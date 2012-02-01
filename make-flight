@@ -222,7 +222,15 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
 
             fi
         done
-                
+
+      if [ $xenarch = amd64 ]; then
+
+      job_create_test test-$xenarch$kern-$dom0arch-xl-win7-amd64 \
+                test-win xl \
+		win_image=win7-x64.iso \
+		all_hostflags=$most_hostflags,hvm
+
+      fi
 
       job_create_test test-$xenarch$kern-$dom0arch-pair test-pair xend \
                 !host !host_hostflags \
@@ -241,15 +249,6 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
 		all_hostflags=$most_hostflags
 
        done
-
-      fi
-
-      if [ $xenarch = amd64 ]; then
-
-      job_create_test test-$xenarch$kern-$dom0arch-xl-win7-amd64 \
-                test-win xl \
-		win_image=win7-x64.iso \
-		all_hostflags=$most_hostflags,hvm
 
       fi
 
