@@ -1,0 +1,29 @@
+#!/usr/bin/perl -w
+
+# diff -b -u <(./mg-show-flight-runvars 11825) <(./mg-show-flight-runvars 11847) |less
+
+use strict qw(vars refs);
+use DBI;
+use Osstest;
+
+csreadconfig();
+
+die unless @ARGV==1 && $ARGV[0] =~ m/^\d+/;
+
+our ($flight) = @ARGV;
+
+our @cols = qw(job name val);
+
+my $qfrom = "FROM runvars WHERE flight=$flight AND NOT synth";
+
+my @colws = $dbh_tests->selectrow_array
+    ("SELECT ".(join ',', map { "max(length($_))" } @cols)." $qfrom");
+
+my $q = $dbh_tests->prepare
+    ("SELECT ".(join ',', @cols)." $qfrom ORDER BY job, name");
+$q->execute();
+
+while (my $row = $q->fetchrow_arrayref()) {
+    printf "%-*s %-*s %-*s\n", map { $colws[$_], $row->[$_] } qw(0 1 2)
+        or die $!;
+}
