@@ -2108,7 +2108,7 @@ sub more_prepareguest_hvm ($$$$;@) {
     my $postimage_hook= $xopts{PostImageHook};
     $postimage_hook->() if $postimage_hook;
 
-    my $cfgpath= prepareguest_part_xencfg($ho, $gho, $ram_mb, \%xopts, <<END);
+    my $cfg = <<END;
 kernel      = 'hvmloader'
 builder     = 'hvm'
 #
@@ -2136,6 +2136,7 @@ serial='file:/dev/stderr'
 boot = 'dc'
 END
 
+    my $cfgpath= prepareguest_part_xencfg($ho, $gho, $ram_mb, \%xopts, $cfg);
     target_cmd_root($ho, <<END);
         (echo $passwd; echo $passwd) | vncpasswd $gho->{Guest}.vncpw
 END
