@@ -8,7 +8,7 @@ die if @ARGV && $ARGV[0] =~ m/^-/;
 logm("checking builds ...");
 
 foreach my $k (sort keys %r) {
-    next unless $k =~ m/^(?:.*_)?([^_]+)buildjob$/;
+    next unless $k =~ m/^(?:.*_)?([^_]*)buildjob$/;
     my $part= $1;
     my $path= "path_${part}dist";
     logm("checking $k $path");
