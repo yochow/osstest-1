@@ -602,7 +602,8 @@ END
 		$rtup= [ 180, '', "failed in", $chkflight ];
 	    } elsif ($chkst eq 'pass') {
                 my $tblocker = $st eq 'fail' ? 'regression' : $st;
-		$rtup= [ 100, $tblocker, "REGR. vs.", $chkflight ];
+                my $tpriority = $j->{job} =~ m/^build/ ? 200 : 100;
+		$rtup= [ $tpriority, $tblocker, "REGR. vs.", $chkflight ];
 	    } else {
 		$rtup= [ 170, '', "$chkst in", $chkflight ];
 	    }
