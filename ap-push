@@ -12,6 +12,7 @@ select_xenbranch
 : ${TREE_LINUX:=$XENBITS:git/linux-pvops}
 : ${TAG_LINUX:=master}
 : ${TAG_LINUX2639:=tested/2.6.39.x}
+: ${TREE_QEMU_UPSTREAM:=$XENBITS:git/qemu-upstream-${xenbranch#xen-}.git}
 
 case "$branch" in
 xen*)
