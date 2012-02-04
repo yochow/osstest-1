@@ -6,13 +6,14 @@ revision=$2
 . cri-lock-repos
 . cri-common
 select_xenbranch
-. ap-common
 
 : ${XENBITS:=xen@xenbits.xensource.com}
 : ${TREE_LINUX:=$XENBITS:git/linux-pvops}
 : ${TAG_LINUX:=master}
 : ${TAG_LINUX2639:=tested/2.6.39.x}
 : ${TREE_QEMU_UPSTREAM:=$XENBITS:git/qemu-upstream-${xenbranch#xen-}.git}
+
+. ap-common
 
 case "$branch" in
 xen*)
