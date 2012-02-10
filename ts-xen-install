@@ -33,7 +33,8 @@ my %distpath;
 
 sub packages () {
     target_install_packages($ho,
-                            qw(bridge-utils vncsnapshot libaio1 libpixman-1-0
+                            qw(ocaml-nox
+                               bridge-utils vncsnapshot libaio1 libpixman-1-0
                                libsdl1.2debian libyajl1 libglib2.0-0));
     if ($r{arch} eq 'i386') {
 	target_install_packages($ho, 'libc6-xen');
