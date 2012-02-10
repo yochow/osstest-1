@@ -157,8 +157,8 @@ END
 END
     $claim_share_new_q= $dbh_tests->prepare(<<END);
         INSERT INTO resource_sharing
-                    (restype, resname, sharetype, state,  wear)
-             VALUES (?,       ?,       ?,         'prep', 1   )
+                    (restype, resname, sharetype, state,  wear, harness)
+             VALUES (?,       ?,       ?,         'prep', 1,    ?      )
 END
     $claim_share_newresource_q= $dbh_tests->prepare(<<END);
         INSERT INTO resources
@@ -727,8 +727,9 @@ sub actual_allocation ($) {
 				     $cand->{restype},$cand->{resname},0);
             $claim_setres_q->finish();
 
+            my $harness = get_harness_rev();
             $claim_share_new_q->execute($cand->{restype},$cand->{resname},
-					$shr);
+					$shr, $harness);
             $claim_share_new_q->finish();
 
             for (my $ix=1; $ix<=$sel->{SharedMaxTasks}; $ix++) {
