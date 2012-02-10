@@ -55,7 +55,7 @@ BEGIN {
                       $tftptail $logm_handle
                       %c %r $dbh_tests $flight $job $stash
                       nonempty
-                      dbfl_check grabrepolock_reexec
+                      dbfl_check get_harness_rev grabrepolock_reexec
                       get_runvar get_runvar_maybe get_runvar_default
                       store_runvar get_stashed open_unique_stashfile
                       broken fail
@@ -178,6 +178,22 @@ sub grabrepolock_reexec {
     }
 }
 
+sub get_harness_rev () {
+    $!=0; $?=0;  my $rev= `git rev-parse HEAD^0`;
+    die "$? $!" unless defined $rev;
+
+    $rev =~ s/\n$//;
+    die "$rev ?" unless $rev =~ m/^[0-9a-f]+$/;
+
+    my $diffr= system 'git diff --exit-code HEAD >/dev/null';
+    if ($diffr) {
+        die "$diffr $! ?" if $diffr != 256;
+        $rev .= '+';
+    }
+
+    return $rev;
+}
+
 sub dbfl_check ($$) {
     my ($fl,$flok) = @_;
     # must be inside db_retry qw(flights)
@@ -197,14 +213,7 @@ END
     die "modifying flight $fl blessing $bless expected @$flok\n"
         unless grep { $_ eq $bless } @$flok;
 
-    $!=0; $?=0; my $rev= `git rev-parse HEAD^0`; die "$? $!" unless defined $rev;
-    $rev =~ s/\n$//;
-    die "$rev ?" unless $rev =~ m/^[0-9a-f]+$/;
-    my $diffr= system 'git diff --exit-code HEAD >/dev/null';
-    if ($diffr) {
-        die "$diffr $! ?" if $diffr != 256;
-        $rev .= '+';
-    }
+    my $rev = get_harness_rev();
 
     my $already= $dbh_tests->selectrow_hashref(<<END, {}, $fl,$rev);
         SELECT * FROM flights_harness_touched WHERE flight=? AND harness=?
