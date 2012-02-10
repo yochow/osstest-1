@@ -106,7 +106,8 @@ END
 END
 
     $alloc_shared_q= $dbh_tests->prepare(<<END);
-            SELECT s.restype, s.resname, s.sharetype, s.state, s.wear,
+            SELECT s.restype, s.resname, s.sharetype, s.state,
+                   s.wear, s.harness,
                    ( SELECT count(*)
 		       FROM resources r
 	              WHERE r.restype=?
@@ -634,7 +635,7 @@ sub actual_allocation ($) {
 
 	print DEBUG "$dbg ALLOC ISSHARED".
 	    " $shared->{sharetype} $shared->{state}".
-	    " $shared->{ntasks} $shared->{wear}\n";
+	    " $shared->{ntasks} $shared->{wear} $shared->{harness}\n";
 
 	if (!$shared->{ntasks}) {
 	    print DEBUG "$dbg ALLOC ISSHARED CAN-UNSHARE\n";
@@ -647,7 +648,8 @@ sub actual_allocation ($) {
     if (defined $shr &&
 	defined $shared &&
 	$shared->{sharetype} eq $shr &&
-	$shared->{wear} < $sel->{SharedMaxWear}) {
+	$shared->{wear} < $sel->{SharedMaxWear} &&
+        $shared->{harness} eq $harness_rev) {
 
 	print DEBUG "$dbg ALLOC SHARED ST $shrestype $shared->{state}\n";
 
