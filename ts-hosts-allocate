@@ -33,6 +33,7 @@ our $taskid;
 our %magictaskid;
 our $fi;
 our $jobinfo;
+our $harness_rev;
 
 #---------- general utilities, setup, etc. ----------
 
@@ -42,6 +43,8 @@ sub show_reskey {
 }
 
 sub setup () {
+    $harness_rev = get_harness_rev();
+
     $taskid= findtask();
 
     $fi= $dbh_tests->selectrow_hashref(<<END, {}, $flight);
@@ -727,9 +730,8 @@ sub actual_allocation ($) {
 				     $cand->{restype},$cand->{resname},0);
             $claim_setres_q->finish();
 
-            my $harness = get_harness_rev();
             $claim_share_new_q->execute($cand->{restype},$cand->{resname},
-					$shr, $harness);
+					$shr, $harness_rev);
             $claim_share_new_q->finish();
 
             for (my $ix=1; $ix<=$sel->{SharedMaxTasks}; $ix++) {
