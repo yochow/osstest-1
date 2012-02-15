@@ -237,6 +237,7 @@ sub fetch_logs_host_guests () {
                   /var/log/xen/osstest*
                   /var/log/xen/xenstored*
 
+                  /var/run/xenstored*
                   /var/log/xenstored*
 
                   /var/log/xen/console/*

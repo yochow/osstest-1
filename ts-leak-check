@@ -177,3 +177,6 @@ xenstore /vm
 xenstore /libxl
 
 process .* udevd
+
+file /var/run/xenstored/db
+file /var/run/xenstored/db.debug
