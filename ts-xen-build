@@ -68,6 +68,20 @@ END
                );
 }
 
+sub buildcmd_stamped_logged ($$$$$) {
+    my ($timeout, $stampname, $prefix, $cmd, $suffix) = @_;
+    target_cmd_build($ho, $timeout, $builddir, <<END);
+        cd xen-unstable
+        $prefix
+        ( $cmd 2>&1 &&             touch ../$stampname-ok-stamp
+        ) |tee ../$stampname-log
+        test -f ../$stampname-ok-stamp
+        $suffix
+        echo ok.
+END
+#/;
+}
+
 sub build () {
     target_cmd_build($ho, 1000, $builddir, <<END);
         cd xen-unstable
@@ -79,13 +93,9 @@ sub build () {
                 print "setopt CONFIG_DEBUG_INFO y\\n" or die \$!;
         ' buildconfigs/enable-xen-config
 END
-    target_cmd_build($ho, 9000, $builddir, <<END);
-        cd xen-unstable
-        (make $makeflags 2>&1 && touch ../build-ok-stamp) |tee ../log
-        test -f ../build-ok-stamp
-        echo ok.
+    buildcmd_stamped_logged(9000, 'build', '',<<END,'');
+            make $makeflags
 END
-#/;
 }
 
 sub collectversion_qemu () {
