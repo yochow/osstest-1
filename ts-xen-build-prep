@@ -142,7 +142,7 @@ END
             next if m/^\S+\s+\Q$mountpoint\E\s/o;
             print EO or die $!;
         }
-        printf EO "%s %s nfs rw\n", $cache, $mountpoint or die $!;
+        printf EO "%s %s nfs rw,fg,retry=1440\n", $cache, $mountpoint or die $!;
     });
 
     my $mount_retries=10;
