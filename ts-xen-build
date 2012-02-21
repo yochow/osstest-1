@@ -93,6 +93,14 @@ sub build () {
                 print "setopt CONFIG_DEBUG_INFO y\\n" or die \$!;
         ' buildconfigs/enable-xen-config
 END
+    buildcmd_stamped_logged(300, 'configure', <<END,<<END,<<END);
+            if test -f configure; then
+END
+                ./configure
+END
+            fi
+END
+#/;
     buildcmd_stamped_logged(9000, 'build', '',<<END,'');
             make $makeflags
 END
