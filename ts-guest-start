@@ -12,7 +12,7 @@ sub start () {
     guest_umount_lv($ho, $gho);
     my $cmd= toolstack()->{Command}." create ".
         $r{ $gho->{Guest}.'_'. toolstack()->{CfgPathVar} };
-    target_cmd_root($ho, $cmd, 100);
+    target_cmd_root($ho, $cmd, 30);
 }
 
 sub checkstart () {
