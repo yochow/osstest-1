@@ -101,7 +101,9 @@ sub prep () {
 
     my $isotimeout= 600;
 
-    $gho= prepareguest($ho, $gn, $guesthost, 22, $disk_mb + 1);
+    $gho= prepareguest($ho, $gn, $guesthost, 22,
+                       $disk_mb + 1,
+                       100);
 
     my $newiso= '/root/newiso';
     my $emptydir= '/root/empty-dir';

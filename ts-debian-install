@@ -24,7 +24,8 @@ sub prep () {
     target_install_packages_norec($ho, qw(lvm2 xen-tools));
 
     $gho= prepareguest($ho, $gn, $guesthost, 22,
-                       $swap_mb + $disk_mb + 2);
+                       $swap_mb + $disk_mb + 2,
+                       40);
     target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
 }
 

@@ -2028,8 +2028,9 @@ sub guest_var_commalist ($$) {
     return split /\,/, guest_var($gho,$runvartail,'');
 }
 
-sub prepareguest ($$$$$) {
-    my ($ho, $gn, $hostname, $tcpcheckport, $mb) = @_;
+sub prepareguest ($$$$$$) {
+    my ($ho, $gn, $hostname, $tcpcheckport, $mb,
+        $boot_timeout) = @_;
     # must be run outside transaction
 
     # If we are passing through a nic, use its mac address not a generated one
@@ -2048,7 +2049,8 @@ sub prepareguest ($$$$$) {
     store_runvar("${gn}_hostname", $hostname);
     store_runvar("${gn}_disk_lv", $r{"${gn}_hostname"}.'-disk');
     store_runvar("${gn}_tcpcheckport", $tcpcheckport);
-    
+    store_runvar("${gn}_boot_timeout", $boot_timeout);
+
     my $gho= selectguest($gn);
     store_runvar("${gn}_domname", $gho->{Name});
 

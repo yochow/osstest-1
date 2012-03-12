@@ -21,5 +21,5 @@ sub checkstart () {
 
 start();
 checkstart();
-guest_await($gho, 100);
+guest_await($gho, target_var($gho,'boot_timeout'));
 guest_check_up($gho);

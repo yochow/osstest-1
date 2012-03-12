@@ -21,7 +21,9 @@ our $guesthost= 'win.guest.osstest';
 sub prep () {
     target_install_packages_norec($ho, qw(lvm2 rsync));
 
-    $gho= prepareguest($ho, 'win', $guesthost, 8936, $disk_mb + 1);
+    $gho= prepareguest($ho, 'win', $guesthost, 8936,
+                       $disk_mb + 1,
+                       300);
 
     my $viridian = guest_var($gho, 'viridian', 1);
 
