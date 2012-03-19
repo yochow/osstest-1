@@ -9,6 +9,7 @@ use HTML::Entities;
 use URI::Escape;
 use POSIX;
 use IPC::Open2;
+use Data::Dumper;
 
 our $specflight;
 our %specver;
@@ -436,6 +437,7 @@ END
 
         my $cat;
         my $heisenflightp= $failv->{Flight} != $specflight;
+        print DEBUG "PRINTOUT ",Dumper($failv);
         if (!keys %{ $specver{that} }) {
             $cat= "A Tests which did not succeed,\n".
 "including tests which could not be run:";
@@ -612,6 +614,7 @@ END
 	    return $rtup->[2];
         });
 	@rtups= sort { $b->[0] <=> $a->[0] } @rtups;
+        print DEBUG Dumper($failv,\@rtups);
         my ($bpriority,$blocker) = @{ $rtups[0] };
         my $heisen;
         if ($blocker && $bpriority < 500) {
