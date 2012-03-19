@@ -594,6 +594,7 @@ END
 	findaflight('that', $fi->{Flight}, $j->{job}, $s->{testid}, sub {
             my ($chkflight, $chkst) = @_;
 	    my $rtup;
+            # NB magic priority threshold, >=500 prevents heisen search
 	    if (!defined $chkst) {
 		$rtup= [ 50, '', "blocked in", $chkflight ];
 	    } elsif ($chkst eq $st) {
@@ -602,7 +603,7 @@ END
 		$rtup= [ 180, '', "failed in", $chkflight ];
 	    } elsif ($chkst eq 'pass') {
                 my $tblocker = $st eq 'fail' ? 'regression' : $st;
-                my $tpriority = $j->{job} =~ m/^build/ ? 200 : 100;
+                my $tpriority = $j->{job} =~ m/^build/ ? 600 : 100;
 		$rtup= [ $tpriority, $tblocker, "REGR. vs.", $chkflight ];
 	    } else {
 		$rtup= [ 170, '', "$chkst in", $chkflight ];
@@ -611,9 +612,9 @@ END
 	    return $rtup->[2];
         });
 	@rtups= sort { $b->[0] <=> $a->[0] } @rtups;
-        my $blocker= $rtups[0][1];;
+        my ($bpriority,$blocker) = @{ $rtups[0] };
         my $heisen;
-        if ($blocker) {
+        if ($blocker && $bpriority < 500) {
             my $heisengoodflight=
                 !keys %{ $specver{this} } ? undef :
               findaflight('this', $fi->{Flight}, $j->{job}, $s->{testid}, sub {
