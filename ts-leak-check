@@ -129,7 +129,17 @@ sub inventory_files ($) {
     }
 }
 
+sub inventory_domains () {
+    my $doms= target_cmd_output_root($ho, "xl list");
+    $doms =~ s/^name\s.*\n//mi or die "$doms ?";
+    foreach (split /\n/, $doms) {
+        m, (\d+) +\S+ +\S+ +\S+ +\S+\s*$, or die "$_ ?";
+        item('domain', $1, $_, 1);
+    }
+}
+
 sub inventory () {
+    inventory_domains();
     inventory_processes();
     inventory_xenstore();
     inventory_files('/tmp /var/run /var/tmp /var/lib/xen');
