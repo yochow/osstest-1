@@ -109,7 +109,7 @@ sub inventory_processes () {
     while (my ($key, $vals) = each %procs) {
         next unless @$vals==2;
         $key =~ m/^\d+ / or die "$key ?";
-        $_= $';
+        $_= $'; #';
         my $suppress= (m/^\[\S+\]$/ ||
                        $_ eq '/sbin/getty');
         item('process', $key, $vals->[1], !$suppress);
