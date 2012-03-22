@@ -8,12 +8,12 @@ select_xenbranch
 . ap-common
 
 : ${XENBITS:=xen@xenbits.xensource.com}
-: ${OLD_TREE_LINUX:=$XENBITS:git/linux-pvops}
-: ${OLD_TAG_LINUX:=master}
-: ${OLD_TAG_LINUX2639:=tested/2.6.39.x}
-: ${OLD_LOCALREV_LINUX:=daily-cron.$branch.old}
+: ${BASE_TREE_LINUX:=$XENBITS:git/linux-pvops}
+: ${BASE_TAG_LINUX:=master}
+: ${BASE_TAG_LINUX2639:=tested/2.6.39.x}
+: ${BASE_LOCALREV_LINUX:=daily-cron.$branch.old}
 
-: ${OLD_TREE_QEMU_UPSTREAM:=${TREE_QEMU_UPSTREAM/\/staging\//\/}}
+: ${BASE_TREE_QEMU_UPSTREAM:=${TREE_QEMU_UPSTREAM/\/staging\//\/}}
 
 case "$branch" in
 xen*)
@@ -24,11 +24,11 @@ xen*)
 	;;
 qemu-upstream-*)
         repo_tree_rev_fetch_git $branch \
-		$OLD_TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM
+		$BASE_TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM
         ;;
 linux)
 	repo_tree_rev_fetch_git linux \
-		$OLD_TREE_LINUX $OLD_TAG_LINUX $OLD_LOCALREV_LINUX
+		$BASE_TREE_LINUX $BASE_TAG_LINUX $BASE_LOCALREV_LINUX
 	;;
 linux-2.6.39)
 	repo_tree_rev_fetch_git linux \
