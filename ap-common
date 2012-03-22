@@ -11,8 +11,9 @@
 
 
 : ${GIT_KERNEL_ORG:=git://git.kernel.org}
+: ${KERNEL_SCM:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git}
 
-: ${TREE_LINUX:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git/jeremy/xen.git}
+: ${TREE_LINUX:=${KERNEL_SCM}/jeremy/xen.git}
 #: ${TREE_LINUX:=git://mariner.uk.xensource.com/linux-2.6-jeremy-temp.git}
 #: ${TREE_LINUX:=git://github.com/jsgf/linux-xen.git}
 : ${TAG_LINUX:=xen/next-2.6.32}
@@ -20,7 +21,7 @@
 : ${BASE_TREE_LINUX:=$XENBITS:git/linux-pvops}
 : ${BASE_TAG_LINUX:=master}
 
-: ${TREE_LINUX2639:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git/konrad/xen.git}
+: ${TREE_LINUX2639:=${KERNEL_SCM}/konrad/xen.git}
 : ${TAG_LINUX2639:=stable/2.6.39.x}
 
 : ${LOCALREV_LINUX:=daily-cron.$branch}
