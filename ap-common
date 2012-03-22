@@ -31,3 +31,27 @@
 : ${TREE_QEMU_UPSTREAM:=git://xenbits.xen.org/staging/qemu-upstream-${xenbranch#xen-}.git}
 : ${LOCALREV_QEMU_UPSTREAM:=daily-cron.$branch}
 
+info_linux_tree () {
+	case $1 in
+
+	linux-linus)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/torvalds/linux-2.6.git}
+		;;
+	linux-mingo-tip-master)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/tip/tip.git}
+		;;
+
+	*)
+		return 1
+		;;
+	esac
+
+	: ${TAG_LINUX_THIS:=master}
+
+	: ${BASE_TREE_LINUX_THIS:=$BASE_TREE_LINUX}
+	: ${PUSH_TREE_LINUX_THIS:=$BASE_TREE_LINUX_THIS}
+	: ${BASE_TAG_LINUX_THIS:=tested/$1}
+	: ${PUSH_TAG_LINUX_THIS:=$BASE_TAG_LINUX_THIS}
+
+	return 0
+}

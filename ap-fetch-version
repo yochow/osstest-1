@@ -7,6 +7,12 @@ branch=$1
 select_xenbranch
 . ap-common
 
+if info_linux_tree "$branch"; then
+	repo_tree_rev_fetch_git linux \
+		$TREE_LINUX_THIS $TAG_LINUX_THIS $LOCALREV_LINUX
+	exit 0
+fi
+
 case "$branch" in
 xen*)
 	./sg-hg-heads sh -ec '

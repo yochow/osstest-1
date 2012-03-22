@@ -12,6 +12,12 @@ select_xenbranch
 
 : ${BASE_TREE_QEMU_UPSTREAM:=${TREE_QEMU_UPSTREAM/\/staging\//\/}}
 
+if info_linux_tree "$branch"; then
+	repo_tree_rev_fetch_git linux \
+		$BASE_TREE_LINUX_THIS $BASE_TAG_LINUX_THIS $BASE_LOCALREV_LINUX
+	exit 0
+fi
+
 case "$branch" in
 xen*)
 	./sg-hg-heads ssh $XENBITS '

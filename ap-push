@@ -14,6 +14,12 @@ select_xenbranch
 
 . ap-common
 
+if info_linux_tree "$branch"; then
+	cd $repos/linux
+	git push $PUSH_TREE_LINUX_THIS $revision:$PUSH_TAG_LINUX_THIS
+        exit 0
+fi
+
 case "$branch" in
 xen*)
 	cd $repos/$branch.hg
