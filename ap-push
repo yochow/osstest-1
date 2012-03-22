@@ -7,7 +7,6 @@ revision=$2
 . cri-common
 select_xenbranch
 
-: ${XENBITS:=xen@xenbits.xensource.com}
 : ${TREE_LINUX:=$XENBITS:git/linux-pvops}
 : ${TAG_LINUX:=master}
 : ${TAG_LINUX2639:=tested/2.6.39.x}

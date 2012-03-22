@@ -7,7 +7,6 @@ branch=$1
 select_xenbranch
 . ap-common
 
-: ${XENBITS:=xen@xenbits.xensource.com}
 : ${BASE_TAG_LINUX2639:=tested/2.6.39.x}
 : ${BASE_LOCALREV_LINUX:=daily-cron.$branch.old}
 

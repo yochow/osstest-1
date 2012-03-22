@@ -2,6 +2,8 @@
 
 # $xenbranch must already be set
 
+: ${XENBITS:=xen@xenbits.xensource.com}
+
 : ${TREE_XEN:=http://xenbits.xen.org/staging/$xenbranch.hg}
 
 #: ${TREE_QEMU:=git://mariner.uk.xensource.com/qemu-$xenbranch.git}
