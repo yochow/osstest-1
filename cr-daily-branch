@@ -10,7 +10,9 @@ tree_bisect=tree-bisect
 check_stop daily.
 
 fetch_version () {
-	if [ "x$1" = "x$branch" ]; then
+	local tbranch=$1
+	local treevarwhich=$2
+	if [ "x$tbranch" = "x$branch" ]; then
                 if [ "x$FORCE_REVISION" != x ]; then
                         echo "$FORCE_REVISION"
                 else
@@ -18,6 +20,13 @@ fetch_version () {
                 fi
 	else
 		./ap-fetch-version-baseline "$@"
+                if [ "x$treevarwhich" != x ]; then
+	                eval "ttreebase=\$BASE_TREE_$treevarwhich"
+	                if [ "x$ttreebase" != x ]; then
+				eval "TREE_$treevarwhich=\$ttreebase"
+				export TREE_$treevarwhich
+			fi
+		fi
 	fi
 }
 
@@ -60,7 +69,7 @@ if [ "x$REVISION_QEMU_UPSTREAM" = x ]; then
         export REVISION_QEMU_UPSTREAM
 fi
 if [ "x$REVISION_LINUX" = x ]; then
-        REVISION_LINUX="`fetch_version linux`"
+        REVISION_LINUX="`fetch_version linux LINUX`"
         export REVISION_LINUX
 fi
 
