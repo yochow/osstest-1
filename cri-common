@@ -29,7 +29,7 @@ select_xenbranch () {
 	xen*)			tree=xen;	xenbranch=$branch ;;
         qemu-upstream-*)    tree=qemuu; xenbranch=xen-${branch#qemu-upstream-};;
 	linux)			tree=linux;	xenbranch=xen-unstable ;;
-	linux-xen-*)		tree=linux;	xenbranch=xen-unstable ;;
+	linux-*)		tree=linux;	xenbranch=xen-unstable ;;
 	osstest)		tree=osstest;	xenbranch=xen-unstable ;;
 	esac
 }
