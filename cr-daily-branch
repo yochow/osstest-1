@@ -114,6 +114,7 @@ if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
         fi
 fi
 
+$DAILY_BRANCH_PREMAKE_HOOK
 flight=`./make-flight $branch $xenbranch $OSSTEST_BLESSING "$@"`
 
 revlog=tmp/$flight.revision-log
