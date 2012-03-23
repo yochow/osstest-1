@@ -16,10 +16,10 @@ fetch_version () {
                 if [ "x$FORCE_REVISION" != x ]; then
                         echo "$FORCE_REVISION"
                 else
-        		./ap-fetch-version "$@"
+        		./ap-fetch-version "$tbranch"
                 fi
 	else
-		./ap-fetch-version-baseline "$@"
+		./ap-fetch-version-baseline "$tbranch"
                 if [ "x$treevarwhich" != x ]; then
 	                eval "ttreebase=\$BASE_TREE_$treevarwhich"
 	                if [ "x$ttreebase" != x ]; then
