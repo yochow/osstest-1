@@ -32,6 +32,11 @@ select_xenbranch () {
 	linux-*)		tree=linux;	xenbranch=xen-unstable ;;
 	osstest)		tree=osstest;	xenbranch=xen-unstable ;;
 	esac
+	if [ "x$tree" = xlinux ]; then
+		linuxbranch=$branch
+	else
+		linuxbranch=linux
+	fi
 }
 
 select_branch () {

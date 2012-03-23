@@ -69,7 +69,7 @@ if [ "x$REVISION_QEMU_UPSTREAM" = x ]; then
         export REVISION_QEMU_UPSTREAM
 fi
 if [ "x$REVISION_LINUX" = x ]; then
-        REVISION_LINUX="`fetch_version linux LINUX`"
+        REVISION_LINUX="`fetch_version $linuxbranch LINUX`"
         export REVISION_LINUX
 fi
 
