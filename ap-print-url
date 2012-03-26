@@ -7,6 +7,11 @@ branch=$1
 select_xenbranch
 . ap-common
 
+if info_linux_tree "$branch"; then
+	echo $TREE_LINUX_THIS
+	exit 0
+fi
+
 case "$branch" in
 xen*)
         echo $TREE_XEN
