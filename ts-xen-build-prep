@@ -27,6 +27,13 @@ sub lvextend () {
         fi
 END
 
+    lvextend1($vg, 'disk extend initial',       30, 0);
+    lvextend1($vg, 'disk extend background', undef, 1);
+}
+
+sub lvextend1 ($$$$) {
+    my ($vg, $what, $max_more_gb, $background)  = @_;
+
     my $lv= "/dev/$vg/root";
 
     my $more_pe= 0;
@@ -41,10 +48,10 @@ END
         my $pv_vg= $pvinfo[1];
         my $pv_free_pe= $pvinfo[9];
         if ($pv_vg ne $vg) {
-            logm("disk extend: $pv_name: vg $pv_vg != $vg");
+            logm("$what: $pv_name: vg $pv_vg != $vg");
             next;
         }
-        logm("disk extend: $pv_name: $pv_free_pe free PEs");
+        logm("$what: $pv_name: $pv_free_pe free PEs");
         next unless $pv_free_pe;
         if (!defined($stripe_minfree) ||
             $pv_free_pe < $stripe_minfree) {
@@ -53,7 +60,7 @@ END
         $stripe_count++;
     }
     $stripe_minfree=0 if !defined $stripe_minfree;
-    logm("disk extend: $stripe_count stripe(s) x $stripe_minfree PEs");
+    logm("$what: $stripe_count stripe(s) x $stripe_minfree PEs");
     if ($stripe_minfree && $stripe_count>1) {
         my $stripes_free = $stripe_count * $stripe_minfree;
         $more_pe += $stripes_free;
@@ -64,17 +71,31 @@ END
     my @vginfo= split /\:/, $vginfo;
     @vginfo >= 17 or die "$vginfo ?";
     my $pe_size= $vginfo[12];
-    my $vg_free_pe= $vginfo[15];
+    my $vg_more_free_pe= $vginfo[15];
 
-    if ($vg_free_pe) {
-        logm("disk extend: unstriped $vg_free_pe PEs");
-        $more_pe += $vg_free_pe;
-        target_cmd_root($ho, "lvextend -i1 -l +$vg_free_pe $lv");
+    if (defined $max_more_gb) {
+	my $max_more_pe = floor($max_more_gb *1024.0*1024.0 / $pe_size);
+	logm("$what: limit ${max_more_gb}G,".
+	     " want $vg_more_free_pe<=$max_more_pe");
+	if ($vg_more_free_pe >= $max_more_pe) {
+	    $vg_more_free_pe = $max_more_pe;
+	}
+    }
+
+    if ($vg_more_free_pe) {
+        logm("$what: unstriped $vg_more_free_pe PEs");
+        $more_pe += $vg_more_free_pe;
+        target_cmd_root($ho, "lvextend -i1 -l +$vg_more_free_pe $lv");
     }
 
     my $timeout = 2000 + int($pe_size * 0.000003 * $more_pe);
-    logm("disk extend: ${pe_size}k x $more_pe (timeout=$timeout)");
-    target_cmd_root($ho, "resize2fs $lv", $timeout);
+    logm("$what: ${pe_size}k x $more_pe (timeout=$timeout)");
+    my $cmd = "resize2fs $lv";
+    if (!$background) {
+	target_cmd_root($ho, $cmd, $timeout);
+    } else {
+	target_cmd_root($ho, "$cmd >>resizefs.log 2>&1 </dev/null &", 30);
+    }
 }
 
 sub prep () {
