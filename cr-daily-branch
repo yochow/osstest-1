@@ -2,32 +2,48 @@
 set -ex
 
 . cri-args-hostlists
+. ap-common
 branch=$1; shift
 select_branch
+info_linux_tree $branch ||:
 
 tree_bisect=tree-bisect
 
 check_stop daily.
 
-fetch_version () {
-	local tbranch=$1
-	local treevarwhich=$2
+determine_tree () {
+	local treevarwhich=$1
+	local tsrcvar=$2
+	if [ "x$treevarwhich" = x ]; then return; fi
+	eval "ttreeurl=\$$tsrcvar"
+	if [ "x$ttreeurl" = x ]; then return; fi
+	eval "TREE_$treevarwhich=\$ttreeurl"
+	export TREE_$treevarwhich
+}
+
+determine_version () {
+	local tversionvar=$1
+	local tbranch=$2
+	local treevarwhich=$3
 	if [ "x$tbranch" = "x$branch" ]; then
                 if [ "x$FORCE_REVISION" != x ]; then
-                        echo "$FORCE_REVISION"
+                        tversion="$FORCE_REVISION"
                 else
-        		./ap-fetch-version "$tbranch"
+        		tversion=`./ap-fetch-version "$tbranch"`
                 fi
+		determine_tree "$treevarwhich" TREE_${treevarwhich}
+		determine_tree "$treevarwhich" TREE_${treevarwhich}_THIS
 	else
-		./ap-fetch-version-baseline "$tbranch"
-                if [ "x$treevarwhich" != x ]; then
-	                eval "ttreebase=\$BASE_TREE_$treevarwhich"
-	                if [ "x$ttreebase" != x ]; then
-				eval "TREE_$treevarwhich=\$ttreebase"
-				export TREE_$treevarwhich
-			fi
-		fi
+		tversion=`./ap-fetch-version-baseline "$tbranch"`
+		determine_tree "$treevarwhich" BASE_TREE_${treevarwhich}
+		determine_tree "$treevarwhich" BASE_TREE_${treevarwhich}_THIS
 	fi
+	eval "$tversionvar=$tversion"
+}
+
+fetch_version () {
+	determine_version fetch_version_result "$@"
+	printf '%s\n' "$fetch_version_result"
 }
 
 skipidentical=true
@@ -69,7 +85,7 @@ if [ "x$REVISION_QEMU_UPSTREAM" = x ]; then
         export REVISION_QEMU_UPSTREAM
 fi
 if [ "x$REVISION_LINUX" = x ]; then
-        REVISION_LINUX="`fetch_version $linuxbranch LINUX`"
+	determine_version REVISION_LINUX $linuxbranch LINUX
         export REVISION_LINUX
 fi
 
