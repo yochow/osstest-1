@@ -14,7 +14,7 @@ exit 0 if $ho->{SharedReady};
 
 our ($vg);
 
-sub lvextend () {
+sub lvextend_stage1 () {
     $vg=
         $ho->{Suite} =~ m/lenny/
         ? "$ho->{Name}.$c{TestHostDomain}"
@@ -30,6 +30,9 @@ sub lvextend () {
 END
 
     lvextend1('disk extend initial',       30, 0);
+}
+
+sub lvextend_stage2 () {
     lvextend1('disk extend background', undef, 1);
 }
 
@@ -195,10 +198,11 @@ sub ccache_setup () {
     }
 }
 
-lvextend();
+lvextend_stage1();
 prep();
 cacheing_git_mount();
 cacheing_git_install();
 ccache_setup();
+lvextend_stage2();
 resource_shared_mark_ready($ho->{Ident}, $ho->{Name},
                            "build-".$ho->{Suite}."-".$r{arch});
