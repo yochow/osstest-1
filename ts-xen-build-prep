@@ -12,8 +12,10 @@ $whhost ||= 'host';
 our $ho= selecthost($whhost);
 exit 0 if $ho->{SharedReady};
 
+our ($vg);
+
 sub lvextend () {
-    my $vg=
+    $vg=
         $ho->{Suite} =~ m/lenny/
         ? "$ho->{Name}.$c{TestHostDomain}"
         : $ho->{Name};
@@ -27,12 +29,12 @@ sub lvextend () {
         fi
 END
 
-    lvextend1($vg, 'disk extend initial',       30, 0);
-    lvextend1($vg, 'disk extend background', undef, 1);
+    lvextend1('disk extend initial',       30, 0);
+    lvextend1('disk extend background', undef, 1);
 }
 
-sub lvextend1 ($$$$) {
-    my ($vg, $what, $max_more_gb, $background)  = @_;
+sub lvextend1 ($$$) {
+    my ($what, $max_more_gb, $background)  = @_;
 
     my $lv= "/dev/$vg/root";
 
