@@ -39,6 +39,7 @@ info_linux_tree () {
 		;;
 	linux-mingo-tip-master)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/tip/tip.git}
+		: ${GIT_TREE_FORCE_FLAG:=-f}
 		;;
 
 	*)
