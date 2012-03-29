@@ -13,6 +13,7 @@
 : ${GIT_KERNEL_ORG:=git://git.kernel.org}
 : ${KERNEL_SCM:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git}
 
+: ${TREEVCS_LINUX:=git}
 : ${TREE_LINUX:=${KERNEL_SCM}/jeremy/xen.git}
 #: ${TREE_LINUX:=git://mariner.uk.xensource.com/linux-2.6-jeremy-temp.git}
 #: ${TREE_LINUX:=git://github.com/jsgf/linux-xen.git}
@@ -48,6 +49,9 @@ info_linux_tree () {
 	esac
 
 	: ${TAG_LINUX_THIS:=master}
+
+	: ${TREEVCS_LINUX_THIS:=git}
+	: ${BASE_TREEVCS_LINUX_THIS:=$TREEVCS_LINUX_THIS}
 
 	: ${BASE_TREE_LINUX_THIS:=$BASE_TREE_LINUX}
 	: ${PUSH_TREE_LINUX_THIS:=$BASE_TREE_LINUX_THIS}

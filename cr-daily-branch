@@ -13,12 +13,16 @@ check_stop daily.
 
 determine_tree () {
 	local treevarwhich=$1
-	local tsrcvar=$2
+	local tsrcvarlhs=$2
+	local tsrcvarrhs=$3
 	if [ "x$treevarwhich" = x ]; then return; fi
-	eval "ttreeurl=\$$tsrcvar"
-	if [ "x$ttreeurl" = x ]; then return; fi
-	eval "TREE_$treevarwhich=\$ttreeurl"
-	export TREE_$treevarwhich
+
+	for tsrcvarwhich in TREE TREEVCS; do
+		eval "ttreeval=\$${tsrcvarlhs}${tsrcvarwhich}${tsrcvarrhs}"
+		if [ "x$ttreeval" = x ]; then return; fi
+		eval "${tsrcvarwhich}_${treevarwhich}=\$ttreeval"
+		export "${tsrcvarwhich}_${treevarwhich}"
+	done
 }
 
 determine_version () {
@@ -31,12 +35,12 @@ determine_version () {
                 else
         		tversion=`./ap-fetch-version "$tbranch"`
                 fi
-		determine_tree "$treevarwhich" TREE_${treevarwhich}
-		determine_tree "$treevarwhich" TREE_${treevarwhich}_THIS
+		determine_tree "$treevarwhich" "" _${treevarwhich}
+		determine_tree "$treevarwhich" "" _${treevarwhich}_THIS
 	else
 		tversion=`./ap-fetch-version-baseline "$tbranch"`
-		determine_tree "$treevarwhich" BASE_TREE_${treevarwhich}
-		determine_tree "$treevarwhich" BASE_TREE_${treevarwhich}_THIS
+		determine_tree "$treevarwhich" BASE_ _${treevarwhich}
+		determine_tree "$treevarwhich" BASE_ _${treevarwhich}_THIS
 	fi
 	eval "$tversionvar=$tversion"
 }
