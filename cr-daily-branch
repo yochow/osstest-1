@@ -29,7 +29,7 @@ determine_version () {
 	local tversionvar=$1
 	local tbranch=$2
 	local treevarwhich=$3
-	if [ "x$tbranch" = "x$branch" ]; then
+	if [ "x$tbranch" = "x$branch" ] && ! $force_baseline; then
                 if [ "x$FORCE_REVISION" != x ]; then
                         tversion="$FORCE_REVISION"
                 else
@@ -50,6 +50,7 @@ fetch_version () {
 	printf '%s\n' "$fetch_version_result"
 }
 
+force_baseline=false
 skipidentical=true
 wantpush=$OSSTEST_PUSH
 
@@ -64,8 +65,7 @@ testedflight=`./sg-check-tested --debug --branch=$branch \
 if [ "x$testedflight" = x ]; then
         wantpush=false
         skipidentical=false
-        FORCE_REVISION=$OLD_REVISION
-        export FORCE_REVISION
+        force_baseline=true
         OLD_REVISION=`./sg-check-tested --debug --branch=$branch \
           --blessings=$OSSTEST_BLESSING --print-revision=$tree`
         if [ "x$OLD_REVISION" = x ]; then
