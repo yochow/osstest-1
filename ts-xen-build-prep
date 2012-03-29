@@ -48,6 +48,22 @@ sub lvextend1 ($$$) {
 
     my $lv= "/dev/$vg/root";
 
+    my @vginfo = vginfo();
+    my $pe_size= $vginfo[12];
+
+    my $do_limit_pe = sub { };
+    if (defined $max_more_gb) {
+	my $max_more_pe = floor($max_more_gb *1024.0*1024.0 / $pe_size);
+	$do_limit_pe = sub {
+	    my ($pevar, $twhat) = @_;
+	    logm("$what: $twhat: limit ${max_more_gb}G,".
+		 " want $$pevar<=$max_more_pe");
+	    if ($$pevar >= $max_more_pe) {
+		$$pevar = $max_more_pe;
+	    }
+	};
+    }
+
     my $more_pe= 0;
 
     my $pvinfos= target_cmd_output_root($ho, "pvdisplay --colon");
@@ -79,18 +95,10 @@ sub lvextend1 ($$$) {
         target_cmd_root($ho, "lvextend -i$stripe_count -l +$stripes_free $lv");
     }
 
-    my @vginfo = vginfo();
-    my $pe_size= $vginfo[12];
+    @vginfo = vginfo();
     my $vg_more_free_pe= $vginfo[15];
 
-    if (defined $max_more_gb) {
-	my $max_more_pe = floor($max_more_gb *1024.0*1024.0 / $pe_size);
-	logm("$what: limit ${max_more_gb}G,".
-	     " want $vg_more_free_pe<=$max_more_pe");
-	if ($vg_more_free_pe >= $max_more_pe) {
-	    $vg_more_free_pe = $max_more_pe;
-	}
-    }
+    $do_limit_pe->(\$vg_more_free_pe, 'unstriped');
 
     if ($vg_more_free_pe) {
         logm("$what: unstriped $vg_more_free_pe PEs");
