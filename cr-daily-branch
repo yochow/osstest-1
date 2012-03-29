@@ -103,6 +103,7 @@ linux)
 	NEW_REVISION=$REVISION_LINUX
 	export REVISION_LINUX_XCP=disable
 	export REVISION_LINUX_OLD=disable
+	: ${GITFORCEFLAG:=$GITFORCEFLAG_TREE_LINUX_THIS}
 	;;
 osstest)
         realtree=
@@ -148,7 +149,8 @@ case "$NEW_REVISION/$OLD_REVISION" in
         sgr_args+=" --this-$tree=$NEW_REVISION"
         sgr_args+=" --that-$tree=$OLD_REVISION"
 
-        if [ "$realtree" ] && [ "x$NEW_REVISION" != "x$OLD_REVISION" ]; then
+        if [ "$realtree" ] && [ "x$NEW_REVISION" != "x$OLD_REVISION" ] \
+	   && [ "x$GITFORCEFLAG" != x ]; then
                 treeurl=`./ap-print-url $branch`
                 ./adhoc-revtuple-generator >$revlog -S \
                         "$treeurl#$OLD_REVISION-$NEW_REVISION" \
