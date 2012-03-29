@@ -137,6 +137,7 @@ fi
 
 $DAILY_BRANCH_PREMAKE_HOOK
 flight=`./make-flight $branch $xenbranch $OSSTEST_BLESSING "$@"`
+$DAILY_BRANCH_POSTMAKE_HOOK
 
 revlog=tmp/$flight.revision-log
 
