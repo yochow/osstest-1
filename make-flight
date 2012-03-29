@@ -46,6 +46,7 @@ if [ x$buildflight = x ]; then
 		xen_kernels=linux-2.6-pvops				     \
 		revision_xen=$REVISION_XEN				     \
 		tree_linux=$TREE_LINUX					     \
+		${TREEVCS_LINUX:+treevcs_linux=}${TREEVCS_LINUX}	\
 		revision_linux=$REVISION_LINUX
 
     if [ "x$REVISION_LINUX_OLD" != xdisable ]; then

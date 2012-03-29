@@ -973,15 +973,23 @@ sub contents_make_cpio ($$$) {
 
 sub build_clone ($$$$) {
     my ($ho, $which, $builddir, $subdir) = @_;
-    my $vcs= '';
 
     need_runvars("tree_$which", "revision_$which");
 
     my $tree= $r{"tree_$which"};
     my $timeout= 4000;
 
-    if ($tree =~ m/\.hg$/) {
+    my $vcs = $r{"treevcs_$which"};
+    if (!defined $vcs) {
+    } elsif ($tree =~ m/\.hg$/) {
         $vcs= 'hg';
+    } elsif ($tree =~ m/\.git$/) {
+        $vcs= 'git';
+    } else {
+        die "unknown vcs for $which $tree ";
+    }
+
+    if ($vcs eq 'hg') {
         
         target_cmd_build($ho, $timeout, $builddir, <<END.
 	    hg clone '$tree' $subdir
@@ -990,8 +998,7 @@ END
                          (length($r{"revision_$which"}) ? <<END : ''));
 	    hg update '$r{"revision_$which"}'
 END
-    } elsif ($tree =~ m/\.git$/) {
-        $vcs= 'git';
+    } elsif ($vcs eq 'git') {
 
         target_cmd_build($ho, $timeout, $builddir, <<END.
             git clone '$tree' $subdir
@@ -1001,7 +1008,7 @@ END
 	    git checkout '$r{"revision_$which"}'
 END
     } else {
-        die "unknown vcs for $which $tree ";
+        die "$vcs $which $tree ?";
     }
 
     my $rev= vcs_dir_revision($ho, "$builddir/$subdir", $vcs);
