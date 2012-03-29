@@ -36,6 +36,13 @@ sub lvextend_stage2 () {
     lvextend1('disk extend background', undef, 1);
 }
 
+sub vginfo () {
+    my $vginfo= target_cmd_output_root($ho, "vgdisplay --colon $vg");
+    my @vginfo= split /\:/, $vginfo;
+    @vginfo >= 17 or die "$vginfo ?";
+    return @vginfo;
+}
+
 sub lvextend1 ($$$) {
     my ($what, $max_more_gb, $background)  = @_;
 
@@ -72,9 +79,7 @@ sub lvextend1 ($$$) {
         target_cmd_root($ho, "lvextend -i$stripe_count -l +$stripes_free $lv");
     }
 
-    my $vginfo= target_cmd_output_root($ho, "vgdisplay --colon $vg");
-    my @vginfo= split /\:/, $vginfo;
-    @vginfo >= 17 or die "$vginfo ?";
+    my @vginfo = vginfo();
     my $pe_size= $vginfo[12];
     my $vg_more_free_pe= $vginfo[15];
 
