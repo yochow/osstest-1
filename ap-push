@@ -16,7 +16,7 @@ select_xenbranch
 
 if info_linux_tree "$branch"; then
 	cd $repos/linux
-	git push $GIT_TREE_FORCE_FLAG \
+	git push $GITFORCEFLAG_TREE_LINUX_THIS \
 		$PUSH_TREE_LINUX_THIS $revision:$PUSH_TAG_LINUX_THIS
         exit 0
 fi
