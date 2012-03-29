@@ -980,7 +980,7 @@ sub build_clone ($$$$) {
     my $timeout= 4000;
 
     my $vcs = $r{"treevcs_$which"};
-    if (!defined $vcs) {
+    if (defined $vcs) {
     } elsif ($tree =~ m/\.hg$/) {
         $vcs= 'hg';
     } elsif ($tree =~ m/\.git$/) {
