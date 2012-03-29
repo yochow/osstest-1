@@ -61,7 +61,9 @@ sub lvextend1 ($$$) {
 	    if ($$pevar >= $max_more_pe) {
 		$$pevar = $max_more_pe;
 		$do_limit_pe = sub {
-		    logm("$what: $_[0]: already limited");
+		    my ($pevar, $twhat) = @_;
+		    logm("$what: $twhat: already limited");
+		    $$pevar = 0;
 		};
 	    }
 	};
