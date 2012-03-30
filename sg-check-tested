@@ -80,6 +80,7 @@ my $q = prepare_execute($qtxt, @conds_vars);
 while (my $row= $q->fetchrow_hashref()) {
     my $flight= $row->{flight};
     if (!defined $prrev) {
+	print DEBUG "==========YES\n";
         print $flight,"\n" or die $!;
         exit 0;
     } else {
@@ -102,4 +103,5 @@ END
     }
 }
 
+print DEBUG "==========NO\n";
 exit 0;
