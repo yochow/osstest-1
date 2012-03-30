@@ -13,13 +13,20 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
     $_= shift @ARGV;
     last if m/^--?$/;
     if (m/^--revision-([^=]+)\=([^=]+)$/) {
-        push @conds_vars, "revision_$1", $2;
-        push @conds, <<END;
+        push @conds_vars, "revision_$1", "built_revision_$1", $2,
+	                  "built_revision_$1";
+        push @conds, <<END, <<END;
              NOT EXISTS
              (SELECT *
                FROM runvars r
-               WHERE name = ?
+               WHERE (name = ? OR name = ?)
                AND   val != ?
+               AND   r.flight = flights.flight)
+END
+             EXISTS
+             (SELECT *
+               FROM runvars r
+               WHERE name = ?
                AND   r.flight = flights.flight)
 END
     } elsif (m/^--branch=(.*)$/) {
