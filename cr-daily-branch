@@ -162,6 +162,9 @@ case "$NEW_REVISION/$OLD_REVISION" in
 */*[^0-9a-f]* | *[^0-9a-f]*/*)
         echo >&2 "NO SGR COMPARISON badchar $NEW_REVISION/$OLD_REVISION"
         ;;
+[0-9a-f]*/)
+        sgr_args+=" --this-$tree=$NEW_REVISION"
+	;;
 [0-9a-f]*/[0-9a-f]*)
         sgr_args+=" --machine-readable-output=$mrof"
         sgr_args+=" --this-$tree=$NEW_REVISION"
