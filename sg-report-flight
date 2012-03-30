@@ -18,7 +18,7 @@ our $mro;
 our $htmldir;
 our $branch;
 our @allows;
-our @includefiles;
+our (@includebeginfiles,@includefiles);
 
 open DEBUG, ">/dev/null";
 open MRO, ">/dev/null";
@@ -37,6 +37,8 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
         $htmldir= $1;
     } elsif (m/^--blessings?=(.*)$/) {
         push @blessings, split ',', $1;
+    } elsif (m/^--include-begin=(.*)$/) {
+        push @includebeginfiles, $1;
     } elsif (m/^--include=(.*)$/) {
         push @includefiles, $1;
     } elsif (m/^--max-flight=(\d+)$/) {
@@ -421,6 +423,12 @@ sub printout {
     print <<END or die $!;
 $r->{Flight}: $r->{OutcomeSummary}
 
+END
+    foreach my $include (@includebeginfiles) {
+        STDOUT->flush();
+        system_checked('cat','--',$include);
+    }
+    print <<END or die $!;
 flight $r->{Flight} $branch $r->{FlightInfo}{blessing} [$r->{FlightInfo}{intended}]
 $c{ReportHtmlPubBaseUrl}/$r->{Flight}/
 END
