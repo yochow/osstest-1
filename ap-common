@@ -19,7 +19,8 @@
 #: ${TREE_LINUX:=git://github.com/jsgf/linux-xen.git}
 : ${TAG_LINUX:=xen/next-2.6.32}
 
-: ${BASE_TREE_LINUX:=$XENBITS:git/linux-pvops}
+: ${PUSH_TREE_LINUX:=$XENBITS:git/linux-pvops.git}
+: ${BASE_TREE_LINUX:=git://xenbits.xen.org/linux-pvops.git}
 : ${BASE_TAG_LINUX:=master}
 
 : ${TREE_LINUX2639:=${KERNEL_SCM}/konrad/xen.git}
@@ -54,7 +55,7 @@ info_linux_tree () {
 	: ${BASE_TREEVCS_LINUX_THIS:=$TREEVCS_LINUX_THIS}
 
 	: ${BASE_TREE_LINUX_THIS:=$BASE_TREE_LINUX}
-	: ${PUSH_TREE_LINUX_THIS:=$BASE_TREE_LINUX_THIS}
+	: ${PUSH_TREE_LINUX_THIS:=$PUSH_TREE_LINUX}
 	: ${BASE_TAG_LINUX_THIS:=tested/$1}
 	: ${PUSH_TAG_LINUX_THIS:=$BASE_TAG_LINUX_THIS}
 
