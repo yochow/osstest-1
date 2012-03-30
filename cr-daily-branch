@@ -183,6 +183,7 @@ END
         ;;
 esac
 
+$DAILY_BRANCH_PREEXEC_HOOK
 execute_flight $flight $OSSTEST_BLESSING
 start_email $flight $branch "$sgr_args"
 
