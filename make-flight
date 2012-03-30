@@ -126,18 +126,31 @@ job_create_test () {
                 esac
         fi
 
-        case "$job" in
-        *-qemuu-*)
-           if [ "x$toolstack" != xxl ]; then return; fi
+	case "$branch" in
+	qemu-upstream-*)
+		case " $* " in
+		*" device_model_version=qemu-xen "*)
+			;;
+		*)
+			: "suppressed $job"
+			return;;
+		esac
+		;;
+	*)
+	        case "$job" in
+		*-qemuu-*)
+	           if [ "x$toolstack" != xxl ]; then return; fi
 
-           case "$job" in
-           *-win*)
-                      case "$job_md5" in
-                      *[0-a]) return;;
-                      esac
-                      ;;
-           esac
-           ;;
+	           case "$job" in
+	           *-win*)
+	                      case "$job_md5" in
+	                      *[0-a]) return;;
+	                      esac
+	                      ;;
+	           esac
+	           ;;
+		esac
+		;;
         esac
 
 	./cs-job-create $flight $job $recipe toolstack=$toolstack \
