@@ -59,15 +59,18 @@ if [ "x$OLD_REVISION" = x ]; then
         export OLD_REVISION
 fi
 
-testedflight=`./sg-check-tested --debug --branch=$branch \
-  --blessings=$OSSTEST_BLESSING --revision-$tree="$OLD_REVISION"`
+check_tested () {
+	./sg-check-tested --debug --branch=$branch \
+	  --blessings=$OSSTEST_BLESSING "$@"
+}
+
+testedflight=`check_tested --revision-$tree="$OLD_REVISION"`
 
 if [ "x$testedflight" = x ]; then
         wantpush=false
         skipidentical=false
         force_baseline=true
-        OLD_REVISION=`./sg-check-tested --debug --branch=$branch \
-          --blessings=$OSSTEST_BLESSING --print-revision=$tree`
+        OLD_REVISION=`check_tested --print-revision=$tree`
         if [ "x$OLD_REVISION" = x ]; then
                 OLD_REVISION="$FORCE_REVISION"
         fi
