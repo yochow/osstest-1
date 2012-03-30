@@ -61,7 +61,8 @@ fi
 
 check_tested () {
 	./sg-check-tested --debug --branch=$branch \
-	  --blessings=$OSSTEST_BLESSING "$@"
+	  --blessings=${DAILY_BRANCH_TESTED_BLESSING:-$OSSTEST_BLESSING} \
+	  "$@"
 }
 
 testedflight=`check_tested --revision-$tree="$OLD_REVISION"`
