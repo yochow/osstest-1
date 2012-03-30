@@ -143,6 +143,19 @@ $DAILY_BRANCH_PREMAKE_HOOK
 flight=`./make-flight $branch $xenbranch $OSSTEST_BLESSING "$@"`
 $DAILY_BRANCH_POSTMAKE_HOOK
 
+heading=tmp/$flight.heading-info
+: >$heading
+sgr_args+=--include-begin=$heading
+
+if $force_baseline; then
+	cat >>$heading <<END
+"Old" tested version had not actually been tested; therefore in this
+flight we test it, rather than a new candidate.  The baseline, if
+any, is the most recent actually tested revision.
+
+END
+fi
+
 revlog=tmp/$flight.revision-log
 
 case "$NEW_REVISION/$OLD_REVISION" in
