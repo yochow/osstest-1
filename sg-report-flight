@@ -106,12 +106,15 @@ if (defined $maxflight) {
 sub findaflight ($$$$$) {
     my ($thisthat, $exceptflight, $job, $testid, $sub) = @_;
 
-    die $thisthat unless keys %{ $specver{$thisthat} };
-
     print DEBUG "FINDAFLIGHT $thisthat";
     print DEBUG " !$exceptflight" if defined $exceptflight;
     print DEBUG " $job.$testid" if defined $job;
     print DEBUG "\n";        
+
+    if (!keys %{ $specver{$thisthat} }) {
+        print DEBUG " unspecified\n";
+        return undef;
+    }
 
     my $checkq= $dbh_tests->prepare(<<END);
         SELECT status FROM steps WHERE flight=? AND job=? AND testid=?
