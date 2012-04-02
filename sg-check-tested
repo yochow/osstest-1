@@ -12,7 +12,21 @@ open DEBUG, ">/dev/null" or die $!;
 while (@ARGV && $ARGV[0] =~ m/^-/) {
     $_= shift @ARGV;
     last if m/^--?$/;
-    if (m/^--revision-([^=]+)\=([^=]+)$/) {
+    if (m/^--revision-osstest\=([^=]+)$/) {
+	push @conds_vars, "$1";
+        push @conds, <<END, <<END;
+             NOT EXISTS
+             (SELECT *
+               FROM flights_harness_touched t
+               WHERE harness != ?
+               AND   t.flight = flights.flight)
+END
+             EXISTS
+             (SELECT *
+               FROM flights_harness_touched t
+               WHERE t.flight = flights.flight)
+END
+    } elsif (m/^--revision-([^=]+)\=([^=]+)$/) {
         push @conds_vars, "revision_$1", "built_revision_$1", $2,
 	                  "built_revision_$1";
         push @conds, <<END, <<END;
