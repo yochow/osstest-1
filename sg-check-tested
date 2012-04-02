@@ -65,6 +65,8 @@ die unless @conds;
 
 csreadconfig();
 
+s/^\S/             $&/ foreach @conds;
+
 my $qtxt= <<END. (join <<END, @conds). <<END. (defined $prrev ? '' : <<END);
        SELECT *
         FROM  flights
