@@ -39,6 +39,10 @@ info_linux_tree () {
 	linux-linus)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/torvalds/linux-2.6.git}
 		;;
+	linux-3.0)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
+		: ${TAG_LINUX_THIS:=linux-3.0.y}
+		;;
 	linux-mingo-tip-master)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/tip/tip.git}
 		: ${GITFORCEFLAG_TREE_LINUX_THIS:=-f}
