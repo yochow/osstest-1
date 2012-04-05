@@ -110,10 +110,10 @@ while (my $row= $q->fetchrow_hashref()) {
 END
 	} else {
             $valsq= prepare_execute(<<END,
-            SELECT DISTINCT val
-              FROM runvars
-             WHERE flight=?
-             AND   (name=? OR name=?)
+		SELECT DISTINCT val
+		  FROM runvars
+		 WHERE flight=?
+		 AND   (name=? OR name=?)
 END
                                    $flight,
                                    "revision_$prrev",
