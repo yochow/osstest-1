@@ -112,6 +112,45 @@ sub update_hosts ($$) {
     });
 }
 
+sub cmd_showprops () {
+    my $prows = sub {
+	my ($q) = @_;
+	while (my (@row) = $q->fetchrow_array()) {
+	    printf " %-18s %-30s %s\n", $row[0],
+		    map {
+			!defined($_) ? '' :
+			(s/'\\/\\$&/g || m/\s/) ? "'$_'" : $_
+		    } @row[1..2]
+		or die $!;
+	}
+    };
+    if (!@ARGV) {
+	my $q = $dbh_tests->prepare(<<END);
+	    SELECT resname, name, val
+	      FROM resource_properties
+	     WHERE restype = 'host'
+	  ORDER BY name, val, resname
+END
+        $q->execute();
+	$prows->($q);
+    } else {
+	my $q = $dbh_tests->prepare(<<END);
+            SELECT r.resname, ?::varchar, val
+	      FROM resources r
+	 LEFT JOIN resource_properties p
+	        ON r.restype=p.restype
+	       AND r.resname=p.resname
+	       AND p.name=?
+	     WHERE r.restype='host'
+	  ORDER BY r.resname
+END
+	foreach my $name (@ARGV) {
+	    $q->execute($name, $name);
+	    $prows->($q);
+	}
+    }
+}
+
 sub cmd_setprops () {
     my $oldvalq = $dbh_tests->prepare(<<END);
 	SELECT val FROM resource_properties
