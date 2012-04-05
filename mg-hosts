@@ -6,6 +6,17 @@ use Osstest;
 
 csreadconfig();
 
+our $checkhostq = $dbh_tests->prepare(<<END);
+    SELECT * FROM resources WHERE restype='host' AND resname=?
+END
+
+sub checkhost ($) {
+    my ($host) = @_;
+    $checkhostq->execute($host);
+    my $row = $checkhostq->fetchrow_hashref();
+    die "$host ?" unless $row;
+}
+
 sub l ($) { return split /,/, $_[0]; }
 
 sub cmd_mkpxedir () {
