@@ -157,22 +157,22 @@ END
 }
 
 sub cmd_setflags () {
-    die unless @ARGV==2;
-    my ($flags,$dsts) = @ARGV; # each flag may start with - to remove
-    db_retry($dbh_tests, [qw(resources)], sub {
-        foreach my $flag (l($flags)) {
+    update_hosts([qw(resources)], sub {
+	my ($dst,$section) = @_;
+	die unless @$section;
+	foreach my $flagorig (@$section) {
+	    my $flag = $flagorig;
+	    # each flag may start with - or ! to remove
             my $remove= $flag =~ s/^[-!]//;
-            foreach my $dst (l($dsts)) {
-                $dbh_tests->do(<<END,{}, $dst,$flag);
+	    $dbh_tests->do(<<END,{}, $dst,$flag);
                     DELETE FROM hostflags
                           WHERE hostname=? AND hostflag=?
 END
-                $dbh_tests->do(<<END,{}, $dst,$flag) unless $remove;
+            $dbh_tests->do(<<END,{}, $dst,$flag) unless $remove;
                     INSERT INTO hostflags
                                 (hostname, hostflag)
                          VALUES (?,        ?       )
 END
-            }
         }
     });
 }
