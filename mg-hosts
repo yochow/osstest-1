@@ -103,6 +103,7 @@ sub update_hosts ($$) {
 	    } else {
 		$anydone = 1;
 		foreach my $host (@$hosts) {
+		    checkhost($host);
 		    $host_update->($host, $section);
 		}
 	    }
@@ -127,7 +128,6 @@ END
 
     my $update = sub {
 	my ($host,$name,$oldval,$val) = @_;
-	checkhost($host);
 	if (defined $oldval) {
 	    $oldvalq->execute($host,$name);
 	    my $row = $oldvalq->fetchrow_hashref();
