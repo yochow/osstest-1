@@ -85,13 +85,14 @@ sub arg_sections ($) {
     $endsection->($section);
 }
 
-sub update_hosts ($) {
+sub update_hosts ($$) {
     # splits args as above, expecting a list of hosts and then
     # passes subsequent sections to
     #   $host_update->($host, [ arguments indicating update ])
-    my ($host_update) = @_;
+    # incorporates a wrapping db_retry
+    my ($locktables, $host_update) = @_;
 
-    db_retry($dbh_tests, [qw(resources)], sub {
+    db_retry($dbh_tests, $locktables, sub {
 	my $hosts;
 	my $anydone;
 	arg_sections (sub {
@@ -141,7 +142,7 @@ END
 	}
     };
 
-    update_hosts(sub {
+    update_hosts([qw(resources)], sub {
 	my ($host,$section) = @_;
 	my ($name,$oldval,$val);
 	if (@$section==2) {
