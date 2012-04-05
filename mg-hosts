@@ -65,6 +65,51 @@ END
     });
 }
 
+sub arg_sections ($) {
+    # splits @ARGV into sublist by arguments '-' or '--'
+    # ('--' means all rest are plain args, no more sections)
+    # and calls $endsection->([ the arguments ]) for each section in turn
+    # does not eat @ARGV
+    my ($endsection) = @_;
+    my $section = [ ];
+    my $haduu= 0;
+    foreach my $a (@ARGV) {
+	if (!$haduu && ($a eq '-' or $a eq '--')) {
+	    $endsection->($section);
+	    $section = [ ];
+	    $haduu ||= ($a eq '--');
+	} else {
+	    push @$section, $a;
+	}
+    }
+    $endsection->($section);
+}
+
+sub update_hosts ($) {
+    # splits args as above, expecting a list of hosts and then
+    # passes subsequent sections to
+    #   $host_update->($host, [ arguments indicating update ])
+    my ($host_update) = @_;
+
+    db_retry($dbh_tests, [qw(resources)], sub {
+	my $hosts;
+	my $anydone;
+	arg_sections (sub {
+	    my ($section) = @_;
+	    if (!defined $hosts) {
+		die unless @$section;
+		$hosts = $section;
+	    } else {
+		$anydone = 1;
+		foreach my $host (@$hosts) {
+		    $host_update->($host, $section);
+		}
+	    }
+	});
+	die unless $anydone;
+    });
+}
+
 sub cmd_setprops () {
     my $oldvalq = $dbh_tests->prepare(<<END);
 	SELECT val FROM resource_properties
@@ -96,37 +141,17 @@ END
 	}
     };
 
-    db_retry($dbh_tests, [qw(resources)], sub {
-	my $hosts;
-	my $section = [ ];
-	my $endsection = sub {
-	    if (!defined $hosts) {
-		die unless @$section;
-		$hosts = $section;
-	    } else {
-		my ($name,$oldval,$val);
-		if (@$section==2) {
-		    ($name,$val) = @$section;
-		} elsif (@$section==3) {
-		    ($name,$oldval,$val) = @$section;
-		} else {
-		    die "@$section ?";
-		}
-		foreach my $host (@$hosts) {
-		    $update->($host,$name,$oldval,$val);
-		}
-	    }
-	    $section = [ ];
-	};
-	foreach my $a (@ARGV) {
-	    if ($a eq '-' or $a eq '--') {
-		$endsection->();
-	    } else {
-		push @$section, $a;
-	    }
+    update_hosts(sub {
+	my ($host,$section) = @_;
+	my ($name,$oldval,$val);
+	if (@$section==2) {
+	    ($name,$val) = @$section;
+	} elsif (@$section==3) {
+	    ($name,$oldval,$val) = @$section;
+	} else {
+	    die "@$section ?";
 	}
-	die unless $hosts;
-	$endsection->();
+	$update->($host,$name,$oldval,$val);
     });
 }
 
