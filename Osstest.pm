@@ -33,6 +33,7 @@ use File::Basename;
 #                   tasks_taskid_seq
 #                   resource_sharing 
 #                   hostflags
+#                   resource_properties
 #
 #   any other tables or databases
 #
