@@ -148,6 +148,7 @@ heading=tmp/$flight.heading-info
 sgr_args+=" --include-begin=$heading"
 
 if $force_baseline; then
+	subject_prefix="[$branch baseline test] "
 	cat >>$heading <<END
 "Old" tested version had not actually been tested; therefore in this
 flight we test it, rather than a new candidate.  The baseline, if
@@ -206,7 +207,7 @@ esac
 : $flight $branch $OSSTEST_BLESSING $sgr_args
 $DAILY_BRANCH_PREEXEC_HOOK
 execute_flight $flight $OSSTEST_BLESSING
-start_email $flight $branch "$sgr_args"
+start_email $flight $branch "$sgr_args" "$subject_prefix"
 
 push=false
 if grep '^tolerable$' $mrof >/dev/null 2>&1; then push=$wantpush; fi

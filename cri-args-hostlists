@@ -66,12 +66,13 @@ start_email () {
 	local flight=$1
 	local branch=$2
         local sgr_args=$3
+        local subject_prefix=$4
         # redirects stdout
 
 	exec >tmp/$flight.email
 	cat $OSSTEST_EMAIL_HEADER
 	echo "Message-ID: <osstest-$flight-mainreport@xen.org>"
-	printf 'Subject: [%s test] ' "$branch"
+	printf 'Subject: %s' "${subject_prefix:-[$branch test] }"
 
 	local flight_html_dir=$OSSTEST_HTMLPUB_DIR/
 	local job_html_dir=$OSSTEST_HTML_DIR/
