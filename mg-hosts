@@ -65,6 +65,71 @@ END
     });
 }
 
+sub cmd_setprops () {
+    my $oldvalq = $dbh_tests->prepare(<<END);
+	SELECT val FROM resource_properties
+	      WHERE restype='host' and resname=? AND name=?
+END
+    my $rmvalq = $dbh_tests->prepare(<<END);
+	DELETE FROM resource_properties
+	      WHERE restype='host' and resname=? AND name=?
+END
+    my $newvalq = $dbh_tests->prepare(<<END);
+	INSERT INTO resource_properties (restype,resname,name,val)
+	                         VALUES ('host', ?,?,?)
+END
+
+    my $update = sub {
+	my ($host,$name,$oldval,$val) = @_;
+	checkhost($host);
+	if (defined $oldval) {
+	    $oldvalq->execute($host,$name);
+	    my $row = $oldvalq->fetchrow_hashref();
+	    die if $row && !length $row->{'val'};
+	    my $gotoldval = $row ? $row->{'val'} : '';
+	    die "$host $name = '$gotoldval' != '$oldval'"
+		unless ($gotoldval eq $oldval || $gotoldval eq $val);
+	}
+	$rmvalq->execute($host,$name);
+	if (length $val) {
+	    $newvalq->execute($host,$name,$val);
+	}
+    };
+
+    db_retry($dbh_tests, [qw(resources)], sub {
+	my $hosts;
+	my $section = [ ];
+	my $endsection = sub {
+	    if (!defined $hosts) {
+		die unless @$section;
+		$hosts = $section;
+	    } else {
+		my ($name,$oldval,$val);
+		if (@$section==2) {
+		    ($name,$val) = @$section;
+		} elsif (@$section==3) {
+		    ($name,$oldval,$val) = @$section;
+		} else {
+		    die "@$section ?";
+		}
+		foreach my $host (@$hosts) {
+		    $update->($host,$name,$oldval,$val);
+		}
+	    }
+	    $section = [ ];
+	};
+	foreach my $a (@ARGV) {
+	    if ($a eq '-' or $a eq '--') {
+		$endsection->();
+	    } else {
+		push @$section, $a;
+	    }
+	}
+	die unless $hosts;
+	$endsection->();
+    });
+}
+
 sub cmd_setflags () {
     die unless @ARGV==2;
     my ($flags,$dsts) = @ARGV; # each flag may start with - to remove
