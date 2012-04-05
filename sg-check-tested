@@ -101,7 +101,15 @@ while (my $row= $q->fetchrow_hashref()) {
         print $flight,"\n" or die $!;
         exit 0;
     } else {
-        my $valsq= prepare_execute(<<END,
+	my $valsq;
+	if ($prrev eq 'osstest') {
+	    $valsq= prepare_execute(<<END, $flight);
+                SELECT DISTINCT harness AS val
+                  FROM flights_harness_touched
+                 WHERE flight=?
+END
+	} else {
+            $valsq= prepare_execute(<<END,
             SELECT DISTINCT val
               FROM runvars
              WHERE flight=?
@@ -110,6 +118,7 @@ END
                                    $flight,
                                    "revision_$prrev",
                                    "built_revision_$prrev");
+	}
         my $row1= $valsq->fetchrow_hashref();
         next unless defined $row1->{val} && length $row1->{val};
         print DEBUG "got $row1->{val}\n";
