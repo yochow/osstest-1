@@ -27,14 +27,15 @@ END
                WHERE t.flight = flights.flight)
 END
     } elsif (m/^--revision-([^=]+)\=([^=]+)$/) {
-        push @conds_vars, "revision_$1", "built_revision_$1", $2,
+        push @conds_vars, "revision_$1", "built_revision_$1",
+	                  $2, "\%:$2",
 	                  "built_revision_$1";
         push @conds, <<END, <<END;
              NOT EXISTS
              (SELECT *
                FROM runvars r
                WHERE (name = ? OR name = ?)
-               AND   val != ?
+               AND   NOT (val = ? OR val LIKE ?)
                AND   r.flight = flights.flight)
 END
              EXISTS
