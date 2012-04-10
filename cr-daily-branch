@@ -110,11 +110,10 @@ linux)
 	: ${GITFORCEFLAG:=$GITFORCEFLAG_TREE_LINUX_THIS}
 	;;
 osstest)
+	determine_version REVISION_OSSTEST osstest
         realtree=
-	git fetch -f $HOME/testing.git incoming:incoming
-	git fetch $HOME/testing.git pretest:incoming
-	git reset --hard incoming
-	NEW_REVISION=`git-rev-parse HEAD^0`
+	NEW_REVISION=$REVISION_OSSTEST
+	git reset --hard $REVISION_OSSTEST
 	;;
 qemuu)
 	realtree=qemu-upstream-${xenbranch#xen-}

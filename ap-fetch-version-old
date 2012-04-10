@@ -42,7 +42,7 @@ linux-xen-*)
 		$OLD_TREE_LINUX $branch $OLD_LOCALREV_LINUX
 	;;
 osstest)
-        cd $HOME/testing.git
+	git-fetch -f $HOME/testing.git incoming:ap-fetch
         git-rev-parse incoming^0
         ;;
 *)

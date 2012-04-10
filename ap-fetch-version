@@ -37,6 +37,10 @@ linux-xen-*)
 	repo_tree_rev_fetch_git linux \
 		$TREE_LINUX xen/next-${branch#linux-xen-} $LOCALREV_LINUX
 	;;
+osstest)
+	git-fetch $HOME/testing.git pretest:ap-fetch
+        git-rev-parse incoming^0
+        ;;
 *)
 	echo >&2 "branch $branch ?"
 	exit 1
