@@ -186,6 +186,7 @@ END
         ../enable-xen-config .config
         yes '' | make oldconfig
 END
+    # /;
 }
 
 sub config_intree_buildconfigs () {
