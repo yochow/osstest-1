@@ -50,7 +50,7 @@ for branch in $BRANCHES; do
 
 		mkdir -p tmp
 
-		savelog -n 500 $LOGFILE >/dev/null
+		savelog -c 28 -n 500 $LOGFILE >/dev/null
 		exec >>$LOGFILE
 
 		log () {
