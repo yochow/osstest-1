@@ -39,7 +39,7 @@ linux-xen-*)
 	;;
 osstest)
 	git-fetch $HOME/testing.git pretest:ap-fetch
-        git-rev-parse incoming^0
+        git-rev-parse ap-fetch^0
         ;;
 *)
 	echo >&2 "branch $branch ?"
