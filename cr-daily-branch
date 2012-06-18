@@ -171,7 +171,7 @@ case "$NEW_REVISION/$OLD_REVISION" in
         sgr_args+=" --that-$tree=$OLD_REVISION"
 
         if [ "$realtree" ] && [ "x$NEW_REVISION" != "x$OLD_REVISION" ] \
-	   && [ "x$GITFORCEFLAG" != x ]; then
+	   && [ "x$GITFORCEFLAG" = x ]; then
                 treeurl=`./ap-print-url $branch`
                 ./adhoc-revtuple-generator >$revlog -S \
                         "$treeurl#$OLD_REVISION-$NEW_REVISION" \
