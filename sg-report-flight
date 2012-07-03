@@ -643,13 +643,11 @@ END
                 $blocker='';
             }
         }
-        my $allow=0;
         if ($blocker) {
             my $item= "$failv->{Job}{job} $failv->{Step}{testid}";
             print DEBUG " allow $item?";
-            foreach my $allow (@allows) {
-                next unless $item =~ m/$allow/;
-                $allow=1;
+            foreach my $allowpat (@allows) {
+                next unless $item =~ m/$allowpat/;
                 $blocker='';
                 print DEBUG " allowed";
                 last;
