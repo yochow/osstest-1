@@ -169,6 +169,9 @@ xenstore /local/domain/0/memory/target
 xenstore /local/domain/0/memory/static-max
 xenstore /local/domain/0/memory/freemem-slack
 
+xenstore /local/domain/0/libxl
+xenstore /local/domain/0/libxl/disable_udev
+
 xenstore /vm
 
 xenstore /libxl
