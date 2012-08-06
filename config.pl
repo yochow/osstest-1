@@ -92,7 +92,7 @@ $c{BisectionRevisonGraphSize}= '600x300';
 
 # We use the IP address because Citrix can't manage reliable nameservice
 #$c{DebianMirrorHost}= 'debian.uk.xensource.com';
-$c{DebianMirrorHost}= '10.80.16.17';
+$c{DebianMirrorHost}= '10.80.16.196';
 $c{DebianMirrorSubpath}= 'debian';
 
 $c{TestingLib}= '.';
