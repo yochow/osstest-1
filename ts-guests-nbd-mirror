@@ -13,7 +13,7 @@ our ($srvhost,$clthost,@gns) = @ARGV;
 our $sho= selecthost($srvhost);
 our $cho= selecthost($clthost);
 
-our @ghos= map { selectguest($_) } @gns;
+our @ghos= map { selectguest($_,$sho) } @gns;
 
 our @vols;
 

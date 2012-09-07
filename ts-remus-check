@@ -7,8 +7,8 @@ use Osstest;
 readconfig();
 opendb_state();
 my $gn= pop(@ARGV);
-our $gho= selectguest($gn);
 our @ho= map { selecthost($_) } @ARGV;
+our $gho= selectguest($gn,$ho[0]);
 
 guest_check_remus_ok($gho, @ho);
 guest_check_up($gho);

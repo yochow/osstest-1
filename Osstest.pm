@@ -291,7 +291,7 @@ sub ts_get_host_guest { # pass this @ARGV
     $gn ||= 'guest';
 
     my $ho= selecthost($whhost);
-    my $gho= selectguest($gn);
+    my $gho= selectguest($gn,$ho);
     return ($ho,$gho);
 }
 
@@ -1770,12 +1770,13 @@ sub guest_find_tcpcheckport ($) {
     $gho->{PingBroken}= $r{"$gho->{Guest}_pingbroken"};
 }
 
-sub selectguest ($) {
-    my ($gn) = @_;
+sub selectguest ($$) {
+    my ($gn,$ho) = @_;
     my $gho= {
         Guest => $gn,
         Name => $r{"${gn}_hostname"},
         CfgPath => $r{"${gn}_cfgpath"},
+	Host => $ho,
     };
     foreach my $opt (guest_var_commalist($gho,'options')) {
         $gho->{Options}{$opt}++;
@@ -2059,7 +2060,7 @@ sub prepareguest ($$$$$$) {
     store_runvar("${gn}_tcpcheckport", $tcpcheckport);
     store_runvar("${gn}_boot_timeout", $boot_timeout);
 
-    my $gho= selectguest($gn);
+    my $gho= selectguest($gn, $ho);
     store_runvar("${gn}_domname", $gho->{Name});
 
     store_runvar("${gn}_vg", '');

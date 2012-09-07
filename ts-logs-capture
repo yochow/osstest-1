@@ -294,7 +294,7 @@ END
 sub fetch_logs_guest ($) {
     my ($gn) = @_;
     logm("saving logs for $gn");
-    my $gho= selectguest($gn);
+    my $gho= selectguest($gn,$ho);
     if (!eval {
         guest_find_domid($ho,$gho);
         1;
