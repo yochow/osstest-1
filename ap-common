@@ -4,7 +4,7 @@
 
 : ${XENBITS:=xen@xenbits.xensource.com}
 
-: ${TREE_XEN:=http://xenbits.xen.org/staging/$xenbranch.hg}
+: ${TREE_XEN:=http://xenbits.xen.org/hg/staging/$xenbranch.hg}
 
 #: ${TREE_QEMU:=git://mariner.uk.xensource.com/qemu-$xenbranch.git}
 : ${TREE_QEMU:=git://xenbits.xen.org/staging/qemu-$xenbranch.git}
