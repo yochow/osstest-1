@@ -13,6 +13,7 @@ use IPC::Open2;
 use IO::Handle;
 use JSON;
 use File::Basename;
+use IO::Socket::INET;
 #use Data::Dumper;
 
 # DATABASE TABLE LOCK HIERARCHY
@@ -1702,6 +1703,7 @@ END
     $ho->{Ether}= get_host_property($ho,'ether');
     $ho->{Power}= get_host_property($ho,'power-method');
     $ho->{DiskDevice}= get_host_property($ho,'disk-device');
+    $ho->{DhcpLeases}= get_host_property($ho,'dhcp-leases',$c{Dhcp3Leases});
 
     if (!$ho->{Ether} || !$ho->{Power}) {
         my $dbh_config= opendb('configdb');
@@ -1814,9 +1816,15 @@ sub guest_check_ip ($) {
 
     guest_find_ether($gho);
 
-    my $leasesfn= $c{Dhcp3Leases};
-    my $leases= new IO::File $leasesfn, 'r';
-    if (!defined $leases) { return "open $leasesfn: $!"; }
+    my $leases;
+    my $leasesfn = $gho->{DhcpLeases} || $gho->{Host}{DhcpLeases};
+
+    if ($leasesfn =~ m,/,) {
+	$leases= new IO::File $leasesfn, 'r';
+	if (!defined $leases) { return "open $leasesfn: $!"; }
+    } else {
+	$leases= new IO::Socket::INET(PeerAddr => $leasesfn);
+    }
 
     my $lstash= "dhcpleases-$gho->{Guest}";
     my $inlease;
