@@ -161,6 +161,18 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
 
   if [ "x$xenarch" = xdisable ]; then continue; fi
 
+  case "$xenarch" in
+  i386)
+	# 32-bit Xen is dropped from 4.3 onwards
+	case "$xenbranch" in
+	xen-3.*-testing) ;;
+	xen-4.0-testing) ;;
+	xen-4.1-testing) ;;
+	xen-4.2-testing) ;;
+	*) continue ;;
+	esac
+  esac
+
   for kern in ''; do
 
     case $kern in
