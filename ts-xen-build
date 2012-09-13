@@ -143,10 +143,12 @@ sub divide () {
     target_cmd_build($ho, 100, $builddir, <<END);
         cd xen-unstable/dist
         mkdir kerninstall xeninstall
+	for f in *install; do
+	    mkdir -p \$f/lib
+	done
         if test -d install/boot; then
             mv install/boot kerninstall/.
             if test -d install/lib/modules; then
-                mkdir kerninstall/lib
                 mv install/lib/modules kerninstall/lib/.
             fi
             if test -f kerninstall/boot/xen.gz; then
