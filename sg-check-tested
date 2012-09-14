@@ -35,6 +35,7 @@ END
              (SELECT *
                FROM runvars r
                WHERE (name = ? OR name = ?)
+               AND   val != ''
                AND   NOT (val = ? OR val LIKE ?)
                AND   r.flight = flights.flight)
 END
@@ -42,7 +43,8 @@ END
              (SELECT *
                FROM runvars r
                WHERE name = ?
-               AND   r.flight = flights.flight)
+               AND   r.flight = flights.flight
+               AND   val != '')
 END
     } elsif (m/^--branch=(.*)$/) {
         push @conds_vars, $1;
