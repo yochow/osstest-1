@@ -5,10 +5,9 @@ use DBI;
 use POSIX;
 
 use Osstest;
-use OsstestDebian;
+use Osstest::Debian;
 
-readconfig();
-opendb_state();
+testscript_start();
 
 my $debconf_priority;
 

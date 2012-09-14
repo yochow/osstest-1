@@ -1,0 +1,34 @@
+TBD
+	make-flight?
+	document db schema?
+	pxe download thing
+
+while we are there
+	sg-run-tests -> sg-run-one-test
+	abolish results/logs distinction ?
+
+HOST
+	Power cycler
+	Serial console
+	DHCP
+	DNS FQDN, network settings, mirror, etc.
+	PXE
+	http server (url and our path)
+	images
+	auth keys
+
+TEST ENVIRONMENT USED BY TS-*
+	log location
+	job runvars read/write
+
+TEST ENVIRONMENT USED BY SG-RUN-TESTS
+	job name -> recipe
+	job and step status
+
+make-flight ??
+
+anything above sg-run-tests is not changed
+
+
+~/.osstest/ -> ~/.xen-osstest
+config file specifies bindings
