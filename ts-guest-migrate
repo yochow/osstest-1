@@ -10,7 +10,7 @@ readconfig();
 opendb_state();
 our $sho = selecthost($ARGV[0]);
 our $dho = selecthost($ARGV[1]);
-our $gho = selectguest($ARGV[2]);
+our $gho = selectguest($ARGV[2],$sho);
 
 sub migrate () {
     guest_checkrunning($sho,$gho) or die $gho->{Name};

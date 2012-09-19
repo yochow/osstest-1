@@ -170,7 +170,7 @@ if (!$stage) {
     prep();
     start();
 } else {
-    $gho= selectguest($gn);
+    $gho= selectguest($gn,$gho);
 }
 if ($stage<2) {
     guest_await_reboot($ho,$gho,2000);
