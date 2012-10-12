@@ -1,0 +1,145 @@
+# -*- Tcl -*- 
+# usage: ./sg-run-job <flight> <job>
+
+source osstestlib.tcl
+
+readconfig
+
+proc run-job {} {
+    global jobinfo builds flight ok need_hosts
+
+    if {![prepare-job $jobinfo(job)]} return
+
+    set ok 1
+    setstatus preparing
+
+    set need_hosts [need-hosts/$jobinfo(recipe)]
+
+               catching-otherwise blocked   check-not-blocked
+    if {!$ok} return
+
+    eval run-ts broken  =                 ts-hosts-allocate + $need_hosts
+
+    setstatus running
+
+    per-host-ts broken  host-install/@(*) ts-host-install-twice
+    per-host-ts .       xen-install/@     ts-xen-install
+    per-host-ts .       xen-boot/@        ts-host-reboot
+    per-host-ts .       =(*)             {ts-leak-check basis}
+
+    if {$ok} { catching-otherwise fail      run-job/$jobinfo(recipe)      }
+    per-host-ts .       =                {ts-leak-check check}
+    per-host-ts !broken capture-logs/@(*) ts-logs-capture
+    if {$ok} { setstatus pass                                             }
+}
+
+proc per-host-ts {iffail ident script args} {
+    global ok need_hosts flight jobinfo
+    
+    if {![regsub {^!} $iffail {} iffail]} {
+	if {!$ok} return
+    }
+    if {![string compare . $iffail]} { set iffail fail }
+
+    set awaitl {}
+    foreach host $need_hosts {
+        set hostargs {}
+        if {![string compare $host host]} {
+            lappend hostargs + $host
+        } else {
+            lappend hostargs $host +
+        }
+        lappend awaitl [eval spawn-ts $iffail $ident $script $hostargs $args]
+    }
+
+    set failed 0
+    foreach host $need_hosts await $awaitl {
+        if {![reap-ts $await]} {
+            logputs stderr "$flight.$jobinfo(job) @$host $args failed"
+            set failed 1
+            set ok 0
+        }
+    }
+
+    if {$failed} {
+        setstatus $iffail
+    }
+}
+
+proc catching-otherwise {failst script} {
+    global anyfail flight jobinfo ok
+
+    if {[catch {
+        uplevel 1 $script
+    } emsg]} {
+        logputs stderr "$flight.$jobinfo(job) $script failed: $emsg"
+        set ok 0
+        set anyfailed 1
+	setstatus $failst
+    }
+}
+
+proc check-not-blocked {} {
+    run-ts blocked * ts-xen-build-check
+}
+
+proc need-hosts/test-debian-nomigr {} { return host }
+proc run-job/test-debian-nomigr {} {
+    install-guest-debian
+    test-guest-nomigr debian
+}
+
+proc install-guest-debian {} {
+    run-ts . = ts-debian-install
+    run-ts . = ts-debian-fixup + debian
+    run-ts . = ts-guest-start + debian
+}
+
+proc need-hosts/test-debian {} { return host }
+proc run-job/test-debian {} {
+    install-guest-debian
+    test-guest debian
+}
+
+proc need-hosts/test-win {} { return host }
+proc run-job/test-win {} {
+    run-ts . = ts-windows-install
+    test-guest win
+}
+
+proc need-hosts/test-rhelhvm {} { return host }
+proc run-job/test-rhelhvm {} {
+    run-ts . = ts-redhat-install
+    test-guest-nomigr redhat
+}
+
+proc need-hosts/test-pair {} { return {src_host dst_host} }
+proc run-job/test-pair {} {
+    run-ts . =              ts-debian-install      dst_host
+    run-ts . =              ts-debian-fixup        dst_host          + debian
+    run-ts . =              ts-guests-nbd-mirror + dst_host src_host + debian
+    per-host-ts . =(*)     {ts-leak-check basis}
+    run-ts . =              ts-guest-start       + src_host          + debian
+    run-ts . =              ts-guest-migrate       src_host dst_host + debian
+    run-ts . =              ts-guest-migrate       dst_host src_host + debian
+    run-ts . =              ts-guest-stop          src_host          + debian
+#    run-ts . =              ts-remus-start       + src_host dst_host + debian
+#    run-ts . remus-run      ts-remus-check         src_host dst_host + debian
+#    run-ts . =              ts-host-fail         + src_host
+#    run-ts . remus-failover ts-remus-check         src_host dst_host + debian
+}
+
+proc test-guest {g} {
+    foreach iteration {{} .2} {
+        run-ts . =$iteration ts-guest-saverestore + host $g
+        run-ts . =$iteration ts-guest-localmigrate + host $g
+    }
+    run-ts . = ts-guest-localmigrate x10 + host $g
+    test-guest-nomigr $g
+}
+
+proc test-guest-nomigr {g} {
+    run-ts . =   ts-guest-stop    + host $g
+    run-ts . =.2 ts-guest-start   + host $g
+    run-ts . =   ts-guest-destroy + host $g
+}
