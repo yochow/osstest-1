@@ -54,40 +54,12 @@ proc main {} {
     }
 }
 
-proc prepare-host {} {
-    global prepared jobinfo
-    if {[info exists prepared]} return
-
-    run-ts broken = ts-hosts-allocate + host
-    run-ts broken host-install(*) ts-host-install-twice
-    run-ts . host-build-prep ts-xen-build-prep
-
-    set prepared 1
-}
-
 proc perhaps-start-job {} {
     # db-{open,close} is done by main
     global jobinfo c builds flight doingarch
 
-    pg_execute -array archinfo dbh "
-        SELECT * FROM runvars
-            WHERE flight=$flight AND job='$jobinfo(job)' AND name='arch'
-    "
-    if {[info exists doingarch]} {
-        if {[string compare $doingarch $archinfo(val)]} {
-	    logputs stdout "skipping $jobinfo(job) (arch $doingarch)"
-	    return
-	}
-    }
-
-    if {![prepare-job $jobinfo(job)]} return
-
-    if {![info exists doingarch]} {
-        logputs stdout "selected arch $archinfo(val)"
-        set doingarch $archinfo(val)
-    }
-
     setstatus preparing
+
     if {[catch {
         prepare-host
     } emsg]} {
@@ -101,13 +73,6 @@ proc perhaps-start-job {} {
 
     setstatus running
     lappend builds [list $jobinfo(job) [spawn-job/$jobinfo(recipe)]]
-}
-
-proc spawn-job/build {} {
-    return [spawn-ts . = ts-xen-build]
-}
-proc spawn-job/build-kern {} {
-    return [spawn-ts . = ts-kernel-build]
 }
 
 main

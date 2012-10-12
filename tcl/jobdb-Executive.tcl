@@ -50,55 +50,20 @@ proc set-flight {} {
     set env(OSSTEST_FLIGHT) $flight
 }
 
-proc prepare-job {job} {
-    # must be outside any transaction, or with flights locked
-    global flight argv c
-    set desc "$flight.$job"
-
-    db-open
-
-    foreach constraint $argv {
-        if {[regexp {^--jobs=(.*)$} $constraint dummy jobs]} {
-            if {[lsearch -exact [split $jobs ,] $job] < 0} {
-                logputs stdout "suppress $desc (jobs)"
-                db-close
-                return 0
-            }
-        } elseif {[regexp {^--hostlist=(.*)$} $constraint dummy wanthosts]} {
-            set actualhosts {}
-            pg_execute -array hostinfo dbh "
-                SELECT val FROM runvars
-                    WHERE  flight=$flight
-                    AND    job='$job'
-                    AND   (name='host' OR name LIKE E'%\\_host')
-                  ORDER BY val
-            " {
-                lappend actualhosts $hostinfo(val)
-            }
-            if {[string compare $wanthosts [join $actualhosts ,]]} {
-                logputs stdout "suppress $desc (hosts $actualhosts)"
-                db-close
-                return 0
-            }
-        } else {
-            error "unknown constraint $constraint"
-        }
+proc jobdb-prepare {job} {
+        pg_execute -array jobinfo dbh "
+        SELECT job, recipe FROM jobs
+			WHERE	flight=$flight
+			AND	job like 'test%'
+			AND   ( status = 'queued'
+			  OR	status = 'preparing'
+			  OR	status = 'retriable' )
+                        [specific-job-constraint]
+		ORDER BY job
+    " {
+        lappend to_run [list $jobinfo(job) $jobinfo(recipe)]
     }
 
-    logputs stdout "prepping $desc"
-    db-close
-    return 1
-}
-
-proc specific-job-constraint {} {
-    global argv
-    foreach constraint $argv {
-        if {[regexp {^--jobs=([^,]+)$} $constraint dummy job]} {
-            return "AND job = [pg_quote $job]"
-        }
-    }
-    return ""
-}
 
 proc run-ts {args} {
     set reap [eval spawn-ts $args]

@@ -8,15 +8,16 @@ readconfig
 proc run-job {} {
     global jobinfo builds flight ok need_hosts
 
-    if {![prepare-job $jobinfo(job)]} return
-
+    jobdb-prepare $jobinfo(job)
     set ok 1
     setstatus preparing
 
     set need_hosts [need-hosts/$jobinfo(recipe)]
 
+    if {[llength $need_hosts]} {
                catching-otherwise blocked   check-not-blocked
-    if {!$ok} return
+	if {!$ok} return
+    }
 
     eval run-ts broken  =                 ts-hosts-allocate + $need_hosts
 
@@ -25,6 +26,7 @@ proc run-job {} {
     per-host-ts broken  host-install/@(*) ts-host-install-twice
     per-host-ts .       xen-install/@     ts-xen-install
     per-host-ts .       xen-boot/@        ts-host-reboot
+
     per-host-ts .       =(*)             {ts-leak-check basis}
 
     if {$ok} { catching-otherwise fail      run-job/$jobinfo(recipe)      }
@@ -142,4 +144,22 @@ proc test-guest-nomigr {g} {
     run-ts . =   ts-guest-stop    + host $g
     run-ts . =.2 ts-guest-start   + host $g
     run-ts . =   ts-guest-destroy + host $g
+}
+
+proc prepare-host-for-build {} {
+    global prepared jobinfo
+    if {[info exists prepared]} return
+
+    run-ts broken = ts-hosts-allocate + host
+    run-ts broken host-install(*) ts-host-install-twice
+    run-ts . host-build-prep ts-xen-build-prep
+
+    set prepared 1
+}
+
+proc spawn-job/build {} {
+    return [spawn-ts . = ts-xen-build]
+}
+proc spawn-job/build-kern {} {
+    return [spawn-ts . = ts-kernel-build]
 }

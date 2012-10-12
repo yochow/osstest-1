@@ -18,18 +18,6 @@ proc main {} {
     db-open
 
     set to_run {}
-    pg_execute -array jobinfo dbh "
-        SELECT job, recipe FROM jobs
-			WHERE	flight=$flight
-			AND	job like 'test%'
-			AND   ( status = 'queued'
-			  OR	status = 'preparing'
-			  OR	status = 'retriable' )
-                        [specific-job-constraint]
-		ORDER BY job
-    " {
-        lappend to_run [list $jobinfo(job) $jobinfo(recipe)]
-    }
 
     db-close
 
