@@ -5,8 +5,9 @@ umask 002
 getconfig () {
         perl -e '
                 use Osstest;
-                readconfigonly();
-                print $c{'$1'} or die $!;
+                readglobalconfig();
+die "'$1' caps err" if "'$1'" =~ m/A-Z/;
+                print $c{"'$1'"} or die $!;
         '
 }
 

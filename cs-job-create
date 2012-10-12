@@ -20,7 +20,7 @@ exit 0 if grep { $_ eq 'disable' } @runvars;
 exit 0 if defined($jobsonly) && !grep { $_ eq $job } split /[:,]/, $jobsonly;
 
 $dbh_tests->
-    selectrow_arrayref("SELECT * FROM flights where flight= $flight")
+    selectrow_arrayref("SELECT * FROM flights where flight=?", {}, $flight)
     or die "$flight ?";
 
 our %runvars;
@@ -41,13 +41,13 @@ foreach my $name (keys %suppress) {
 }
 
 db_retry($flight,'constructing', $dbh_tests,[qw(flights)], sub {
-    $dbh_tests->do(<<END);
-        INSERT INTO jobs VALUES ($flight,'$job','$recipe','queued')
+    $dbh_tests->do(<<END, {}, $flight);
+        INSERT INTO jobs VALUES (?,'$job','$recipe','queued')
 END
     my $q= $dbh_tests->
-        prepare("INSERT INTO runvars VALUES ($flight,'$job',?,?,'f')");
+        prepare("INSERT INTO runvars VALUES (?,'$job',?,?,'f')");
     foreach my $name (keys %runvars) {
-        $q->execute($name, $runvars{$name});
+        $q->execute($flight, $name, $runvars{$name});
         $q->finish();
     }
 });

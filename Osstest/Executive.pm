@@ -1,8 +1,10 @@
 
-package Osstest;
+package Osstest::Executive;
 
 use strict;
 use warnings;
+
+use Osstest;
 
 use POSIX;
 use IO::File;
@@ -15,6 +17,18 @@ use JSON;
 use File::Basename;
 use IO::Socket::INET;
 #use Data::Dumper;
+
+BEGIN {
+    use Exporter ();
+    our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
+    $VERSION     = 1.00;
+    @ISA         = qw(Exporter);
+    @EXPORT      = qw();
+    %EXPORT_TAGS = (
+	);
+
+    @EXPORT_OK   = qw();
+}
 
 # DATABASE TABLE LOCK HIERARCHY
 #
@@ -55,7 +69,7 @@ BEGIN {
     @ISA         = qw(Exporter);
     @EXPORT      = qw(
                       $tftptail $logm_handle
-                      %c %r $dbh_tests $flight $job $stash
+                      %c %r $flight $job $stash
                       nonempty
                       dbfl_check get_harness_rev grabrepolock_reexec
                       get_runvar get_runvar_maybe get_runvar_default
@@ -67,13 +81,12 @@ BEGIN {
                       alloc_resources alloc_resources_rollback_begin_work
                       resource_check_allocated resource_shared_mark_ready
                       built_stash flight_otherjob duration_estimator
-                      csreadconfig readconfigonly ts_get_host_guest
-                      readconfig opendb_state selecthost get_hostflags
+                      csreadconfig ts_get_host_guest
+                      opendb_state selecthost get_hostflags
                       get_host_property get_timeout
                       need_runvars
                       host_involves_pcipassthrough host_get_pcipassthrough_devs
                       get_filecontents ensuredir postfork
-                      db_retry db_begin_work
                       poll_loop logm link_file_contents create_webfile
                       contents_make_cpio file_simple_write_contents
                       power_state power_cycle power_cycle_time
@@ -116,7 +129,6 @@ BEGIN {
 our $tftptail= '/spider/pxelinux.cfg';
 
 our (%c,%r,$flight,$job,$stash);
-our $dbh_tests;
 
 our %timeout= qw(RebootDown   100
                  RebootUp     400
@@ -132,36 +144,7 @@ sub nonempty ($) {
 #---------- configuration reader etc. ----------
 
 sub opendb_tests () {
-    $dbh_tests ||= opendb('osstestdb');
-}
-
-sub readconfigonly () {
-    require 'config.pl';
-    foreach my $v (keys %c) {
-	my $e= $ENV{"OSSTEST_C_$v"};
-	next unless defined $e;
-	$c{$v}= $e;
-    }
-
-    my $whoami= `whoami`;  die if $?;  chomp $whoami;
-
-    foreach my $db (qw(osstestdb statedb configdb assetdb)) {
-        my $pat= $c{PgDbNamePat};
-        my %vars= ('dbname' => $db,
-                   'whoami' => $whoami);
-        $pat =~ s#\<(\w+)\>#
-            my $val=$vars{$1};  defined $val or die "$pat $1 ?";
-            $val;
-        #ge;
-        $pat =~ s#\<(([.~]?)(/[^<>]+))\>#
-            my $path= $2 eq '~' ? "$ENV{HOME}/$3" : $1;
-            my $data= get_filecontents_core_quiet($path);
-            chomp $data;
-            $data;
-        #ge;
-        $pat =~ s#\<([][])\># $1 eq '[' ? '<' : '>' #ge;
-        $c{"PgDbName_$db"}= $pat;
-    }
+    $dbh_tests ||= $mjobdb->open();
 }
 
 sub csreadconfig () {
@@ -196,41 +179,9 @@ sub get_harness_rev () {
     return $rev;
 }
 
-sub dbfl_check ($$) {
-    my ($fl,$flok) = @_;
-    # must be inside db_retry qw(flights)
-
-    if (!ref $flok) {
-        $flok= [ split /,/, $flok ];
-    }
-    die unless ref($flok) eq 'ARRAY';
-
-    my ($bless) = $dbh_tests->selectrow_array(<<END, {}, $fl);
-        SELECT blessing FROM flights WHERE flight=?
-END
-
-    die "modifying flight $fl but flight not found\n"
-        unless defined $bless;
-    return if $bless =~ m/\bplay\b/;
-    die "modifying flight $fl blessing $bless expected @$flok\n"
-        unless grep { $_ eq $bless } @$flok;
-
-    my $rev = get_harness_rev();
-
-    my $already= $dbh_tests->selectrow_hashref(<<END, {}, $fl,$rev);
-        SELECT * FROM flights_harness_touched WHERE flight=? AND harness=?
-END
-
-    if (!$already) {
-        $dbh_tests->do(<<END, {}, $fl,$rev);
-            INSERT INTO flights_harness_touched VALUES (?,?)
-END
-    }
-}
-
 #---------- test script startup ----------
 
-sub readconfig () {
+sub tsreadconfig () {
     # must be run outside transaction
     csreadconfig();
 
@@ -298,63 +249,38 @@ sub ts_get_host_guest { # pass this @ARGV
 
 #---------- database access ----------#
 
-our $db_retry_stop;
-
-sub db_retry_abort () { $db_retry_stop= 'abort'; undef; }
-sub db_retry_retry () { $db_retry_stop= 'retry'; undef; }
-
-sub db_begin_work ($;$) {
-    my ($dbh,$tables) = @_;
-    $dbh->begin_work();
-    return if $ENV{OSSTEST_DEBUG_NOSQLLOCK};
-    foreach my $tab (@$tables) {
-        $dbh->do("LOCK TABLE $tab IN ACCESS EXCLUSIVE MODE");
-    }
-}
-
-sub db_retry ($$$;$$) {
-    # $code should return whatever it likes, and that will
-    #     be returned by db_retry
-    # $code may be [ \&around_loop_init, \&actual_code ]
-    my ($fl,$flok, $dbh,$tables,$code) = (@_==5 ? @_ :
-                                          @_==3 ? (undef,undef,@_) :
-                                          die);
-    my ($pre,$body) =
-        (ref $code eq 'ARRAY') ? @$code : (sub { }, $code);
-
-    my $retries= 20;
-    my $r;
-    local $db_retry_stop;
-    for (;;) {
-        $pre->();
-
-        db_begin_work($dbh, $tables);
-        if (defined $fl) {
-            die unless $dbh eq $dbh_tests;
-            dbfl_check($fl,$flok);
-        }
-        $db_retry_stop= 0;
-        $r= &$body;
-        if ($db_retry_stop) {
-            $dbh->rollback();
-            last if $db_retry_stop eq 'abort';
-        } else {
-            last if eval { $dbh->commit(); 1; };
-        }
-        die "$dbh $body $@ ?" unless $retries-- > 0;
-        sleep(1);
-    }
-    return $r;
-}
-
 sub opendb_state () {
     return opendb('statedb');
 }
 
+our $whoami;
+
 sub opendb ($) {
     my ($dbname) = @_;
 
-    my $src= "dbi:Pg:".$c{"PgDbName_$dbname"};
+    my $src= $c{"executive-dbi-$dbname"};
+
+    if (!defined $src) {
+	if (!defined $whoami) {
+	    $whoami = `whoami`;  die if $?;  chomp $whoami;
+	}
+        my $pat= $c{'executive-dbi-pat'};
+        my %vars= ('dbname' => $dbname,
+                   'whoami' => $whoami);
+        $pat =~ s#\<(\w+)\>#
+            my $val=$vars{$1};  defined $val or die "$pat $1 ?";
+            $val;
+        #ge;
+        $pat =~ s#\<(([.~]?)(/[^<>]+))\>#
+            my $path= $2 eq '~' ? "$ENV{HOME}/$3" : $1;
+            my $data= get_filecontents_core_quiet($path);
+            chomp $data;
+            $data;
+        #ge;
+        $pat =~ s#\<([][])\># $1 eq '[' ? '<' : '>' #ge;
+
+        $src = $c{"executive-dbi-$dbname"} = $pat;
+    }
 
     my $dbh= DBI->connect($src, '','', {
         AutoCommit => 1,

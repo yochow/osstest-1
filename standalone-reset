@@ -1,0 +1,56 @@
+#!/bin/bash
+usage(){
+	cat <<END
+usage: ./standalone-reset [<options>] [<branch> [<xenbranch> [<buildflight>]]]
+ branch and xenbranch default, separately, to xen-unstable
+options:
+ -f<flight>     generate flight "flight", default is "standalone"
+END
+}
+
+set -e
+
+branch=xen-unstable
+xenbranch=xen-unstable
+
+case $# in
+0)	;;
+1)	branch="$1"; shift;;
+2)	branch="$1"; shift; xenbranch="$1"; shift;;
+3)	branch="$1"; shift; xenbranch="$1"; shift; buildflight="$1"; shift;;
+*)	usage >&2; exit 1;;
+esac
+
+if test -f standalone.db; then
+	sqlite3 standalone.db <<END
+		DELETE FROM runvars WHERE flight='$flight';
+		DELETE FROM jobs    WHERE flight='$flight';
+		DELETE FROM flights WHERE flight='$flight';
+END
+else
+	sqlite3 standalone.db <<END
+		CREATE TABLE flights (
+			flight TEXT PRIMARY KEY,
+			intended TEXT,
+			branch TEXT
+			);
+		CREATE TABLE jobs (
+			flight TEXT NOT NULL,
+			job TEXT NOT NULL,
+			recipe TEXT NOT NULL,
+			status TEXT NOT NULL,
+			PRIMARY KEY(flight,job)
+			);
+		CREATE TABLE runvars (
+			flight TEXT NOT NULL,
+			job TEXT NOT NULL,
+			name TEXT NOT NULL,
+			val TEXT NOT NULL,
+			synth BOOLEAN NOT NULL,
+			PRIMARY KEY(flight,job,name)
+			);
+END
+fi
+
+OSSTEST_FLIGHT=$flight \
+./make-flight "$branch" "$xenbranch" play $buildflight >/dev/null
