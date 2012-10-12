@@ -1,0 +1,38 @@
+To run osstest in standalone mode:
+
+ - Write a config file
+    ~/.osstest/config
+
+ - First, run ./standalone-reset
+
+========================================
+
+Config settings relevant to standalone mode
+
+job-db-standalone-ds                 Perl DBI data source
+job-db-standalone-filename           Pathname for Sqlite3
+   Database file to use to record the "jobs" and their run variables.
+   Default: ./standalone.db (sqlite3)
+
+dns-domain
+   DNS domain to suffix to many things.  No default.
+
+========================================
+
+Other config settings
+
+job-db
+host-db
+   Class name tails for the job and host databases.
+
+executive-dbi-pat
+   Pattern for generating Perl DBI names for the executive's
+   various databases.  Processed as follows:
+     1. <\w+> is replaced with variables:
+		 <dbname>    database name
+     2. <~/path> </path> <./path> are replaced with contents of specified file 
+     3. <[> and <]> are replaced with < and >
+
+executive-dbi-DBNAME
+   Perl DBI name for the database DBNAME.  Default is to use
+   executive-dbi-pat
