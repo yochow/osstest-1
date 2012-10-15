@@ -53,7 +53,7 @@ proc run-job {job} {
 }
 
 proc catching-otherwise {failst script} {
-    global anyfail flight jobinfo ok
+    global anyfailed flight jobinfo ok
 
     if {[catch {
         uplevel 1 $script
@@ -71,7 +71,7 @@ proc check-not-blocked {} {
 
 proc setstatus {st} {
     global flight jobinfo
-    job-set-status $flight $jobinfo(job) $st
+    jobdb::job-set-status $flight $jobinfo(job) $st
 }
 
 #---------- test script handling ----------
