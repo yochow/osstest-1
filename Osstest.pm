@@ -17,7 +17,7 @@ BEGIN {
                       csreadconfig
                       getmethod
                       $dbh_tests db_retry db_begin_work                      
-                      testscript_start
+get_filecontents ensuredir get_filecontents_core_quiet system_checked
                       );
     %EXPORT_TAGS = ( );
 
@@ -156,6 +156,44 @@ sub db_retry ($$$;$$) {
 sub csreadconfig () {
     readglobalconfig();
     $dbh_tests = $mjobdb->open();
+}
+
+#---------- generally useful subroutines ----------
+
+sub get_filecontents_core_quiet ($) { # ENOENT => undef
+    my ($path) = @_;
+    if (!open GFC, '<', $path) {
+        $!==&ENOENT or die "$path $!";
+        return undef;
+    }
+    local ($/);
+    undef $/;
+    my $data= <GFC>;
+    defined $data or die "$path $!";
+    close GFC or die "$path $!";
+    return $data;
+}
+
+sub get_filecontents ($;$) {
+    my ($path, $ifnoent) = @_;  # $ifnoent=undef => is error
+    my $data= get_filecontents_core_quiet($path);
+    if (!defined $data) {
+        die "$path does not exist" unless defined $ifnoent;
+        logm("read $path absent.");
+        return $ifnoent;
+    }
+    logm("read $path ok.");
+    return $data;
+}
+
+sub ensuredir ($) {
+    my ($dir)= @_;
+    mkdir($dir) or $!==&EEXIST or die "$dir $!";
+}
+
+sub system_checked {
+    $!=0; $?=0; system @_;
+    die "@_: $? $!" if $? or $!;
 }
 
 1;

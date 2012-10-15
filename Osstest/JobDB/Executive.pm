@@ -28,6 +28,10 @@ sub begin_work ($$) {
     }
 }
 
+sub current_flight ($) {
+    return $ENV{'OSSTEST_FLIGHT'};
+}
+
 sub open () {
     return opendb('osstestdb');
 }
@@ -73,4 +77,23 @@ END
     my $fl= $dbh_tests->
         selectrow_array('SELECT MAX(flight) FROM flights');
     return $fl
+}
+
+sub job_ensure_started ($) {
+    my ($count) = $dbh_tests->selectrow_array(<<END,{}, $flight, $job);
+            SELECT count(*) FROM jobs WHERE flight=? AND job=?
+END
+die "$flight.$job $count" unless $count==1;
+
+    $count= $dbh_tests->do(<<END);
+           UPDATE flights SET blessing='running'
+               WHERE flight=$flight AND blessing='constructing'
+END
+    logm("starting $flight") if $count>0;
+
+    $count= $dbh_tests->do(<<END);
+           UPDATE flights SET started=$now
+               WHERE flight=$flight AND started=0
+END
+    logm("starting $flight started=$now") if $count>0;
 }

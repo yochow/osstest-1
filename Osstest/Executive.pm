@@ -69,13 +69,13 @@ BEGIN {
     @ISA         = qw(Exporter);
     @EXPORT      = qw(
                       $logm_handle
-                      %c %r $flight $job $stash
+                      %c
                       nonempty
                       dbfl_check get_harness_rev grabrepolock_reexec
                       get_runvar get_runvar_maybe get_runvar_default
                       store_runvar get_stashed open_unique_stashfile
                       broken fail
-                      unique_incrementing_runvar system_checked
+                      unique_incrementing_runvar 
                       tcpconnect findtask @all_lock_tables
                       tcpconnect_queuedaemon plan_search
                       alloc_resources alloc_resources_rollback_begin_work
@@ -86,8 +86,8 @@ BEGIN {
                       get_host_property get_timeout
                       need_runvars
                       host_involves_pcipassthrough host_get_pcipassthrough_devs
-                      get_filecontents ensuredir postfork
-                      poll_loop logm link_file_contents create_webfile
+                      postfork
+                      poll_loop link_file_contents create_webfile
                       contents_make_cpio file_simple_write_contents
                       power_state power_cycle power_cycle_time
                       setup_pxeboot setup_pxeboot_local
@@ -137,13 +137,9 @@ augmentconfigdefaults(
     QueuePlanUpdateInterval => 300, # seconds
 );
 
-our (%g,%r,$flight,$job,$stash);
-
 our %timeout= qw(RebootDown   100
                  RebootUp     400
                  HardRebootUp 600);
-
-our $logm_handle= new IO::File ">& STDERR" or die $!;
 
 sub nonempty ($) {
     my ($v) = @_;
@@ -189,62 +185,6 @@ sub get_harness_rev () {
 }
 
 #---------- test script startup ----------
-
-sub tsreadconfig () {
-    # must be run outside transaction
-    csreadconfig();
-
-    $flight= $ENV{'OSSTEST_FLIGHT'};
-    $job=    $ENV{'OSSTEST_JOB'};
-    die unless defined $flight and defined $job;
-
-    my $now= time;  defined $now or die $!;
-
-    db_retry($flight,[qw(running constructing)],
-             $dbh_tests,[qw(flights)], sub {
-        my ($count) = $dbh_tests->selectrow_array(<<END,{}, $flight, $job);
-            SELECT count(*) FROM jobs WHERE flight=? AND job=?
-END
-        die "$flight.$job $count" unless $count==1;
-
-        $count= $dbh_tests->do(<<END);
-           UPDATE flights SET blessing='running'
-               WHERE flight=$flight AND blessing='constructing'
-END
-        logm("starting $flight") if $count>0;
-
-        $count= $dbh_tests->do(<<END);
-           UPDATE flights SET started=$now
-               WHERE flight=$flight AND started=0
-END
-        logm("starting $flight started=$now") if $count>0;
-
-        undef %r;
-
-        logm("starting $flight.$job");
-
-        my $q= $dbh_tests->prepare(<<END);
-            SELECT name, val FROM runvars WHERE flight=? AND job=?
-END
-        $q->execute($flight, $job);
-        my $row;
-        while ($row= $q->fetchrow_hashref()) {
-            $r{ $row->{name} }= $row->{val};
-            logm("setting $row->{name}=$row->{val}");
-        }
-        $q->finish();
-    });
-
-    $stash= "$c{Stash}/$flight/$job";
-    ensuredir("$c{Stash}/$flight");
-    ensuredir($stash);
-    ensuredir('tmp');
-    eval {
-        system_checked("find tmp -mtime +30 -name t.\\* -print0".
-                       " | xargs -0r rm -rf --");
-        1;
-    } or warn $@;
-}
 
 sub ts_get_host_guest { # pass this @ARGV
     my ($gn,$whhost) = reverse @_;
@@ -684,11 +624,6 @@ sub target_await_down ($$) {
     });
 }    
 
-sub system_checked {
-    $!=0; $?=0; system @_;
-    die "@_: $? $!" if $? or $!;
-}
-
 sub tcmd { # $tcmd will be put between '' but not escaped
     my ($stdout,$user,$ho,$tcmd,$timeout) = @_;
     $timeout=30 if !defined $timeout;
@@ -767,47 +702,6 @@ sub poll_loop ($$$&) {
 }
 
 #---------- other stuff ----------
-
-sub logm ($) {
-    my ($m) = @_;
-    my @t = gmtime;
-    printf $logm_handle "%04d-%02d-%02d %02d:%02d:%02d Z %s\n",
-        $t[5]+1900,$t[4]+1,$t[3], $t[2],$t[1],$t[0],
-        $m
-    or die $!;
-    $logm_handle->flush or die $!;
-}
-
-sub get_filecontents_core_quiet ($) { # ENOENT => undef
-    my ($path) = @_;
-    if (!open GFC, '<', $path) {
-        $!==&ENOENT or die "$path $!";
-        return undef;
-    }
-    local ($/);
-    undef $/;
-    my $data= <GFC>;
-    defined $data or die "$path $!";
-    close GFC or die "$path $!";
-    return $data;
-}
-
-sub get_filecontents ($;$) {
-    my ($path, $ifnoent) = @_;  # $ifnoent=undef => is error
-    my $data= get_filecontents_core_quiet($path);
-    if (!defined $data) {
-        die "$path does not exist" unless defined $ifnoent;
-        logm("read $path absent.");
-        return $ifnoent;
-    }
-    logm("read $path ok.");
-    return $data;
-}
-
-sub ensuredir ($) {
-    my ($dir)= @_;
-    mkdir($dir) or $!==&EEXIST or die "$dir $!";
-}
 
 sub postfork () {
     $dbh_tests->{InactiveDestroy}= 1;  undef $dbh_tests;

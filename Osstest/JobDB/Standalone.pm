@@ -55,4 +55,10 @@ END
     return $fl
 }
 
+sub current_flight ($) {
+    return $ENV{'OSSTEST_FLIGHT'} || 'standalone';
+}
+
+sub job_ensure_started ($) { }
+
 1;
