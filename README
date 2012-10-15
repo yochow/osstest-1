@@ -9,23 +9,22 @@ To run osstest in standalone mode:
 
 Config settings relevant to standalone mode
 
-job-db-standalone-ds                 Perl DBI data source
-job-db-standalone-filename           Pathname for Sqlite3
+JobDbStandaloneFilename
    Database file to use to record the "jobs" and their run variables.
    Default: ./standalone.db (sqlite3)
 
-dns-domain
+DnsDomain
    DNS domain to suffix to many things.  No default.
 
 ========================================
 
 Other config settings
 
-job-db
-host-db
+JobDb
+HostDb
    Class name tails for the job and host databases.
 
-executive-dbname-pat
+ExecutiveDbnamePat
    Pattern for generating PostgreSQL dbname strings for the executive's
    various databases.  Processed as follows:
      1. <\w+> is replaced with variables:
@@ -33,6 +32,6 @@ executive-dbname-pat
      2. <~/path> </path> <./path> are replaced with contents of specified file 
      3. <[> and <]> are replaced with < and >
 
-executive-dbname-DB
-   PostgreSQL dbname string for the database DB.  Default is to use
-   executive-dbi-pat.
+ExecutiveDbname_<DB>
+   PostgreSQL dbname string for the database <DB>.  Default is to use
+   ExecutiveDbnamePat.

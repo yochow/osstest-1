@@ -7,8 +7,8 @@ proc readconfig {} {
     set pl {
         use Osstest;
         readglobalconfig();
-        foreach my $k (sort keys %g) {
-            my $v= $g{$k};
+        foreach my $k (sort keys %c) {
+            my $v= $c{$k};
             printf "%s\n%d\n%s\n", $k, length($v), $v;
         }
     }
@@ -25,7 +25,7 @@ proc readconfig {} {
 }
 
 proc source-method {m} {
-    source ./tcl/$m-$g($m).tcl
+    source ./tcl/$m-$c($m).tcl
 }
 
 proc logf {f m} {

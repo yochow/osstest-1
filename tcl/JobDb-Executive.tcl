@@ -73,7 +73,7 @@ proc db-open {} {
     # PgDbName_* are odbc-style strings as accepted by Perl's DBD::Pg
     # but Tcl pg_connect unaccountably uses a different format which
     # is whitespace-separated.
-    regsub -all {;} $g(executive-dbname-osstestdb) { } conninfo
+    regsub -all {;} $c(ExecutiveDbname_osstestdb) { } conninfo
     pg_connect -conninfo $conninfo -connhandle dbh
     incr dbusers
 }
@@ -215,7 +215,7 @@ proc become-task {comment} {
     global env c
     if {[info exists env(OSSTEST_TASK)]} return
 
-    set ownerqueue [socket $g(control-daemon-host) $g(owner-daemon-port)]
+    set ownerqueue [socket $c(ControlDaemonHost) $c(OwnerDaemonPort)]
     fconfigure $ownerqueue -buffering line -translation lf
     must-gets $ownerqueue {^OK ms-ownerdaemon\M}
     puts $ownerqueue create-task

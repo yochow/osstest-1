@@ -25,10 +25,6 @@ proc main {} {
         lassign $jobitem jobinfo(job) jobinfo(recipe)
         run-job
     }
-
-    if {$anyfailed} {
-        logputs stdout "at least one test failed"
-    }
 }
 
 main

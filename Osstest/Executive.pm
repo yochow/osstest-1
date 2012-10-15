@@ -127,14 +127,14 @@ BEGIN {
 }
 
 augmentconfigdefaults(
-    'control-daemon-host' => 'woking.cam.xci-test.com',
-    'owner-daemon-port' => 4031,
-    'queue-daemon-port' => 4032,
-    'queue-daemon-retry' => 120, # seconds
-    'queue-daemon-holdoff' => 30, # seconds
-    'queue-thoughts-timeout' => 30, # seconds
-    'queue-resource-pollinterval' => 60, # seconds
-    'queue-plan-update-interval' => 300, # seconds
+    ControlDaemonHost => 'woking.cam.xci-test.com',
+    OwnerDaemonPort => 4031,
+    QueueDaemonPort => 4032,
+    QueueDaemonRetry => 120, # seconds
+    QueueDaemonHoldoff => 30, # seconds
+    QueueThoughtsTimeout => 30, # seconds
+    QueueResourcePollInterval => 60, # seconds
+    QueuePlanUpdateInterval => 300, # seconds
 );
 
 our (%g,%r,$flight,$job,$stash);
@@ -267,13 +267,13 @@ our $whoami;
 sub opendb ($) {
     my ($dbname) = @_;
 
-    my $pg= $g{"executive-dbname-$dbname"};
+    my $pg= $c{"ExecutiveDbname_$dbname"};
 
     if (!defined $pg) {
 	if (!defined $whoami) {
 	    $whoami = `whoami`;  die if $?;  chomp $whoami;
 	}
-        my $pat= $g{'executive-dbname-pat'};
+        my $pat= $c{ExecutiveDbnamePat};
         my %vars= ('dbname' => $dbname,
                    'whoami' => $whoami);
         $pat =~ s#\<(\w+)\>#
@@ -288,7 +288,7 @@ sub opendb ($) {
         #ge;
         $pat =~ s#\<([][])\># $1 eq '[' ? '<' : '>' #ge;
 
-        $pg = $g{"executive-dbname-$dbname"} = $pat;
+        $pg = $c{"ExecutiveDbname_$dbname"} = $pat;
     }
 
     my $dbh= DBI->connect("dbi:Pg:$pg", '','', {

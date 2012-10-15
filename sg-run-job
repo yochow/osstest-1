@@ -3,7 +3,7 @@
 
 source ./tcl/osstestlib.tcl
 readconfig
-source-method job-db
+source-method JobDb
 
 proc run-job {} {
     global jobinfo builds flight ok need_xen_hosts anyfailed
@@ -45,6 +45,10 @@ proc run-job {} {
     }
 
     if {$ok} { setstatus pass                                             }
+
+    if {$anyfailed} {
+        logputs stdout "at least one test failed"
+    }
 }
 
 proc catching-otherwise {failst script} {

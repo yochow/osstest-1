@@ -23,8 +23,8 @@ sub begin_work { }
 sub dbfl_check { }
 
 sub open ($) {
-    my $dbfn = $c{'job-db-standalone-filename'} || "standalone.db";
-    my $dbi = $c{'job-db-standalone-ds'} || "dbi:SQLite:dbname=".$dbfn;
+    my $dbfn = $c{'JobDbStandaloneFilename'} || "standalone.db";
+    my $dbi = "dbi:SQLite:dbname=".$dbfn;
     
     my $dbh= DBI->connect($dbi, '','', {
         AutoCommit => 1,
