@@ -10,25 +10,10 @@ proc main {} {
     global flight jobinfo builds anyfailed argv
 
     set-flight
-    become-task "$flight $argv"
-    
+
     set builds {}
 
     db-open
-
-    set to_run {}
-    pg_execute -array jobinfo dbh "
-        SELECT job, recipe FROM jobs
-			WHERE	flight=$flight
-			AND	job like 'build%'
-			AND   ( status = 'queued'
-			  OR	status = 'preparing'
-			  OR	status = 'retriable' )
-                        [specific-job-constraint]
-		ORDER BY job
-    " {
-        lappend to_run [list $jobinfo(job) $jobinfo(recipe)]
-    }
 
     foreach jobitem $to_run {
         lassign $jobitem jobinfo(job) jobinfo(recipe)
@@ -59,17 +44,6 @@ proc perhaps-start-job {} {
     global jobinfo c builds flight doingarch
 
     setstatus preparing
-
-    if {[catch {
-        prepare-host
-    } emsg]} {
-        global errorInfo errorCode
-        set ei $errorInfo
-        set ec $errorCode
-        run-ts broken * ts-logs-capture
-        setstatus broken
-        return
-    }
 
     setstatus running
     lappend builds [list $jobinfo(job) [spawn-job/$jobinfo(recipe)]]

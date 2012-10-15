@@ -1,11 +1,14 @@
+# -*- Tcl -*-
+
+package require Tclx
 
 proc readconfig {} {
-    global c
+    global g
     set pl {
         use Osstest;
-        csreadconfig();
-        foreach my $k (sort keys %c) {
-            my $v= $c{$k};
+        readglobalconfig();
+        foreach my $k (sort keys %g) {
+            my $v= $g{$k};
             printf "%s\n%d\n%s\n", $k, length($v), $v;
         }
     }
@@ -21,11 +24,17 @@ proc readconfig {} {
     close $ch
 }
 
-proc log {m} {
+proc source-method {m} {
+    source ./tcl/$m-$g($m).tcl
+}
+
+proc logf {f m} {
     set now [clock seconds]
     set timestamp [clock format $now -format {%Y-%m-%d %H:%M:%S Z} -gmt 1]
-    puts "$timestamp $m"
+    puts $f "$timestamp $m"
 }
+
+proc log {m} { logf stdout $m }
 
 proc must-gets {chan regexp args} {
     if {[gets $chan l] <= 0} { error "[eof $chan] $regexp" }

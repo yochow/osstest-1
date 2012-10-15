@@ -25,14 +25,14 @@ job-db
 host-db
    Class name tails for the job and host databases.
 
-executive-dbi-pat
-   Pattern for generating Perl DBI names for the executive's
+executive-dbname-pat
+   Pattern for generating PostgreSQL dbname strings for the executive's
    various databases.  Processed as follows:
      1. <\w+> is replaced with variables:
 		 <dbname>    database name
      2. <~/path> </path> <./path> are replaced with contents of specified file 
      3. <[> and <]> are replaced with < and >
 
-executive-dbi-DBNAME
-   Perl DBI name for the database DBNAME.  Default is to use
-   executive-dbi-pat
+executive-dbname-DB
+   PostgreSQL dbname string for the database DB.  Default is to use
+   executive-dbi-pat.

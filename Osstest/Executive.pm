@@ -68,7 +68,7 @@ BEGIN {
     $VERSION     = 1.00;
     @ISA         = qw(Exporter);
     @EXPORT      = qw(
-                      $tftptail $logm_handle
+                      $logm_handle
                       %c %r $flight $job $stash
                       nonempty
                       dbfl_check get_harness_rev grabrepolock_reexec
@@ -126,9 +126,18 @@ BEGIN {
     @EXPORT_OK   = qw();
 }
 
-our $tftptail= '/spider/pxelinux.cfg';
+augmentconfigdefaults(
+    'control-daemon-host' => 'woking.cam.xci-test.com',
+    'owner-daemon-port' => 4031,
+    'queue-daemon-port' => 4032,
+    'queue-daemon-retry' => 120, # seconds
+    'queue-daemon-holdoff' => 30, # seconds
+    'queue-thoughts-timeout' => 30, # seconds
+    'queue-resource-pollinterval' => 60, # seconds
+    'queue-plan-update-interval' => 300, # seconds
+);
 
-our (%c,%r,$flight,$job,$stash);
+our (%g,%r,$flight,$job,$stash);
 
 our %timeout= qw(RebootDown   100
                  RebootUp     400
@@ -258,13 +267,13 @@ our $whoami;
 sub opendb ($) {
     my ($dbname) = @_;
 
-    my $src= $c{"executive-dbi-$dbname"};
+    my $pg= $g{"executive-dbname-$dbname"};
 
-    if (!defined $src) {
+    if (!defined $pg) {
 	if (!defined $whoami) {
 	    $whoami = `whoami`;  die if $?;  chomp $whoami;
 	}
-        my $pat= $c{'executive-dbi-pat'};
+        my $pat= $g{'executive-dbname-pat'};
         my %vars= ('dbname' => $dbname,
                    'whoami' => $whoami);
         $pat =~ s#\<(\w+)\>#
@@ -279,15 +288,15 @@ sub opendb ($) {
         #ge;
         $pat =~ s#\<([][])\># $1 eq '[' ? '<' : '>' #ge;
 
-        $src = $c{"executive-dbi-$dbname"} = $pat;
+        $pg = $g{"executive-dbname-$dbname"} = $pat;
     }
 
-    my $dbh= DBI->connect($src, '','', {
+    my $dbh= DBI->connect("dbi:Pg:$pg", '','', {
         AutoCommit => 1,
         RaiseError => 1,
         ShowErrorStatement => 1,
         })
-        or die "could not open state db $src";
+        or die "could not open state db $pg";
     return $dbh;
 }
 

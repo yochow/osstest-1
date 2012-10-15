@@ -12,7 +12,7 @@ BEGIN {
     $VERSION     = 1.00;
     @ISA         = qw(Exporter);
     @EXPORT      = qw(
-                      readglobalconfig %c $mjobdb $mhostdb
+                      readglobalconfig %g $mjobdb $mhostdb
                       csreadconfig
                       getmethod
                       $dbh_tests db_retry db_begin_work                      
@@ -30,7 +30,7 @@ our $dbh_tests;
 
 #---------- static default config settings ----------
 
-our %c = qw(job-db Standalone
+our %g = qw(job-db Standalone
             host-db Static);
 
 #---------- general setup and config reading ----------
@@ -61,25 +61,32 @@ sub readglobalconfig () {
 	    s/\s+$//;
 	    next if m/^\#/;
 	    m/^([a-z][0-9a-zA-Z-]*)\s+(\S.*)$/ or die "bad syntax";
-	    $c{$1} = $2;
+	    $g{$1} = $2;
 	}
 	close C or die "$cfgfile $!";
     }
 
     # dynamic default config settings
-    $c{'executive-dbi-pat'} ||= "dbi:Pg:dbname=<dbname>;user=<whoami>;".
-	"host=<dbname>.db.$c{'dns-domain'};".
+    $g{'executive-dbname-pat'} ||= "dbname=<dbname>;user=<whoami>;".
+	"host=<dbname>.db.$g{'dns-domain'};".
 	"password=<~/.osstest/db-password>"
-	if defined $c{'dns-domain'};
+	if defined $g{'dns-domain'};
     # 1. <\w+> is replaced with variables:
     #         <dbname>    database name
     # 2. <~/path> </path> <./path> are replaced with contents of specified file
     # 3. <[> and <]> are replaced with < and >
 
-    $mjobdb = getmethod("Osstest::JobDB::$c{'job-db'}");
-    $mhostdb = getmethod("Osstest::HostDB::$c{'host-db'}");
+    $mjobdb = getmethod("Osstest::JobDB::$g{'job-db'}");
+    $mhostdb = getmethod("Osstest::HostDB::$g{'host-db'}");
 }
 
+sub augmentconfigdefaults {
+    while (my $k = shift @_) {
+	my $v = shift @_;
+	next if defined $g{$k};
+	$g{$k} = $v;
+    }
+}
 
 #---------- database access ----------
 
