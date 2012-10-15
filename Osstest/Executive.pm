@@ -79,7 +79,7 @@ BEGIN {
                       tcpconnect_queuedaemon plan_search
                       alloc_resources alloc_resources_rollback_begin_work
                       resource_check_allocated resource_shared_mark_ready
-                      built_stash flight_otherjob duration_estimator
+                      built_stash duration_estimator
                       csreadconfig ts_get_host_guest
                       opendb_state selecthost get_hostflags
                       get_host_property get_timeout
@@ -252,17 +252,6 @@ sub open_unique_stashfile ($) {
 }
 
 #---------- runvars ----------
-
-sub flight_otherjob ($$) {
-    my ($thisflight, $otherflightjob) = @_;    
-    return $otherflightjob =~ m/^([^.]+)\.([^.]+)$/ ? ($1,$2) :
-           $otherflightjob =~ m/^\.?([^.]+)$/ ? ($thisflight,$1) :
-           die "$otherflightjob ?";
-}
-
-sub otherflightjob ($) {
-    return flight_otherjob($flight,$_[0]);
-}
 
 sub get_stashed ($$) {
     my ($param, $otherflightjob) = @_; 

@@ -21,6 +21,7 @@ BEGIN {
 fail logm
 
 store_runvar get_runvar get_runvar_maybe get_runvar_default need_runvars
+ flight_otherjob
 
                       );
     %EXPORT_TAGS = ( );
@@ -183,6 +184,17 @@ sub need_runvars {
     my @missing= grep { !defined $r{$_} } @_;
     return unless @missing;
     die "missing runvars @missing ";
+}
+
+sub flight_otherjob ($$) {
+    my ($thisflight, $otherflightjob) = @_;    
+    return $otherflightjob =~ m/^([^.]+)\.([^.]+)$/ ? ($1,$2) :
+           $otherflightjob =~ m/^\.?([^.]+)$/ ? ($thisflight,$1) :
+           die "$otherflightjob ?";
+}
+
+sub otherflightjob ($) {
+    return flight_otherjob($flight,$_[0]);
 }
 
 1;
