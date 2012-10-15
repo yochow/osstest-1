@@ -21,5 +21,29 @@ proc job-set-status {flight job st} {
 proc ensure-db-open {} {
     global g
     if {![catch { osstestdb version }]} { return }
-    sqlite3 jobdb::osstestdb $g(job-db-standalone-filename)
+    sqlite3 jobdb::osstestdb $g(JobDbStandaloneFilename)
 }
+
+proc set-flight {} {
+    global flight env
+    if {![info exists env(OSSTEST_FLIGHT)]} {
+	set env(OSSTEST_FLIGHT) standalone
+    }
+    set flight $env(OSSTEST_FLIGHT)
+}
+
+proc spawn-step-begin {flight job ts stepnovar} {
+    variable stepcounter 0
+    upvar 1 $stepnovar stepno
+    set stepno [incr stepcounter]
+}
+
+proc spawn-step-commit {flight job stepno testid} {
+    logputs stdout "$flight.$job $stepno TESTID $testid..."
+}
+
+proc step-set-status {flight job stepno st} {
+    logputs stdout "$flight.$job $stepno STATUS $st"
+}
+
+proc become-task {argv} { }
