@@ -61,4 +61,8 @@ sub current_flight ($) {
 
 sub job_ensure_started ($) { }
 
+sub host_check_allocated ($$) { #method
+    my ($jd, $ho) = @_;
+}
+
 1;

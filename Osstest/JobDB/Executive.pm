@@ -19,8 +19,8 @@ BEGIN {
 
 sub new { return bless {}, Osstest::JobDB::Standalone };
 
-sub begin_work ($$) {
-    my ($dbh,$tables) = @_;
+sub begin_work ($$$) { #method
+    my ($jd, $dbh,$tables) = @_;
     
     return if $ENV{'OSSTEST_DEBUG_NOSQLLOCK'};
     foreach my $tab (@$tables) {
@@ -28,11 +28,11 @@ sub begin_work ($$) {
     }
 }
 
-sub current_flight ($) {
+sub current_flight ($) { #method
     return $ENV{'OSSTEST_FLIGHT'};
 }
 
-sub open () {
+sub open ($) { #method
     return opendb('osstestdb');
 }
 
@@ -68,7 +68,8 @@ END
     }
 }
 
-sub flight_create () {
+sub flight_create ($) { #method
+    my ($jd) = @_;
     $dbh_tests->do(<<END, {}, $branch, $intended);
              INSERT INTO flights
                          (flight,  started, blessing,       branch, intended)
@@ -79,7 +80,9 @@ END
     return $fl
 }
 
-sub job_ensure_started ($) {
+sub job_ensure_started ($) { #method
+    my ($jd) = @_;
+
     my ($count) = $dbh_tests->selectrow_array(<<END,{}, $flight, $job);
             SELECT count(*) FROM jobs WHERE flight=? AND job=?
 END
@@ -97,3 +100,18 @@ END
 END
     logm("starting $flight started=$now") if $count>0;
 }
+
+sub host_check_allocated ($$) { #method
+    my ($jd, $ho) = @_;
+    $ho->{Shared}= resource_check_allocated('host', $name);
+    $ho->{SharedReady}=
+        $ho->{Shared} &&
+        $ho->{Shared}{State} eq 'ready' &&
+        !! grep { $_ eq "share-".$ho->{Shared}{Type} } get_hostflags($ident);
+    $ho->{SharedOthers}=
+        $ho->{Shared} ? $ho->{Shared}{Others} : 0;
+    
+    die if $ho->{SharedOthers} && !$ho->{SharedReady};
+}
+
+1;

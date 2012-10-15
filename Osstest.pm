@@ -18,6 +18,7 @@ BEGIN {
                       getmethod
                       $dbh_tests db_retry db_begin_work                      
 get_filecontents ensuredir get_filecontents_core_quiet system_checked
+
                       );
     %EXPORT_TAGS = ( );
 
@@ -93,6 +94,8 @@ sub readglobalconfig () {
 
     $mjobdb = getmethod("Osstest::JobDB::$c{JobDb}");
     $mhostdb = getmethod("Osstest::HostDB::$c{HostDb}");
+
+    $c{TestHostDomain} ||= $c{DnsDomain};
 }
 
 sub augmentconfigdefaults {

@@ -1,3 +1,4 @@
 DnsDomain cam.xci-test.com
 NetNameservers 10.80.248.2 10.80.16.28 10.80.16.67
 TargetHost bedbug
+HostProp_bedbug_Ether 00:13:72:14:c0:51

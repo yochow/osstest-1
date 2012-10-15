@@ -81,8 +81,7 @@ BEGIN {
                       resource_check_allocated resource_shared_mark_ready
                       built_stash duration_estimator
                       csreadconfig ts_get_host_guest
-                      opendb_state selecthost get_hostflags
-                      get_host_property get_timeout
+                      opendb_state get_timeout
                       host_involves_pcipassthrough host_get_pcipassthrough_devs
                       postfork
                        link_file_contents create_webfile
@@ -1040,13 +1039,6 @@ sub get_hostflags ($) {
     return grep /./, split /\,/, $flags;
 }
 
-sub get_host_property ($$;$) {
-    my ($ho, $prop, $defval) = @_;
-    my $row= $ho->{Properties}{$prop};
-    return $defval unless $row && defined $row->{val};
-    return $row->{val};
-}
-
 sub host_involves_pcipassthrough ($) {
     my ($ho) = @_;
     return !!grep m/^pcipassthrough\-/, get_hostflags($ho->{Ident});
@@ -1068,100 +1060,6 @@ sub host_get_pcipassthrough_devs ($) {
             };
     }
     return @devs;
-}
-
-sub selecthost ($) {
-    my ($ident) = @_;
-    # must be run outside transaction
-    my $name;
-    if ($ident =~ m/=/) {
-        $ident= $`;
-        $name= $'; #'
-        $r{$ident}= $name;
-    } else {
-        $name= $r{$ident};
-        die "no specified $ident" unless defined $name;
-    }
-
-    my $ho= {
-        Ident => $ident,
-        Name => $name,
-        TcpCheckPort => 22,
-        Fqdn => "$name.$c{TestHostDomain}",
-        Info => [],
-        Suite => get_runvar_default("${ident}_suite",$job,$c{Suite}),
-    };
-
-    $ho->{Properties}= $dbh_tests->selectall_hashref(<<END, 'name', {}, $name);
-        SELECT * FROM resource_properties
-            WHERE restype='host' AND resname=?
-END
-
-    my $getprop= sub {
-        my ($k,$r) = @_;
-        my $row= $ho->{Properties}{$r};
-        return unless $row;
-        $ho->{$k}= $row->{val};
-    };
-    $ho->{Ether}= get_host_property($ho,'ether');
-    $ho->{Power}= get_host_property($ho,'power-method');
-    $ho->{DiskDevice}= get_host_property($ho,'disk-device');
-    $ho->{DhcpLeases}= get_host_property($ho,'dhcp-leases',$c{Dhcp3Leases});
-
-    if (!$ho->{Ether} || !$ho->{Power}) {
-        my $dbh_config= opendb('configdb');
-        my $selname= $ho->{Fqdn};
-        my $sth= $dbh_config->prepare(<<END);
-            SELECT * FROM ips WHERE reverse_dns = ?
-END
-        $sth->execute($selname);
-        my $row= $sth->fetchrow_hashref();
-        die "$ident $name $selname ?" unless $row;
-        die if $sth->fetchrow_hashref();
-        $sth->finish();
-        my $get= sub {
-            my ($k,$nowarn) = @_;
-            my $v= $row->{$k};
-            defined $v or $nowarn or
-                warn "host $name: undefined $k in configdb::ips\n";
-            return $v;
-        };
-        $ho->{Asset}= $get->('asset',1);
-        $ho->{Ether} ||= $get->('hardware');
-        $ho->{Power} ||= "statedb $ho->{Asset}";
-        push @{ $ho->{Info} }, "(asset=$ho->{Asset})" if defined $ho->{Asset};
-        $dbh_config->disconnect();
-    }
-
-    my $ip_packed= gethostbyname($ho->{Fqdn});
-    die "$ho->{Fqdn} ?" unless $ip_packed;
-    $ho->{Ip}= inet_ntoa($ip_packed);
-    die "$ho->{Fqdn} ?" unless defined $ho->{Ip};
-
-    $ho->{Flags}= { };
-    my $flagsq= $dbh_tests->prepare(<<END);
-        SELECT hostflag FROM hostflags WHERE hostname=?
-END
-    $flagsq->execute($name);
-    while (my ($flag) = $flagsq->fetchrow_array()) {
-        $ho->{Flags}{$flag}= 1;
-    }
-    $flagsq->finish();
-
-    $ho->{Shared}= resource_check_allocated('host', $name);
-    $ho->{SharedReady}=
-        $ho->{Shared} &&
-        $ho->{Shared}{State} eq 'ready' &&
-        !! grep { $_ eq "share-".$ho->{Shared}{Type} } get_hostflags($ident);
-    $ho->{SharedOthers}=
-        $ho->{Shared} ? $ho->{Shared}{Others} : 0;
-
-    logm("host: selected $ho->{Name} $ho->{Ether} $ho->{Ip}".
-         (!$ho->{Shared} ? '' :
-          sprintf(" - shared %s %s %d", $ho->{Shared}{Type},
-                  $ho->{Shared}{State}, $ho->{Shared}{Others}+1)));
-    
-    return $ho;
 }
 
 sub get_timeout ($$$) {

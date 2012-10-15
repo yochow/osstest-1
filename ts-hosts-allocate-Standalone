@@ -13,8 +13,8 @@ foreach my $ident (@ARGV) {
     }
     $host ||= $r{$ident};;
     $host ||= $ENV{'OSSTEST_HOST_'.uc $ident};
-    $host ||= $c{"TargetHost_$ident"};
-    $host ||= $c{TargetHost};
+    $host ||= $c{"TestHost_$ident"};
+    $host ||= $c{TestHost};
     $host || die "need host setting for $ident";
     store_runvar($ident, $host);
 }

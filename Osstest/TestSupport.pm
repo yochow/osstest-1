@@ -7,6 +7,7 @@ use warnings;
 use POSIX;
 use DBI;
 use IO::File;
+use IO::Socket::INET;
 
 use Osstest;
 
@@ -33,6 +34,9 @@ store_runvar get_runvar get_runvar_maybe get_runvar_default need_runvars
                       target_install_packages target_install_packages_norec
                       target_extract_jobdistpath
 poll_loop
+
+selecthost get_hostflags
+                      get_host_property 
                       );
     %EXPORT_TAGS = ( );
 
@@ -514,6 +518,62 @@ sub poll_loop ($$$&) {
         fail("$what: wait timed out: $bad.");
     }
     logm("$what: ok. (${waited}s)");
+}
+
+#---------- host selection and properties ----------
+
+sub selecthost ($) {
+    my ($ident) = @_;
+    # must be run outside transaction
+    my $name;
+    if ($ident =~ m/=/) {
+        $ident= $`;
+        $name= $'; #'
+        $r{$ident}= $name;
+    } else {
+        $name= $r{$ident};
+        die "no specified $ident" unless defined $name;
+    }
+
+    my $fqdn = $name;
+    $fqdn .= ".$c{TestHostDomain}" unless $fqdn =~ m/\./;
+    my $ho= {
+        Ident => $ident,
+        Name => $name,
+        TcpCheckPort => 22,
+        Fqdn => $fqdn,
+        Info => [],
+        Suite => get_runvar_default("${ident}_suite",$job,$c{Suite}),
+    };
+
+    $ho->{Properties} = $mhostdb->get_properties($name);
+
+    $ho->{Ether}= get_host_property($ho,'ether');
+    $ho->{Power}= get_host_property($ho,'power-method');
+    $ho->{DiskDevice}= get_host_property($ho,'disk-device');
+    $ho->{DhcpLeases}= get_host_property($ho,'dhcp-leases',$c{Dhcp3Leases});
+
+    $mhostdb->default_methods($ho);
+
+    my $ip_packed= gethostbyname($ho->{Fqdn});
+    die "$ho->{Fqdn} ?" unless $ip_packed;
+    $ho->{Ip}= inet_ntoa($ip_packed);
+    die "$ho->{Fqdn} ?" unless defined $ho->{Ip};
+
+    $ho->{Flags} = $mhostdb->get_flags($ho);
+
+    $mjobdb->host_check_allocated($ho);
+
+    logm("host: selected $ho->{Name} $ho->{Ether} $ho->{Ip}".
+         (!$ho->{Shared} ? '' :
+          sprintf(" - shared %s %s %d", $ho->{Shared}{Type},
+                  $ho->{Shared}{State}, $ho->{Shared}{Others}+1)));
+
+    return $ho;
+}
+
+sub get_host_property ($$;$) {
+    return $mhostdb->get_property(@_);
 }
 
 1;
