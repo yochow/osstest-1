@@ -6,8 +6,9 @@ use POSIX;
 
 use Osstest;
 use Osstest::Debian;
+use Osstest::TestSupport;
 
-testscript_start();
+tsreadconfig();
 
 my $debconf_priority;
 
