@@ -1,0 +1,20 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Osstest;
+use Osstest::TestSupport;
+
+tsreadconfig();
+
+foreach my $ident (@ARGV) {
+    my $host;
+    if ($ident =~ s/\=(.*)$//) {
+        $host = $1;
+    }
+    $host ||= $r{$ident};;
+    $host ||= $ENV{'OSSTEST_HOST_'.uc $ident};
+    $host ||= $c{"TargetHost_$ident"};
+    $host ||= $c{TargetHost};
+    $host || die "need host setting for $ident";
+    store_runvar($ident, $host);
+}

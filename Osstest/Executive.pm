@@ -72,8 +72,7 @@ BEGIN {
                       %c
                       nonempty
                       dbfl_check get_harness_rev grabrepolock_reexec
-                      get_runvar get_runvar_maybe get_runvar_default
-                      store_runvar get_stashed open_unique_stashfile
+                      get_stashed open_unique_stashfile
                       broken fail
                       unique_incrementing_runvar 
                       tcpconnect findtask @all_lock_tables
@@ -84,7 +83,6 @@ BEGIN {
                       csreadconfig ts_get_host_guest
                       opendb_state selecthost get_hostflags
                       get_host_property get_timeout
-                      need_runvars
                       host_involves_pcipassthrough host_get_pcipassthrough_devs
                       postfork
                       poll_loop link_file_contents create_webfile
@@ -295,101 +293,6 @@ END
     });
     logm("runvar increment: $param=$value");
     return $value;
-}
-
-sub store_runvar ($$) {
-    my ($param,$value) = @_;
-    # must be run outside transaction
-    logm("runvar store: $param=$value");
-    db_retry($flight,'running', $dbh_tests,[qw(flights)], sub {
-        $dbh_tests->do(<<END, undef, $flight, $job, $param);
-	    DELETE FROM runvars WHERE flight=? AND job=? AND name=? AND synth
-END
-        $dbh_tests->do(<<END,{}, $flight,$job, $param,$value);
-            INSERT INTO runvars VALUES (?,?,?,?,'t')
-END
-    });
-    $r{$param}= get_runvar($param, "$flight.$job");
-}
-
-sub fail ($) {
-    my ($m) = @_;
-    logm("FAILURE: $m");
-    die "failure: $m\n";
-}
-
-sub broken ($;$) {
-    my ($m, $newst) = @_;
-    # must be run outside transaction
-    my $affected;
-    $newst= 'broken' unless defined $newst;
-    db_retry($flight,'running', $dbh_tests,[qw(flights)], sub {
-        $affected= $dbh_tests->do(<<END, {}, $newst, $flight, $job);
-            UPDATE jobs SET status=?
-             WHERE flight=? AND job=?
-               AND (status='queued' OR status='running')
-END
-    });
-    die "BROKEN: $m; ". ($affected>0 ? "marked $flight.$job $newst"
-                         : "($flight.$job not marked $newst)");
-}
-
-sub get_runvar ($$) {
-    my ($param, $otherflightjob) = @_;
-    # may be run outside transaction, or with flights locked
-    my $r= get_runvar_maybe($param,$otherflightjob);
-    die "need $param in $otherflightjob" unless defined $r;
-    return $r;
-}
-
-sub get_runvar_default ($$$) {
-    my ($param, $otherflightjob, $default) = @_;
-    # may be run outside transaction, or with flights locked
-    my $r= get_runvar_maybe($param,$otherflightjob);
-    return defined($r) ? $r : $default;
-}
-
-sub get_runvar_maybe ($$) {
-    my ($param, $otherflightjob) = @_;
-    # may be run outside transaction, or with flights locked
-    my ($oflight, $ojob) = otherflightjob($otherflightjob);
-
-    if ("$oflight.$ojob" ne "$flight.$job") {
-        my $jstmt= <<END;
-            SELECT * FROM jobs WHERE flight=? AND job=?
-END
-        my $jrow= $dbh_tests->selectrow_hashref($jstmt,{}, $oflight,$ojob);
-        $jrow or broken("job $oflight.$ojob not found (looking for $param)");
-        my $jstatus= $jrow->{'status'};
-        defined $jstatus or broken("job $oflight.$ojob no status?!");
-        if ($jstatus eq 'pass') {
-            # fine
-        } elsif ($jstatus eq 'queued') {
-            $jrow= $dbh_tests->selectrow_hashref($jstmt,{}, $flight,$job);
-            $jrow or broken("our job $flight.$job not found!");
-            my $ourstatus= $jrow->{'status'};
-            if ($ourstatus eq 'queued') {
-                logm("not running under sg-execute-*:".
-                     " $oflight.$ojob queued ok, for $param");
-            } else {
-                die "job $oflight.$ojob (for $param) queued (we are $ourstatus)";
-            }
-        } else {
-            broken("job $oflight.$ojob (for $param) $jstatus", 'blocked');
-        }
-    }
-
-    my $row= $dbh_tests->selectrow_arrayref(<<END,{}, $oflight,$ojob,$param);
-        SELECT val FROM runvars WHERE flight=? AND job=? AND name=?
-END
-    if (!$row) { return undef; }
-    return $row->[0];
-}
-
-sub need_runvars {
-    my @missing= grep { !defined $r{$_} } @_;
-    return unless @missing;
-    die "missing runvars @missing ";
 }
 
 #---------- running commands eg on targets ----------

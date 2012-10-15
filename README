@@ -18,6 +18,9 @@ JobDbStandaloneFilename
    Database file to use to record the "jobs" and their run variables.
    Default: ./standalone.db (sqlite3)
 
+TargetHost_<ident>      where eg <ident> = "host"
+TargetHost
+
 ========================================
 
 General config settings
