@@ -12,7 +12,8 @@ BEGIN {
     $VERSION     = 1.00;
     @ISA         = qw(Exporter);
     @EXPORT      = qw(
-                      readglobalconfig %g $mjobdb $mhostdb
+                      readglobalconfig %c $mjobdb $mhostdb
+                      augmentconfigdefaults
                       csreadconfig
                       getmethod
                       $dbh_tests db_retry db_begin_work                      
@@ -30,8 +31,16 @@ our $dbh_tests;
 
 #---------- static default config settings ----------
 
-our %g = qw(JobDb Standalone
-            HostDb Static);
+our %c = qw(
+
+   JobDb Standalone
+   HostDb Static
+
+   Stash logs
+   Images images
+   Logs logs
+   Results results
+);
 
 #---------- general setup and config reading ----------
 
@@ -60,8 +69,14 @@ sub readglobalconfig () {
 	    s/^\s*//;
 	    s/\s+$//;
 	    next if m/^\#/;
-	    m/^([a-z][0-9a-zA-Z-]*)\s+(\S.*)$/ or die "bad syntax";
-	    $c{$1} = $2;
+	    next unless m/\S/;
+	    if (m/^([A-Z][0-9a-zA-Z-_]*)\s+(\S.*)$/) {
+		$c{$1} = $2;
+	    } elsif (m/^([A-Z][0-9a-zA-Z-_]*)=(.*)$/) {
+		eval "\$c{$1} = ( $2 ); 1;" or die $@;
+	    } else {
+		die "bad syntax";
+	    }
 	}
 	close C or die "$cfgfile $!";
     }

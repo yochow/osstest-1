@@ -17,14 +17,17 @@ BEGIN {
     @EXPORT_OK   = qw();
 }
 
+augmentconfigdefaults(
+    JobDbStandaloneFilename => 'standalone.db',
+);
+
 sub new { return bless {}, $_[0]; };
 
 sub begin_work { }
 sub dbfl_check { }
 
 sub open ($) {
-    my $dbfn = $c{'JobDbStandaloneFilename'} || "standalone.db";
-    my $dbi = "dbi:SQLite:dbname=".$dbfn;
+    my $dbi = "dbi:SQLite:dbname=$c{JobDbStandaloneFilename}";
     
     my $dbh= DBI->connect($dbi, '','', {
         AutoCommit => 1,

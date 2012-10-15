@@ -5,20 +5,45 @@ To run osstest in standalone mode:
 
  - First, run ./standalone-reset
 
+Config settings are
+   Name value
+or
+   Name=  perl expression
+
 ========================================
 
-Config settings relevant to standalone mode
+Config settings relevant only to standalone mode
 
 JobDbStandaloneFilename
    Database file to use to record the "jobs" and their run variables.
    Default: ./standalone.db (sqlite3)
 
+========================================
+
+General config settings
+
 DnsDomain
    DNS domain to suffix to many things.  No default.
 
+Stash
+Images
+Logs
+
 ========================================
 
-Other config settings
+Host-specific config settigs
+
+NetNameServers
+GenEtherPrefix
+
+WebspaceFile
+WebspaceUrl
+WebspaceCommon
+WebspaceLog
+
+========================================
+
+Other config settings which might be interesting
 
 JobDb
 HostDb
@@ -35,3 +60,6 @@ ExecutiveDbnamePat
 ExecutiveDbname_<DB>
    PostgreSQL dbname string for the database <DB>.  Default is to use
    ExecutiveDbnamePat.
+
+PubBaseDir
+Results

@@ -3,7 +3,7 @@
 package require Tclx
 
 proc readconfig {} {
-    global g
+    global c
     set pl {
         use Osstest;
         readglobalconfig();
@@ -25,6 +25,7 @@ proc readconfig {} {
 }
 
 proc source-method {m} {
+    global c
     source ./tcl/$m-$c($m).tcl
 }
 
@@ -48,23 +49,4 @@ proc lremove {listvar item} {
     set ix [lsearch -exact $list $item]
     if {$ix<0} return
     set list [lreplace $list $ix $ix]
-}
-
-proc reap-ts {reap {dbopen 0}} {
-    if {![string length $reap]} { if {$dbopen} db-open; return 0 }
-
-    upvar #0 reap_details($reap) details
-    set detstr [lindex $details 3]
-    set iffail [lindex $details 4]
-    logputs stdout "awaiting $detstr"
-    if {[catch { close $reap } emsg]} {
-        set result $iffail
-    } else {
-        set result pass
-    }
-    if {$dbopen} db-open
-
-    eval step-set-status [lrange $details 0 2] $result
-    logputs stdout "finished $detstr $result $emsg"
-    return [expr {![string compare $result pass]}]
 }

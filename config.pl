@@ -1,15 +1,10 @@
+# things which may need sorting at the use site
+
 $c{TestHostDomain}= 'cam.xci-test.com';
-
-$c{NetNameservers}= '10.80.248.2 10.80.16.28 10.80.16.67';
-
 $c{GenEtherPrefix}= '5a:36:0e';
-
-$c{WebspaceFile}= '/export/home/osstest/public_html/';
-$c{WebspaceUrl}= "http://woking.$c{Domain}/~osstest/";
-$c{WebspaceCommon}= 'osstest/';
-$c{WebspaceLog}= '/var/log/apache2/access.log';
-
 $c{Dhcp3Leases}= '/var/lib/dhcp3/dhcpd.leases';
+
+
 
 $c{Repos}= "$ENV{HOME}/repos";
 
@@ -35,14 +30,6 @@ $c{SerialLogPattern}= '/root/sympathy/%host%.log*';
 $c{OverlayLocal}= '/export/home/osstest/overlay-local';
 
 $c{Publish}= 'xensrcts@login.chiark.greenend.org.uk:/home/ian/work/xc_osstest';
-
-$c{PubBaseDir}= '/home/xc_osstest';
-$c{Stash}= '/home/xc_osstest/logs';
-$c{Images}= '/home/xc_osstest/images';
-$c{Logs}= '/home/xc_osstest/logs';
-$c{Results}= '/home/xc_osstest/results';
-$c{LogsMinSpaceMby}= 10*1e3;
-$c{LogsMinExpireAge}= 86400*7;
 
 $c{GlobalLockDir}= "/export/home/osstest/testing.git";
 

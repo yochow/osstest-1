@@ -1,3 +1,4 @@
+#!/usr/bin/tclsh8.4
 # -*- Tcl -*- 
 # usage: ./sg-run-job <flight> <job>
 
@@ -5,11 +6,11 @@ source ./tcl/osstestlib.tcl
 readconfig
 source-method JobDb
 
-proc run-job {} {
+proc run-job {job} {
     global jobinfo builds flight ok need_xen_hosts anyfailed
 
     set ok 1
-    jobdb::prepare $jobinfo(job)
+    jobdb::prepare $job
 
     set nh [need-hosts/$jobinfo(recipe)]
     if {![string compare $nh BUILD]} {
@@ -47,7 +48,7 @@ proc run-job {} {
     if {$ok} { setstatus pass                                             }
 
     if {$anyfailed} {
-        logputs stdout "at least one test failed"
+        jobdb::logputs stdout "at least one test failed"
     }
 }
 
@@ -81,10 +82,10 @@ proc run-ts {args} {
 }
 
 proc spawn-ts {iffail testid ts args} {
-    global flight g jobinfo reap_details env
+    global flight c jobinfo reap_details env
 
     if {[file exists abort]} {
-        logputs stdout \
+        jobdb::logputs stdout \
             "aborting - not executing $flight.$jobinfo(job) $ts $args"
         job-set-status $flight $jobinfo(job) aborted
         return {}
@@ -120,7 +121,7 @@ proc spawn-ts {iffail testid ts args} {
 
     set detstr "$flight.$jobinfo(job) $ts $real_args"
     set details [list $flight $jobinfo(job) $stepno $detstr $iffail]
-    logputs stdout "starting $detstr $testid"
+    jobdb::logputs stdout "starting $detstr $testid"
 
     jobdb::spawn-step-commit $flight $jobinfo(job) $stepno $testid
 
@@ -148,6 +149,24 @@ proc spawn-ts {iffail testid ts args} {
     set reap_details($fh) $details
 
     return $fh
+}
+
+proc reap-ts {reap} {
+    if {![string length $reap]} { return 0 }
+
+    upvar #0 reap_details($reap) details
+    set detstr [lindex $details 3]
+    set iffail [lindex $details 4]
+    jobdb::logputs stdout "awaiting $detstr"
+    if {[catch { close $reap } emsg]} {
+        set result $iffail
+    } else {
+        set result pass
+    }
+
+    eval jobdb::step-set-status [lrange $details 0 2] $result
+    jobdb::logputs stdout "finished $detstr $result $emsg"
+    return [expr {![string compare $result pass]}]
 }
 
 #---------- per-host infrastructure (non-build tests only) ----------
@@ -272,4 +291,10 @@ proc prepare-build-host {} {
 
 jobdb::set-flight
 jobdb::become-task "$flight $argv"
-run-job
+
+switch -glob [llength $argv].[lindex $argv 0] {
+    1.[0-9a-z]* { set job [lindex $argv 0] }
+    default { error "usage: \[OSSTEST_FLIGHT=<flight>] sg-run-job <JOB>" }
+}
+
+run-job $job

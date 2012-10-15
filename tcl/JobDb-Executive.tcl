@@ -2,7 +2,7 @@
 
 package require Pgtcl 1.5
 
-namespace jobdb {
+namespace eval jobdb {
 
 proc logputs {f m} {
     global argv
@@ -12,6 +12,7 @@ proc logputs {f m} {
 }
 
 proc prepare {job} {
+    global jobinfo
     db-open
     set found 0
     pg_execute -array jobinfo dbh "
@@ -243,4 +244,4 @@ proc become-task {comment} {
     }
 }
 
-}; # namespace jobdb
+}; # namespace eval jobdb

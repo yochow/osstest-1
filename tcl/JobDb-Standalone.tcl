@@ -2,11 +2,22 @@
 
 package require sqlite3
 
-namespace jobdb {
+namespace eval jobdb {
 
 proc logputs {f m} { logf $f $m }
 
-proc prepare {job} { }
+proc prepare {job} {
+    global flight jobinfo
+    ensure-db-open
+    osstestdb eval {
+	SELECT job, status, recipe FROM jobs
+	    WHERE flight = $flight
+	    AND    job = $job
+    } jobinfo {
+	return
+    }
+    error "job $flight.$job not found"
+}
 
 proc job-set-status {flight job st} {
     ensure-db-open
@@ -19,9 +30,9 @@ proc job-set-status {flight job st} {
 }
 
 proc ensure-db-open {} {
-    global g
+    global c
     if {![catch { osstestdb version }]} { return }
-    sqlite3 jobdb::osstestdb $g(JobDbStandaloneFilename)
+    sqlite3 osstestdb $c(JobDbStandaloneFilename)
 }
 
 proc set-flight {} {
@@ -47,3 +58,5 @@ proc step-set-status {flight job stepno st} {
 }
 
 proc become-task {argv} { }
+
+}; # namespace eval jobdb
