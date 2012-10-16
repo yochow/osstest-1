@@ -72,7 +72,9 @@ if [ "x$diver" = xcurrent ]; then
 		if test -d "$tftp/$dibase/$arch/$diver"; then continue; fi
 		mkdir -p "$tftp/$dibase/$arch"
 		echo "** need to generate d-i with firmware for $arch"
-		./mg-debian-installer-update $suite $arch $firmware
+		div=`./mg-debian-installer-update $suite $arch $firmware`
+		rm -f "$tftp/$dibase/$arch/current"
+		ln -s $div "$tftp/$dibase/$arch/current"
 	done
 fi
 

@@ -27,7 +27,7 @@ mkdir -p $dst
 cd $dst
 
 for f in $files; do
-        echo "fetching $f"
+        echo >&2 "fetching $f"
         curl -s $src/$f >$f.new
 done
 
@@ -35,7 +35,7 @@ curl -s $pfile >Packages.bz2
 
 for p in $packages; do
         set +e
-        echo "collecting $p"
+        echo >&2 "collecting $p"
         pkgfile=`bzcat Packages.bz2 | grep-dctrl -PX $p -nsFilename`
         rc=$?
         set -e
@@ -60,4 +60,5 @@ rm Packages.bz2
 #ln -s $date current.new
 #mv -Tf current.new current
 
-echo "downloaded $dstroot/$arch/$date"
+echo $date
+echo >&2 "downloaded $dstroot/$arch/$date"
