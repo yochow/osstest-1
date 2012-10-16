@@ -2,10 +2,28 @@ To run osstest in standalone mode:
 
  - Write a config file
     ~/.osstest/config
+   See below.
 
- - First, run ./standalone-reset
+ - Select the "branch" and job to reproduce.  By default the system
+   gives you the "branch" consisting of tests run for the xen-unstable
+   push gate.  You need to select a job.
 
-Config settings are
+ - Run ./standalone-reset
+
+ - If you have an existing test host and guest set up
+   you can run
+      OSSTEST_JOB=<job>  ./ts-debian-install host=bedbug
+   or some such to install a Debian guest on it.
+
+ - Or you can run
+      ./sg-run-job <job>
+
+========================================
+
+Format of config file ~/.osstest/config (you may set OSSTEST_CONFIG to
+point to a different file):
+
+Lines containing:
    Name value
 or
    Name=  perl expression
@@ -13,6 +31,34 @@ or
    Name= <<'END'    or <<END
    blah blah
    END
+
+#-comments and blank lines are ignored.
+
+========================================
+
+Essential config settings for standalone mode:
+
+DnsDomain
+   DNS domain to suffix to many things.  No default.
+   For example, test box hostnames will by default be qualified
+   with this name.
+
+NetNameservers
+   Space-separated list of nameserver IPv4 addresses
+
+DebianMirrorHost
+   Domain name or address of the Debian mirror to use.
+   Set DebianMirrorSubpath to the path inside the mirror if
+   your mirror isn't at http://<DebianMirrorHost>/debian/
+
+HostProp_<testbox>_Ether
+   MAC address of the box <testbox>.  Only needed if you want
+   to use the osstest host and Xen installer.
+
+DebianPreseed
+  Text to add to the debian-installer preseed file.  Optional
+  but you will need to set some NTP servers here if your firewall
+  doesn't permit NTP to Debian's pool.ntp.org servers.
 
 ========================================
 
@@ -53,9 +99,6 @@ HostProp_GenEtherPrefixBase 5e:36:0e:f5
 ========================================
 
 General config settings
-
-DnsDomain
-   DNS domain to suffix to many things.  No default.
 
 Stash
 Images
