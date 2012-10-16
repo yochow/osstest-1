@@ -26,3 +26,4 @@ standalone.db
 logs
 id_rsa_osstest
 id_rsa_osstest.pub
+overlay-local

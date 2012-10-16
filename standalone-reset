@@ -12,12 +12,50 @@ set -e
 
 . cri-getconfig
 
-#---------- making the database with a flight and some jobs ----------
-
 jobdb=`getconfig JobDB`
 if [ "$jobdb" != Standalone ]; then
 	echo >&2 "jobdb is $jobdb!"; exit 1
 fi
+
+ensure_dir () {
+	if test -d "$1"; then return; fi
+	mkdir "$1"
+}
+
+ensure_key () {
+	kpf=$1; shift
+	if test -f "$kpf"; then return; fi
+	ssh-keygen "$@" -N '' -f "$kpf"
+}
+
+#---------- ensuring we have a suitable rsa key ----------
+
+keypair=`getconfig TestHostKeypairPath`
+ensure_key "$keypair" -t rsa -b 1024
+
+#---------- ensuring we can visit our webspace ----------
+
+wsfile=`getconfig WebspaceFile``getconfig WebspaceCommon`
+wsurl=`getconfig WebspaceUrl``getconfig WebspaceCommon`
+
+ensure_dir "$wsfile"
+
+head -c10 /dev/urandom >${wsfile}standalone-test
+curl -sS >standalone-test.tmp ${wsurl}standalone-test
+cmp ${wsfile}standalone-test standalone-test.tmp
+rm -f ${wsfile}standalone-test standalone-test.tmp
+
+#---------- generate host keys in overlay ----------
+
+overlay=`getconfig OverlayLocal`
+
+ensure_dir "$overlay"
+mkdir -p "$overlay"/etc/ssh
+
+ensure_key "$overlay"/etc/ssh/ssh_host_rsa_key -t rsa -b 1024
+ensure_key "$overlay"/etc/ssh/ssh_host_dsa_key -t dsa
+
+#---------- making the database with a flight and some jobs ----------
 
 branch=xen-unstable
 xenbranch=xen-unstable
@@ -64,21 +102,6 @@ fi
 OSSTEST_FLIGHT=$flight \
 ./make-flight "$branch" "$xenbranch" play $buildflight >/dev/null
 
-#---------- ensuring we have a suitable rsa key ----------
+#---------- done ----------
 
-keypair=`getconfig TestHostKeypairPath`
-if ! test -f "$keypair"; then
-	ssh-keygen -t rsa -b 1024 -N '' -f "$keypair"
-fi
-
-#---------- ensuring we can visit our webspace ----------
-
-wsfile=`getconfig WebspaceFile``getconfig WebspaceCommon`
-wsurl=`getconfig WebspaceUrl``getconfig WebspaceCommon`
-
-if ! test -d "$wsfile"; then mkdir "$wsfile"; fi
-
-head -c10 /dev/urandom >${wsfile}standalone-test
-curl -sS >standalone-test.tmp ${wsurl}standalone-test
-cmp ${wsfile}standalone-test standalone-test.tmp
-rm -f ${wsfile}standalone-test standalone-test.tmp
+echo ok.

@@ -126,6 +126,8 @@ sub readglobalconfig () {
     }
     $c{WebspaceCommon} ||= 'osstest/';
     $c{WebspaceLog} ||= '/var/log/apache2/access.log';
+
+    $c{OverlayLocal} ||= "overlay-local";
 }
 
 sub augmentconfigdefaults {
@@ -184,8 +186,8 @@ sub db_retry ($$$;$$) {
     return $r;
 }
 
-sub jobdb_postfork () {
-    $mjobdb->postfork();
+sub postfork () {
+    $mjobdb->jobdb_postfork();
 }
 
 #---------- script entrypoints ----------

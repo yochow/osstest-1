@@ -24,8 +24,6 @@ $c{PlanRogueAllocationDuration}= 86400*7;
 
 $c{SerialLogPattern}= '/root/sympathy/%host%.log*';
 
-$c{OverlayLocal}= '/export/home/osstest/overlay-local';
-
 $c{Publish}= 'xensrcts@login.chiark.greenend.org.uk:/home/ian/work/xc_osstest';
 
 $c{GlobalLockDir}= "/export/home/osstest/testing.git";
