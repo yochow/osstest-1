@@ -3,6 +3,8 @@
 #   ./mg-debian-installer-update lenny i386 'firmware-bnx2 firmware-spong'
 set -e
 
+. cri-getconfig
+
 suite=$1
 arch=$2
 packages="$3"
@@ -16,7 +18,7 @@ src=$sbase/main/installer-$arch/current/images/netboot/debian-installer/$arch
 pfile=$sbase/non-free/binary-$arch/Packages.bz2
 files='initrd.gz linux'
 
-dstroot=/tftpboot/pxe/osstest/debian-installer/
+dstroot=`getconfig Tftp`/`getconfig PxeDiBase`/
 date=`date +%Y-%m-%d`-$suite
 dst=$arch/$date
 

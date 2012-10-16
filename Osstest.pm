@@ -54,6 +54,10 @@ our %c = qw(
     HostDiskSwap  2000
 
     Baud  115200
+
+    Tftp  /tftpboot/pxe
+
+    DebianNonfreeFirmware firmware-bnx2
 );
 
 #---------- general setup and config reading ----------
@@ -126,12 +130,13 @@ sub readglobalconfig () {
 
     $c{TestHostDomain} ||= $c{DnsDomain};
 
+    my $whoami = `whoami` or die $!;
+    chomp($whoami) or die;
+
     $c{WebspaceFile} ||= "$ENV{'HOME'}/public_html/";
     if (!$c{WebspaceUrl}) {
 	my $nodename = `uname -n` or die $!;
-	my $whoami = `whoami` or die $!;
 	chomp($nodename) or die;
-	chomp($whoami) or die;
 	$c{WebspaceUrl} = "http://$nodename.$c{DnsDomain}/~$whoami/";
     }
     $c{WebspaceCommon} ||= 'osstest/';
@@ -139,6 +144,9 @@ sub readglobalconfig () {
 
     $c{OverlayLocal} ||= "overlay-local";
     $c{GuestDebianSuite} ||= $c{DebianSuite};
+    
+    $c{PxeDiBase} ||= "$whoami/osstest/debian-installer";
+    $c{PxeDiVersion} ||= 'current';
 }
 
 sub augmentconfigdefaults {

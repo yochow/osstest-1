@@ -55,6 +55,27 @@ mkdir -p "$overlay"/etc/ssh
 ensure_key "$overlay"/etc/ssh/ssh_host_rsa_key -t rsa -b 1024
 ensure_key "$overlay"/etc/ssh/ssh_host_dsa_key -t dsa
 
+#---------- ensuring we can update pxe files and have d-i ----------
+
+tftp=`getconfig Tftp`
+if ! test -d "$tftp"; then
+	echo >&2 'Need Tftp config variable pointing to tftp server'; exit 1
+fi
+
+dibase=`getconfig PxeDiBase`
+diver=`getconfig PxeDiVersion`
+suite=`getconfig DebianSuite`
+firmware=`getconfig DebianNonfreeFirmware`
+
+if [ "x$diver" = xcurrent ]; then
+	for arch in i386 amd64; do
+		if test -d "$tftp/$dibase/$arch/$diver"; then continue; fi
+		mkdir -p "$tftp/$dibase/$arch"
+		echo "** need to generate d-i with firmware for $arch"
+		./mg-debian-installer-update $suite $arch $firmware
+	done
+fi
+
 #---------- making the database with a flight and some jobs ----------
 
 branch=xen-unstable
