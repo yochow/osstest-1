@@ -65,4 +65,6 @@ sub host_check_allocated ($$) { #method
     my ($jd, $ho) = @_;
 }
 
+sub postfork ($) { }
+
 1;

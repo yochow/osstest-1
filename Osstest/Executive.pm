@@ -68,14 +68,8 @@ BEGIN {
     $VERSION     = 1.00;
     @ISA         = qw(Exporter);
     @EXPORT      = qw(
-                      $logm_handle
-                      %c
-                      nonempty
                       dbfl_check get_harness_rev grabrepolock_reexec
-                      get_stashed open_unique_stashfile
-                      broken fail
-                      unique_incrementing_runvar 
-                      tcpconnect findtask @all_lock_tables
+                       findtask @all_lock_tables
                       tcpconnect_queuedaemon plan_search
                       alloc_resources alloc_resources_rollback_begin_work
                       resource_check_allocated resource_shared_mark_ready
@@ -83,13 +77,11 @@ BEGIN {
                       csreadconfig ts_get_host_guest
                       opendb_state get_timeout
                       host_involves_pcipassthrough host_get_pcipassthrough_devs
-                      postfork
                        link_file_contents create_webfile
-                      contents_make_cpio file_simple_write_contents
                       setup_pxeboot setup_pxeboot_local
                       await_webspace_fetch_byleaf await_tcp
                       remote_perl_script_open remote_perl_script_done sshopts
-                      host_reboot host_pxedir target_reboot target_reboot_hard
+                       host_pxedir 
                       target_choose_vg target_umount_lv target_await_down
                       target_ping_check_down target_ping_check_up
                       target_kernkind_check target_kernkind_console_inittab
@@ -127,11 +119,6 @@ augmentconfigdefaults(
 our %timeout= qw(RebootDown   100
                  RebootUp     400
                  HardRebootUp 600);
-
-sub nonempty ($) {
-    my ($v) = @_;
-    return defined($v) && length($v);
-}
 
 #---------- configuration reader etc. ----------
 
@@ -225,151 +212,6 @@ sub opendb ($) {
         })
         or die "could not open state db $pg";
     return $dbh;
-}
-
-sub open_unique_stashfile ($) {
-    my ($leafref) = @_;
-    my $dh;
-    for (;;) {
-        my $df= $$leafref;
-        $dh= new IO::File "$stash/$df", O_WRONLY|O_EXCL|O_CREAT;
-        last if $dh;
-        die "$df $!" unless $!==&EEXIST;
-        $$leafref .= '+';
-    }
-    return $dh;
-}
-
-#---------- runvars ----------
-
-sub get_stashed ($$) {
-    my ($param, $otherflightjob) = @_; 
-    # may be run outside transaction, or with flights locked
-    my ($oflight, $ojob) = otherflightjob($otherflightjob);
-    my $path= get_runvar($param, $otherflightjob);
-    die "$path $& " if
-        $path =~ m,[^-+._0-9a-zA-Z/], or
-        $path =~ m/\.\./;
-    return "$c{Stash}/$oflight/$ojob/$path";
-}
-
-sub unique_incrementing_runvar ($$) {
-    my ($param,$start) = @_;
-    # must be run outside transaction
-    my $value;
-    db_retry($flight,'running', $dbh_tests,[qw(flights)], sub {
-	my $row= $dbh_tests->selectrow_arrayref(<<END,{}, $flight,$job,$param);
-            SELECT val FROM runvars WHERE flight=? AND job=? AND name=?
-END
-	$value= $row ? $row->[0] : $start;
-	$dbh_tests->do(<<END, undef, $flight, $job, $param);
-            DELETE FROM runvars WHERE flight=? AND job=? AND name=? AND synth
-END
-	$dbh_tests->do(<<END, undef, $flight, $job, $param, $value+1);
-            INSERT INTO runvars VALUES (?,?,?,?,'t')
-END
-    });
-    logm("runvar increment: $param=$value");
-    return $value;
-}
-
-#---------- other stuff ----------
-
-sub postfork () {
-    $dbh_tests->{InactiveDestroy}= 1;  undef $dbh_tests;
-}
-
-sub host_reboot ($) {
-    my ($ho) = @_;
-    target_reboot($ho);
-    poll_loop(40,2, 'reboot-confirm-booted', sub {
-        my $output;
-        if (!eval {
-            $output= target_cmd_output($ho,
-                "stat /dev/shm/osstest-confirm-booted 2>&1 >/dev/null ||:",
-                                       40);
-            1;
-        }) {
-            return $@;
-        }
-        return length($output) ? $output : undef;
-    });
-}
-
-sub target_reboot ($) {
-    my ($ho) = @_;
-    target_cmd_root($ho, "init 6");
-    target_await_down($ho, $timeout{RebootDown});
-    await_tcp(get_timeout($ho,'reboot',$timeout{RebootUp}), 5,$ho);
-}
-
-sub target_reboot_hard ($) {
-    my ($ho) = @_;
-    power_cycle($ho);
-    await_tcp(get_timeout($ho,'reboot',$timeout{HardRebootUp}), 5, $ho);
-}
-
-sub tcpconnect ($$) {
-    my ($host, $port) = @_;
-    my $h= new IO::Handle;
-    my $proto= getprotobyname('tcp');  die $! unless defined $proto;
-    my $fixedaddr= inet_aton($host);
-    my @addrs; my $atype;
-    if (defined $fixedaddr) {
-        @addrs= $fixedaddr;
-        $atype= AF_INET;
-    } else {
-        $!=0; $?=0; my @hi= gethostbyname($host);
-        @hi or die "host lookup failed for $host: $? $!";
-        $atype= $hi[2];
-        @addrs= @hi[4..$#hi];
-        die "connect $host:$port: no addresses for $host" unless @addrs;
-    }
-    foreach my $addr (@addrs) {
-        my $h= new IO::Handle;
-        my $sin; my $pfam; my $str;
-        if ($atype==AF_INET) {
-            $sin= sockaddr_in $port, $addr;
-            $pfam= PF_INET;
-            $str= inet_ntoa($addr);
-#        } elsif ($atype==AF_INET6) {
-#            $sin= sockaddr_in6 $port, $addr;
-#            $pfam= PF_INET6;
-#            $str= inet_ntoa6($addr);
-        } else {
-            warn "connect $host:$port: unknown AF $atype";
-            next;
-        }
-        if (!socket($h, $pfam, SOCK_STREAM, $proto)) {
-            warn "connect $host:$port: unsupported PF $pfam";
-            next;
-        }
-        if (!connect($h, $sin)) {
-            warn "connect $host:$port: [$str]: $!";
-            next;
-        }
-        return $h;
-
-    }
-    die "$host:$port all failed";
-}
-
-sub contents_make_cpio ($$$) {
-    my ($fh, $format, $srcdir) = @_;
-    my $child= fork;  defined $child or die $!;
-    if (!$child) {
-        postfork();
-        chdir($srcdir) or die $!;
-        open STDIN, 'find ! -name "*~" ! -name "#*" -type f -print0 |'
-            or die $!;
-        open STDOUT, '>&', $fh or die $!;
-        system "cpio -H$format -o --quiet -0 -R 1000:1000";
-        $? and die $?;
-        $!=0; close STDIN; die "$! $?" if $! or $?;
-        exit 0;
-    }
-    waitpid($child, 0) == $child or die $!;
-    $? and die $?;
 }
 
 #---------- building, vcs's, etc. ----------
@@ -1566,21 +1408,6 @@ sub guest_check_remus_ok {
     die "running on multiple hosts $compound" if $runnings > 1;
     die "not running anywhere $compound" unless $runnings;
     die "crashed somewhere $compound" if grep { m/c/ } @ststrings;
-}
-
-sub file_simple_write_contents ($$) {
-    my ($real, $contents) = @_;
-    # $contents may be a coderef in which case we call it with the
-    #  filehandle to allow caller to fill in the file
-
-    unlink $real or $!==&ENOENT or die "$real $!";
-    my $flc= new IO::File "$real",'w' or die "$real $!";
-    if (ref $contents eq 'CODE') {
-        $contents->($flc);
-    } else {
-        print $flc $contents or die "$real $!";
-    }
-    close $flc or die "$real $!";
 }
 
 sub file_link_contents ($$) {

@@ -16,8 +16,11 @@ BEGIN {
                       augmentconfigdefaults
                       csreadconfig
                       getmethod
+                      postfork
+
                       $dbh_tests db_retry db_begin_work                      
 get_filecontents ensuredir get_filecontents_core_quiet system_checked
+                      nonempty
 
                       );
     %EXPORT_TAGS = ( );
@@ -154,6 +157,10 @@ sub db_retry ($$$;$$) {
     return $r;
 }
 
+sub postfork () {
+    $mjobdb->postfork();
+}
+
 #---------- script entrypoints ----------
 
 sub csreadconfig () {
@@ -197,6 +204,11 @@ sub ensuredir ($) {
 sub system_checked {
     $!=0; $?=0; system @_;
     die "@_: $? $!" if $? or $!;
+}
+
+sub nonempty ($) {
+    my ($v) = @_;
+    return defined($v) && length($v);
 }
 
 1;

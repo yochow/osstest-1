@@ -20,9 +20,13 @@ BEGIN {
                       tsreadconfig %r $flight $job $stash
 
 fail logm
+                      broken                      $logm_handle
+
 
 store_runvar get_runvar get_runvar_maybe get_runvar_default need_runvars
  flight_otherjob
+
+                      unique_incrementing_runvar 
 
                       target_cmd_root target_cmd target_cmd_build
                       target_cmd_output_root target_cmd_output
@@ -39,7 +43,13 @@ selecthost get_hostflags
                       get_host_property 
 
 power_state power_cycle power_cycle_time
-                      
+         
+                      get_stashed open_unique_stashfile
+
+host_reboot target_reboot target_reboot_hard            
+tcpconnect
+                      contents_make_cpio file_simple_write_contents
+ 
                       );
     %EXPORT_TAGS = ( );
 
@@ -212,6 +222,27 @@ sub flight_otherjob ($$) {
 
 sub otherflightjob ($) {
     return flight_otherjob($flight,$_[0]);
+}
+
+sub unique_incrementing_runvar ($$) {
+    my ($param,$start) = @_;
+    # must be run outside transaction
+    my $value;
+    db_retry($flight,'running', $dbh_tests,[qw(flights)], sub {
+	my $row= $dbh_tests->selectrow_arrayref(<<END,{}, $flight,$job,$param);
+            SELECT val FROM runvars WHERE flight=? AND job=? AND name=?
+END
+	$value= $row ? $row->[0] : $start;
+	$dbh_tests->do(<<END, undef, $flight, $job, $param);
+            DELETE FROM runvars
+		  WHERE flight=? AND job=? AND name=? AND synth='t'
+END
+	$dbh_tests->do(<<END, undef, $flight, $job, $param, $value+1);
+            INSERT INTO runvars VALUES (?,?,?,?,'t')
+END
+    });
+    logm("runvar increment: $param=$value");
+    return $value;
 }
 
 #---------- running commands eg on targets ----------
@@ -613,6 +644,144 @@ sub selecthost ($) {
 
 sub get_host_property ($$;$) {
     return $mhostdb->get_property(@_);
+}
+
+#---------- stashed files ----------
+
+sub open_unique_stashfile ($) {
+    my ($leafref) = @_;
+    my $dh;
+    for (;;) {
+        my $df= $$leafref;
+        $dh= new IO::File "$stash/$df", O_WRONLY|O_EXCL|O_CREAT;
+        last if $dh;
+        die "$df $!" unless $!==&EEXIST;
+        $$leafref .= '+';
+    }
+    return $dh;
+}
+
+sub get_stashed ($$) {
+    my ($param, $otherflightjob) = @_; 
+    # may be run outside transaction, or with flights locked
+    my ($oflight, $ojob) = otherflightjob($otherflightjob);
+    my $path= get_runvar($param, $otherflightjob);
+    die "$path $& " if
+        $path =~ m,[^-+._0-9a-zA-Z/], or
+        $path =~ m/\.\./;
+    return "$c{Stash}/$oflight/$ojob/$path";
+}
+
+#---------- other stuff ----------
+
+sub host_reboot ($) {
+    my ($ho) = @_;
+    target_reboot($ho);
+    poll_loop(40,2, 'reboot-confirm-booted', sub {
+        my $output;
+        if (!eval {
+            $output= target_cmd_output($ho,
+                "stat /dev/shm/osstest-confirm-booted 2>&1 >/dev/null ||:",
+                                       40);
+            1;
+        }) {
+            return $@;
+        }
+        return length($output) ? $output : undef;
+    });
+}
+
+sub target_reboot ($) {
+    my ($ho) = @_;
+    target_cmd_root($ho, "init 6");
+    target_await_down($ho, $timeout{RebootDown});
+    await_tcp(get_timeout($ho,'reboot',$timeout{RebootUp}), 5,$ho);
+}
+
+sub target_reboot_hard ($) {
+    my ($ho) = @_;
+    power_cycle($ho);
+    await_tcp(get_timeout($ho,'reboot',$timeout{HardRebootUp}), 5, $ho);
+}
+
+sub tcpconnect ($$) {
+    my ($host, $port) = @_;
+    my $h= new IO::Handle;
+    my $proto= getprotobyname('tcp');  die $! unless defined $proto;
+    my $fixedaddr= inet_aton($host);
+    my @addrs; my $atype;
+    if (defined $fixedaddr) {
+        @addrs= $fixedaddr;
+        $atype= AF_INET;
+    } else {
+        $!=0; $?=0; my @hi= gethostbyname($host);
+        @hi or die "host lookup failed for $host: $? $!";
+        $atype= $hi[2];
+        @addrs= @hi[4..$#hi];
+        die "connect $host:$port: no addresses for $host" unless @addrs;
+    }
+    foreach my $addr (@addrs) {
+        my $h= new IO::Handle;
+        my $sin; my $pfam; my $str;
+        if ($atype==AF_INET) {
+            $sin= sockaddr_in $port, $addr;
+            $pfam= PF_INET;
+            $str= inet_ntoa($addr);
+#        } elsif ($atype==AF_INET6) {
+#            $sin= sockaddr_in6 $port, $addr;
+#            $pfam= PF_INET6;
+#            $str= inet_ntoa6($addr);
+        } else {
+            warn "connect $host:$port: unknown AF $atype";
+            next;
+        }
+        if (!socket($h, $pfam, SOCK_STREAM, $proto)) {
+            warn "connect $host:$port: unsupported PF $pfam";
+            next;
+        }
+        if (!connect($h, $sin)) {
+            warn "connect $host:$port: [$str]: $!";
+            next;
+        }
+        return $h;
+
+    }
+    die "$host:$port all failed";
+}
+
+#---------- file handling ----------
+
+sub contents_make_cpio ($$$) {
+    my ($fh, $format, $srcdir) = @_;
+    my $child= fork;  defined $child or die $!;
+    if (!$child) {
+        postfork();
+        chdir($srcdir) or die $!;
+        open STDIN, 'find ! -name "*~" ! -name "#*" -type f -print0 |'
+            or die $!;
+        open STDOUT, '>&', $fh or die $!;
+        system "cpio -H$format -o --quiet -0 -R 1000:1000";
+        $? and die $?;
+        $!=0; close STDIN; die "$! $?" if $! or $?;
+        exit 0;
+    }
+    waitpid($child, 0) == $child or die $!;
+    $? and die $?;
+}
+
+sub file_simple_write_contents ($$) {
+    my ($real, $contents) = @_;
+    # $contents may be a coderef in which case we call it with the
+    #  filehandle to allow caller to fill in the file
+
+    unlink $real or $!==&ENOENT or die "$real $!";
+    my $flc= new IO::File "$real",'w' or die "$real $!";
+    if (ref $contents eq 'CODE') {
+        $contents->($flc);
+    } else {
+        print $flc $contents or die "$real $!";
+    }
+    close $flc or die "$real $!";
 }
 
 1;
