@@ -3,6 +3,7 @@
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
 tsreadconfig();
 

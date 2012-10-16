@@ -5,9 +5,9 @@ use Osstest;
 use DBI;
 use IO::File;
 use POSIX;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 our ($whhost) = @ARGV;
 $whhost ||= 'host';

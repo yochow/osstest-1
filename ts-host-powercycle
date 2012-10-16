@@ -3,9 +3,9 @@
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 my $only;
 if (@ARGV && $ARGV[0] =~ m/^--power=([01])$/) {

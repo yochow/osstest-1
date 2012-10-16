@@ -4,9 +4,10 @@ use strict qw(vars);
 use DBI;
 use Osstest;
 use POSIX;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
+
 our ($whhost) = @ARGV;
 $whhost ||= 'host';
 our $ho= selecthost($whhost);

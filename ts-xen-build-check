@@ -1,7 +1,9 @@
 #!/usr/bin/perl -w
 
 use Osstest;
-readconfig();
+use Osstest::TestSupport;
+
+tsreadconfig();
 
 die if @ARGV && $ARGV[0] =~ m/^-/;
 

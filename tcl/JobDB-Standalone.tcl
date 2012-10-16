@@ -44,7 +44,8 @@ proc set-flight {} {
 }
 
 proc spawn-step-begin {flight job ts stepnovar} {
-    variable stepcounter 0
+    variable stepcounter
+    if {![info exists stepcounter]} { set stepcounter 0 }
     upvar 1 $stepnovar stepno
     set stepno [incr stepcounter]
 }

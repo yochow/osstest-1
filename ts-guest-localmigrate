@@ -3,11 +3,11 @@
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
 our %timeout= qw(Migrate      400);
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 our $reps= 1;
 

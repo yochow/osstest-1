@@ -5,12 +5,12 @@ use DBI;
 use Osstest;
 use File::Path;
 use POSIX;
-use OsstestDebian;
+use Osstest::Debian;
+use Osstest::TestSupport;
 
 my $checkmode= 0;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 our @hos;
 

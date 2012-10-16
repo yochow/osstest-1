@@ -3,11 +3,12 @@
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
 our %timeout= qw(Migrate      400);
 
-readconfig();
-opendb_state();
+tsreadconfig();
+
 our $sho = selecthost($ARGV[0]);
 our $dho = selecthost($ARGV[1]);
 our $gho = selectguest($ARGV[2],$sho);

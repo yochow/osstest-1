@@ -5,9 +5,10 @@ use DBI;
 use Osstest;
 use File::Path;
 use POSIX;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
+
 our ($whhost) = @ARGV;
 $whhost ||= 'host';
 our $ho= selecthost($whhost);

@@ -3,9 +3,10 @@
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
+
 our ($ho,$gho) = ts_get_host_guest(@ARGV);
 
 sub destroy () {

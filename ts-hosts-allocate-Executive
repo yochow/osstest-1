@@ -7,8 +7,9 @@ use Data::Dumper;
 use POSIX;
 use JSON;
 use IO::Handle;
+use Osstest::TestSupport;
 
-readconfig();
+tsreadconfig();
 opendb_state();
 
 open DEBUG, ">/dev/null" or die $!;

@@ -1,12 +1,11 @@
 #!/usr/bin/perl -w
 
-
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 our ($srvhost,$clthost,@gns) = @ARGV;
 
