@@ -37,6 +37,9 @@ poll_loop
 
 selecthost get_hostflags
                       get_host_property 
+
+power_state power_cycle power_cycle_time
+                      
                       );
     %EXPORT_TAGS = ( );
 
@@ -520,6 +523,40 @@ sub poll_loop ($$$&) {
     logm("$what: ok. (${waited}s)");
 }
 
+#---------- power cycling ----------
+
+sub power_cycle_host_setup ($) {
+    my ($ho) = @_;
+    my $methobjs = [ ];
+    foreach my $meth (split /\;\s*/, $ho->{Power}) {
+        my (@meth) = split /\s+/, $meth;
+	eval ("use Osstest::PDU::$meth[0];".
+	      "push \@\$methobjs, Osstest::PDU::$meth[0]->new(\$ho, \@meth);")
+	    or die $@;
+    }
+    $ho->{PowerMethobjs} = $methobjs;
+}
+
+sub power_cycle_time ($) {
+    my ($ho) = @_;
+    return get_host_property($ho, 'power-cycle-time', 5);
+}
+
+sub power_cycle ($) {
+    my ($ho) = @_;
+    power_state($ho, 0);
+    sleep(power_cycle_time($ho));
+    power_state($ho, 1);
+}
+
+sub power_state ($$) {
+    my ($ho, $on) = @_;
+    logm("power: setting $on for $ho->{Name}");
+    foreach my $mo (@{ $ho->{PowerMethobjs} }) {
+	$mo->power_state($on);
+    }
+}
+
 #---------- host selection and properties ----------
 
 sub selecthost ($) {
@@ -549,11 +586,13 @@ sub selecthost ($) {
     $ho->{Properties} = $mhostdb->get_properties($name);
 
     $ho->{Ether}= get_host_property($ho,'ether');
-    $ho->{Power}= get_host_property($ho,'power-method');
     $ho->{DiskDevice}= get_host_property($ho,'disk-device');
     $ho->{DhcpLeases}= get_host_property($ho,'dhcp-leases',$c{Dhcp3Leases});
+    $ho->{Power}= get_host_property($ho,'power-method');
 
     $mhostdb->default_methods($ho);
+
+    power_cycle_host_setup($ho);
 
     my $ip_packed= gethostbyname($ho->{Fqdn});
     die "$ho->{Fqdn} ?" unless $ip_packed;

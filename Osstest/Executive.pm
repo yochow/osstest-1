@@ -86,7 +86,6 @@ BEGIN {
                       postfork
                        link_file_contents create_webfile
                       contents_make_cpio file_simple_write_contents
-                      power_state power_cycle power_cycle_time
                       setup_pxeboot setup_pxeboot_local
                       await_webspace_fetch_byleaf await_tcp
                       remote_perl_script_open remote_perl_script_done sshopts
@@ -1567,76 +1566,6 @@ sub guest_check_remus_ok {
     die "running on multiple hosts $compound" if $runnings > 1;
     die "not running anywhere $compound" unless $runnings;
     die "crashed somewhere $compound" if grep { m/c/ } @ststrings;
-}
-
-sub power_cycle_time ($) {
-    my ($ho) = @_;
-    return get_host_property($ho, 'power-cycle-time', 5);
-}
-
-sub power_cycle ($) {
-    my ($ho) = @_;
-    power_state($ho, 0);
-    sleep(power_cycle_time($ho));
-    power_state($ho, 1);
-}
-
-sub power_state_await ($$$) {
-    my ($sth, $want, $msg) = @_;
-    poll_loop(30,1, "power: $msg $want", sub {
-        $sth->execute();
-        my ($got) = $sth->fetchrow_array();
-        $sth->finish();
-        return undef if $got eq $want;
-        return "state=\"$got\"";
-    });
-}
-
-sub power_state ($$) {
-    my ($ho, $on) = @_;
-
-    foreach my $meth (split /\;\s*/, $ho->{Power}) {
-        my (@meth) = split /\s+/, $meth;
-        logm("power: setting $on for $ho->{Name} (@meth)");
-        no strict qw(refs);
-        &{"power_state__$meth[0]"}($ho,$on,@meth);
-    }
-}
-
-sub power_state__statedb {
-    my ($ho,$on, $methname,$asset) = @_;
-
-    my $want= (qw(s6 s1))[!!$on];
-
-    my $dbh_state= opendb_state();
-    my $sth= $dbh_state->prepare
-        ('SELECT current_power FROM control WHERE asset = ?');
-
-    my $current= $dbh_state->selectrow_array
-        ('SELECT desired_power FROM control WHERE asset = ?',
-         undef, $asset);
-    die "not found $asset" unless defined $current;
-
-    $sth->bind_param(1, $asset);
-    power_state_await($sth, $current, 'checking');
-
-    my $rows= $dbh_state->do
-        ('UPDATE control SET desired_power=? WHERE asset=?',
-         undef, $want, $asset);
-    die "$rows updating desired_power for $asset in statedb::control\n"
-        unless $rows==1;
-    
-    $sth->bind_param(1, $asset);
-    power_state_await($sth, $want, 'awaiting');
-    $sth->finish();
-
-    $dbh_state->disconnect();
-}
-
-sub power_state__msw {
-    my ($ho,$on, $methname,$pdu,$port) = @_;
-    my $onoff= $on ? "on" : "off";
-    system_checked("./pdu-msw $pdu $port $onoff");
 }
 
 sub file_simple_write_contents ($$) {
