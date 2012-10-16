@@ -93,7 +93,8 @@ sub tsreadconfig () {
 
     $flight= $mjobdb->current_flight();
     $job=    $ENV{'OSSTEST_JOB'};
-    die unless defined $flight and defined $job;
+    die "OSSTEST_FLIGHT and/or _JOB missing"
+	unless defined $flight and defined $job;
 
     my $now= time;  defined $now or die $!;
 

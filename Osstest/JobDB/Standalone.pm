@@ -64,6 +64,11 @@ sub job_ensure_started ($) { }
 
 sub host_check_allocated ($$) { #method
     my ($jd, $ho) = @_;
+
+    if ($ENV{'OSSTEST_HOST_REUSE'}) {
+	logm("OSSTEST_HOST_REUSE");
+	$ho->{SharedReady}= 1;
+    }
 }
 
 sub jobdb_postfork ($) { }
