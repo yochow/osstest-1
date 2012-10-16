@@ -1,6 +1,5 @@
 # things which may need sorting at the use site
 
-$c{TestHostDomain}= 'cam.xci-test.com';
 $c{GenEtherPrefix}= '5a:36:0e';
 $c{Dhcp3Leases}= '/var/lib/dhcp3/dhcpd.leases';
 
