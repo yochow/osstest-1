@@ -35,18 +35,19 @@ our $dbh_tests;
 
 our %c = qw(
 
-   JobDB Standalone
-   HostDB Static
+    JobDB Standalone
+    HostDB Static
 
-   Stash logs
-   Images images
-   Logs logs
-   Results results
+    Stash logs
+    Images images
+    Logs logs
+    Results results
 
-   DebianSuite squeeze
+    DebianSuite squeeze
+    DebianMirrorSubpath debian
 
-   TestHostKeypairPath id_rsa_osstest
-   HostProp_GenEtherBase 5e:36:0e:f5:95:9c
+    TestHostKeypairPath id_rsa_osstest
+    HostProp_GenEtherBase 5e:36:0e:f5:95:9c
 );
 
 #---------- general setup and config reading ----------
