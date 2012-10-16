@@ -10,6 +10,7 @@ use IO::File;
 use IO::Socket::INET;
 
 use Osstest;
+use Osstest::Logtailer;
 
 BEGIN {
     use Exporter ();
