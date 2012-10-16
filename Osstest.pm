@@ -48,6 +48,12 @@ our %c = qw(
 
     TestHostKeypairPath id_rsa_osstest
     HostProp_GenEtherBase 5e:36:0e:f5:95:9c
+
+    HostDiskBoot   300
+    HostDiskRoot 10000
+    HostDiskSwap  2000
+
+    Baud  115200
 );
 
 #---------- general setup and config reading ----------

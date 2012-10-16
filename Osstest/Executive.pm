@@ -90,6 +90,7 @@ augmentconfigdefaults(
     QueueResourcePollInterval => 60, # seconds
     QueuePlanUpdateInterval => 300, # seconds
     Repos => "$ENV{'HOME'}/repos",
+    BisectionRevisonGraphSize => '600x300',
 );
 
 #---------- configuration reader etc. ----------
