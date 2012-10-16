@@ -18,7 +18,7 @@ or
 
 Config settings relevant only to standalone mode
 
-JobDbStandaloneFilename
+JobDBStandaloneFilename
    Database file to use to record the "jobs" and their run variables.
    Default: ./standalone.db (sqlite3)
 
@@ -36,6 +36,15 @@ HostProp_DhcpWatchMethod
    leases <format> <source>
       where <format> is dhcp3
             <source> is filename (with slash) or <host>:<port>
+
+AuthorizedKeysFiles
+     :-separated list of files to concatenate into authorized_keys
+AuthorizedKeysAppend
+     literal text to add
+The keys in ~/.ssh/id_{rsa,dsa}.pub and ~/.ssh/authorized_keys
+(if they exist) are copied anyway.
+
+TestHostKeypairPath
 
 ========================================
 
@@ -64,8 +73,8 @@ WebspaceLog
 
 Other config settings which might be interesting
 
-JobDb
-HostDb
+JobDB
+HostDB
    Class name tails for the job and host databases.
 
 ExecutiveDbnamePat

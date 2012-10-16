@@ -21,7 +21,7 @@ BEGIN {
                       tsreadconfig %r $flight $job $stash
                       ts_get_host_guest
 
-                      fail broken logm $logm_handle
+                      fail broken logm $logm_handle get_filecontents
 
                       store_runvar get_runvar get_runvar_maybe
                       get_runvar_default need_runvars flight_otherjob
@@ -172,6 +172,18 @@ END
     });
     die "BROKEN: $m; ". ($affected>0 ? "marked $flight.$job $newst"
                          : "($flight.$job not marked $newst)");
+}
+
+sub get_filecontents ($;$) {
+    my ($path, $ifnoent) = @_;  # $ifnoent=undef => is error
+    my $data= get_filecontents_core_quiet($path);
+    if (!defined $data) {
+        die "$path does not exist" unless defined $ifnoent;
+        logm("read $path absent.");
+        return $ifnoent;
+    }
+    logm("read $path ok.");
+    return $data;
 }
 
 #---------- runvars ----------
@@ -601,9 +613,9 @@ sub dhcp_watch_host_setup ($) {
 }
 
 sub guest_check_ip ($) {
-    my ($ho) = @_;
+    my ($gho) = @_;
     guest_find_ether($gho);
-    $ho->{DhcpWatch}->guest_check_ip($ho);
+    $gho->{DhcpWatch}->check_ip($gho);
 }
 
 #---------- power cycling ----------

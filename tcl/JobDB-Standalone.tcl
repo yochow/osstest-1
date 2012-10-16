@@ -32,7 +32,7 @@ proc job-set-status {flight job st} {
 proc ensure-db-open {} {
     global c
     if {![catch { osstestdb version }]} { return }
-    sqlite3 osstestdb $c(JobDbStandaloneFilename)
+    sqlite3 osstestdb $c(JobDBStandaloneFilename)
 }
 
 proc set-flight {} {

@@ -114,7 +114,7 @@ sub host_check_allocated ($$) { #method
     die if $ho->{SharedOthers} && !$ho->{SharedReady};
 }
 
-sub postfork ($) { #method
+sub jobdb_postfork ($) { #method
     my ($jd) = @_;
     $dbh_tests->{InactiveDestroy}= 1;  undef $dbh_tests;
 }

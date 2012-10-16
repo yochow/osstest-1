@@ -6,6 +6,6 @@ use Osstest::TestSupport;
 
 tsreadconfig();
 
-my $ts = "./ts-hosts-allocate-$c{JobDb}";
+my $ts = "./ts-hosts-allocate-$c{JobDB}";
 exec $ts, @ARGV;
 die "$ts $!";

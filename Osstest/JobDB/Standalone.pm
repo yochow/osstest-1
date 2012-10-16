@@ -18,7 +18,7 @@ BEGIN {
 }
 
 augmentconfigdefaults(
-    JobDbStandaloneFilename => 'standalone.db',
+    JobDBStandaloneFilename => 'standalone.db',
 );
 
 sub new { return bless {}, $_[0]; };
@@ -27,7 +27,7 @@ sub begin_work { }
 sub dbfl_check { }
 
 sub open ($) {
-    my $dbi = "dbi:SQLite:dbname=$c{JobDbStandaloneFilename}";
+    my $dbi = "dbi:SQLite:dbname=$c{JobDBStandaloneFilename}";
     
     my $dbh= DBI->connect($dbi, '','', {
         AutoCommit => 1,
@@ -65,6 +65,6 @@ sub host_check_allocated ($$) { #method
     my ($jd, $ho) = @_;
 }
 
-sub postfork ($) { }
+sub jobdb_postfork ($) { }
 
 1;

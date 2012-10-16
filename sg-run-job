@@ -4,7 +4,7 @@
 
 source ./tcl/osstestlib.tcl
 readconfig
-source-method JobDb
+source-method JobDB
 
 proc run-job {job} {
     global jobinfo builds flight ok need_xen_hosts anyfailed

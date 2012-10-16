@@ -10,6 +10,15 @@ END
 
 set -e
 
+. cri-getconfig
+
+#---------- making the database with a flight and some jobs ----------
+
+jobdb=`getconfig JobDB`
+if [ "$jobdb" != Standalone ]; then
+	echo >&2 "jobdb is $jobdb!"; exit 1
+fi
+
 branch=xen-unstable
 xenbranch=xen-unstable
 
@@ -54,3 +63,10 @@ fi
 
 OSSTEST_FLIGHT=$flight \
 ./make-flight "$branch" "$xenbranch" play $buildflight >/dev/null
+
+#---------- ensuring we have a suitable rsa key ----------
+
+keypair=`getconfig TestHostKeypairPath`
+if ! test -f "$keypair"; then
+	ssh-keygen -t rsa -b 1024 -N '' -f "$keypair"
+fi

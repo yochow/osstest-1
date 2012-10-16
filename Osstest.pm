@@ -17,11 +17,9 @@ BEGIN {
                       csreadconfig
                       getmethod
                       postfork
-
                       $dbh_tests db_retry db_begin_work                      
-get_filecontents ensuredir get_filecontents_core_quiet system_checked
+                      ensuredir get_filecontents_core_quiet system_checked
                       nonempty
-
                       );
     %EXPORT_TAGS = ( );
 
@@ -37,15 +35,15 @@ our $dbh_tests;
 
 our %c = qw(
 
-   JobDb Standalone
-   HostDb Static
+   JobDB Standalone
+   HostDB Static
 
    Stash logs
    Images images
    Logs logs
    Results results
 
-   HostProp_DhcpWatchMethod leases dhcp3 /var/lib/dhcp3/dhcpd.leases
+   TestHostKeypairPath id_rsa_osstest
 );
 
 #---------- general setup and config reading ----------
@@ -66,6 +64,12 @@ sub readglobalconfig () {
     return if $readglobalconfig_done;
     $readglobalconfig_done=1;
 
+    $c{HostProp_DhcpWatchMethod} = 'leases dhcp3 /var/lib/dhcp3/dhcpd.leases';
+    $c{AuthorizedKeysFiles} = '';
+    $c{AuthorizedKeysAppend} = '';
+
+    my $cfgvar_re = '[A-Z][0-9a-zA-Z-_]*';
+
     my $cfgfile = $ENV{'OSSTEST_CONFIG'} || "$ENV{'HOME'}/.osstest/config";
     if (!open C, '<', "$cfgfile") {
 	die "$cfgfile $!" unless $!==&ENOENT;
@@ -76,9 +80,18 @@ sub readglobalconfig () {
 	    s/\s+$//;
 	    next if m/^\#/;
 	    next unless m/\S/;
-	    if (m/^([A-Z][0-9a-zA-Z-_]*)\s+(\S.*)$/) {
+	    if (m/^($cfgvar_re)\s+(\S.*)$/) {
 		$c{$1} = $2;
-	    } elsif (m/^([A-Z][0-9a-zA-Z-_]*)=(.*)$/) {
+	    } elsif (m/^($cfgvar_re)=\s*\<\<\'(.*)\'\s*$/) {
+		my ($vn,$delim) = ($1,$2);
+		my $val = '';
+		$!=0; while (<C>) {
+		    last if $_ eq "$delim\n";
+		    $val .= $_;
+		}
+		die $! unless length $_;
+		$c{$vn} = $val;
+	    } elsif (m/^($cfgvar_re)=(.*)$/) {
 		eval "\$c{$1} = ( $2 ); 1;" or die $@;
 	    } else {
 		die "bad syntax";
@@ -97,8 +110,8 @@ sub readglobalconfig () {
     # 2. <~/path> </path> <./path> are replaced with contents of specified file
     # 3. <[> and <]> are replaced with < and >
 
-    $mjobdb = getmethod("Osstest::JobDB::$c{JobDb}");
-    $mhostdb = getmethod("Osstest::HostDB::$c{HostDb}");
+    $mjobdb = getmethod("Osstest::JobDB::$c{JobDB}");
+    $mhostdb = getmethod("Osstest::HostDB::$c{HostDB}");
 
     $c{TestHostDomain} ||= $c{DnsDomain};
 }
@@ -159,7 +172,7 @@ sub db_retry ($$$;$$) {
     return $r;
 }
 
-sub postfork () {
+sub jobdb_postfork () {
     $mjobdb->postfork();
 }
 
@@ -183,18 +196,6 @@ sub get_filecontents_core_quiet ($) { # ENOENT => undef
     my $data= <GFC>;
     defined $data or die "$path $!";
     close GFC or die "$path $!";
-    return $data;
-}
-
-sub get_filecontents ($;$) {
-    my ($path, $ifnoent) = @_;  # $ifnoent=undef => is error
-    my $data= get_filecontents_core_quiet($path);
-    if (!defined $data) {
-        die "$path does not exist" unless defined $ifnoent;
-        logm("read $path absent.");
-        return $ifnoent;
-    }
-    logm("read $path ok.");
     return $data;
 }
 

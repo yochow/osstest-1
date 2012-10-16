@@ -1,15 +1,8 @@
 # -*- bash -*-
 
-umask 002
+. cri-getconfig
 
-getconfig () {
-        perl -e '
-                use Osstest;
-                readglobalconfig();
-die "'$1' caps err" if "'$1'" =~ m/A-Z/;
-                print $c{"'$1'"} or die $!;
-        '
-}
+umask 002
 
 repo_tree_rev_fetch_git () {
 	local treename=$1
