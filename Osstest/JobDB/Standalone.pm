@@ -67,4 +67,9 @@ sub host_check_allocated ($$) { #method
 
 sub jobdb_postfork ($) { }
 
+sub gen_ether_offset ($$) { #method
+    my ($mo,$ho,$fl) = @_;
+    return $< & 0xffff;
+}
+
 1;

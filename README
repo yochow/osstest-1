@@ -46,6 +46,10 @@ The keys in ~/.ssh/id_{rsa,dsa}.pub and ~/.ssh/authorized_keys
 
 TestHostKeypairPath
 
+HostProp_GenEtherPrefixBase 5e:36:0e:f5
+# 	                               :00:01 guest number in job appended
+#            in standalone jobdb, ^^^^^ xor'd with low 16 bits of your uid
+
 ========================================
 
 General config settings
@@ -62,7 +66,6 @@ Logs
 Host-specific config settigs
 
 NetNameServers
-GenEtherPrefix
 
 WebspaceFile
 WebspaceUrl

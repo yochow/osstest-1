@@ -119,4 +119,9 @@ sub jobdb_postfork ($) { #method
     $dbh_tests->{InactiveDestroy}= 1;  undef $dbh_tests;
 }
 
+sub gen_ether_offset ($$) { #method
+    my ($mo,$ho,$fl) = @_;
+    return $flight & 0xff;
+}
+
 1;

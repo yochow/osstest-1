@@ -1090,14 +1090,20 @@ sub target_choose_vg ($$) {
     return $bestvg;
 }
 
-sub select_ether ($) {
-    my ($vn) = @_;
+sub select_ether ($$) {
+    my ($ho,$vn) = @_;
     # must be run outside transaction
     my $ether= $r{$vn};
     return $ether if defined $ether;
-    my $prefix= sprintf "%s:%02x", $c{GenEtherPrefix}, $flight & 0xff;
 
     db_retry($flight,'running', $dbh_tests,[qw(flights)], sub {
+	my $prefix = get_host_property($ho, 'gen-ether-base');
+	$prefix =~ m/^(\w+:\w+):(\w+):(\w+)$/ or die "$prefix ?";
+	my $lhs = $1;
+	my $pv = (hex($1)<<8) | (hex($2));
+	$pv ^= $mjobdb->gen_ether_offset($ho,$flight);
+	$prefix = sprintf "%s:%02x:%02x", $lhs, ($pv>>8)&0xff, $pv&0xff;
+
         my $previous= $dbh_tests->selectrow_array(<<END, {}, $flight);
             SELECT max(val) FROM runvars WHERE flight=?
                 AND name LIKE E'%\\_ether'
@@ -1151,7 +1157,7 @@ sub prepareguest ($$$$$$) {
     # If we are passing through a nic, use its mac address not a generated one
     my $ptnichostident= $r{"${gn}_pcipassthrough_nic"};
     if (!$ptnichostident) {
-        select_ether("${gn}_ether");
+        select_ether($ho,"${gn}_ether");
     } else {
         my $ptnicho= selecthost($ptnichostident);
         my $ptnicinfo= get_host_property($ptnicho,'pcipassthrough nic');

@@ -44,6 +44,7 @@ our %c = qw(
    Results results
 
    TestHostKeypairPath id_rsa_osstest
+   HostProp_GenEtherBase 5e:36:0e:f5:95:9c
 );
 
 #---------- general setup and config reading ----------
@@ -114,6 +115,17 @@ sub readglobalconfig () {
     $mhostdb = getmethod("Osstest::HostDB::$c{HostDB}");
 
     $c{TestHostDomain} ||= $c{DnsDomain};
+
+    $c{WebspaceFile} ||= "$ENV{'HOME'}/public_html/";
+    if (!$c{WebspaceUrl}) {
+	my $nodename = `uname -n` or die $!;
+	my $whoami = `whoami` or die $!;
+	chomp($nodename) or die;
+	chomp($whoami) or die;
+	$c{WebspaceUrl} = "http://$nodename.$c{DnsDomain}/~$whoami/";
+    }
+    $c{WebspaceCommon} ||= 'osstest/';
+    $c{WebspaceLog} ||= '/var/log/apache2/access.log';
 }
 
 sub augmentconfigdefaults {

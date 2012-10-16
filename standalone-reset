@@ -70,3 +70,15 @@ keypair=`getconfig TestHostKeypairPath`
 if ! test -f "$keypair"; then
 	ssh-keygen -t rsa -b 1024 -N '' -f "$keypair"
 fi
+
+#---------- ensuring we can visit our webspace ----------
+
+wsfile=`getconfig WebspaceFile``getconfig WebspaceCommon`
+wsurl=`getconfig WebspaceUrl``getconfig WebspaceCommon`
+
+if ! test -d "$wsfile"; then mkdir "$wsfile"; fi
+
+head -c10 /dev/urandom >${wsfile}standalone-test
+curl -sS >standalone-test.tmp ${wsurl}standalone-test
+cmp ${wsfile}standalone-test standalone-test.tmp
+rm -f ${wsfile}standalone-test standalone-test.tmp
