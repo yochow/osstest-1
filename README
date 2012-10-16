@@ -9,6 +9,10 @@ Config settings are
    Name value
 or
    Name=  perl expression
+or
+   Name= <<'END'
+   blah blah
+   END
 
 ========================================
 
@@ -27,6 +31,11 @@ HostProp_<property>
 HostProp_<host>_<property>
 HostFlags                flag,flag,flag,...
 HostFlags_<host>         flag,!flag,!flag,flag...
+
+HostProp_DhcpWatchMethod
+   leases <format> <source>
+      where <format> is dhcp3
+            <source> is filename (with slash) or <host>:<port>
 
 ========================================
 

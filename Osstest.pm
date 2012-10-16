@@ -44,6 +44,8 @@ our %c = qw(
    Images images
    Logs logs
    Results results
+
+   HostProp_DhcpWatchMethod leases dhcp3 /var/lib/dhcp3/dhcpd.leases
 );
 
 #---------- general setup and config reading ----------

@@ -591,16 +591,28 @@ sub poll_loop ($$$&) {
     logm("$what: ok. (${waited}s)");
 }
 
+#---------- dhcp watching ----------
+
+sub dhcp_watch_host_setup ($) {
+    my ($ho) = @_;
+
+    my $meth = get_host_property($ho,'dhcp-watch-method',undef);
+    $ho->{DhcpWatch} = get_host_method_object($ho, 'DhcpWatch', $meth);
+}
+
+sub guest_check_ip ($) {
+    my ($ho) = @_;
+    guest_find_ether($gho);
+    $ho->{DhcpWatch}->guest_check_ip($ho);
+}
+
 #---------- power cycling ----------
 
 sub power_cycle_host_setup ($) {
     my ($ho) = @_;
     my $methobjs = [ ];
     foreach my $meth (split /\;\s*/, $ho->{Power}) {
-        my (@meth) = split /\s+/, $meth;
-	eval ("use Osstest::PDU::$meth[0];".
-	      "push \@\$methobjs, Osstest::PDU::$meth[0]->new(\$ho, \@meth);")
-	    or die $@;
+	push @$methobjs, get_host_method_object($ho,'PDU',$meth);
     }
     $ho->{PowerMethobjs} = $methobjs;
 }
@@ -655,11 +667,11 @@ sub selecthost ($) {
 
     $ho->{Ether}= get_host_property($ho,'ether');
     $ho->{DiskDevice}= get_host_property($ho,'disk-device');
-    $ho->{DhcpLeases}= get_host_property($ho,'dhcp-leases',$c{Dhcp3Leases});
     $ho->{Power}= get_host_property($ho,'power-method');
 
     $mhostdb->default_methods($ho);
 
+    dhcp_watch_host_setup($ho);
     power_cycle_host_setup($ho);
 
     my $ip_packed= gethostbyname($ho->{Fqdn});
@@ -681,6 +693,16 @@ sub selecthost ($) {
 
 sub get_host_property ($$;$) {
     return $mhostdb->get_property(@_);
+}
+
+sub get_host_method_object ($$$) {
+    my ($ho, $kind, $meth) = @_;
+    my (@meth) = split /\s+/, $meth;
+    my $mo;
+    eval ("use Osstest::${kind}::$meth[0];".
+	  "\$mo = Osstest::${kind}::$meth[0]->new(\$ho, \@meth);")
+	or die "get_host_method_object $kind $meth $@";
+    return $mo;
 }
 
 #---------- stashed files ----------
@@ -1013,144 +1035,6 @@ sub report_once ($$$) {
     $ho->{$k}= $msg;
 }
 
-sub guest_check_ip ($) {
-    my ($gho) = @_;
-
-    guest_find_ether($gho);
-
-    my $leases;
-    my $leasesfn = $gho->{DhcpLeases} || $gho->{Host}{DhcpLeases};
-
-    if ($leasesfn =~ m,/,) {
-	$leases= new IO::File $leasesfn, 'r';
-	if (!defined $leases) { return "open $leasesfn: $!"; }
-    } else {
-	$leases= new IO::Socket::INET(PeerAddr => $leasesfn);
-    }
-
-    my $lstash= "dhcpleases-$gho->{Guest}";
-    my $inlease;
-    my $props;
-    my $best;
-    my @warns;
-
-    my $copy= new IO::File "$stash/$lstash.new", 'w';
-    $copy or die "$lstash.new $!";
-
-    my $saveas= sub {
-        my ($fn,$keep) = @_;
-
-        while (<$leases>) { print $copy $_ or die $!; }
-        die $! unless $leases->eof;
-
-        my $rename= sub {
-            my ($src,$dst) = @_;
-            rename "$stash/$src", "$stash/$dst"
-                or $!==&ENOENT
-                or die "rename $fn.$keep $!";
-        };
-        while (--$keep>0) {
-            $rename->("$fn.$keep", "$fn.".($keep+1));
-        }
-        if ($keep>=0) {
-            die if $keep;
-            $rename->("$fn", "$fn.$keep");
-        }
-        $copy->close();
-        rename "$stash/$lstash.new", "$stash/$fn" or die "$lstash.new $fn $!";
-        logm("warning: $_") foreach grep { defined } @warns[0..5];
-        logm("$fn: rotated and stashed current leases");
-    };
-
-    my $badleases= sub {
-        my ($m) = @_;
-        $m= "$leasesfn:$.: unknown syntax";
-        $saveas->("$lstash.bad", 7);
-        return $m;
-    };
-
-    while (<$leases>) {
-        print $copy $_ or die $!;
-
-        chomp; s/^\s+//; s/\s+$//;
-        next if m/^\#/;  next unless m/\S/;
-        if (m/^lease\s+([0-9.]+)\s+\{$/) {
-            return $badleases->("lease inside lease") if defined $inlease;
-            $inlease= $1;
-            $props= { };
-            next;
-        }
-        if (!m/^\}$/) {
-            s/^( hardware \s+ ethernet |
-                 binding \s+ state
-               ) \s+//x
-               or
-            s/^( [-a-z0-9]+
-               ) \s+//x
-               or
-              return $badleases->("unknown syntax");
-            my $prop= $1;
-            s/\s*\;$// or return $badleases->("missing semicolon");
-            $props->{$prop}= $_;
-            next;
-        }
-        return $badleases->("end lease not inside lease")
-            unless defined $inlease;
-
-        $props->{' addr'}= $inlease;
-        undef $inlease;
-
-        # got a lease in $props
-
-        # ignore old leases
-        next if exists $props->{'binding state'} &&
-            lc $props->{'binding state'} ne 'active';
-
-        # ignore leases we don't understand
-        my @missing= grep { !defined $props->{$_} }
-            ('binding state', 'hardware ethernet', 'ends');
-        if (@missing) {
-            push @warns, "$leasesfn:$.: lease without \`$_'"
-                foreach @missing;
-            next;
-        }
-
-        # ignore leases for other hosts
-        next unless lc $props->{'hardware ethernet'} eq lc $gho->{Ether};
-
-        $props->{' ends'}= $props->{'ends'};
-        $props->{' ends'} =~
-            s/^[0-6]\s+(\S+)\s+(\d+)\:(\d+\:\d+)$/
-                sprintf "%s %02d:%s", $1,$2,$3 /e
-                or return $badleases->("unexpected syntax for ends");
-
-        next if $best &&
-            $best->{' ends'} gt $props->{' ends'};
-        $best= $props;
-    }
-
-    if (!$best) {
-        $saveas->("$lstash.nolease", 3);
-        return "no active lease";
-    }
-    $gho->{Ip}= $best->{' addr'};
-
-    report_once($gho, 'guest_check_ip', 
-		"guest $gho->{Name}: $gho->{Ether} $gho->{Ip}");
-    return undef;
-}
-
-sub guest_editconfig ($$$) {
-    my ($ho, $gho, $code) = @_;
-    target_editfile_root($ho, "$gho->{CfgPath}", sub {
-        while (<::EI>) {
-            $code->();
-            print ::EO or die $!;
-        }
-        die $! if ::EI->error;
-    });
-}
-
 sub guest_await_reboot ($$$) {
     my ($ho,$gho, $timeout) = @_;
     poll_loop($timeout, 30, "await reboot request from $gho->{Guest}", sub {
@@ -1377,6 +1261,17 @@ END
 END
 
     return $cfgpath;
+}
+
+sub guest_editconfig ($$$) {
+    my ($ho, $gho, $code) = @_;
+    target_editfile_root($ho, "$gho->{CfgPath}", sub {
+        while (<::EI>) {
+            $code->();
+            print ::EO or die $!;
+        }
+        die $! if ::EI->error;
+    });
 }
 
 sub guest_check_via_ssh ($) {
