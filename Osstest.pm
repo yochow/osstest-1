@@ -43,6 +43,8 @@ our %c = qw(
    Logs logs
    Results results
 
+   DebianSuite squeeze
+
    TestHostKeypairPath id_rsa_osstest
    HostProp_GenEtherBase 5e:36:0e:f5:95:9c
 );
@@ -83,14 +85,15 @@ sub readglobalconfig () {
 	    next unless m/\S/;
 	    if (m/^($cfgvar_re)\s+(\S.*)$/) {
 		$c{$1} = $2;
-	    } elsif (m/^($cfgvar_re)=\s*\<\<\'(.*)\'\s*$/) {
-		my ($vn,$delim) = ($1,$2);
+	    } elsif (m/^($cfgvar_re)=\s*\<\<(\')(.*)\2\s*$/) {
+		my ($vn,$qu,$delim) = ($1,$2,$3);
 		my $val = '';
 		$!=0; while (<C>) {
 		    last if $_ eq "$delim\n";
 		    $val .= $_;
 		}
 		die $! unless length $_;
+		if ($qu eq '') { eval "\$val = ($val); 1;" or die $@; }
 		$c{$vn} = $val;
 	    } elsif (m/^($cfgvar_re)=(.*)$/) {
 		eval "\$c{$1} = ( $2 ); 1;" or die $@;
@@ -128,6 +131,7 @@ sub readglobalconfig () {
     $c{WebspaceLog} ||= '/var/log/apache2/access.log';
 
     $c{OverlayLocal} ||= "overlay-local";
+    $c{GuestDebianSuite} ||= $c{DebianSuite};
 }
 
 sub augmentconfigdefaults {

@@ -89,6 +89,7 @@ augmentconfigdefaults(
     QueueThoughtsTimeout => 30, # seconds
     QueueResourcePollInterval => 60, # seconds
     QueuePlanUpdateInterval => 300, # seconds
+    Repos => "$ENV{'HOME'}/repos",
 );
 
 #---------- configuration reader etc. ----------

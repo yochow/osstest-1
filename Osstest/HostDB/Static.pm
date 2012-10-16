@@ -24,14 +24,21 @@ sub get_properties ($$) { #method
     my ($hd, $name) = @_;
     my $hp = { };
     my $k;
+    my $sp = sub {
+	my ($pn,$v) = @_;
+	$hp->{$pn} = {
+	    name => $pn,
+	    val => $v,
+	};
+    };
     foreach $k (keys %c) {
 	next unless $k =~ m/^HostProp_([A-Z].*)$/;
-	$hp->{$1} = $c{$k};
+	$sp->($1, $c{$k});
     }
     foreach $k (keys %c) {
 	next unless $k =~ m/^HostProp_([a-z0-9]+)_(.*)$/;
 	next unless $1 eq $name;
-	$hp->{$2} = $c{$k};
+	$sp->($2, $c{$k});
     }
     return $hp;
 }
@@ -44,9 +51,9 @@ sub get_property ($$$;$) { #method
 	$prop = $`.ucfirst $'; #';
     }
 
-    my $val = $ho->{Properties}{$prop};
-    return $defval unless defined $val;
-    return $val;
+    my $row = $ho->{Properties}{$prop};
+    return $defval unless $row && defined $row->{val};
+    return $row->{val};
 }
 
 sub get_flags ($$) { #method

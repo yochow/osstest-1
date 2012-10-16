@@ -672,7 +672,7 @@ sub selecthost ($) {
         TcpCheckPort => 22,
         Fqdn => $fqdn,
         Info => [],
-        Suite => get_runvar_default("${ident}_suite",$job,$c{Suite}),
+        Suite => get_runvar_default("${ident}_suite",$job,$c{DebianSuite}),
     };
 
     $ho->{Properties} = $mhostdb->get_properties($name);

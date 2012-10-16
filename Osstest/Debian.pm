@@ -308,7 +308,7 @@ sub preseed_create ($$;@) {
     my $knownhosts= '';
 
     my $disk= $xopts{DiskDevice} || '/dev/sda';
-    my $suite= $xopts{Suite} || $c{Suite};
+    my $suite= $xopts{Suite} || $c{DebianSuite};
 
     my $hostsq= $dbh_tests->prepare(<<END);
         SELECT val FROM runvars
@@ -520,7 +520,7 @@ END
             (join ' && ', @{ $preseed_cmds{$di_key} }). "\n";
     }
 
-    $preseed_file .= "$c{Preseed}\n";
+    $preseed_file .= "$c{DebianPreseed}\n";
 
     foreach my $prop (values %{ $xopts{Properties} }) {
         next unless $prop->{name} =~ m/^preseed $suite /;

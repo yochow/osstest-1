@@ -10,7 +10,7 @@ Config settings are
 or
    Name=  perl expression
 or
-   Name= <<'END'
+   Name= <<'END'    or <<END
    blah blah
    END
 
@@ -60,6 +60,11 @@ DnsDomain
 Stash
 Images
 Logs
+
+DebianSuite
+GuestDebianSuite   defaults to DebianSuite
+
+DebianPreseed      added to existing preseed file
 
 ========================================
 
