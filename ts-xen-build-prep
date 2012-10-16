@@ -225,5 +225,6 @@ cacheing_git_mount();
 cacheing_git_install();
 ccache_setup();
 lvextend_stage2();
-resource_shared_mark_ready($ho->{Ident}, $ho->{Name},
-                           "build-".$ho->{Suite}."-".$r{arch});
+
+$mjobdb->jobdb_resource_shared_mark_ready
+   ($ho->{Ident}, $ho->{Name}, "build-".$ho->{Suite}."-".$r{arch});

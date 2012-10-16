@@ -124,4 +124,9 @@ sub gen_ether_offset ($$) { #method
     return $flight & 0xff;
 }
 
+sub jobdb_resource_shared_mark_ready { #method
+    my $mo = shift @_;
+    resource_shared_mark_ready(@_);
+}
+
 1;
