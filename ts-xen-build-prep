@@ -148,7 +148,7 @@ END
 
 sub cacheing_git_mount () {
     my $cache= $c{GitCache};
-    return unless defined $cache;
+    return unless $cache;
 
     if ($cache =~ m,/$,) {
         my $cachelocal= $c{GitCacheLocal};
@@ -208,6 +208,8 @@ END
 }
 
 sub cacheing_git_install () {
+    my $cache = $c{GitCache};
+    return unless $cache;
     target_install_packages($ho, qw(chiark-utils-bin));
     target_putfile_root($ho,10, "cacheing-git","/usr/local/bin/git", "-p");
 }

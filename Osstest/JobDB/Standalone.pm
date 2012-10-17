@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use Osstest;
+use Osstest::TestSupport;
 
 BEGIN {
     use Exporter ();
