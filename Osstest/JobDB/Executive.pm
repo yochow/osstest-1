@@ -159,4 +159,12 @@ END
     }
 }
 
+sub jobdb_flight_started_for_log_capture ($$) { #method
+    my ($mo, $flight) = @_;
+    my $started= $dbh_tests->selectrow_array(<<END);
+        SELECT started FROM flights WHERE flight=$flight
+END
+    return $started;
+}
+
 1;

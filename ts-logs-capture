@@ -61,9 +61,8 @@ sub fetch_logs_serial () {
     my $logpat= $c{SerialLogPattern};
     my $vn;
 
-    my $started= $dbh_tests->selectrow_array(<<END);
-        SELECT started FROM flights WHERE flight=$flight
-END
+    my $started= $mjobdb->jobdb_flight_started_for_log_capture($flight);
+
     $logpat =~ s/\%(\w*)\%/
         !length $1 ? '' :
         ($vn=$1) eq 'host' ? $ho->{Name} :
