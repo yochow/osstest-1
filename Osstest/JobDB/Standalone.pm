@@ -92,4 +92,9 @@ sub jobdb_enable_log_capture ($) { #method
     return $c{CaptureLogs} || 0;
 }
 
+sub jobdb_db_glob ($) { #method
+    my ($mo,$str) = @_;
+    return "GLOB '$str'";
+}
+
 1;

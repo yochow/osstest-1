@@ -172,4 +172,14 @@ sub jobdb_enable_log_capture ($) { #method
     return 1;
 }
 
+sub jobdb_db_glob ($$) { #method
+    my ($mo, $str) = @_;
+    # $str must be a glob pattern; returns a glob clause
+    # [...] and ? in the glob are not supported
+    # ' and \ may not occur either
+    $str =~ s/\*/%/;
+    $str =~ s/_/\\_/g;
+    return "LIKE E'$str'";
+}
+
 1;
