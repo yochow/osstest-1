@@ -84,7 +84,7 @@ sub readglobalconfig () {
 
     my $cfgvar_re = '[A-Z][0-9a-zA-Z-_]*';
 
-    my $cfgfile = $ENV{'OSSTEST_CONFIG'} || "$ENV{'HOME'}/.osstest/config";
+    my $cfgfile = $ENV{'OSSTEST_CONFIG'} || "$ENV{'HOME'}/.xen-osstest/config";
     if (!open C, '<', "$cfgfile") {
 	die "$cfgfile $!" unless $!==&ENOENT;
     } else {
@@ -118,7 +118,7 @@ sub readglobalconfig () {
     # dynamic default config settings
     $c{ExecutiveDbnamePat} ||= "dbname=<dbname>;user=<whoami>;".
 	"host=<dbname>.db.$c{DnsDomain};".
-	"password=<~/.osstest/db-password>"
+	"password=<~/.xen-osstest/db-password>"
 	if defined $c{DnsDomain};
     # 1. <\w+> is replaced with variables:
     #         <dbname>    database name

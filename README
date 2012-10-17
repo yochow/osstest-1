@@ -6,7 +6,7 @@ To run osstest in standalone mode:
      libdbi-perl libdbd-sqlite3-perl
 
  - Write a config file
-    ~/.osstest/config
+    ~/.xen-osstest/config
    See below.
 
  - Select the "branch" and job to reproduce.  By default the system
@@ -31,7 +31,7 @@ To run osstest in standalone mode:
 
 ========================================
 
-Format of config file ~/.osstest/config (you may set OSSTEST_CONFIG to
+Format of config file ~/.xen-osstest/config (you may set OSSTEST_CONFIG to
 point to a different file):
 
 Lines containing:
