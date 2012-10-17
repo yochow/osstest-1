@@ -167,4 +167,9 @@ END
     return $started;
 }
 
+sub jobdb_enable_log_capture ($) { #method
+    my ($mo) = @_;
+    return 1;
+}
+
 1;

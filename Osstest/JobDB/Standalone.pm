@@ -88,4 +88,8 @@ sub jobdb_flight_started_for_log_capture ($$) { #method
     return time - 1; # just the most recent serial log then
 }
 
+sub jobdb_enable_log_capture ($) { #method
+    return $c{CaptureLogs} || 0;
+}
+
 1;

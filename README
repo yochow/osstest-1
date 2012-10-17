@@ -86,6 +86,9 @@ JobDBStandaloneFilename
    Database file to use to record the "jobs" and their run variables.
    Default: ./standalone.db (sqlite3)
 
+CaptureLogs
+   boolean, set to 1 to enable ts-logs-capture
+
 TestHostDomain            defaults to DnsDomain
 
 TestHost_<ident>      where eg <ident> = "host"

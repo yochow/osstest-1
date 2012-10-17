@@ -9,6 +9,11 @@ use Osstest::TestSupport;
 
 tsreadconfig();
 
+if (!$mjobdb->jobdb_enable_log_capture) {
+    logm("log capturing not enabled");
+    exit 0;
+}
+
 our ($whhost) = @ARGV;
 $whhost ||= 'host';
 our $ho= selecthost($whhost);
