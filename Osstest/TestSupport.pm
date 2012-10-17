@@ -1081,13 +1081,15 @@ sub select_ether ($$) {
 	my $prefix = get_host_property($ho, 'gen-ether-prefix-base');
 	$prefix =~ m/^(\w+:\w+):(\w+):(\w+)$/ or die "$prefix ?";
 	my $lhs = $1;
-	my $pv = (hex($1)<<8) | (hex($2));
+	my $pv = (hex($2)<<8) | (hex($3));
 	$pv ^= $mjobdb->gen_ether_offset($ho,$flight);
 	$prefix = sprintf "%s:%02x:%02x", $lhs, ($pv>>8)&0xff, $pv&0xff;
 
+	my $glob_ether = $mjobdb->jobdb_db_glob('*_ether');
+
         my $previous= $dbh_tests->selectrow_array(<<END, {}, $flight);
             SELECT max(val) FROM runvars WHERE flight=?
-                AND name LIKE E'%\\_ether'
+                AND name $glob_ether
                 AND val LIKE '$prefix:%'
 END
         if (defined $previous) {
@@ -1106,7 +1108,7 @@ END
 END
         my $chkrow= $dbh_tests->selectrow_hashref(<<END,{}, $flight);
 	    SELECT val, count(*) FROM runvars WHERE flight=?
-                AND name LIKE E'%\\_ether'
+                AND name $glob_ether
                 AND val LIKE '$prefix:%'
 		GROUP BY val
 		HAVING count(*) <> 1
