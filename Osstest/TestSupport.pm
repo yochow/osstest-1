@@ -664,6 +664,9 @@ sub selecthost ($) {
     dhcp_watch_host_setup($ho);
     power_cycle_host_setup($ho);
 
+    my $serialmeth = get_host_property($ho,'serial','noop');
+    $ho->{SerialMethobj} = get_host_method_object($ho,'Serial',$serialmeth);
+
     my $ip_packed= gethostbyname($ho->{Fqdn});
     die "$ho->{Fqdn} ?" unless $ip_packed;
     $ho->{Ip}= inet_ntoa($ip_packed);
