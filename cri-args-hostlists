@@ -1,5 +1,7 @@
 #
 
+export OSSTEST_CONFIG=production-config
+
 check_stop () {
 	for stop_dir in '' $HOME/testing.git/; do
 		if test -f $stop_dir${1}stop; then

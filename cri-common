@@ -4,8 +4,6 @@
 
 umask 002
 
-export OSSTEST_CONFIG=production-config
-
 repo_tree_rev_fetch_git () {
 	local treename=$1
 	local remoteurl=$2

@@ -42,8 +42,8 @@ sub open ($) {
 sub flight_create ($$$) {
     my ($obj, $branch, $intended) = @_;
     my $fl = $ENV{'OSSTEST_FLIGHT'};
+    $fl = 'standalone' unless defined $fl && length $fl;
     die "flight names may not contain ." if $fl =~ m/\./;
-    $fl = 'standalone' if !length $fl;
     foreach my $table (qw(runvars jobs flights)) {
 	$dbh_tests->do(<<END, {}, $fl)
 	     DELETE FROM $table WHERE flight = ?
