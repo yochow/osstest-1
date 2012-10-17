@@ -47,7 +47,7 @@ our %c = qw(
     DebianMirrorSubpath debian
 
     TestHostKeypairPath id_rsa_osstest
-    HostProp_GenEtherBase 5e:36:0e:f5:95:9c
+    HostProp_GenEtherPrefixBase 5e:36:0e:f5
 
     HostDiskBoot   300
     HostDiskRoot 10000

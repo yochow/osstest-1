@@ -1075,7 +1075,7 @@ sub select_ether ($$) {
     return $ether if defined $ether;
 
     db_retry($flight,'running', $dbh_tests,[qw(flights)], sub {
-	my $prefix = get_host_property($ho, 'gen-ether-base');
+	my $prefix = get_host_property($ho, 'gen-ether-prefix-base');
 	$prefix =~ m/^(\w+:\w+):(\w+):(\w+)$/ or die "$prefix ?";
 	my $lhs = $1;
 	my $pv = (hex($1)<<8) | (hex($2));
