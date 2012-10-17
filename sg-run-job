@@ -10,6 +10,7 @@ proc run-job {job} {
     global jobinfo builds flight ok need_xen_hosts anyfailed
 
     set ok 1
+    set anyfailed 0
     jobdb::prepare $job
 
     set nh [need-hosts/$jobinfo(recipe)]
