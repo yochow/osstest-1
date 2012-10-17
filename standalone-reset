@@ -59,23 +59,27 @@ ensure_key "$overlay"/etc/ssh/ssh_host_dsa_key -t dsa
 
 tftp=`getconfig Tftp`
 if ! test -d "$tftp"; then
-	echo >&2 'Need Tftp config variable pointing to tftp server'; exit 1
-fi
+	echo >&2 \
+'Warning, Tftp variable pointing to tftp server needed to do host installs &c'
+else
 
-dibase=`getconfig PxeDiBase`
-diver=`getconfig PxeDiVersion`
-suite=`getconfig DebianSuite`
-firmware=`getconfig DebianNonfreeFirmware`
+	dibase=`getconfig PxeDiBase`
+	diver=`getconfig PxeDiVersion`
+	suite=`getconfig DebianSuite`
+	firmware=`getconfig DebianNonfreeFirmware`
 
-if [ "x$diver" = xcurrent ]; then
-	for arch in i386 amd64; do
-		if test -d "$tftp/$dibase/$arch/$diver"; then continue; fi
-		mkdir -p "$tftp/$dibase/$arch"
-		echo "** need to generate d-i with firmware for $arch"
-		div=`./mg-debian-installer-update $suite $arch $firmware`
-		rm -f "$tftp/$dibase/$arch/current"
-		ln -s $div "$tftp/$dibase/$arch/current"
-	done
+	if [ "x$diver" = xcurrent ]; then
+		for arch in i386 amd64; do
+			if test -d "$tftp/$dibase/$arch/$diver"
+				then continue; fi
+			mkdir -p "$tftp/$dibase/$arch"
+			echo "** need to generate d-i with firmware for $arch"
+			div=`./mg-debian-installer-update \
+					$suite $arch $firmware`
+			rm -f "$tftp/$dibase/$arch/current"
+			ln -s $div "$tftp/$dibase/$arch/current"
+		done
+	fi
 fi
 
 #---------- making the database with a flight and some jobs ----------
