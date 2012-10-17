@@ -51,13 +51,17 @@ proc spawn-step-begin {flight job ts stepnovar} {
 }
 
 proc spawn-step-commit {flight job stepno testid} {
-    logputs stdout "$flight.$job $stepno TESTID $testid..."
+    logputs stdout "$flight.$job ========== $stepno testid $testid =========="
 }
 
 proc step-set-status {flight job stepno st} {
-    logputs stdout "$flight.$job $stepno STATUS $st"
+    logputs stdout "$flight.$job $stepno status status $st"
 }
 
 proc become-task {argv} { }
+
+proc step-log-filename {flight job} {
+    return {}
+}
 
 }; # namespace eval jobdb

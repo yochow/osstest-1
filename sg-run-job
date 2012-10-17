@@ -125,14 +125,16 @@ proc spawn-ts {iffail testid ts args} {
 
     jobdb::spawn-step-commit $flight $jobinfo(job) $stepno $testid
 
-    set logdir $c(Logs)/$flight/$jobinfo(job)
-    file mkdir $c(Logs)/$flight
-    file mkdir $logdir
-
-    set log $logdir/$stepno.$ts.log
-
     set xprefix {}
     if {[info exists env(OSSTEST_SIMULATE)]} { set xprefix echo }
+
+    set log [jobdb::step-log-filename $flight $jobinfo(job)]
+    set redirects {< /dev/null}
+    if {[string length $log]} {
+        lappend redirects 2> $log
+    } else {
+        lappend redirects 2>@ stderr
+    }
 
     set cmd [concat \
                  [list sh -xc "
@@ -143,8 +145,7 @@ proc spawn-ts {iffail testid ts args} {
                      date -u +\"%Y-%m-%d %H:%M:%S Z exit status \$rc\" >&2
                      exit \$rc
                  " x ./$ts] \
-                 $real_args \
-                 [list 2> $log < /dev/null]]
+                 $real_args $redirects]
     set fh [open |$cmd r]
     set reap_details($fh) $details
 
