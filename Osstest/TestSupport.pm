@@ -225,30 +225,7 @@ sub get_runvar_maybe ($$) {
     # may be run outside transaction, or with flights locked
     my ($oflight, $ojob) = otherflightjob($otherflightjob);
 
-    if ("$oflight.$ojob" ne "$flight.$job") {
-        my $jstmt= <<END;
-            SELECT * FROM jobs WHERE flight=? AND job=?
-END
-        my $jrow= $dbh_tests->selectrow_hashref($jstmt,{}, $oflight,$ojob);
-        $jrow or broken("job $oflight.$ojob not found (looking for $param)");
-        my $jstatus= $jrow->{'status'};
-        defined $jstatus or broken("job $oflight.$ojob no status?!");
-        if ($jstatus eq 'pass') {
-            # fine
-        } elsif ($jstatus eq 'queued') {
-            $jrow= $dbh_tests->selectrow_hashref($jstmt,{}, $flight,$job);
-            $jrow or broken("our job $flight.$job not found!");
-            my $ourstatus= $jrow->{'status'};
-            if ($ourstatus eq 'queued') {
-                logm("not running under sg-execute-*:".
-                     " $oflight.$ojob queued ok, for $param");
-            } else {
-                die "job $oflight.$ojob (for $param) queued (we are $ourstatus)";
-            }
-        } else {
-            broken("job $oflight.$ojob (for $param) $jstatus", 'blocked');
-        }
-    }
+    $mjobdb->jobdb_check_other_job($flight,$job, $oflight,$ojob);
 
     my $row= $dbh_tests->selectrow_arrayref(<<END,{}, $oflight,$ojob,$param);
         SELECT val FROM runvars WHERE flight=? AND job=? AND name=?

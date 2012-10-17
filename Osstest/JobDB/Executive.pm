@@ -129,4 +129,34 @@ sub jobdb_resource_shared_mark_ready { #method
     resource_shared_mark_ready(@_);
 }
 
+sub jobdb_check_other_job { #method
+    my ($mo, $flight,$job, $oflight,$ojob);
+
+    if ("$oflight.$ojob" ne "$flight.$job") {
+        my $jstmt= <<END;
+            SELECT * FROM jobs WHERE flight=? AND job=?
+END
+        my $jrow= $dbh_tests->selectrow_hashref($jstmt,{}, $oflight,$ojob);
+        $jrow or broken("job $oflight.$ojob not found (looking for $param)");
+        my $jstatus= $jrow->{'status'};
+
+        defined $jstatus or broken("job $oflight.$ojob no status?!");
+        if ($jstatus eq 'pass') {
+            # fine
+        } elsif ($jstatus eq 'queued') {
+            $jrow= $dbh_tests->selectrow_hashref($jstmt,{}, $flight,$job);
+            $jrow or broken("our job $flight.$job not found!");
+            my $ourstatus= $jrow->{'status'};
+            if ($ourstatus eq 'queued') {
+                logm("not running under sg-execute-*:".
+                     " $oflight.$ojob queued ok, for $param");
+            } else {
+                die "job $oflight.$ojob (for $param) queued (we are $ourstatus)";
+            }
+        } else {
+            broken("job $oflight.$ojob (for $param) $jstatus", 'blocked');
+        }
+    }
+}
+
 1;

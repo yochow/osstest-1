@@ -78,7 +78,9 @@ sub gen_ether_offset ($$) { #method
     my ($mo,$ho,$fl) = @_;
     return $< & 0xffff;
 }
-sub jobdb_resource_shared_mark_ready { }
 
+sub jobdb_resource_shared_mark_ready { } #method
+
+sub jobdb_check_other_job { } #method
 
 1;
