@@ -1,11 +1,13 @@
-DnsDomain cam.xci-test.com
+DnsDomain uk.xensource.com
 NetNameservers 10.80.248.2 10.80.16.28 10.80.16.67
 
-TestHost bedbug
-HostProp_bedbug_Ether 00:13:72:14:c0:51
+TestHost calder
+#HostProp_bedbug_Ether 00:13:72:14:c0:51
 
-HostProp_DhcpWatchMethod leases dhcp3 woking.cam.xci-test.com:5556
-#HostProp_DhcpWatchMethod leases dhcp3 dhcp.uk.xensource.com:5556
+#HostProp_DhcpWatchMethod leases dhcp3 woking.cam.xci-test.com:5556
+HostProp_DhcpWatchMethod leases dhcp3 dhcp.uk.xensource.com:5556
+
+TftpPath /usr/groups/netboot/
 
 DebianMirrorHost debian.uk.xensource.com
 

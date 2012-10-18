@@ -18,7 +18,7 @@ src=$sbase/main/installer-$arch/current/images/netboot/debian-installer/$arch
 pfile=$sbase/non-free/binary-$arch/Packages.bz2
 files='initrd.gz linux'
 
-dstroot=`getconfig Tftp`/`getconfig PxeDiBase`/
+dstroot=`getconfig TftpPath`/`getconfig TftpDiBase`/
 date=`date +%Y-%m-%d`-$suite
 dst=$arch/$date
 

@@ -47,9 +47,10 @@ END
 
 PlanRogueAllocationDuration= 86400*7
 
+TftpPath /usr/groups/netboot/
+
 TftpPxeGroup osstest
-PxeDiBase osstest/debian-installer
-PxeDiVersion 2012-01-30-squeeze
+TftpDiVersion 2012-01-30-squeeze
 
 # We use the IP address because Citrix can't manage reliable nameservice
 #DebianMirrorHost debian.uk.xensource.com

@@ -106,17 +106,17 @@ END
 sub setup_pxeboot_firstboot($) {
     my ($ps_url) = @_;
     
-    my $d_i= $c{PxeDiBase}.'/'.$r{arch}.'/'.$c{PxeDiVersion};
+    my $d_i= $c{TftpDiBase}.'/'.$r{arch}.'/'.$c{TftpDiVersion};
     
     my @installcmdline= qw(vga=normal);
     push @installcmdline, di_installcmdline_core($ho, $ps_url, %xopts);
 
     my $src_initrd= "$d_i/initrd.gz";
-    my @initrds= "$c{Tftp}/$src_initrd";
+    my @initrds= "$c{TftpPath}/$src_initrd";
 
     foreach my $fp (keys %{ $ho->{Flags} }) {
         $fp =~ s/^need-firmware-deb-// or next;
-        my $cpio= "$c{Tftp}/$d_i/$fp.cpio.gz";
+        my $cpio= "$c{TftpPath}/$d_i/$fp.cpio.gz";
         if (stat $cpio) {
             logm("using firmware from: $cpio");
             push @initrds, $cpio;
@@ -133,6 +133,8 @@ sub setup_pxeboot_firstboot($) {
 
     my $wantphysif= get_host_property($ho,'interface force','auto');
     if ($wantphysif ne 'auto') {
+	die "need Ether for $ho->{Name} ($wantphysif)"
+	    unless defined $ho->{Ether};
         system_checked(qw(mkdir -p --), "$initrd_overlay.d/etc/udev/rules.d");
         file_simple_write_contents
             ("$initrd_overlay.d/etc/udev/rules.d/70-persistent-net.rules",
@@ -149,10 +151,10 @@ END
     push @initrds, "$initrd_overlay.cpio.gz";
 
     logm("using initrds: @initrds");
-    my $initrd= host_pxedir($ho)."/initrd.gz";
-    system_checked("cat -- @initrds >$c{Tftp}/$initrd");
+    my $initrd= "$c{TftpTmpDir}$ho->{Name}--initrd.gz";
+    system_checked("cat -- @initrds >$c{TftpPath}$initrd");
     
-    push @installcmdline, ("initrd=$initrd",
+    push @installcmdline, ("initrd=/$initrd",
                            "domain=$c{TestHostDomain}",
                            );
     push @installcmdline,
@@ -169,7 +171,7 @@ timeout 5
 label overwrite
 	menu label ^Overwrite
 	menu default
-	kernel $d_i/linux
+	kernel /$d_i/linux
 	append $installcmdline
 default overwrite
 END

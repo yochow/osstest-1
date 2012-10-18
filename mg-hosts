@@ -27,7 +27,7 @@ sub cmd_mkpxedir () {
         $macdir =~ s/\:/-/g;
         system_checked(<<END);
             set -e
-            cd $c{Tftp}
+	    cd $c{TftpPath}$c{TftpPxeDir}
             sudo chown root.$c{TftpPxeGroup} $macdir
             sudo chmod 2775 $macdir
             sudo rm -f $hn

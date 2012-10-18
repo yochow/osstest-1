@@ -73,7 +73,7 @@ BEGIN {
 
                       await_webspace_fetch_byleaf create_webfile
                       file_link_contents get_timeout
-                      setup_pxeboot setup_pxeboot_local host_pxedir 
+                      setup_pxeboot setup_pxeboot_local host_pxefile
                       );
     %EXPORT_TAGS = ( );
 
@@ -698,10 +698,14 @@ sub selecthost ($) {
     my $serialmeth = get_host_property($ho,'serial','noop');
     $ho->{SerialMethobj} = get_host_method_object($ho,'Serial',$serialmeth);
 
-    my $ip_packed= gethostbyname($ho->{Fqdn});
-    die "$ho->{Fqdn} ?" unless $ip_packed;
-    $ho->{Ip}= inet_ntoa($ip_packed);
-    die "$ho->{Fqdn} ?" unless defined $ho->{Ip};
+    $ho->{IpStatic} = get_host_property($ho,'ip-addr');
+    if (!defined $ho->{IpStatic}) {
+	my $ip_packed= gethostbyname($ho->{Fqdn});
+	die "$ho->{Fqdn} ?" unless $ip_packed;
+	$ho->{IpStatic}= inet_ntoa($ip_packed);
+	die "$ho->{Fqdn} ?" unless defined $ho->{IpStatic};
+    }
+    $ho->{Ip}= $ho->{IpStatic};
 
     $mjobdb->host_check_allocated($ho);
 
@@ -1665,21 +1669,42 @@ sub file_link_contents ($$) {
     logm("wrote $fn");
 }
 
-sub host_pxedir ($) {
+sub host_pxefile ($) {
     my ($ho) = @_;
-    my $dir= $ho->{Ether};
-    $dir =~ y/A-Z/a-z/;
-    $dir =~ y/0-9a-f//cd;
-    length($dir)==12 or die "$dir";
-    $dir =~ s/../$&-/g;
-    $dir =~ s/\-$//;
-    return $dir;
+    my %v = %r;
+    if (defined $ho->{Ether}) {
+	my $eth = $v{'ether'} = $ho->{Ether};
+	$eth =~ y/A-Z/a-z/;
+	$eth =~ y/0-9a-f//cd;
+	length($eth)==12 or die "$eth ?";
+	$eth =~ s/../$&-/g;
+	$eth =~ s/\-$//;
+	$v{'etherhyph'} = $eth;
+    }
+    if (defined $ho->{IpStatic}) {
+	my $ip = $ho->{IpStatic};
+	$ip =~ s/\b0+//g;
+	$v{'ipaddr'} = $ip;
+	$v{'ipaddrhex'} = sprintf "%02X%02X%02X%02X", split /\./, $ip;
+    }
+    foreach my $pat (split /\s+/, $c{TftpPxeTemplates}) {
+	# we skip patterns that contain any references to undefined %var%s
+	$pat =~ s{\%(\w*)\%}{
+		    $1 eq '' ? '%' :
+		    defined($v{$1}) ? $v{$1} :
+		    next;
+		 }ge;
+	# and return the first pattern we managed to completely substitute
+        return $pat;
+    }
+    die "no pxe template matched $c{TftpPxeTemplates} ".
+        (join ",", sort keys %v)." ?";
 }
 
 sub setup_pxeboot ($$) {
     my ($ho, $bootfile) = @_;
-    my $dir= host_pxedir($ho);
-    file_link_contents($c{Tftp}."/$dir/pxelinux.cfg", $bootfile);
+    my $f= host_pxefile($ho);
+    file_link_contents("$c{TftpPath}$c{TftpPxeDir}$f", $bootfile);
 }
 
 sub setup_pxeboot_local ($) {

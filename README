@@ -4,6 +4,7 @@ To run osstest in standalone mode:
      sqlite3
      tcl8.4 tclx8.4 libsqlite3-tcl
      libdbi-perl libdbd-sqlite3-perl
+     pax rsync
 
  - Write a config file
     ~/.xen-osstest/config
@@ -129,6 +130,19 @@ DebianSuite
 GuestDebianSuite   defaults to DebianSuite
 
 DebianPreseed      added to existing preseed file
+
+TftpPxeTemplates
+    List (space-separated) of template filenames for writing
+    The templates contain variable substitutions %var%
+    The variables are the runvars plus
+        ether         host/guest mac address
+        etherhyp      ... in lowercase hyphen-separated form (for pxelinux)
+	ipaddr        host/guest static ip address
+	ipaddrhex     ... in uppercase hex form (for pxelinux)
+    Templates containing references to unknown %var%s - particularly,
+    the host mac address when not known, or the guest's dynamic
+    ip address - are skipped.  The first template all of whose ingredients
+    are known is used, with TftpPath and TftpPxeDir prepended.
 
 ========================================
 

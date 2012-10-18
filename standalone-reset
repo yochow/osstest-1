@@ -57,14 +57,17 @@ ensure_key "$overlay"/etc/ssh/ssh_host_dsa_key -t dsa
 
 #---------- ensuring we can update pxe files and have d-i ----------
 
-tftp=`getconfig Tftp`
+tftp=`getconfig TftpPath`
 if ! test -d "$tftp"; then
 	echo >&2 \
-'Warning, Tftp variable pointing to tftp server needed to do host installs &c'
+'Warning, TftpPath variable would be needed for host installs &c'
 else
 
-	dibase=`getconfig PxeDiBase`
-	diver=`getconfig PxeDiVersion`
+	tftptmp=`getconfig TftpTmpDir`
+	ensure_dir "$tftp$tftptmp"
+
+	dibase=`getconfig TftpDiBase`
+	diver=`getconfig TftpDiVersion`
 	suite=`getconfig DebianSuite`
 	firmware=`getconfig DebianNonfreeFirmware`
 
