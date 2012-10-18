@@ -20,13 +20,18 @@ BEGIN {
 
 sub new { return bless {}, $_[0]; }
 
-sub get_properties ($$) {
-    my ($hd, $name) = @_;
+sub get_properties ($$$) {
+    my ($hd, $name, $hp) = @_;
     
-    return $dbh_tests->selectall_hashref(<<END, 'name', {}, $name);
+    my $q = $dbh_tests->prepare(<<END);
         SELECT * FROM resource_properties
             WHERE restype='host' AND resname=?
 END
+    $q->execute($name);
+    foreach my ($row = $q->fetchrow_hashref()) {
+	my $name = $row->{name};
+	$hp{propname_massage($name)} = $row->{val};
+    }
 }
 
 sub get_flags ($$) {
@@ -43,13 +48,6 @@ END
     }
     $flagsq->finish();
     return $flags;
-}
-
-sub get_property ($$$;$) {
-    my ($hd, $ho, $prop, $defval) = @_;
-    my $row= $ho->{Properties}{$prop};
-    return $defval unless $row && defined $row->{val};
-    return $row->{val};
 }
 
 sub default_methods ($$) {

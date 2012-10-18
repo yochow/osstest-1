@@ -44,6 +44,7 @@ BEGIN {
 
                       selecthost get_hostflags get_host_property
                       power_state power_cycle power_cycle_time
+                      propname_massage
          
                       get_stashed open_unique_stashfile
                       dir_identify_vcs build_clone built_stash 
@@ -655,7 +656,35 @@ sub selecthost ($) {
         Suite => get_runvar_default("${ident}_suite",$job,$c{DebianSuite}),
     };
 
-    $ho->{Properties} = $mhostdb->get_properties($name);
+    #----- calculation of the host's properties -----
+
+    $ho->{Properties} = { };
+    my $setprop = sub {
+	my ($pn,$val) = @_;
+	$ho->{Properties}{$pn} = $val;
+    };
+
+    # First, we use the config file's general properites as defaults
+    foreach my $k (keys %c) {
+	next unless $k =~ m/^HostProp_([A-Z].*)$/;
+	$setprop->($1, $c{$k});
+    }
+
+    # Then we read in the HostDB's properties
+    $mhostdb->get_properties($name, $ho->{Properties});
+
+    # Finally, we override any host-specific properties from the config
+    foreach my $k (keys %c) {
+	next unless $k =~ m/^HostProp_([a-z0-9]+)_(.*)$/;
+	next unless $1 eq $name;
+	$setprop->($2, $c{$k});
+    }
+
+    #----- calculation of the host's flags -----
+
+    $ho->{Flags} = $mhostdb->get_flags($ho);
+
+
 
     $ho->{Ether}= get_host_property($ho,'ether');
     $ho->{DiskDevice}= get_host_property($ho,'disk-device');
@@ -674,8 +703,6 @@ sub selecthost ($) {
     $ho->{Ip}= inet_ntoa($ip_packed);
     die "$ho->{Fqdn} ?" unless defined $ho->{Ip};
 
-    $ho->{Flags} = $mhostdb->get_flags($ho);
-
     $mjobdb->host_check_allocated($ho);
 
     logm("host: selected $ho->{Name} $ho->{Ether} $ho->{Ip}".
@@ -686,8 +713,22 @@ sub selecthost ($) {
     return $ho;
 }
 
+sub propname_massage ($) {
+    # property names used to be in the form word-word-word
+    # and are moving to WordWordWord
+    my ($prop) = @_;
+
+    $prop = ucfirst $prop;
+    while ($prop =~ m/-/) {
+	$prop = $`.ucfirst $'; #';
+    }
+    return $prop;
+}
+
 sub get_host_property ($$;$) {
-    return $mhostdb->get_property(@_);
+    my ($ho, $prop, $defval) = @_;
+    my $val = $ho->{Properties}{propname_massage($prop)};
+    return defined($val) ? $val : $defval;
 }
 
 sub get_host_method_object ($$$) {
@@ -965,12 +1006,13 @@ sub host_involves_pcipassthrough ($) {
 sub host_get_pcipassthrough_devs ($) {
     my ($ho) = @_;
     my @devs;
-    foreach my $prop (values %{ $ho->{Properties} }) {
-        next unless $prop->{name} =~ m/^pcipassthrough (\w+)$/;
+    foreach my $name (keys %{ $ho->{Properties} }) {
+        next unless $name =~ m/^pcipassthrough (\w+)$/;
         my $devtype= $1;
         next unless grep { m/^pcipassthrough-$devtype$/ } get_hostflags($ho);
-        $prop->{val} =~ m,^([0-9a-f]+\:[0-9a-f]+\.\d+)/, or
-            die "$ho->{Ident} $prop->{val} ?";
+	my $val = $ho->{Properties}{$name};
+        $val =~ m,^([0-9a-f]+\:[0-9a-f]+\.\d+)/, or
+            die "$ho->{Ident} $val ?";
         push @devs, {
             DevType => $devtype,
             Bdf => $1,

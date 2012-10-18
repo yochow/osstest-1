@@ -522,9 +522,9 @@ END
 
     $preseed_file .= "$c{DebianPreseed}\n";
 
-    foreach my $prop (values %{ $xopts{Properties} }) {
-        next unless $prop->{name} =~ m/^preseed $suite /;
-        $preseed_file .= "$' $prop->{val}\n";
+    foreach my $name (keys %{ $xopts{Properties} }) {
+        next unless $name =~ m/^preseed $suite /;
+        $preseed_file .= "$' $xopts{Properties}{$name}\n";
     }
 
     return create_webfile($ho, "preseed$sfx", $preseed_file);

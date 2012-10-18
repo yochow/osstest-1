@@ -20,40 +20,8 @@ BEGIN {
 
 sub new { return bless {}, $_[0]; }
 
-sub get_properties ($$) { #method
-    my ($hd, $name) = @_;
-    my $hp = { };
-    my $k;
-    my $sp = sub {
-	my ($pn,$v) = @_;
-	$hp->{$pn} = {
-	    name => $pn,
-	    val => $v,
-	};
-    };
-    foreach $k (keys %c) {
-	next unless $k =~ m/^HostProp_([A-Z].*)$/;
-	$sp->($1, $c{$k});
-    }
-    foreach $k (keys %c) {
-	next unless $k =~ m/^HostProp_([a-z0-9]+)_(.*)$/;
-	next unless $1 eq $name;
-	$sp->($2, $c{$k});
-    }
-    return $hp;
-}
-
-sub get_property ($$$;$) { #method
-    my ($hd, $ho, $prop, $defval) = @_;
-
-    $prop = ucfirst $prop;
-    while ($prop =~ m/-/) {
-	$prop = $`.ucfirst $'; #';
-    }
-
-    my $row = $ho->{Properties}{$prop};
-    return $defval unless $row && defined $row->{val};
-    return $row->{val};
+sub get_properties ($$$) { #method
+    my ($hd, $name, $hp) = @_;
 }
 
 sub get_flags ($$) { #method
