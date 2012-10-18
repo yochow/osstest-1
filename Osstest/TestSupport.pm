@@ -11,6 +11,7 @@ use IO::Socket::INET;
 
 use Osstest;
 use Osstest::Logtailer;
+use File::Copy;
 
 BEGIN {
     use Exporter ();
@@ -22,6 +23,7 @@ BEGIN {
                       ts_get_host_guest
 
                       fail broken logm $logm_handle get_filecontents
+                      report_once
 
                       store_runvar get_runvar get_runvar_maybe
                       get_runvar_default need_runvars flight_otherjob
@@ -583,11 +585,11 @@ sub poll_loop ($$$&) {
 
 #---------- dhcp watching ----------
 
-sub dhcp_watch_host_setup ($) {
-    my ($ho) = @_;
+sub dhcp_watch_setup ($$) {
+    my ($ho,$gho) = @_;
 
     my $meth = get_host_property($ho,'dhcp-watch-method',undef);
-    $ho->{DhcpWatch} = get_host_method_object($ho, 'DhcpWatch', $meth);
+    $gho->{DhcpWatch} = get_host_method_object($ho, 'DhcpWatch', $meth);
 }
 
 sub guest_check_ip ($) {
@@ -661,7 +663,7 @@ sub selecthost ($) {
 
     $mhostdb->default_methods($ho);
 
-    dhcp_watch_host_setup($ho);
+    dhcp_watch_setup($ho,$ho);
     power_cycle_host_setup($ho);
 
     my $serialmeth = get_host_property($ho,'serial','noop');
@@ -1003,6 +1005,7 @@ sub selectguest ($$) {
     guest_find_lv($gho);
     guest_find_ether($gho);
     guest_find_tcpcheckport($gho);
+    dhcp_watch_setup($ho,$gho);
     return $gho;
 }
 
