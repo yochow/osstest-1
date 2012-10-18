@@ -33,6 +33,21 @@ sub ginstall () {
     my $arch= $r{"$gho->{Guest}_arch"};
     my $archarg= defined($arch) ? "--arch $arch" : '';
     my $gsuite= guest_var($gho,'suite',$c{GuestDebianSuite});
+
+    my $kernpath = guest_var($gho,'kernel_path',$r{xen_kernel_path});
+    my $initrd = guest_var($gho,'initrd_path',$r{xen_initrd_path});
+    if (!$kernpath) {
+	my $kernver= guest_var($gho,'kernel_ver',$r{xen_kernel_ver});
+	$kernver ||= target_cmd_output($ho, 'uname -r');
+	$kernpath = "/boot/vmlinuz-$kernver";
+	$initrd ||= "/boot/initrd.img-$kernver";
+    }
+    if (!$initrd) {
+	$initrd = $kernpath;
+	$initrd =~ s,/vmlinuz-,/initrd.img-, or die "$initrd ?";
+    }
+    my $initrd_opt = $initrd eq 'none' ? '' : "--initrd $initrd";
+    
     target_cmd_root($ho, <<END, 2000);
         xen-create-image \\
             --dhcp --mac $gho->{Ether} \\
@@ -41,8 +56,8 @@ sub ginstall () {
             --mirror http://$c{DebianMirrorHost}/$c{DebianMirrorSubpath} \\
             --hostname $gho->{Name} \\
             --lvm $gho->{Vg} --force \\
-            --kernel $r{xen_kernel_path} \\
-            --initrd /boot/initrd.img-$r{xen_kernel_ver} \\
+            --kernel $kernpath \\
+            $initrd_opt \\
             $archarg
 END
     my $cfg_xend= "/etc/xen/$gho->{Name}.cfg";
