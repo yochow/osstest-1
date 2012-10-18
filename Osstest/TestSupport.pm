@@ -705,7 +705,9 @@ sub selecthost ($) {
 
     $mjobdb->host_check_allocated($ho);
 
-    logm("host: selected $ho->{Name} $ho->{Ether} $ho->{Ip}".
+    logm("host: selected $ho->{Name} ".
+	 (defined $ho->{Ether} ? $ho->{Ether} : '<unknown-ether>').
+	 " $ho->{Ip}".
          (!$ho->{Shared} ? '' :
           sprintf(" - shared %s %s %d", $ho->{Shared}{Type},
                   $ho->{Shared}{State}, $ho->{Shared}{Others}+1)));

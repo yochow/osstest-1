@@ -50,7 +50,6 @@ sub get_flags ($$) { #method
 sub default_methods ($$) { #method
     my ($hd, $ho) = @_;
 
-    die "need ethernet address for $ho->{Name}" unless $ho->{Ether};
     $ho->{Power} ||= "manual $ho->{Name}";
 }
 
