@@ -1523,6 +1523,14 @@ END
 END
         }
     });
+    if (!eval {
+	my $qserv = tcpconnect_queuedaemon();
+	print $qserv "prod\n" or die $!;
+	$_ = <$qserv>;  defined && m/^OK prod\b/ or die "$_ ?";
+	1;
+    }) {
+	logm("post-mark-ready queue daemon prod failed: $@");
+    }
     logm("$restype $resname shared $sharetype marked ready");
 }
 
