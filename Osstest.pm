@@ -1497,6 +1497,7 @@ sub resource_shared_mark_ready ($$$) {
     # must run outside transaction
 
     my $what= "resource $restype $resname";
+    $sharetype .= ' '.get_harness_rev();
 
     db_retry($dbh_tests, [qw(resources)], sub {
         my $oldshr= resource_check_allocated_core($restype, $resname);
