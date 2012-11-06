@@ -1758,7 +1758,7 @@ END
     $ho->{SharedReady}=
         $ho->{Shared} &&
         $ho->{Shared}{State} eq 'ready' &&
-        !! grep { $_ eq "share-".$ho->{Shared}{Type} } get_hostflags($ident);
+        !! grep { $_." ".get_harness_rev() eq "share-".$ho->{Shared}{Type} } get_hostflags($ident);
     $ho->{SharedOthers}=
         $ho->{Shared} ? $ho->{Shared}{Others} : 0;
 
