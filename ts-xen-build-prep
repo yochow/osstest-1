@@ -130,7 +130,7 @@ sub prep () {
                                flex bison
                                libpci-dev libncurses5-dev libssl-dev python-dev
                                libx11-dev git-core uuid-dev gettext gawk
-                               libsdl-dev libyajl-dev libaio-dev
+                               libsdl-dev libyajl-dev libaio-dev libpixman-1-dev
                                libglib2.0-dev pkg-config
 			       ccache));
 
