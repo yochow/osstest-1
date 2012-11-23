@@ -219,10 +219,13 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
 		debian_arch=$dom0arch   				  \
 		all_hostflags=$most_hostflags
 
-        for qemuu_suffix in '' -qemuu; do
+        for qemuu_suffix in '' -qemut -qemuu; do
           case "$qemuu_suffix" in
           '')
                 qemuu_runvar=''
+                ;;
+          -qemut)
+                qemuu_runvar=device_model_version=qemu-xen-traditional
                 ;;
           -qemuu)
                 case $xenbranch in
