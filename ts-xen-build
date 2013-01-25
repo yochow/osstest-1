@@ -99,7 +99,7 @@ END
     buildcmd_stamped_logged(300, 'configure', <<END,<<END,<<END);
             if test -f configure; then
 END
-                ./configure
+                ./configure --sysconfdir=/etc
 END
             fi
 END
