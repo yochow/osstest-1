@@ -219,6 +219,26 @@ END
     });
 }    
 
+sub forbidden () {
+    target_cmd_root($ho, <<'END');
+	outcome=true
+	for f in /usr/local/etc/* /usr/local/var/*; do
+	    if test -e "$f"; then
+	        case "$f" in
+		/usr/local/etc/qemu)
+                    echo >&2 "*** WARNING IGNORING FORBIDDEN PATH: $f"
+                    ;;
+                *)
+		    echo >&2 "*** FORBIDDEN PATH IN USE, install problem: $f"
+		    outcome=false
+                    ;;
+                esac
+	    fi
+	done
+	$outcome
+END
+}
+
 if ($checkmode) {
     extract();
 } else {
@@ -227,6 +247,7 @@ if ($checkmode) {
     
     packages();
     extract();
+    forbidden();
     adjustconfig();
     setupboot();
     setupinitd();
