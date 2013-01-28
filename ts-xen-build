@@ -13,7 +13,8 @@ $whhost ||= 'host';
 our $ho= selecthost($whhost);
 
 my $leaf= "build.$flight.$job";
-my $builddir= "/home/osstest/$leaf";
+my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
+my $builddir= "$homedir/$leaf";
 
 my $makeflags= get_host_property($ho, 'build make flags', '-j4');
     
