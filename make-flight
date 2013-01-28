@@ -17,9 +17,17 @@ xenrt_images=/usr/groups/images/autoinstall
 
 if [ x$buildflight = x ]; then
 
-  for arch in ${BUILD_ARCHES- i386 amd64 }; do
+  for arch in ${BUILD_ARCHES- i386 amd64 armhf }; do
 
     if [ "x$arch" = xdisable ]; then continue; fi
+
+    case "$arch" in
+    armhf)
+      case "$xenbranch" in
+      3.*|4.0|4.1|4.2) continue;;
+      esac
+      ;;
+    esac
 
     eval "
 	arch_runvars=\"\$ARCH_RUNVARS_$arch\"
@@ -37,6 +45,10 @@ if [ x$buildflight = x ]; then
 		revision_xen=$REVISION_XEN				     \
 		revision_qemu=$REVISION_QEMU				     \
 		revision_qemuu=$REVISION_QEMU_UPSTREAM
+
+    case "$arch" in
+    armhf) continue;; # don't do any kernel builds
+    esac
 
     ./cs-job-create $flight build-$arch-pvops build-kern		     \
 		arch=$arch kconfighow=xen-enable-xen-config		     \
