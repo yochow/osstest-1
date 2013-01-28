@@ -1693,7 +1693,6 @@ sub selecthost ($) {
         Ident => $ident,
         Name => $name,
         TcpCheckPort => 22,
-        Fqdn => "$name.$c{TestHostDomain}",
         Info => [],
         Suite => get_runvar_default("${ident}_suite",$job,$c{Suite}),
     };
@@ -1713,6 +1712,7 @@ END
     $ho->{Power}= get_host_property($ho,'power-method');
     $ho->{DiskDevice}= get_host_property($ho,'disk-device');
     $ho->{DhcpLeases}= get_host_property($ho,'dhcp-leases',$c{Dhcp3Leases});
+    $ho->{Fqdn}= get_host_property($ho,'fqdn',"$name.$c{TestHostDomain}");
 
     if (!$ho->{Ether} || !$ho->{Power}) {
         my $dbh_config= opendb('configdb');
