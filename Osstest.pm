@@ -1714,6 +1714,16 @@ END
     $ho->{DhcpLeases}= get_host_property($ho,'dhcp-leases',$c{Dhcp3Leases});
     $ho->{Fqdn}= get_host_property($ho,'fqdn',"$name.$c{TestHostDomain}");
 
+    $ho->{Flags}= { };
+    my $flagsq= $dbh_tests->prepare(<<END);
+        SELECT hostflag FROM hostflags WHERE hostname=?
+END
+    $flagsq->execute($name);
+    while (my ($flag) = $flagsq->fetchrow_array()) {
+        $ho->{Flags}{$flag}= 1;
+    }
+    $flagsq->finish();
+
     if (!$ho->{Ether} || !$ho->{Power}) {
         my $dbh_config= opendb('configdb');
         my $selname= $ho->{Fqdn};
@@ -1743,16 +1753,6 @@ END
     die "$ho->{Fqdn} ?" unless $ip_packed;
     $ho->{Ip}= inet_ntoa($ip_packed);
     die "$ho->{Fqdn} ?" unless defined $ho->{Ip};
-
-    $ho->{Flags}= { };
-    my $flagsq= $dbh_tests->prepare(<<END);
-        SELECT hostflag FROM hostflags WHERE hostname=?
-END
-    $flagsq->execute($name);
-    while (my ($flag) = $flagsq->fetchrow_array()) {
-        $ho->{Flags}{$flag}= 1;
-    }
-    $flagsq->finish();
 
     $ho->{Shared}= resource_check_allocated('host', $name);
     $ho->{SharedReady}=
