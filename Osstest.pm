@@ -1724,7 +1724,8 @@ END
     }
     $flagsq->finish();
 
-    if (!$ho->{Ether} || !$ho->{Power}) {
+    if (!$ho->{Flags}{'no-reinstall'} &&
+	(!$ho->{Ether} || !$ho->{Power})) {
         my $dbh_config= opendb('configdb');
         my $selname= $ho->{Fqdn};
         my $sth= $dbh_config->prepare(<<END);
@@ -1762,7 +1763,9 @@ END
     $ho->{SharedOthers}=
         $ho->{Shared} ? $ho->{Shared}{Others} : 0;
 
-    logm("host: selected $ho->{Name} $ho->{Ether} $ho->{Ip}".
+    my $show_ether = $ho->{Ether};
+    $show_ether ||= '<no_ether>';
+    logm("host: selected $ho->{Name} $show_ether $ho->{Ip}".
          (!$ho->{Shared} ? '' :
           sprintf(" - shared %s %s %d", $ho->{Shared}{Type},
                   $ho->{Shared}{State}, $ho->{Shared}{Others}+1)));

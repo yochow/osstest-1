@@ -218,11 +218,13 @@ sub ccache_setup () {
     }
 }
 
-lvextend_stage1();
-prep();
-cacheing_git_mount();
-cacheing_git_install();
-ccache_setup();
-lvextend_stage2();
+if (!$ho->{Flags}{'no-reinstall'}) {
+    lvextend_stage1();
+    prep();
+    cacheing_git_mount();
+    cacheing_git_install();
+    ccache_setup();
+    lvextend_stage2();
+}
 resource_shared_mark_ready($ho->{Ident}, $ho->{Name},
                            "build-".$ho->{Suite}."-".$r{arch});
