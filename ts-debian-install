@@ -57,6 +57,7 @@ sub ginstall () {
             --hostname $gho->{Name} \\
             --lvm $gho->{Vg} --force \\
             --kernel $kernpath \\
+            --genpass 0 --password xenroot \\
             $initrd_opt \\
             $archarg
 END
