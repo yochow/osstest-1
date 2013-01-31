@@ -587,6 +587,7 @@ sub resource_shared_mark_ready ($$$) {
     # must run outside transaction
 
     my $what= "resource $restype $resname";
+    $sharetype .= ' '.get_harness_rev();
 
     db_retry($dbh_tests, [qw(resources)], sub {
         my $oldshr= resource_check_allocated_core($restype, $resname);
@@ -613,6 +614,14 @@ END
 END
         }
     });
+    if (!eval {
+       my $qserv = tcpconnect_queuedaemon();
+       print $qserv "prod\n" or die $!;
+       $_ = <$qserv>;  defined && m/^OK prod\b/ or die "$_ ?";
+       1;
+    }) {
+       logm("post-mark-ready queue daemon prod failed: $@");
+    }
     logm("$restype $resname shared $sharetype marked ready");
 }
 

@@ -197,7 +197,7 @@ sub compute_hids () {
             if ($flag =~ m/^share-/) {
                 die if exists $hid->{Shared};
                 my $shr= $'; #'
-                $hid->{Shared}= $shr;
+                $hid->{Shared}= $shr." ".get_harness_rev();
                 if ($shr =~ m/^build-/) {
                     $hid->{DefaultSharedMaxTasks}= 3;
                     $hid->{DefaultSharedMaxWear}= 10;

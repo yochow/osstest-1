@@ -645,13 +645,10 @@ sub selecthost ($) {
         die "no specified $ident" unless defined $name;
     }
 
-    my $fqdn = $name;
-    $fqdn .= ".$c{TestHostDomain}" unless $fqdn =~ m/\./;
     my $ho= {
         Ident => $ident,
         Name => $name,
         TcpCheckPort => 22,
-        Fqdn => $fqdn,
         Info => [],
         Suite => get_runvar_default("${ident}_suite",$job,$c{DebianSuite}),
     };
@@ -684,6 +681,11 @@ sub selecthost ($) {
 
     $ho->{Flags} = $mhostdb->get_flags($ho);
 
+    #----- fqdn -----
+
+    my $defaultfqdn = $name;
+    $defaultfqdn .= ".$c{TestHostDomain}" unless $defaultfqdn =~ m/\./;
+    $ho->{Fqdn} = get_host_property($ho,'fqdn',$defaultfqdn);
 
 
     $ho->{Ether}= get_host_property($ho,'ether');

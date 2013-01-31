@@ -195,6 +195,61 @@ END
     });
 }
 
+sub cmd_previoustasks () {
+    my $doclear = (@ARGV==0 ? 0 :
+		   @ARGV==1 && $ARGV[0] eq '--clear' ? 1 :
+		   die "bad usage\n");
+
+    my $tasksq = $dbh_tests->prepare(<<END);
+        SELECT * FROM tasks
+	        WHERE refkey LIKE 'previous %'
+		  AND live
+		  AND type = 'ownd'
+             ORDER BY comment, refkey
+END
+
+    my $resq = $dbh_tests->prepare(<<END);
+        SELECT * FROM resources
+	        WHERE owntaskid = ?
+	     ORDER BY restype, resname
+END
+
+    my $clearq = $dbh_tests->prepare(<<END);
+        UPDATE tasks
+	   SET live = 'f'
+	 WHERE refkey LIKE 'previous %'
+	   AND live
+	   AND type = 'ownd'
+	   AND taskid = ?
+END
+
+    my $o = '';
+
+    db_retry($dbh_tests,[qw(resources)], sub {
+	$tasksq->execute();
+	while (my $trow = $tasksq->fetchrow_hashref()) {
+	    $o .= sprintf("%10d %-20s | %s\n",
+			  $trow->{taskid},
+			  $trow->{username},
+			  "$trow->{comment}");
+	    $resq->execute($trow->{taskid});
+	    while (my $rrow = $resq->fetchrow_hashref()) {
+		$o .= sprintf("      %-25s | %s\n",
+			      "$rrow->{restype}/$rrow->{resname}".
+			      ($rrow->{shareix} ? "/$rrow->{shareix}" : ''),
+			      $rrow->{subtask});
+
+	    }
+	    $o .= "\n";
+	    if ($doclear) {
+		$clearq->execute($trow->{taskid})
+		    or die "failed to clear task $trow->{taskid}";
+	    }
+	}
+    });
+    print $o or die $!;
+}
+
 sub cmd_setflags () {
     update_hosts([qw(resources)], sub {
 	my ($dst,$section) = @_;

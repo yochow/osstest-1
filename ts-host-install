@@ -23,6 +23,7 @@ if (@ARGV && $ARGV[0] =~ m/^--priority(?:=(.*))?$/) {
 our ($whhost) = @ARGV;
 $whhost ||= 'host';
 our $ho= selecthost($whhost);
+exit 0 if $ho->{Flags}{'no-reinstall'};
 exit 0 if $ho->{SharedReady};
 
 our %timeout= qw(ReadPreseed  350

@@ -1039,8 +1039,15 @@ END
 END
 
         if ($reusejob) {
-            $usejob= "$reusejob->{flight}.$reusejob->{job}";
-            print STDERR "Can reuse $recipe $usejob.\n";
+	    my $wantusejob= "$reusejob->{flight}.$reusejob->{job}";
+	    my $stashcheck = "$c{Stash}/$reusejob->{flight}/$reusejob->{job}";
+	    if (stat $stashcheck) {
+		$usejob = $wantusejob;
+		print STDERR "Can reuse $recipe $usejob.\n";
+	    } else {
+		print STDERR "Can NOT reuse $recipe $wantusejob:".
+		    " $stashcheck: $!\n";
+	    }
         }
     }
 

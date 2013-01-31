@@ -33,7 +33,7 @@ my %distpath;
 
 sub packages () {
     target_install_packages($ho,
-                            qw(bridge-utils vncsnapshot libaio1
+                            qw(bridge-utils vncsnapshot libaio1 libpixman-1-0
                                libsdl1.2debian libyajl1 libglib2.0-0));
     if ($r{arch} eq 'i386') {
 	target_install_packages($ho, 'libc6-xen');
@@ -219,6 +219,26 @@ END
     });
 }    
 
+sub forbidden () {
+    target_cmd_root($ho, <<'END');
+	outcome=true
+	for f in /usr/local/etc/* /usr/local/var/*; do
+	    if test -e "$f"; then
+	        case "$f" in
+		/usr/local/etc/qemu)
+                    echo >&2 "*** WARNING IGNORING FORBIDDEN PATH: $f"
+                    ;;
+                *)
+		    echo >&2 "*** FORBIDDEN PATH IN USE, install problem: $f"
+		    outcome=false
+                    ;;
+                esac
+	    fi
+	done
+	$outcome
+END
+}
+
 if ($checkmode) {
     extract();
 } else {
@@ -227,6 +247,7 @@ if ($checkmode) {
     
     packages();
     extract();
+    forbidden();
     adjustconfig();
     setupboot();
     setupinitd();

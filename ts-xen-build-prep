@@ -128,10 +128,10 @@ sub prep () {
     target_install_packages($ho,
                             qw(mercurial
                                build-essential bin86 bcc iasl
-                               flex bison
+                               flex bison cmake
                                libpci-dev libncurses5-dev libssl-dev python-dev
                                libx11-dev git-core uuid-dev gettext gawk
-                               libsdl-dev libyajl-dev libaio-dev
+                               libsdl-dev libyajl-dev libaio-dev libpixman-1-dev
                                libglib2.0-dev pkg-config
 			       ccache));
 
@@ -221,12 +221,13 @@ sub ccache_setup () {
     }
 }
 
-lvextend_stage1();
-prep();
-cacheing_git_mount();
-cacheing_git_install();
-ccache_setup();
-lvextend_stage2();
-
+if (!$ho->{Flags}{'no-reinstall'}) {
+    lvextend_stage1();
+    prep();
+    cacheing_git_mount();
+    cacheing_git_install();
+    ccache_setup();
+    lvextend_stage2();
+}
 $mjobdb->jobdb_resource_shared_mark_ready
    ($ho->{Ident}, $ho->{Name}, "build-".$ho->{Suite}."-".$r{arch});

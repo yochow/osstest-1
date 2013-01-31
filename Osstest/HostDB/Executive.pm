@@ -53,6 +53,7 @@ END
 sub default_methods ($$) {
     my ($hd, $ho) = @_;
 
+    return if $ho->{Flags}{'no-reinstall'};
     return if $ho->{Ether} && $ho->{Power};
 
     my $dbh_config= opendb('configdb');
