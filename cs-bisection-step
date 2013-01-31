@@ -44,6 +44,7 @@ open SUMMARY, ">/dev/null" or die $!;
 
 our @org_argv= @ARGV;
 our $maxflight_cond= '';
+our $basistemplate;
 
 while (@ARGV && $ARGV[0] =~ m/^\-/) {
     $_= shift @ARGV;
@@ -69,6 +70,8 @@ while (@ARGV && $ARGV[0] =~ m/^\-/) {
         $maxflight_cond= "AND flights.flight <= $1";
     } elsif (m/^--(fail|basis)-flight=(\d+)$/) {
         $specflights{$1}= $2;
+    } elsif (m/^--basis-template=(\d+)$/) {
+        $basistemplate= $1;
     } elsif (m/^-D$/) {
         $debug++;
         if ($debug==1) {
@@ -344,7 +347,19 @@ END
         $basisq->finish();
 
         if (!$basisrow) {
-            print STDERR " no.\n";
+	    if (defined $specflights{fail}) {
+		print STDERR " missing basis.\n";
+		next;
+	    } elsif (!defined $basistemplate) {
+		print STDERR " no basis template.\n";
+		next;
+	    } else {
+		print STDERR " using template as basis.\n";
+		$latest_flight= $tryfail->{flight};
+		$basispass_flight= $basistemplate;
+		$hosts= $failhosts;
+		last;
+	    }
             next;
         }
 
