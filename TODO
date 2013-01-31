@@ -1,0 +1,52 @@
+Comments from Ian Campbell:
+
+
+
+I had to manually mkdir a bunch of stuff,
+
+=> mkdir /home/ianc/public_html
+=> mkdir /usr/groups/netboot/ianc/osstest
+=> mkdir logs
+
+
+
+We've previously talked about the need to run the webserver on the same
+host and to make the logs available to osstest for the purposes of
+detecting the preseed getting loaded. We discussed perhaps using netcat
+or something to ring a doorbell from the preseed file.
+
+
+
+There's no option to install using VGA rather than serial.
+
+diff --git a/ts-host-install b/ts-host-install
+index 95cefa1..561d55c 100755
+--- a/ts-host-install
++++ b/ts-host-install
+@@ -161,8 +161,8 @@ END
+     push @installcmdline,
+         get_host_property($ho, "install-append $ho->{Suite}", '');
+ 
+-    push @installcmdline, qw(--);
+-    push @installcmdline, "console=ttyS0,$c{Baud}n8";
++    #push @installcmdline, qw(--);
++    #push @installcmdline, "console=ttyS0,$c{Baud}n8";
+ 
+     my $installcmdline= join ' ', @installcmdline;
+
+
+Figuring out what a "job" was and where a list of valid ones was took a
+little while. I think you said that in manual mode this basically only
+controlled the $ARCH, in which case being able to say -a $ARCH or set an
+env var and have it pick a job would be useful. Or give a job as
+arch=foo or something.
+
+
+
+Pie in the sky stuff I'd like to do, which probably require new ts-foo
+stuff. Mostly this is targeted at keeping tabs on the state of Debian
+rather than xen-unstable.hg. In any case just FYI.
+      * Install packaged version of Xen instead of building it.
+      * Install Wheezy instead of Squeeze (Jessie, N+2,...)
+      * Test host upgrades
+      * Install Debian guests using d-i via netinst, from CD etc.

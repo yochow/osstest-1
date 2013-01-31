@@ -12,7 +12,13 @@ To run osstest in standalone mode:
 
  - Select the "branch" and job to reproduce.  By default the system
    gives you the "branch" consisting of tests run for the xen-unstable
-   push gate.  You need to select a job.
+   push gate.  You need to select a job.  The list of available jobs
+   is that shown in the publicly emailed test reports on xen-devel, eg
+     http://lists.xen.org/archives/html/xen-devel/2013-01/msg02574.html
+
+   If you don't want to repro one of those and don't know how to
+   choose a job, choose one of
+      test-amd64-{i386,amd64}-xl       32/64-bit dom0,domU; Debian guest
 
  - Run ./standalone-reset
 
@@ -24,6 +30,10 @@ To run osstest in standalone mode:
       OSSTEST_HOST_HOST     override config file TestHost setting
                              (strictly, the final `_HOST' is the
 			      uppercase of the host's `ident' in the job)
+
+ - Don't forget to set the machine to pxeboot in the BIOS.
+
+ - Currently you need a serial console at 115200 8n1; see TODO.
 
  - If you have an existing test host and guest set up
    you can run
