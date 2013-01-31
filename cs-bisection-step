@@ -299,7 +299,7 @@ END
         SELECT * FROM flights JOIN steps USING (flight)
 	   WHERE job = ?
 	     AND testid = ?
-	     AND blessing = ?
+	     AND $blessingscond
 	     AND status = 'pass'
              AND branch = ?
              AND $flight_is_not_broken
@@ -330,7 +330,7 @@ END
 
         print STDERR "/";
         my ($basisrow,$trybasis);
-        $basisq->execute($job,$testid,$blessings[0],$branch);
+        $basisq->execute($job,$testid,$branch);
         while ($trybasis= $basisq->fetchrow_hashref()) {
             print STDERR " $trybasis->{flight}";
             my $basishosts= relevant_hosts($trybasis->{flight});
