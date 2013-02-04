@@ -103,6 +103,17 @@ if (defined $maxflight) {
     $blessingscond= "( flight <= $maxflight AND $blessingscond )";
 }
 
+sub displayflightnum ($) {
+    my ($flight) = @_;
+    my $frow = $dbh_tests->selectrow_hashref
+	("SELECT * FROM flights WHERE flight = ?", {}, $flight);
+    if ($frow && $frow->{blessing} =~ m/-.*/) {
+	return "$flight$&";
+    } else {
+	return $flight;
+    }
+}
+
 sub findaflight ($$$$$) {
     my ($thisthat, $exceptflight, $job, $testid, $sub) = @_;
 
@@ -659,7 +670,7 @@ END
 	$failv->{SummaryCore}= $rtups[0][2];
 	$failv->{SummaryRefFlight}= $rtups[0][3];
 	$failv->{Summary}= $failv->{SummaryCore};
-        $failv->{Summary}.= ' '.$failv->{SummaryRefFlight}
+        $failv->{Summary}.= ' '.displayflightnum($failv->{SummaryRefFlight})
             if defined $failv->{SummaryRefFlight};
 	print DEBUG " so $failv->{Summary}\n";
         print DEBUG " blocker $failv->{Blocker}\n" if $failv->{Blocker};
@@ -900,7 +911,8 @@ END
                 print H encode_entities($sum_core);
                 print H "</a>";
                 if (defined $sum_flight) {
-                    print H " <a href=\"../$sum_flight/\">$sum_flight</a>";
+                    print H " <a href=\"../$sum_flight/\">".
+			displayflightnum($sum_flight)."</a>";
                 }
                 print H "</td>";
             } else {
