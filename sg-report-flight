@@ -85,7 +85,7 @@ die if defined $specver{this}{flight};
 die if defined $specver{that}{flight} &&
     grep { $_ ne 'flight' } keys %{ $specver{that} };
 
-push @blessings, 'real' unless @blessings;
+push @blessings, 'real', 'real-bisect' unless @blessings;
 
 csreadconfig();
 
