@@ -426,6 +426,7 @@ d-i mirror/suite string $suite
 
 d-i debian-installer/locale string en_GB
 d-i console-keymaps-at/keymap select gb
+d-i keyboard-configuration/xkb-keymap string en_GB
 
 #d-i debconf/frontend string readline
 
