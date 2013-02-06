@@ -87,10 +87,19 @@ HostProp_<testbox>_Ether
    MAC address of the box <testbox>.  Only needed if you want
    to use the osstest host and Xen installer.
 
+HostProp_<testbox>_NoSerial
+   Set to 1 if <testbox> has no serial, system will use VGA console
+   instead.
+
+HostProp_<testbox>_DIFrontend
+   Configure the frontend used by Debian installer. Default in osstest
+   is a very basic "text" interface but for standalone configurations,
+   especially on VGA, "newt" might be preferred.
+
 DebianPreseed
-  Text to add to the debian-installer preseed file.  Optional
-  but you will need to set some NTP servers here if your firewall
-  doesn't permit NTP to Debian's pool.ntp.org servers.
+   Text to add to the debian-installer preseed file.  Optional
+   but you will need to set some NTP servers here if your firewall
+   doesn't permit NTP to Debian's pool.ntp.org servers.
 
 DebianNonfreeFirmware
   List of debs of non-free firmware to include in the massaged
