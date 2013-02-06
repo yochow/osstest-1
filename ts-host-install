@@ -162,7 +162,8 @@ END
         get_host_property($ho, "install-append $ho->{Suite}", '');
 
     push @installcmdline, qw(--);
-    push @installcmdline, "console=ttyS0,$c{Baud}n8";
+    push @installcmdline, "console=ttyS0,$c{Baud}n8"
+	unless get_host_property($ho, "NoSerial", "0");
 
     my $installcmdline= join ' ', @installcmdline;
 

@@ -281,9 +281,10 @@ sub di_installcmdline_core ($$;@) {
                auto=true preseed
                hw-detect/load_firmware=false
                DEBCONF_DEBUG=5
-               DEBIAN_FRONTEND=text
                );
+    my $difront = get_host_property($tho,'DIFrontend','text');
     push @cl, (
+               "DEBIAN_FRONTEND=$difront",
                "hostname=$tho->{Name}",
                "url=$ps_url",
                "netcfg/dhcp_timeout=150",
