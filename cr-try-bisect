@@ -49,6 +49,7 @@ compute_state_done_callback () {
 
 compute_state_callback () {
 	compute_state_core \
+		--basis-template=$basisflight \
                 --blessings=$OSSTEST_BLESSING,$OSSTEST_BLESSING-bisect \
                 "$@" $branch $job $testid
 }

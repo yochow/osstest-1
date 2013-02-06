@@ -44,6 +44,7 @@ open SUMMARY, ">/dev/null" or die $!;
 
 our @org_argv= @ARGV;
 our $maxflight_cond= '';
+our $basistemplate;
 
 while (@ARGV && $ARGV[0] =~ m/^\-/) {
     $_= shift @ARGV;
@@ -69,6 +70,8 @@ while (@ARGV && $ARGV[0] =~ m/^\-/) {
         $maxflight_cond= "AND flights.flight <= $1";
     } elsif (m/^--(fail|basis)-flight=(\d+)$/) {
         $specflights{$1}= $2;
+    } elsif (m/^--basis-template=(\d+)$/) {
+        $basistemplate= $1;
     } elsif (m/^-D$/) {
         $debug++;
         if ($debug==1) {
@@ -299,7 +302,7 @@ END
         SELECT * FROM flights JOIN steps USING (flight)
 	   WHERE job = ?
 	     AND testid = ?
-	     AND blessing = ?
+	     AND $blessingscond
 	     AND status = 'pass'
              AND branch = ?
              AND $flight_is_not_broken
@@ -330,7 +333,7 @@ END
 
         print STDERR "/";
         my ($basisrow,$trybasis);
-        $basisq->execute($job,$testid,$blessings[0],$branch);
+        $basisq->execute($job,$testid,$branch);
         while ($trybasis= $basisq->fetchrow_hashref()) {
             print STDERR " $trybasis->{flight}";
             my $basishosts= relevant_hosts($trybasis->{flight});
@@ -344,7 +347,19 @@ END
         $basisq->finish();
 
         if (!$basisrow) {
-            print STDERR " no.\n";
+	    if (defined $specflights{fail}) {
+		print STDERR " missing basis.\n";
+		next;
+	    } elsif (!defined $basistemplate) {
+		print STDERR " no basis template.\n";
+		next;
+	    } else {
+		print STDERR " using template as basis.\n";
+		$latest_flight= $tryfail->{flight};
+		$basispass_flight= $basistemplate;
+		$hosts= $failhosts;
+		last;
+	    }
             next;
         }
 

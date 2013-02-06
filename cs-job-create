@@ -15,7 +15,8 @@ my ($flight,$job,$recipe,@runvars) = @ARGV;
 my $jobsonly= $ENV{OSSTEST_JOBS_ONLY};
 
 exit 0 if grep { $_ eq 'disable' } @runvars;
-exit 0 if defined($jobsonly) && !grep { $_ eq $job } split /[:,]/, $jobsonly;
+exit 0 if defined($jobsonly) &&
+    !grep { $job =~ m/^$_$/ } split /[:,]/, $jobsonly;
 
 $dbh_tests->
     selectrow_arrayref("SELECT * FROM flights where flight=?", {}, $flight)

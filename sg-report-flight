@@ -85,7 +85,7 @@ die if defined $specver{this}{flight};
 die if defined $specver{that}{flight} &&
     grep { $_ ne 'flight' } keys %{ $specver{that} };
 
-push @blessings, 'real' unless @blessings;
+push @blessings, 'real', 'real-bisect' unless @blessings;
 
 csreadconfig();
 
@@ -101,6 +101,17 @@ our $blessingscond= '('.join(' OR ', map { "blessing=?" } @blessings).')';
 
 if (defined $maxflight) {
     $blessingscond= "( flight <= $maxflight AND $blessingscond )";
+}
+
+sub displayflightnum ($) {
+    my ($flight) = @_;
+    my $frow = $dbh_tests->selectrow_hashref
+	("SELECT * FROM flights WHERE flight = ?", {}, $flight);
+    if ($frow && $frow->{blessing} =~ m/-.*/) {
+	return "$flight$&";
+    } else {
+	return $flight;
+    }
 }
 
 sub findaflight ($$$$$) {
@@ -142,11 +153,17 @@ END
     $flightsq= $dbh_tests->prepare($flightsq);
     $flightsq->execute($branch, @blessings);
 
+    my $buildflightsq= $dbh_tests->prepare(<<END);
+        SELECT val FROM runvars
+	 WHERE flight = ?
+           AND name LIKE '%buildjob'
+END
+
     my $revisionsq= <<END;
-            SELECT job, val FROM runvars
+            SELECT flight, job, val FROM runvars
                 WHERE flight=?
 		  AND name=?
-		GROUP BY job, val
+		GROUP BY flight, job, val
 END
     #print DEBUG "===\n$mismatchq\n===\n";
     $revisionsq= $dbh_tests->prepare($revisionsq);
@@ -157,28 +174,41 @@ END
 END
 
     while (my ($tflight) = $flightsq->fetchrow_array) {
+	my @bflights;
+	push @bflights, $tflight;
+	$buildflightsq->execute($tflight);
+	while (my $bflightrow = $buildflightsq->fetchrow_hashref()) {
+	    my $val = $bflightrow->{val};
+	    next unless $val =~ m/\./; # same flight, already added
+	    push @bflights, $`;
+	}
 	my $whynot;
 	foreach my $tree (keys %{ $specver{$thisthat} }) {
+	    my @revisions;
 	    my $v= $specver{$thisthat}{$tree};
-            my $revisions;
-            if ($tree ne 'osstest') {
-                $revisionsq->execute($tflight, "built_revision_$tree");
-                $revisions= $revisionsq->fetchall_arrayref({});
-            } else {
-                $revisionsosstestq->execute($tflight);
-                $revisions= $revisionsosstestq->fetchall_arrayref({});
-            }
-            if (!@$revisions) {
+	    foreach my $bflight (@bflights) {
+		my $revisions;
+		if ($tree ne 'osstest') {
+		    $revisionsq->execute($bflight, "built_revision_$tree");
+		    $revisions= $revisionsq->fetchall_arrayref({});
+		} else {
+		    $revisionsosstestq->execute($bflight);
+		    $revisions= $revisionsosstestq->fetchall_arrayref({});
+		}
+		push @revisions, @$revisions;
+	    }
+            if (!@revisions) {
                 $whynot= "no built/used $tree";
                 last;
             }
             my ($wrong) = grep {
                 $_->{val} !~ m/^(?: .*: )? $v /x;
-            } @$revisions;
+            } @revisions;
 
             if (defined $wrong) {
                 $whynot= "mismatch $tree ".
-                    (defined $wrong->{job} ? $wrong->{job} : "(osstest)").
+                    (defined $wrong->{job} ?
+		     "$wrong->{flight}.$wrong->{job}" : "(osstest)").
                     " $wrong->{val} != $v";
                 last;
             }
@@ -659,7 +689,7 @@ END
 	$failv->{SummaryCore}= $rtups[0][2];
 	$failv->{SummaryRefFlight}= $rtups[0][3];
 	$failv->{Summary}= $failv->{SummaryCore};
-        $failv->{Summary}.= ' '.$failv->{SummaryRefFlight}
+        $failv->{Summary}.= ' '.displayflightnum($failv->{SummaryRefFlight})
             if defined $failv->{SummaryRefFlight};
 	print DEBUG " so $failv->{Summary}\n";
         print DEBUG " blocker $failv->{Blocker}\n" if $failv->{Blocker};
@@ -900,7 +930,8 @@ END
                 print H encode_entities($sum_core);
                 print H "</a>";
                 if (defined $sum_flight) {
-                    print H " <a href=\"../$sum_flight/\">$sum_flight</a>";
+                    print H " <a href=\"../$sum_flight/\">".
+			displayflightnum($sum_flight)."</a>";
                 }
                 print H "</td>";
             } else {
