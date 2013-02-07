@@ -46,6 +46,7 @@ sub extract () {
         target_extract_jobdistpath($ho, $part, "path_${part}dist",
 				   $r{"${part}buildjob"}, \%distpath);
     }
+    target_cmd_root($ho, '/sbin/ldconfig');
 }
 
 sub adjustconfig () {
