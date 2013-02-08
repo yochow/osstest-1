@@ -125,7 +125,7 @@ sub lvextend1 ($$$) {
 
 sub prep () {
     target_install_packages($ho,
-                            qw(mercurial ocaml-nox ocaml-findlib
+                            qw(mercurial
                                build-essential bin86 bcc iasl
                                flex bison cmake
                                libpci-dev libncurses5-dev libssl-dev python-dev
