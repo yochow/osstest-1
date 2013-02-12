@@ -713,19 +713,21 @@ END
               scalar(@failures), "\n";
     }
 
-    if (!@failures) {
-        print MRO "tolerable\nperfect\n" or die $!;
-         $fi->{Overall}.= "Perfect :-)\n";
-    } elsif (grep { $_->{Blocker} eq 'regression' } @failures) {
-        $fi->{OutcomeSummary}= "regressions - $fi->{OutcomeSummary}";
-        $fi->{Overall}.= "Regressions :-(\n";
-    } elsif (!grep { $_->{Blocker} } @failures) {
-        $fi->{OutcomeSummary}= "tolerable $fi->{OutcomeSummary}";
-        print MRO "tolerable\n" or die $!
-            unless defined $heisen_why;
-        $fi->{Overall}.= "Failures :-/ but no regressions.\n";
-    } else {
-        $fi->{Overall}.= "Failures and problems with tests :-(\n";
+    if (!$heisen_why) {
+	if (!@failures) {
+	    print MRO "tolerable\nperfect\n" or die $!;
+	    $fi->{Overall}.= "Perfect :-)\n";
+	} elsif (grep { $_->{Blocker} eq 'regression' } @failures) {
+	    $fi->{OutcomeSummary}= "regressions - $fi->{OutcomeSummary}";
+	    $fi->{Overall}.= "Regressions :-(\n";
+	} elsif (!grep { $_->{Blocker} } @failures) {
+	    $fi->{OutcomeSummary}= "tolerable $fi->{OutcomeSummary}";
+	    print MRO "tolerable\n" or die $!
+		unless defined $heisen_why;
+	    $fi->{Overall}.= "Failures :-/ but no regressions.\n";
+	} else {
+	    $fi->{Overall}.= "Failures and problems with tests :-(\n";
+	}
     }
 
     return @failures;
