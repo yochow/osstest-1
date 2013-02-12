@@ -143,11 +143,14 @@ END
     }
 
     my $flightsq= <<END;
-        SELECT flight FROM flights
+      SELECT * FROM (
+        SELECT flight, blessing FROM flights
             WHERE branch=?
               AND $blessingscond
             ORDER BY flight DESC
             LIMIT 1000
+      ) AS sub
+      ORDER BY blessing ASC, flight DESC
 END
     #print DEBUG "===\n$flightsq\n===\n";
     $flightsq= $dbh_tests->prepare($flightsq);
