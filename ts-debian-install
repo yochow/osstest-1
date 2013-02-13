@@ -1,11 +1,26 @@
 #!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 our ($whhost,$gn) = @ARGV;
 $whhost ||= 'host';
@@ -32,7 +47,22 @@ sub prep () {
 sub ginstall () {
     my $arch= $r{"$gho->{Guest}_arch"};
     my $archarg= defined($arch) ? "--arch $arch" : '';
-    my $gsuite= guest_var($gho,'suite',$c{GuestSuite});
+    my $gsuite= guest_var($gho,'suite',$c{GuestDebianSuite});
+
+    my $kernpath = guest_var($gho,'kernel_path',$r{xen_kernel_path});
+    my $initrd = guest_var($gho,'initrd_path',$r{xen_initrd_path});
+    if (!$kernpath) {
+	my $kernver= guest_var($gho,'kernel_ver',$r{xen_kernel_ver});
+	$kernver ||= target_cmd_output($ho, 'uname -r');
+	$kernpath = "/boot/vmlinuz-$kernver";
+	$initrd ||= "/boot/initrd.img-$kernver";
+    }
+    if (!$initrd) {
+	$initrd = $kernpath;
+	$initrd =~ s,/vmlinuz-,/initrd.img-, or die "$initrd ?";
+    }
+    my $initrd_opt = $initrd eq 'none' ? '' : "--initrd $initrd";
+    
     target_cmd_root($ho, <<END, 2000);
         xen-create-image \\
             --dhcp --mac $gho->{Ether} \\
@@ -41,8 +71,9 @@ sub ginstall () {
             --mirror http://$c{DebianMirrorHost}/$c{DebianMirrorSubpath} \\
             --hostname $gho->{Name} \\
             --lvm $gho->{Vg} --force \\
-            --kernel $r{xen_kernel_path} \\
-            --initrd /boot/initrd.img-$r{xen_kernel_ver} \\
+            --kernel $kernpath \\
+            --genpass 0 --password xenroot \\
+            $initrd_opt \\
             $archarg
 END
     my $cfg_xend= "/etc/xen/$gho->{Name}.cfg";

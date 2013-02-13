@@ -1,12 +1,28 @@
 #!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict qw(vars);
 use DBI;
 use Osstest;
 use POSIX;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
+
 our ($whhost) = @ARGV;
 $whhost ||= 'host';
 our $ho= selecthost($whhost);
@@ -147,7 +163,7 @@ END
 
 sub cacheing_git_mount () {
     my $cache= $c{GitCache};
-    return unless defined $cache;
+    return unless $cache;
 
     if ($cache =~ m,/$,) {
         my $cachelocal= $c{GitCacheLocal};
@@ -207,6 +223,8 @@ END
 }
 
 sub cacheing_git_install () {
+    my $cache = $c{GitCache};
+    return unless $cache;
     target_install_packages($ho, qw(chiark-utils-bin));
     target_putfile_root($ho,10, "cacheing-git","/usr/local/bin/git", "-p");
 }
@@ -226,5 +244,5 @@ if (!$ho->{Flags}{'no-reinstall'}) {
     ccache_setup();
     lvextend_stage2();
 }
-resource_shared_mark_ready($ho->{Ident}, $ho->{Name},
-                           "build-".$ho->{Suite}."-".$r{arch});
+$mjobdb->jobdb_resource_shared_mark_ready
+   ($ho->{Ident}, $ho->{Name}, "build-".$ho->{Suite}."-".$r{arch});

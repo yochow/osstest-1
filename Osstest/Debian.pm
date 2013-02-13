@@ -1,10 +1,27 @@
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package OsstestDebian;
+
+package Osstest::Debian;
 
 use strict;
 use warnings;
 
 use Osstest;
+use Osstest::TestSupport;
 
 BEGIN {
     use Exporter ();
@@ -280,9 +297,10 @@ sub di_installcmdline_core ($$;@) {
                auto=true preseed
                hw-detect/load_firmware=false
                DEBCONF_DEBUG=5
-               DEBIAN_FRONTEND=text
                );
+    my $difront = get_host_property($tho,'DIFrontend','text');
     push @cl, (
+               "DEBIAN_FRONTEND=$difront",
                "hostname=$tho->{Name}",
                "url=$ps_url",
                "netcfg/dhcp_timeout=150",
@@ -307,7 +325,7 @@ sub preseed_create ($$;@) {
     my $knownhosts= '';
 
     my $disk= $xopts{DiskDevice} || '/dev/sda';
-    my $suite= $xopts{Suite} || $c{Suite};
+    my $suite= $xopts{Suite} || $c{DebianSuite};
 
     my $hostsq= $dbh_tests->prepare(<<END);
         SELECT val FROM runvars
@@ -425,6 +443,7 @@ d-i mirror/suite string $suite
 
 d-i debian-installer/locale string en_GB
 d-i console-keymaps-at/keymap select gb
+d-i keyboard-configuration/xkb-keymap string en_GB
 
 #d-i debconf/frontend string readline
 
@@ -519,11 +538,11 @@ END
             (join ' && ', @{ $preseed_cmds{$di_key} }). "\n";
     }
 
-    $preseed_file .= "$c{Preseed}\n";
+    $preseed_file .= "$c{DebianPreseed}\n";
 
-    foreach my $prop (values %{ $xopts{Properties} }) {
-        next unless $prop->{name} =~ m/^preseed $suite /;
-        $preseed_file .= "$' $prop->{val}\n";
+    foreach my $name (keys %{ $xopts{Properties} }) {
+        next unless $name =~ m/^preseed $suite /;
+        $preseed_file .= "$' $xopts{Properties}{$name}\n";
     }
 
     return create_webfile($ho, "preseed$sfx", $preseed_file);

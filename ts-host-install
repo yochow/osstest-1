@@ -1,14 +1,30 @@
 #!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict qw(vars);
 use DBI;
 use POSIX;
 
 use Osstest;
-use OsstestDebian;
+use Osstest::Debian;
+use Osstest::TestSupport;
+use Osstest::Logtailer;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 my $debconf_priority;
 
@@ -24,7 +40,6 @@ $whhost ||= 'host';
 our $ho= selecthost($whhost);
 exit 0 if $ho->{Flags}{'no-reinstall'};
 exit 0 if $ho->{SharedReady};
-die if $ho->{SharedOthers};
 
 our %timeout= qw(ReadPreseed  350
                  Sshd        2400);
@@ -107,17 +122,17 @@ END
 sub setup_pxeboot_firstboot($) {
     my ($ps_url) = @_;
     
-    my $d_i= $c{PxeDiBase}.'/'.$r{arch}.'/'.$c{PxeDiVersion};
+    my $d_i= $c{TftpDiBase}.'/'.$r{arch}.'/'.$c{TftpDiVersion};
     
     my @installcmdline= qw(vga=normal);
     push @installcmdline, di_installcmdline_core($ho, $ps_url, %xopts);
 
     my $src_initrd= "$d_i/initrd.gz";
-    my @initrds= "$c{Tftp}/$src_initrd";
+    my @initrds= "$c{TftpPath}/$src_initrd";
 
     foreach my $fp (keys %{ $ho->{Flags} }) {
         $fp =~ s/^need-firmware-deb-// or next;
-        my $cpio= "$c{Tftp}/$d_i/$fp.cpio.gz";
+        my $cpio= "$c{TftpPath}/$d_i/$fp.cpio.gz";
         if (stat $cpio) {
             logm("using firmware from: $cpio");
             push @initrds, $cpio;
@@ -134,6 +149,8 @@ sub setup_pxeboot_firstboot($) {
 
     my $wantphysif= get_host_property($ho,'interface force','auto');
     if ($wantphysif ne 'auto') {
+	die "need Ether for $ho->{Name} ($wantphysif)"
+	    unless defined $ho->{Ether};
         system_checked(qw(mkdir -p --), "$initrd_overlay.d/etc/udev/rules.d");
         file_simple_write_contents
             ("$initrd_overlay.d/etc/udev/rules.d/70-persistent-net.rules",
@@ -150,17 +167,18 @@ END
     push @initrds, "$initrd_overlay.cpio.gz";
 
     logm("using initrds: @initrds");
-    my $initrd= host_pxedir($ho)."/initrd.gz";
-    system_checked("cat -- @initrds >$c{Tftp}/$initrd");
+    my $initrd= "$c{TftpTmpDir}$ho->{Name}--initrd.gz";
+    system_checked("cat -- @initrds >$c{TftpPath}$initrd");
     
-    push @installcmdline, ("initrd=$initrd",
+    push @installcmdline, ("initrd=/$initrd",
                            "domain=$c{TestHostDomain}",
                            );
     push @installcmdline,
         get_host_property($ho, "install-append $ho->{Suite}", '');
 
     push @installcmdline, qw(--);
-    push @installcmdline, "console=ttyS0,$c{Baud}n8";
+    push @installcmdline, "console=ttyS0,$c{Baud}n8"
+	unless get_host_property($ho, "NoSerial", "0");
 
     my $installcmdline= join ' ', @installcmdline;
 
@@ -170,7 +188,7 @@ timeout 5
 label overwrite
 	menu label ^Overwrite
 	menu default
-	kernel $d_i/linux
+	kernel /$d_i/linux
 	append $installcmdline
 default overwrite
 END
