@@ -189,7 +189,7 @@ proc main_iteration {} {
             pass - fail - broken - blocked {
             }
             queued - preparing - running {
-                job-set-status-unlocked $flight $job broken
+                jobdb::job-set-status-unlocked $flight $job broken
                 if {$exitok} {
                     error "job $flight.$job runner exited 0\
                        but left job status $jobinfo(status)"
