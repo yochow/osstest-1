@@ -24,7 +24,8 @@ use Osstest;
 use IO::Handle;
 use HTML::Entities;
 
-our ($job,$flight);
+use Osstest::TestSupport;
+
 our (@blessings,@branches);
 our $limit= 100;
 our $htmlout;

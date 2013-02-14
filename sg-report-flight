@@ -28,6 +28,9 @@ use POSIX;
 use IPC::Open2;
 use Data::Dumper;
 
+use Osstest;
+use Osstest::Executive;
+
 our $specflight;
 our %specver;
 our @blessings;
