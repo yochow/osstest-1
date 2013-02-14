@@ -30,7 +30,7 @@ proc check {} {
 
     jobdb::db-open
 
-    set nqueued [pg_execute dbh "
+    set nqueued [jobdb::db-execute "
         SELECT job FROM jobs j
          WHERE j.flight = $flight
            AND j.status = 'queued'
@@ -46,7 +46,7 @@ proc check {} {
         exit 0
     }
 
-    pg_execute -array jobinfo dbh "
+    jobdb::db-execute-array jobinfo "
         SELECT * FROM jobs j
          WHERE j.flight = $flight
            AND j.status = 'queued'
@@ -178,7 +178,7 @@ proc main_iteration {} {
     kill-term $job $pid
 
     jobdb::transaction flights {
-        set found [pg_execute -array jobinfo dbh "
+        set found [jobdb::db-execute-array jobinfo "
             SELECT * FROM jobs
                     WHERE flight=$flight
                       AND job=[pg_quote $job]

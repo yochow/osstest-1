@@ -30,7 +30,7 @@ proc prepare {job} {
     global flight jobinfo
     db-open
     set found 0
-    pg_execute -array jobinfo dbh "
+    db-execute-array jobinfo "
         SELECT job, status, recipe FROM jobs
 			WHERE	flight = [pg_quote $flight]
 			AND	job = [pg_quote $job]
@@ -52,7 +52,7 @@ proc prepare {job} {
 
 proc job-set-status-unlocked {flight job st} {
     db-open
-    pg_execute dbh "
+    db-execute "
             UPDATE jobs SET status='$st'
                 WHERE flight=$flight AND job='$job'
                   AND status<>'aborted' AND status<>'broken'
@@ -112,14 +112,28 @@ proc db-close {} {
 
 proc db-update-1 {stmt} {
     # must be in transaction
-    set nrows [pg_execute dbh $stmt]
+    set nrows [db-execute $stmt]
     if {$nrows != 1} { error "$nrows != 1 in < $stmt >" }
+}
+
+proc db-execute-debug {stmt} {
+    if {[info exists env(OSSTEST_TCL_JOBDB_DEBUG)]} {
+	puts stderr "EXECUTING >$stmt<"
+    }
+}
+proc db-execute {stmt} {
+    db-execute-debug $stmt
+    uplevel 1 pg_execute dbh $stmt
+}
+proc db-execute-array {stmt arrayvar} {
+    db-execute-debug $stmt
+    uplevel 1 pg_execute -array $arrayvar dbh $stmt
 }
 
 proc lock-tables {tables} {
     # must be inside transaction
     foreach tab $tables {
-        pg_execute dbh "
+        db-execute "
 		LOCK TABLE $tab IN ACCESS EXCLUSIVE MODE
         "
     }
@@ -130,11 +144,11 @@ proc spawn-step-begin {flight job ts stepnovar} {
 
     db-open
 
-    pg_execute dbh BEGIN
-    pg_execute dbh "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"
+    db-execute BEGIN
+    db-execute "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"
     if {[catch {
         lock-tables flights
-	pg_execute -array stepinfo dbh "
+	db-execute-array stepinfo "
             SELECT max(stepno) AS maxstep FROM steps
                 WHERE flight=[pg_quote $flight] AND job=[pg_quote $job]
         "
@@ -144,18 +158,18 @@ proc spawn-step-begin {flight job ts stepnovar} {
 	} else {
 	    set stepno 1
 	}
-	pg_execute dbh "
+	db-execute "
             INSERT INTO steps
                 VALUES ([pg_quote $flight], [pg_quote $job], $stepno,
                         [pg_quote $ts], 'running',
                         'STARTING')
         "
-	pg_execute dbh COMMIT
+	db-execute COMMIT
     } emsg]} {
 	global errorInfo errorCode
 	set ei $errorInfo
 	set ec $errorCode
-	catch { pg_execute dbh ROLLBACK }
+	catch { db-execute ROLLBACK }
         db-close
 	error $emsg $ei $ec
     }
@@ -184,12 +198,12 @@ proc step-set-status {flight job stepno st} {
              WHERE flight=$flight AND job='$job' AND stepno=$stepno
         "
         set pause 0
-        pg_execute -array stopinfo dbh "
+        db-execute-array stopinfo "
             SELECT val FROM runvars
              WHERE flight=$flight AND job='$job'
                AND name='pause_on_$st'
         " {
-            pg_execute -array stepinfo dbh "
+            db-execute-array stepinfo "
                 SELECT * FROM steps
                  WHERE flight=$flight AND job='$job' AND stepno=$stepno
             " {
@@ -214,21 +228,21 @@ proc transaction {tables script} {
     db-open
     while 1 {
         set ol {}
-        pg_execute dbh BEGIN
-        pg_execute dbh "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"
+        db-execute BEGIN
+        db-execute "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"
         lock-tables $tables
 	set rc [catch { uplevel 1 $script } result]
 	if {!$rc} {
 	    if {[catch {
-		pg_execute dbh COMMIT
+		db-execute COMMIT
 	    } emsg]} {
 		puts "commit failed: $emsg; retrying ..."
-		pg_execute dbh ROLLBACK
+		db-execute ROLLBACK
 		after 500
 		continue
 	    }
 	} else {
-	    pg_execute dbh ROLLBACK
+	    db-execute ROLLBACK
 	}
         db-close
 	return -code $rc $result
@@ -253,7 +267,7 @@ proc become-task {comment} {
     set username "[id user]@$hostname"
 
     transaction resources {
-        set nrows [pg_execute dbh "
+        set nrows [db-execute "
             UPDATE tasks
                SET username = [pg_quote $username],
                    comment = [pg_quote $comment]
