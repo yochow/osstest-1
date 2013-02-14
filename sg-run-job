@@ -146,7 +146,7 @@ proc spawn-ts {iffail testid ts args} {
     set xprefix {}
     if {[info exists env(OSSTEST_SIMULATE)]} { set xprefix echo }
 
-    set log [jobdb::step-log-filename $flight $jobinfo(job) $stepno]
+    set log [jobdb::step-log-filename $flight $jobinfo(job) $stepno $ts]
     set redirects {< /dev/null}
     if {[string length $log]} {
         lappend redirects 2> $log

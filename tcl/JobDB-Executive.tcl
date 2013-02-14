@@ -267,7 +267,7 @@ proc become-task {comment} {
     }
 }
 
-proc step-log-filename {flight job stepno} {
+proc step-log-filename {flight job stepno ts} {
     global c
     set logdir $c(Logs)/$flight/$job
     file mkdir $c(Logs)/$flight
