@@ -32,7 +32,8 @@ BEGIN {
                       csreadconfig
                       getmethod
                       postfork
-                      $dbh_tests db_retry db_begin_work                      
+                      $dbh_tests db_retry db_retry_retry db_retry_abort
+                      db_begin_work
                       ensuredir get_filecontents_core_quiet system_checked
                       nonempty
                       );

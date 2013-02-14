@@ -23,9 +23,9 @@ use POSIX;
 use JSON;
 use IO::Handle;
 use Osstest::TestSupport;
+use Osstest::Executive;
 
 tsreadconfig();
-opendb_state();
 
 open DEBUG, ">/dev/null" or die $!;
 
