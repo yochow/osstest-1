@@ -44,13 +44,13 @@ sub new {
 
     foreach (@args) {
 	my $vn;
-	my $org = _:
+	my $org = $_;
 	s/\%(\w*)\%/
 	    !length $1 ? '' :
 	    ($vn=$1) eq 'host' ? $ho->{Name} :
 	    !defined $r{$vn} ? die "$ho->{Name} $org $_ $1 ?" :
 	    $r{$vn}
-        /ge;
+        /ge; #/;
     };
     logm("serial method $mo->{Host}: @args");
     ($mo->{Server}, $mo->{Socket}, $mo->{Pattern}) = @args;
