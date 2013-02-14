@@ -20,8 +20,9 @@
 use strict qw(refs vars);
 
 use Osstest;
+use Osstest::Executive;
 
-readconfigonly();
+readglobalconfig();
 
 die unless @ARGV==2;
 my ($seconds, $desc) = @ARGV;

@@ -56,7 +56,7 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
     }
 }
 
-readconfigonly();
+readglobalconfig();
 
 grabrepolock_reexec(@org_argv);
 

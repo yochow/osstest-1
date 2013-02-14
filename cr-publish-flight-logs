@@ -23,7 +23,7 @@ use Osstest;
 
 our %c;
 
-readconfigonly();
+readglobalconfig();
 
 die "usage: ./cr-publish-flight-logs <flight>" unless @ARGV==1;
 
