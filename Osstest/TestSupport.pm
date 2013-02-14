@@ -633,6 +633,9 @@ sub power_cycle_time ($) {
 
 sub power_cycle ($) {
     my ($ho) = @_;
+    $mjobdb->host_check_allocated($ho);
+    die "refusing to set power state for host $ho->{Name} shared with others\n"
+	if $ho->{SharedOthers};
     power_state($ho, 0);
     sleep(power_cycle_time($ho));
     power_state($ho, 1);
