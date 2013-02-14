@@ -129,7 +129,7 @@ sub host_check_allocated ($$) { #method
         $ho->{Shared}{State} eq 'ready';
     $ho->{SharedReady}=
 	$ho->{SharedMaybeOthers} &&
-        !! (grep { $_ eq "share-".$ho->{Shared}{Type} }
+        !! (grep { $_." ".get_harness_rev() eq "share-".$ho->{Shared}{Type} }
 	    get_hostflags($ho->{Ident}));
     $ho->{SharedOthers}=
         $ho->{Shared} ? $ho->{Shared}{Others} : 0;
