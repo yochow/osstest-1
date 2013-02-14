@@ -75,7 +75,7 @@ proc step-set-status {flight job stepno st} {
 
 proc become-task {argv} { }
 
-proc step-log-filename {flight job} {
+proc step-log-filename {flight job stepno} {
     return {}
 }
 
