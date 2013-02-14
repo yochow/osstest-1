@@ -148,7 +148,7 @@ proc spawn-step-begin {flight job ts stepnovar} {
             INSERT INTO steps
                 VALUES ([pg_quote $flight], [pg_quote $job], $stepno,
                         [pg_quote $ts], 'running',
-                        'TBD')
+                        'STARTING')
         "
 	pg_execute dbh COMMIT
     } emsg]} {
