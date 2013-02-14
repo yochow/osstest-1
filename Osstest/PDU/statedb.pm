@@ -39,7 +39,7 @@ sub new {
     return bless { Asset => $asset }, $class;
 }
 
-sub power_state__statedb {
+sub power_state {
     my ($mo,$on) = @_;
     my $asset = $mo->{Asset};
 
