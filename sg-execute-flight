@@ -19,16 +19,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-source osstestlib.tcl
-
+source ./tcl/osstestlib.tcl
 readconfig
+source-method JobDB
 
 proc check {} {
     global flight jobinfo running blessing killing stopping startdelay
 
     if {$stopping} return
 
-    db-open
+    jobdb::db-open
 
     set nqueued [pg_execute dbh "
         SELECT job FROM jobs j
@@ -69,7 +69,7 @@ proc check {} {
          ORDER BY job
     " maybe-spawn-job
 
-    db-close
+    jobdb::db-close
 }
 
 proc prequit {why} {
@@ -87,12 +87,7 @@ proc maybe-spawn-job {} {
         if {[string equal $job $jobinfo(job)]} return
     }
 
-    switch -glob $jobinfo(recipe) {
-        build* { set runner sg-run-builds }
-        test* { set runner sg-run-tests }
-        * { error "unknown runner for recipe $jobinfo(recipe)" }
-    }
-    log "flight $flight spawning $jobinfo(job) $jobinfo(recipe) $runner"
+    log "flight $flight spawning $jobinfo(job)"
 
     incr startdelay 300
 
@@ -114,8 +109,8 @@ proc maybe-spawn-job {} {
             execl sh {-c {trap '' TERM; read dummy}}
             error "execl sh returned success ?!"
         }
-        execl ./$runner [list --start-delay $startdelay \
-                             $flight --jobs=$jobinfo(job)]
+        execl ./sg-run-job [list --start-delay $startdelay \
+                             $flight $jobinfo(job)]
         error "execl returned success ?!"
     }
     close $waiter_sentinel_r
@@ -220,7 +215,7 @@ proc kill-kill {job pid} {
 
 proc parse-args {} {
     global argv blessing
-    set-flight
+    jobdb::set-flight
     if {[llength $argv]!=1} { error "wrong # args" }
     lassign $argv blessing
 }

@@ -27,7 +27,7 @@ proc logputs {f m} {
 }
 
 proc prepare {job} {
-    global jobinfo
+    global flight jobinfo
     db-open
     set found 0
     pg_execute -array jobinfo dbh "
@@ -79,17 +79,26 @@ proc set-flight {} {
     set env(OSSTEST_FLIGHT) $flight
 }
 
+variable dbusers 0
 
 proc db-open {} {
     global g
-    variable dbusers 0
+    variable dbusers
 
     if {$dbusers > 0} { incr dbusers; return }
+
+    set pl {
+	use Osstest;
+	use Osstest::Executive;
+	readglobalconfig();
+	print db_pg_dsn("osstestdb") or die $!;
+    }
+    set db_pg_dsn [exec perl -e $pl]
 
     # PgDbName_* are odbc-style strings as accepted by Perl's DBD::Pg
     # but Tcl pg_connect unaccountably uses a different format which
     # is whitespace-separated.
-    regsub -all {;} $c(ExecutiveDbname_osstestdb) { } conninfo
+    regsub -all {;} $db_pg_dsn { } conninfo
     pg_connect -conninfo $conninfo -connhandle dbh
     incr dbusers
 }
