@@ -123,9 +123,11 @@ END
 sub host_check_allocated ($$) { #method
     my ($jd, $ho) = @_;
     $ho->{Shared}= resource_check_allocated('host', $ho->{Name});
-    $ho->{SharedReady}=
+    $ho->{SharedMaybeOthers}=
         $ho->{Shared} &&
-        $ho->{Shared}{State} eq 'ready' &&
+        $ho->{Shared}{State} eq 'ready';
+    $ho->{SharedReady}=
+	$ho->{SharedMaybeOthers} &&
         !! (grep { $_ eq "share-".$ho->{Shared}{Type} }
 	    get_hostflags($ho->{Ident}));
     $ho->{SharedOthers}=
