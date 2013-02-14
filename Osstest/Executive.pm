@@ -49,7 +49,7 @@ BEGIN {
                       alloc_resources alloc_resources_rollback_begin_work
                       resource_check_allocated resource_shared_mark_ready
                       duration_estimator
-                      opendb_state
+                      opendb opendb_state
                       );
     %EXPORT_TAGS = ( );
 
