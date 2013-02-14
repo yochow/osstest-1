@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-package Osstest::PDU::manual;
+package Osstest::PDU::unsupported;
 
 use strict;
 use warnings;
