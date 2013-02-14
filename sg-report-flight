@@ -629,15 +629,6 @@ END
             next;
         }
 
-        $anypassq->execute($branch, $j->{job}, $s->{testid}, @blessings);
-        if (!$anypassq->fetchrow_hashref()) {
-            print MRO "never-passed $j->{job} $s->{testid} $st\n";
-            print DEBUG " never passed\n";
-            $failv->{Summary}= 'never pass';
-            $failv->{Blocker}= '';
-            next;
-        }
-
 	if ($st eq 'blocked') {
 	    print MRO "blocked $s->{job} $s->{testid}\n";
 	    print DEBUG " blocked, call it justifiable\n";
@@ -650,6 +641,15 @@ END
             print DEBUG " not a fail, unjustifiable\n";
             $failv->{Summary}= "[st=$st!]";
             $failv->{Blocker}= 'broken';
+            next;
+        }
+
+        $anypassq->execute($branch, $j->{job}, $s->{testid}, @blessings);
+        if (!$anypassq->fetchrow_hashref()) {
+            print MRO "never-passed $j->{job} $s->{testid} $st\n";
+            print DEBUG " never passed\n";
+            $failv->{Summary}= 'never pass';
+            $failv->{Blocker}= '';
             next;
         }
 
