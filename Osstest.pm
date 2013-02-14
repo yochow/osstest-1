@@ -109,7 +109,7 @@ sub readglobalconfig () {
 	    next unless m/\S/;
 	    if (m/^($cfgvar_re)\s+(\S.*)$/) {
 		$c{$1} = $2;
-	    } elsif (m/^($cfgvar_re)=\s*\<\<(\')(.*)\2\s*$/) {
+	    } elsif (m/^($cfgvar_re)=\s*\<\<(\'?)(.*)\2\s*$/) {
 		my ($vn,$qu,$delim) = ($1,$2,$3);
 		my $val = '';
 		$!=0; while (<C>) {
@@ -117,10 +117,16 @@ sub readglobalconfig () {
 		    $val .= $_;
 		}
 		die $! unless length $_;
-		if ($qu eq '') { eval "\$val = ($val); 1;" or die $@; }
+		die unless $val =~ m/\n$/;
+		if ($qu eq '') {
+		    my $reconstruct =
+			"\$val = <<${qu}${delim}${qu}; 1;\n".
+			"${val}${delim}\n";
+		    eval $reconstruct or die "$1 here doc ($reconstruct) $@";
+		}
 		$c{$vn} = $val;
 	    } elsif (m/^($cfgvar_re)=(.*)$/) {
-		eval "\$c{$1} = ( $2 ); 1;" or die $@;
+		eval "\$c{$1} = ( $2 ); 1;" or die "$1 parsed val ($2) $@";
 	    } else {
 		die "bad syntax";
 	    }
