@@ -125,9 +125,9 @@ proc db-execute {stmt} {
     db-execute-debug $stmt
     uplevel 1 [list pg_execute dbh $stmt]
 }
-proc db-execute-array {stmt arrayvar} {
+proc db-execute-array {stmt arrayvar args} {
     db-execute-debug $stmt
-    uplevel 1 [list pg_execute -array $arrayvar dbh $stmt]
+    uplevel 1 [list pg_execute -array $arrayvar dbh $stmt] $args
 }
 
 proc lock-tables {tables} {
