@@ -812,8 +812,12 @@ END
             encode_entities(strftime "%Y-%m-%d %H:%M:%S Z",
                             gmtime $step->{started});
 
-        printf H "<td align=right>%d</td>\n",
-            $step->{finished} - $step->{started};
+	if (defined $step->{finished} && defined $step->{started}) {
+	    printf H "<td align=right>%d</td>\n",
+                $step->{finished} - $step->{started};
+	} else {
+	    printf H "<td></td>\n";
+	}
     }
 
     print H <<END;
