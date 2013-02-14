@@ -54,8 +54,8 @@ sub open ($) { #method
     return opendb('osstestdb');
 }
 
-sub dbfl_check ($$) {
-    my ($fl,$flok) = @_;
+sub dbfl_check ($$) { #method
+    my ($jd, $fl,$flok) = @_;
     # must be inside db_retry qw(flights)
 
     if (!ref $flok) {
