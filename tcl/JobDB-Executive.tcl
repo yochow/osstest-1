@@ -125,7 +125,7 @@ proc db-execute {stmt} {
     db-execute-debug $stmt
     uplevel 1 [list pg_execute dbh $stmt]
 }
-proc db-execute-array {stmt arrayvar args} {
+proc db-execute-array {arrayvar stmt args} {
     db-execute-debug $stmt
     uplevel 1 [list pg_execute -array $arrayvar dbh $stmt] $args
 }
