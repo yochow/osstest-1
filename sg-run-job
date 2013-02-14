@@ -42,8 +42,8 @@ proc run-job {job} {
     if {[llength $need_xen_hosts]} {
                catching-otherwise blocked   check-not-blocked
 	if {!$ok} return
+        eval run-ts broken  =             ts-hosts-allocate + $need_xen_hosts
     }
-    eval run-ts broken  =                 ts-hosts-allocate + $need_xen_hosts
 
     if {$need_build_host} { catching-otherwise broken prepare-build-host }
 
