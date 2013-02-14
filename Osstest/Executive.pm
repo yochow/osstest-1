@@ -49,7 +49,7 @@ BEGIN {
                       alloc_resources alloc_resources_rollback_begin_work
                       resource_check_allocated resource_shared_mark_ready
                       duration_estimator
-                      opendb opendb_state
+                      db_pg_dsn opendb opendb_state
                       );
     %EXPORT_TAGS = ( );
 
@@ -141,9 +141,8 @@ sub opendb_state () {
 
 our $whoami;
 
-sub opendb ($) {
+sub db_pg_dsn ($) {
     my ($dbname) = @_;
-
     my $pg= $c{"ExecutiveDbname_$dbname"};
 
     if (!defined $pg) {
@@ -167,6 +166,13 @@ sub opendb ($) {
 
         $pg = $c{"ExecutiveDbname_$dbname"} = $pat;
     }
+    return $pg;
+}
+
+sub opendb ($) {
+    my ($dbname) = @_;
+
+    my $pg= db_pg_dsn($dbname);
 
     my $dbh= DBI->connect("dbi:Pg:$pg", '','', {
         AutoCommit => 1,
