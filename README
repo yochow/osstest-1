@@ -43,7 +43,7 @@ To run osstest in standalone mode:
 ========================================
 
 Format of config file ~/.xen-osstest/config (you may set OSSTEST_CONFIG to
-point to a different file):
+point to a different file, or :-separates series of files):
 
 Lines containing:
    Name value
@@ -60,6 +60,7 @@ To set a value to the empty string, say
 #-comments and blank lines are ignored.
 
 For an example see  ./standalone-config-example
+Values later in the file, or in a later file, take precedence.
 
 ========================================
 
