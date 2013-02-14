@@ -23,6 +23,7 @@ use warnings;
 use Osstest;
 use Osstest::TestSupport;
 use Osstest::Executive;
+use Data::Dumper;
 
 BEGIN {
     use Exporter ();
@@ -133,7 +134,7 @@ sub host_check_allocated ($$) { #method
     $ho->{SharedOthers}=
         $ho->{Shared} ? $ho->{Shared}{Others} : 0;
     
-    die if $ho->{SharedOthers} && !$ho->{SharedReady};
+    die Dumper($ho)." ?" if $ho->{SharedOthers} && !$ho->{SharedReady};
 }
 
 sub jobdb_postfork ($) { #method
