@@ -34,14 +34,24 @@ use File::Basename;
 use IO::Socket::INET;
 #use Data::Dumper;
 
+use Osstest;
+use Osstest::TestSupport;
+use Osstest::Executive;
+
 BEGIN {
     use Exporter ();
     our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
     $VERSION     = 1.00;
     @ISA         = qw(Exporter);
-    @EXPORT      = qw();
-    %EXPORT_TAGS = (
-	);
+    @EXPORT      = qw(get_harness_rev grabrepolock_reexec
+                      findtask @all_lock_tables
+                      tcpconnect_queuedaemon plan_search
+                      alloc_resources alloc_resources_rollback_begin_work
+                      resource_check_allocated resource_shared_mark_ready
+                      duration_estimator
+                      opendb_state
+                      );
+    %EXPORT_TAGS = ( );
 
     @EXPORT_OK   = qw();
 }
@@ -76,25 +86,6 @@ our (@all_lock_tables) = qw(flights resources);
 #
 #  Nontransactional reads are also permitted
 #  Transactional reads must take out locks as if they were modifying
-
-
-BEGIN {
-    use Exporter ();
-    our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
-    $VERSION     = 1.00;
-    @ISA         = qw(Exporter);
-    @EXPORT      = qw(dbfl_check get_harness_rev grabrepolock_reexec
-                      findtask @all_lock_tables
-                      tcpconnect_queuedaemon plan_search
-                      alloc_resources alloc_resources_rollback_begin_work
-                      resource_check_allocated resource_shared_mark_ready
-                      duration_estimator
-                      opendb_state
-                      );
-    %EXPORT_TAGS = ( );
-
-    @EXPORT_OK   = qw();
-}
 
 augmentconfigdefaults(
     ControlDaemonHost => 'woking.cam.xci-test.com',

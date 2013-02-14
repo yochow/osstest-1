@@ -20,6 +20,8 @@ package Osstest::JobDB::Executive;
 use strict;
 use warnings;
 
+use Osstest;
+use Osstest::TestSupport;
 use Osstest::Executive;
 
 BEGIN {
@@ -27,13 +29,13 @@ BEGIN {
     our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
     $VERSION     = 1.00;
     @ISA         = qw(Exporter);
-    @EXPORT      = qw();
+    @EXPORT      = qw(dbfl_check);
     %EXPORT_TAGS = ( );
 
     @EXPORT_OK   = qw();
 }
 
-sub new { return bless {}, Osstest::JobDB::Standalone };
+sub new { return bless {}, $_[0] };
 
 sub begin_work ($$$) { #method
     my ($jd, $dbh,$tables) = @_;
@@ -84,8 +86,8 @@ END
     }
 }
 
-sub flight_create ($) { #method
-    my ($jd) = @_;
+sub flight_create ($$$) { #method
+    my ($jd,$intended,$branch) = @_;
     $dbh_tests->do(<<END, {}, $branch, $intended);
              INSERT INTO flights
                          (flight,  started, blessing,       branch, intended)
@@ -109,6 +111,7 @@ die "$flight.$job $count" unless $count==1;
                WHERE flight=$flight AND blessing='constructing'
 END
     logm("starting $flight") if $count>0;
+    my $now = time;
 
     $count= $dbh_tests->do(<<END);
            UPDATE flights SET started=$now
@@ -119,11 +122,12 @@ END
 
 sub host_check_allocated ($$) { #method
     my ($jd, $ho) = @_;
-    $ho->{Shared}= resource_check_allocated('host', $name);
+    $ho->{Shared}= resource_check_allocated('host', $ho->{Name});
     $ho->{SharedReady}=
         $ho->{Shared} &&
         $ho->{Shared}{State} eq 'ready' &&
-        !! grep { $_ eq "share-".$ho->{Shared}{Type} } get_hostflags($ident);
+        !! (grep { $_ eq "share-".$ho->{Shared}{Type} }
+	    get_hostflags($ho->{Ident}));
     $ho->{SharedOthers}=
         $ho->{Shared} ? $ho->{Shared}{Others} : 0;
     
@@ -141,8 +145,8 @@ sub gen_ether_offset ($$) { #method
 }
 
 sub jobdb_resource_shared_mark_ready { #method
-    my $mo = shift @_;
-    resource_shared_mark_ready(@_);
+    my ($mo, $restype, $resname, $sharetype) = @_;
+    resource_shared_mark_ready($restype, $resname, $sharetype);
 }
 
 sub jobdb_check_other_job { #method

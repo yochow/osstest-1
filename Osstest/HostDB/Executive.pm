@@ -44,9 +44,9 @@ sub get_properties ($$$) {
             WHERE restype='host' AND resname=?
 END
     $q->execute($name);
-    foreach my ($row = $q->fetchrow_hashref()) {
+    while (my $row = $q->fetchrow_hashref()) {
 	my $name = $row->{name};
-	$hp{propname_massage($name)} = $row->{val};
+	$hp->{propname_massage($name)} = $row->{val};
     }
 }
 
@@ -79,7 +79,8 @@ sub default_methods ($$) {
 END
     $sth->execute($selname);
     my $row= $sth->fetchrow_hashref();
-    die "$ident $name $selname ?" unless $row;
+    my $name= $ho->{Name};
+    die "$ho->{Ident} $name $selname ?" unless $row;
     die if $sth->fetchrow_hashref();
     $sth->finish();
     my $get= sub {
