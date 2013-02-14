@@ -65,7 +65,9 @@ END
 
 PlanRogueAllocationDuration= 86400*7
 
-TftpPath /usr/groups/netboot/
+TftpPath /tftpboot/pxe/
+TftpPlayDir osstest/
+TftpPxeDir /
 
 TftpPxeGroup osstest
 TftpDiVersion 2012-01-30-squeeze
