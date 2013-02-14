@@ -52,7 +52,7 @@ sub new {
 	    $r{$vn}
         /ge; #/;
     };
-    logm("serial method $mo->{Host}: @args");
+    logm("serial method $mo->{Host}{Name}: @args");
     ($mo->{Server}, $mo->{Socket}, $mo->{Pattern}) = @args;
     return bless $mo, $class;
 }
