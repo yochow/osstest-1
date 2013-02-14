@@ -24,6 +24,7 @@ use POSIX;
 use DBI;
 use IO::File;
 use IO::Socket::INET;
+use IPC::Open2;
 
 use Osstest;
 use Osstest::Logtailer;

@@ -35,7 +35,7 @@ BEGIN {
 }
 
 sub new {
-    my ($class, $ho, @args) = @_;
+    my ($class, $ho, $methname, @args) = @_;
     my $mo = { Host => $ho, Name => $ho->{Name} };
     die if @args<1;
     die if @args>3;
@@ -52,7 +52,7 @@ sub new {
 	    $r{$vn}
         /ge; #/;
     };
-    logm("serial method $mo->{Host}{Name}: @args");
+    logm("serial method $methname $mo->{Host}{Name}: @args");
     ($mo->{Server}, $mo->{Socket}, $mo->{Pattern}) = @args;
     return bless $mo, $class;
 }

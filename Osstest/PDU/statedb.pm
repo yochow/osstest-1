@@ -22,6 +22,7 @@ use warnings;
 
 use Osstest;
 use Osstest::Executive;
+use Osstest::TestSupport;
 
 sub power_state_await ($$$) {
     my ($sth, $want, $msg) = @_;
