@@ -30,7 +30,7 @@ Results /home/xc_osstest/results
 PubBaseDir /home/xc_osstest
 
 WebspaceFile /export/home/osstest/public_html/
-WebspaceUrl http://woking.$c{Domain}/~osstest/
+WebspaceUrl="http://woking.$c{DnsDomain}/~osstest/"
 
 OverlayLocal /export/home/osstest/overlay-local
 
@@ -67,7 +67,9 @@ PlanRogueAllocationDuration= 86400*7
 
 TftpPath /tftpboot/pxe/
 TftpPlayDir osstest/
+TftpTmpDir osstest/tmp/
 TftpPxeDir /
+TftpPxeTemplates %ipaddrhex%/pxelinux.cfg
 
 TftpPxeGroup osstest
 TftpDiVersion 2012-01-30-squeeze
