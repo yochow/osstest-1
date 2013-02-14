@@ -40,7 +40,7 @@ sub new {
     return bless { Host => $ho }, $class;
 }
 
-sub power_state {
+sub pdu_power_state {
     my ($mo, $on) = @_;
     my $onoff= $on ? "on" : "off";
 

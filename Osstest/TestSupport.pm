@@ -647,7 +647,7 @@ sub power_state ($$) {
     my ($ho, $on) = @_;
     logm("power: setting $on for $ho->{Name}");
     foreach my $mo (@{ $ho->{PowerMethobjs} }) {
-	$mo->power_state($on);
+	$mo->pdu_power_state($on);
     }
 }
 

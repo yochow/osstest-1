@@ -40,7 +40,7 @@ sub new {
     return bless { Asset => $asset }, $class;
 }
 
-sub power_state {
+sub pdu_power_state {
     my ($mo,$on) = @_;
     my $asset = $mo->{Asset};
 
