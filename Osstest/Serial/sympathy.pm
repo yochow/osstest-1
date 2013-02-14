@@ -62,6 +62,7 @@ sub fetch_logs {
 
     my $started= $mjobdb->jobdb_flight_started_for_log_capture($flight);
 
+    my $ho = $mo->{Host};
     my $logpat = $mo->{Pattern};
     my $targhost= $mo->{Server};
 
