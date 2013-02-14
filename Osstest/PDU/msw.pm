@@ -38,7 +38,7 @@ sub new {
     return bless { Pdu => $pdu, Port => $port }, $class;
 }
 
-sub power_state {
+sub pdu_power_state {
     my ($mo, $on) = @_;
     my $onoff= $on ? "on" : "off";
     system_checked("./pdu-msw $mo->{Pdu} $mo->{Port} $onoff");
