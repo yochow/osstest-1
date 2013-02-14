@@ -159,6 +159,7 @@ proc spawn-step-begin {flight job ts stepnovar} {
         db-close
 	error $emsg $ei $ec
     }
+    db-close
 }
 
 proc spawn-step-commit {flight job stepno testid} {
@@ -172,8 +173,6 @@ proc spawn-step-commit {flight job stepno testid} {
                   AND stepno=$stepno
         "
     }
-
-    db-close
 }
 
 proc step-set-status {flight job stepno st} {
