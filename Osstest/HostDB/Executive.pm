@@ -22,6 +22,7 @@ use warnings;
 
 use Osstest;
 use Osstest::Executive;
+use Osstest::TestSupport;
 
 BEGIN {
     use Exporter ();
