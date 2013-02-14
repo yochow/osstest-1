@@ -244,7 +244,7 @@ sub get_runvar_maybe ($$) {
     # may be run outside transaction, or with flights locked
     my ($oflight, $ojob) = otherflightjob($otherflightjob);
 
-    $mjobdb->jobdb_check_other_job($flight,$job, $oflight,$ojob);
+    $mjobdb->jobdb_check_other_job($flight,$job, $oflight,$ojob, "for $param");
 
     my $row= $dbh_tests->selectrow_arrayref(<<END,{}, $oflight,$ojob,$param);
         SELECT val FROM runvars WHERE flight=? AND job=? AND name=?
