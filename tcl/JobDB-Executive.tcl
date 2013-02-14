@@ -123,11 +123,11 @@ proc db-execute-debug {stmt} {
 }
 proc db-execute {stmt} {
     db-execute-debug $stmt
-    uplevel 1 pg_execute dbh $stmt
+    uplevel 1 [list pg_execute dbh $stmt]
 }
 proc db-execute-array {stmt arrayvar} {
     db-execute-debug $stmt
-    uplevel 1 pg_execute -array $arrayvar dbh $stmt
+    uplevel 1 [list pg_execute -array $arrayvar dbh $stmt]
 }
 
 proc lock-tables {tables} {
