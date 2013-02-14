@@ -447,7 +447,9 @@ sub hid_recurse ($$) {
 	$duration= $cand->{Duration} if
 	    !defined($duration) ||
 	    defined($cand->{Duration}) && $cand->{Duration} >= $duration;
-        $previously_failed++ if $cand->{MostRecentStatus} eq 'fail';
+        $previously_failed++ if
+	    defined $cand->{MostRecentStatus} &&
+	    $cand->{MostRecentStatus} eq 'fail';
     }
     my $duration_rightaway_adjust= 0;
     
