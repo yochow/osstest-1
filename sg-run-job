@@ -58,9 +58,12 @@ proc run-job {job} {
     if {$ok} { catching-otherwise fail      run-job/$jobinfo(recipe)      }
     per-host-ts .       =                {ts-leak-check check}
 
-    per-host-ts !broken capture-logs/@(*) ts-logs-capture
-    if {$anyfailed && $need_build_host} {
-        run-ts broken   *                 ts-logs-capture
+    if {!$need_build_host} {
+        per-host-ts !broken capture-logs/@(*) ts-logs-capture
+    } else {
+        if {$anyfailed} {
+            run-ts  !broken capture-logs      ts-logs-capture + host
+        }
     }
 
     if {$ok} { setstatus pass                                             }
