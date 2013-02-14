@@ -20,6 +20,7 @@
 export OSSTEST_CONFIG=production-config
 
 check_stop () {
+	if [ "x$OSSTEST_IGNORE_STOP" = xy ]; then return; fi
 	for stop_dir in '' $HOME/testing.git/; do
 		if test -f $stop_dir${1}stop; then
 			echo "$stop_dir${1}stop found - stopping"
