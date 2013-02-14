@@ -29,7 +29,7 @@ flight=`./cs-flight-create $blessing $branch`
 . ap-common
 . cri-common
 
-suite=`getconfig Suite`
+suite=`getconfig DebianSuite`
 
 xenrt_images=/usr/groups/images/autoinstall
 
