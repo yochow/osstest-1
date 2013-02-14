@@ -193,7 +193,7 @@ sub db_retry_retry () { $db_retry_stop= 'retry'; undef; }
 sub db_begin_work ($;$) {
     my ($dbh,$tables) = @_;
     $dbh->begin_work();
-    $mjobdb->begin_work($dbh, @$tables);
+    $mjobdb->begin_work($dbh, $tables);
 }
 
 sub db_retry ($$$;$$) {
