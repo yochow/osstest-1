@@ -20,6 +20,10 @@ package Osstest::DhcpWatch::leases;
 use strict;
 use warnings;
 
+use POSIX;
+use IO::File;
+use IO::Socket;
+
 use Osstest;
 use Osstest::TestSupport;
 
