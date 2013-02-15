@@ -337,7 +337,8 @@ END
                 print DEBUG "$dbg $khash ($kdb) FROM-RES-PROP $val\n";
             } else {
                 $val= $hid->{"Default$khash"};
-                print DEBUG "$dbg $khash ($kdb) FROM-DEFAULT $val\n";
+                print DEBUG "$dbg $khash ($kdb) FROM-DEFAULT ".
+		    (defined $val ? $val : '<undef>')."\n";
             }
             $candrow->{$khash}= $val;
         }

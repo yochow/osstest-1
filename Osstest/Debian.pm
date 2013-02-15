@@ -20,6 +20,8 @@ package Osstest::Debian;
 use strict;
 use warnings;
 
+use IO::File;
+
 use Osstest;
 use Osstest::TestSupport;
 

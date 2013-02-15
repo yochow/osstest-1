@@ -23,6 +23,7 @@ package Osstest::Logtailer;
 
 use Fcntl qw(:seek);
 use POSIX;
+use IO::File;
 
 BEGIN {
     use Exporter ();

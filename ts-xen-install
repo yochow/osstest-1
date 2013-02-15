@@ -67,7 +67,7 @@ sub adjustconfig () {
     target_editfile_root($ho, "/etc/xen/xend-config.sxp",
 			 "xend-config.sxp", sub {
 	my (@domains) = (qw(localhost localhost.localdomain),
-			 ".".$c{Domain}, ".".$c{TestHostDomain});
+			 ".".$c{DnsDomain}, ".".$c{TestHostDomain});
 	logm("relocation domains: @domains");
 	foreach (@domains) {
 	    s/\./\\$&/g;

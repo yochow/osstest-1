@@ -29,6 +29,8 @@ use IPC::Open2;
 use Osstest;
 use Osstest::Logtailer;
 use File::Copy;
+use File::Basename;
+use IO::Handle;
 
 BEGIN {
     use Exporter ();

@@ -45,7 +45,7 @@ sub checkout () {
 
     my $linux_url_envvar= 'XEN_LINUX_GIT_URL';
     my $linux_rev_envvar= 'XEN_LINUX_GITREV';
-    if (length $r{tree_linux} && $r{tree_linux} =~ m/\.hg$/) {
+    if (defined $r{tree_linux} && $r{tree_linux} =~ m/\.hg$/) {
         $linux_url_envvar= 'XEN_LINUX_HGREPO';
         $linux_rev_envvar= 'XEN_LINUX_HGREV';
     }
