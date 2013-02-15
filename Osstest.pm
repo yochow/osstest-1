@@ -35,7 +35,7 @@ BEGIN {
                       $dbh_tests db_retry db_retry_retry db_retry_abort
                       db_begin_work
                       ensuredir get_filecontents_core_quiet system_checked
-                      nonempty
+                      nonempty visible_undef
                       );
     %EXPORT_TAGS = ( );
 
@@ -276,6 +276,11 @@ sub system_checked {
 sub nonempty ($) {
     my ($v) = @_;
     return defined($v) && length($v);
+}
+
+sub visible_undef ($) {
+    my ($v) = @_;
+    return defined $v ? $v : '<undef>';
 }
 
 1;
