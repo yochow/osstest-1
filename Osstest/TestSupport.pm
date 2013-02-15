@@ -1402,7 +1402,8 @@ sub guest_await_dhcp_tcp ($$) {
     my ($gho,$timeout) = @_;
     guest_find_tcpcheckport($gho);
     poll_loop($timeout,1,
-              "guest $gho->{Name} $gho->{Ether} $gho->{TcpCheckPort}".
+              "guest $gho->{Name} ".visible_undef($gho->{Ether}).
+	      " $gho->{TcpCheckPort}".
               " link/ip/tcp",
               sub {
         my $err= guest_check_ip($gho);
