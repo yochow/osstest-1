@@ -24,6 +24,7 @@ no warnings qw(recursion);
 use Data::Dumper;
 use POSIX;
 use Osstest;
+use Osstest::Executive;
 
 our $num= 1000;
 our $doupdate= 1;
