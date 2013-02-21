@@ -19,9 +19,9 @@
 
 # $xenbranch must already be set
 
-: ${XENBITS:=xen@xenbits.xensource.com}
+: ${XENBITS:=osstest@xenbits.xensource.com}
 
-: ${TREE_XEN:=http://xenbits.xen.org/hg/staging/$xenbranch.hg}
+: ${TREE_XEN:=git://xenbits.xen.org/xen.git}
 
 #: ${TREE_QEMU:=git://mariner.uk.xensource.com/qemu-$xenbranch.git}
 : ${TREE_QEMU:=git://xenbits.xen.org/staging/qemu-$xenbranch.git}
@@ -43,6 +43,7 @@
 : ${TREE_LINUX2639:=${KERNEL_SCM}/konrad/xen.git}
 : ${TAG_LINUX2639:=stable/2.6.39.x}
 
+: ${LOCALREV_XEN:=daily-cron.$branch}
 : ${LOCALREV_LINUX:=daily-cron.$branch}
 
 : ${TREEBASE_LINUX_XCP:=http://hg.uk.xensource.com/carbon/trunk/linux-2.6.27}

@@ -37,11 +37,21 @@ if info_linux_tree "$branch"; then
 fi
 
 case "$branch" in
-xen*)
+xen-3.*)
 	./sg-hg-heads ssh $XENBITS '
 	        set -e
 	        cd HG/"'"$branch.hg"'"
 	'
+	;;
+xen-unstable)
+	repo_tree_rev_fetch_git xen \
+		$TREE_XEN master $LOCALREV_XEN
+	;;
+xen-4.*-testing)
+	branchcore=${branch#xen-}
+	branchcore=${branchcore%-testing}
+	repo_tree_rev_fetch_git xen \
+		$TREE_XEN stable-$branchcore $LOCALREV_XEN
 	;;
 qemu-upstream-*)
         repo_tree_rev_fetch_git $branch \
