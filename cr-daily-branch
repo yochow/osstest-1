@@ -89,10 +89,10 @@ if [ "x$testedflight" = x ]; then
         wantpush=false
         skipidentical=false
         force_baseline=true
-        OLD_REVISION=`check_tested --print-revision=$tree`
-        if [ "x$OLD_REVISION" = x ]; then
-                OLD_REVISION="$FORCE_REVISION"
-        fi
+	tested_revision=`check_tested --print-revision=$tree`
+	if [ "x$tested_revision" != x ]; then
+		OLD_REVISION="$tested_revision"
+	fi
 fi
 
 if [ "x$REVISION_XEN" = x ]; then
