@@ -113,6 +113,9 @@ sub prepare_execute ($@) {
 
 my $q = prepare_execute($qtxt, @conds_vars);
 
+sub massage ($) { local ($_) = @_; s/^\d+\://; $_; }
+
+FLIGHT:
 while (my $row= $q->fetchrow_hashref()) {
     my $flight= $row->{flight};
     if (!defined $prrev) {
@@ -140,10 +143,15 @@ END
 	}
         my $row1= $valsq->fetchrow_hashref();
         next unless defined $row1->{val} && length $row1->{val};
-        print DEBUG "got $row1->{val}\n";
-        my $row2= $valsq->fetchrow_hashref();
-        next if defined $row2;
-        print "$row1->{val}\n";
+	my $val1 = massage($row1->{val});
+        print DEBUG "got $val1\n";
+	while (my $row2 = $valsq->fetchrow_hashref()) {
+	    my $val2 = massage($row2->{val});
+	    next if $val2 eq $val1;
+	    print DEBUG "also $val2\n";
+	    next FLIGHT;
+	}
+        print "$val1\n";
         exit 0;
     }
 }
