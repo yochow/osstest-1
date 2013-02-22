@@ -63,6 +63,16 @@ END
                AND   r.flight = flights.flight
                AND   val != '')
 END
+    } elsif (m/^--tree-([^=]+)=(.*)$/) {
+	push @conds_vars, "tree_$1", $2;
+	push @conds, <<END;
+             NOT EXISTS
+             (SELECT *
+               FROM runvars r
+               WHERE name = ?
+               AND   val != ?
+               AND   r.flight = flights.flight)
+END
     } elsif (m/^--branch=(.*)$/) {
         push @conds_vars, $1;
         push @conds, "branch = ?";

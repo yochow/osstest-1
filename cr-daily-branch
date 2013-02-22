@@ -91,7 +91,8 @@ if [ "x$testedflight" = x ]; then
         wantpush=false
         skipidentical=false
         force_baseline=true
-	tested_revision=`check_tested --print-revision=$tree`
+	tested_revision=`check_tested --tree-$tree=$treeurl \
+				--print-revision=$tree`
 	if [ "x$tested_revision" != x ]; then
 		OLD_REVISION="$tested_revision"
 	fi
