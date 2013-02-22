@@ -68,6 +68,8 @@ fetch_version () {
 	printf '%s\n' "$fetch_version_result"
 }
 
+treeurl=`./ap-print-url $branch`
+
 force_baseline=false
 skipidentical=true
 wantpush=$OSSTEST_PUSH
@@ -190,7 +192,6 @@ case "$NEW_REVISION/$OLD_REVISION" in
 
         if [ "$realtree" ] && [ "x$NEW_REVISION" != "x$OLD_REVISION" ] \
 	   && [ "x$GITFORCEFLAG" = x ]; then
-                treeurl=`./ap-print-url $branch`
                 ./adhoc-revtuple-generator >$revlog -S \
                         "$treeurl#$OLD_REVISION-$NEW_REVISION" \
 
