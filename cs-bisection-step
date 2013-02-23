@@ -31,6 +31,7 @@ use Osstest;
 use Data::Dumper;
 no warnings qw(recursion);
 use HTML::Entities;
+use Osstest::Executive;
 
 our @blessings= qw(real real-bisect);
 our @revtuplegenargs= ();
