@@ -22,6 +22,7 @@
 : ${XENBITS:=osstest@xenbits.xensource.com}
 
 : ${TREE_XEN:=git://xenbits.xen.org/xen.git}
+: ${PUSH_TREE_XEN:=$XENBITS:/home/xen/git/xen.git}
 
 #: ${TREE_QEMU:=git://mariner.uk.xensource.com/qemu-$xenbranch.git}
 : ${TREE_QEMU:=git://xenbits.xen.org/staging/qemu-$xenbranch.git}
@@ -36,7 +37,7 @@
 #: ${TREE_LINUX:=git://github.com/jsgf/linux-xen.git}
 : ${TAG_LINUX:=xen/next-2.6.32}
 
-: ${PUSH_TREE_LINUX:=$XENBITS:git/linux-pvops.git}
+: ${PUSH_TREE_LINUX:=$XENBITS:/home/xen/git/linux-pvops.git}
 : ${BASE_TREE_LINUX:=git://xenbits.xen.org/linux-pvops.git}
 : ${BASE_TAG_LINUX:=master}
 

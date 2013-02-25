@@ -32,6 +32,7 @@ select_xenbranch
 
 TREE_LINUX=$PUSH_TREE_LINUX
 TREE_QEMU_UPSTREAM=$XENBITS:git/qemu-upstream-${xenbranch#xen-}.git
+TREE_XEN=$PUSH_TREE_XEN
 
 if info_linux_tree "$branch"; then
 	cd $repos/linux
@@ -41,9 +42,20 @@ if info_linux_tree "$branch"; then
 fi
 
 case "$branch" in
-xen*)
+xen-3.*)
 	cd $repos/$branch.hg
-	hg push -r "$revision" ssh://$XENBITS/HG/$branch.hg
+	hg push -r "$revision" ssh://$XENBITS//home/xen/HG/$branch.hg
+	;;
+xen-unstable)
+	cd $repos/xen
+	git push $TREE_XEN $revision:master
+	;;
+xen-*-testing)
+	cd $repos/xen
+	xenversion=$branch
+	xenversion=${branch%-testing}
+	xenversion=${xenversion#xen-}
+	git push $TREE_XEN $revision:stable-$xenversion
 	;;
 qemu-upstream-*)
 	cd $repos/$branch
