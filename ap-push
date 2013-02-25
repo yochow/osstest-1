@@ -31,7 +31,7 @@ select_xenbranch
 . ap-common
 
 TREE_LINUX=$PUSH_TREE_LINUX
-TREE_QEMU_UPSTREAM=$XENBITS:git/qemu-upstream-${xenbranch#xen-}.git
+TREE_QEMU_UPSTREAM=$XENBITS:/home/xen/git/qemu-upstream-${xenbranch#xen-}.git
 TREE_XEN=$PUSH_TREE_XEN
 
 if info_linux_tree "$branch"; then
@@ -75,7 +75,7 @@ linux-xen-*)
         ;;
 osstest)
 	git push $HOME/testing.git $revision:incoming
-	git push $XENBITS:git/osstest.git $revision:master
+	git push $XENBITS:/home/xen/git/osstest.git $revision:master
 	;;
 *)
 	echo >&2 "branch $branch ?"
