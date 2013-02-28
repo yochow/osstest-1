@@ -43,6 +43,9 @@ linux)
 linux-2.6.39)
 	echo $TREE_LINUX2639
 	;;
+osstest)
+	echo none:;
+	;;
 *)
 	echo >&2 "branch $branch ?"
 	exit 1
