@@ -394,10 +394,16 @@ END
 		print STDERR " no basis template.\n";
 		next;
 	    } else {
-		print STDERR " using template as basis.\n";
+		print STDERR " template as basis?";
+		my @bad = $checkbasisvcs->($basistemplate);
+		if (@bad) {
+		    print STDERR " unsuitable.\n";
+		    next;
+		}
 		$latest_flight= $tryfail->{flight};
 		$basispass_flight= $basistemplate;
 		$hosts= $failhosts;
+		print STDERR " using template as basis.\n";
 		last;
 	    }
             next;
