@@ -90,7 +90,7 @@ while (@ARGV && $ARGV[0] =~ m/^\-/) {
         $specflights{$1}= $2;
     } elsif (m/^--basis-template=(\d+)$/) {
         $basistemplate= $1;
-    } elsif (m/^-D$/) {
+    } elsif (m/^-D$/ || m/^--debug$/) {
         $debug++;
         if ($debug==1) {
             open DEBUG, ">&2" or die $!;
