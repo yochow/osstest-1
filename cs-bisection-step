@@ -348,6 +348,27 @@ END
 	my $failrmap = flight_rmap($tryfail->{flight});
 	next unless $failrmap;
 
+	my $checkbasisvcs = sub {
+	    my ($trybasisflight) = @_;
+	    my $basisrmap = flight_rmap($trybasisflight);
+	    my @bad;
+#print STDERR Dumper($failrmap, $basisrmap);
+	    foreach my $tree (keys %$failrmap) {
+		my $failvcs = $failrmap->{$tree}{Url};
+		my $basisvcs = $basisrmap->{$tree}{Url};
+#print STDERR Dumper($failvcs, $basisvcs);
+		next unless defined $basisvcs;
+		$failvcs=~ s/.*(\.\w+)$/$1/ or warn "$tryfail->{flight} $tree ";
+		$basisvcs=~s/.*(\.\w+)$/$1/ or warn "$trybasisflight $tree ";
+#print STDERR "COMPARE $failvcs $basisvcs\n";
+		push @bad, "$tree:<$failvcs>/<$basisvcs>"
+                    if $failvcs ne $basisvcs;
+	    }
+	    print STDERR " (vcs mismatch: @bad)"
+		if @bad;
+	    return @bad;
+	};
+
         print STDERR "/";
         my ($basisrow,$trybasis);
         $basisq->execute($job,$testid,$branch);
@@ -358,24 +379,8 @@ END
                 print STDERR " [$basishosts]";
                 next;
             }
-	    my $basisrmap = flight_rmap($trybasis->{flight});
-	    my @bad;
-#print STDERR Dumper($failrmap, $basisrmap);
-	    foreach my $tree (keys %$failrmap) {
-		my $failvcs = $failrmap->{$tree}{Url};
-		my $basisvcs = $basisrmap->{$tree}{Url};
-#print STDERR Dumper($failvcs, $basisvcs);
-		next unless defined $basisvcs;
-		$failvcs=~ s/.*(\.\w+)$/$1/ or warn"$tryfail->{flight} $tree ";
-		$basisvcs=~s/.*(\.\w+)$/$1/ or warn"$trybasis->{flight} $tree ";
-#print STDERR "COMPARE $failvcs $basisvcs\n";
-		push @bad, "$tree:<$failvcs>/<$basisvcs>"
-                    if $failvcs ne $basisvcs;
-	    }
-	    if (@bad) {
-		print STDERR " (vcs mismatch: @bad)";
-		next;
-	    }
+	    my @bad = $checkbasisvcs->($trybasis->{flight});
+	    next if @bad;
             $basisrow= $trybasis;
             last;
         }
