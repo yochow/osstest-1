@@ -333,7 +333,7 @@ END
 
     $latestq->execute($job,$testid,$blessings[0],$branch);
 
-    my ($tryfail,%tried_hosts);
+    my ($tryfail);
 
     while ($tryfail= $latestq->fetchrow_hashref()) {
         printf(STDERR " %s %s%s", $tryfail->{flight}, $tryfail->{status},
@@ -344,10 +344,6 @@ END
         my $failhosts= relevant_hosts($tryfail->{flight});
 
         print STDERR " [$failhosts] ";
-        if ($tried_hosts{$failhosts}++) {
-            print STDERR "again\n";
-            next;
-        }
 
 	my $failrmap = flight_rmap($tryfail->{flight});
 	next unless $failrmap;
