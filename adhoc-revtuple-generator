@@ -86,7 +86,7 @@ sub git_revshower ($) {
     print DEBUG "GIT-REVSHOW TREE ", Dumper($tree);
     my $treedir= "$c{Repos}/$tree->{Treename}";
     chdir $treedir or die $treedir;
-    my @cmd = (qw(git log -n1), "$tree->{Earliest}^..$tree->{Latest}");
+    my @cmd = (qw(git log), "$tree->{Earliest}..$tree->{Latest}");
     print DEBUG "GIT-REVSHOW CMD ", Dumper(\@cmd);
     exec @cmd;
     die $!;
