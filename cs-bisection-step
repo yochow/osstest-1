@@ -326,7 +326,7 @@ END
              AND $flight_is_not_broken
              AND $flight_cond{basis}
                  $maxflight_cond
-	   ORDER BY flights.started DESC
+	   ORDER BY blessing, flights.started DESC
 END
 
     print STDERR "Searching for failure / basis pass:\n";
