@@ -83,9 +83,12 @@ sub shellcmd ($) {
 
 sub git_revshower ($) {
     my ($tree) = @_;
+    print DEBUG "GIT-REVSHOW TREE ", Dumper($tree);
     my $treedir= "$c{Repos}/$tree->{Treename}";
     chdir $treedir or die $treedir;
-    exec qw(git log -n1), "$tree->{Earliest}^..$tree->{Latest}";
+    my @cmd = (qw(git log -n1), "$tree->{Earliest}^..$tree->{Latest}");
+    print DEBUG "GIT-REVSHOW CMD ", Dumper(\@cmd);
+    exec @cmd;
     die $!;
 }
 
@@ -162,7 +165,10 @@ sub hg_revshower ($) {
 
     my $treedir= "$c{Repos}/$tree->{Treename}";
     chdir $treedir or die $treedir;
-    open P, "hg log -vr$tree->{Latest}:$tree->{Earliest} |" or die $!;
+    my $revspec = "$tree->{Latest}:$tree->{Earliest}";
+    my $cmd = "hg log -vr'$revspec' |";
+    print DEBUG "HG-REVSHOW CMD $cmd\n";
+    open P, $cmd or die $!;
     while (<P>) {
         if (s/^description:$//..
             !(!m/^changeset:   \d+:[0-9a-f]{12}$/ && s/^/    /)) {
@@ -663,6 +669,7 @@ sub main () {
 
 sub showrev () {
     my @trees= parse_trees();
+    print DEBUG "SHOWREV TREES ", Dumper(@trees);
     die unless @trees == 1;
     my ($tree) = @trees;
     tree_get_gen($tree);
