@@ -288,25 +288,6 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
 		win_image=winxpsp3.iso $vcpus_runvars	\
 		all_hostflags=$most_hostflags,hvm
 
-      # These next two tests are obsolete and should be removed
-      # in a few months say March 2012:
-      job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-win$vcpus_suffix \
-                test-win xend $qemuu_runvar \
-		win_image=winxpsp2.iso $vcpus_runvars			\
-		all_hostflags=$most_hostflags,hvm
-        #
-        if [ $toolstack = xl ]; then
-        #
-      job_create_test \
-                test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-win$vcpus_suffix \
-                test-win xl $qemuu_runvar \
-		$toolstack_runvars					  \
-		win_image=winxpsp2.iso $vcpus_runvars			\
-		all_hostflags=$most_hostflags,hvm
-      #
-        fi
-      # end of obsolete part
-
             fi
         done
 
