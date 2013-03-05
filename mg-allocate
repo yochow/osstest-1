@@ -27,6 +27,8 @@
 use strict qw(vars refs);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
+use Osstest::Executive;
 
 csreadconfig();
 
