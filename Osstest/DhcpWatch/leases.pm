@@ -91,7 +91,7 @@ sub check_ip ($$) {
         $copy->close();
         rename "$stash/$lstash.new", "$stash/$fn" or die "$lstash.new $fn $!";
         logm("warning: $_") foreach grep { defined } @warns[0..5];
-        logm("$fn: rotated and stashed current leases");
+        # logm("$fn: rotated and stashed current leases");
     };
 
     my $badleases= sub {
