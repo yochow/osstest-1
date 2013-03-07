@@ -280,6 +280,22 @@ END
     print $o or die $!;
 }
 
+our $flag_clear_q = $dbh_tests->prepare(<<END);
+                    DELETE FROM hostflags
+                          WHERE hostname=? AND hostflag=?
+END
+our $flag_set_q = $dbh_tests->prepare(<<END);
+                    INSERT INTO hostflags
+                                (hostname, hostflag)
+                         VALUES (?,        ?       )
+END
+
+sub setflagval ($$$) {
+    my ($dst,$flag,$value) = @_;
+    $flag_clear_q->execute($dst,$flag);
+    $flag_set_q->execute($dst,$flag) if $value;
+}
+
 sub cmd_setflags () {
     update_hosts([qw(resources)], sub {
 	my ($dst,$section) = @_;
@@ -288,15 +304,7 @@ sub cmd_setflags () {
 	    my $flag = $flagorig;
 	    # each flag may start with - or ! to remove
             my $remove= $flag =~ s/^[-!]//;
-	    $dbh_tests->do(<<END,{}, $dst,$flag);
-                    DELETE FROM hostflags
-                          WHERE hostname=? AND hostflag=?
-END
-            $dbh_tests->do(<<END,{}, $dst,$flag) unless $remove;
-                    INSERT INTO hostflags
-                                (hostname, hostflag)
-                         VALUES (?,        ?       )
-END
+	    setflagval($dst,$flag,!$remove);
         }
     });
 }
