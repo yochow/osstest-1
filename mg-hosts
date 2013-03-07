@@ -309,6 +309,35 @@ sub cmd_setflags () {
     });
 }
 
+sub cmd_setflagexpr () {
+    my $test_q = $dbh_tests->prepare(<<END);
+        SELECT COUNT(*) FROM hostflags WHERE hostname=? AND hostflag=?
+END
+    update_hosts([qw(resources)], sub {
+	my ($dst,$section) = @_;
+	die unless @$section == 2;
+	my ($dstflag, $expr) = @$section;
+	die "$expr $& ?" if $expr =~ m/[^-0-9a-z_&|()!~]/;
+
+	my %inputs;
+	$expr =~ s{[-0-9a-z_]+}{
+                $inputs{$&} = undef;
+                " \$inputs{'$&'} ";
+            }ge;
+	$expr =~ s/\~/!/g;
+	$expr =~ s/[&|]/$&$&/g;
+
+	foreach my $flagorig (sort keys %inputs) {
+	    $test_q->execute($dst, $flagorig);
+	    ($inputs{$flagorig}) = $test_q->fetchrow_array();
+	}
+
+	my $newval;
+	eval "\$newval = $expr; 1;" or die "$expr $@ ?";
+	setflagval($dst, $dstflag, $newval);
+    });
+}
+
 sub cmd_showflags () {
     die if @ARGV;
     my $hostsq= $dbh_tests->prepare(<<END);
