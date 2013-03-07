@@ -120,8 +120,21 @@ sub update_hosts ($$) {
 	    } else {
 		$anydone = 1;
 		foreach my $host (@$hosts) {
-		    checkhost($host);
-		    $host_update->($host, $section);
+		    if ($host =~ m/\*/) {
+			my $re = $host;
+			$re =~ s/\*/.*/g;
+			my $hosts_q = $dbh_tests->prepare(<<END);
+			    SELECT resname FROM resources WHERE restype='host'
+END
+                        $hosts_q->execute();
+			while (my ($hname) = $hosts_q->fetchrow_array()) {
+			    next unless $hname =~ m/^$re$/;
+			    $host_update->($hname, $section);
+			}
+		    } else {
+			checkhost($host);
+			$host_update->($host, $section);
+		    }
 		}
 	    }
 	});
