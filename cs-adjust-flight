@@ -56,7 +56,9 @@ while (@ARGV && $ARGV[0] =~ m/^\-/) {
 }
 
 die unless @ARGV >= 1;
-my ($dstflight,@changes) = @ARGV;
+our ($dstflightspec,@changes) = @ARGV;
+
+our $dstflight;
 
 sub spec_re ($) {
     my ($spec) = @_;
@@ -283,7 +285,21 @@ sub changes () {
 }
 
 sub main () {
-    db_retry($dstflight,'constructing', $dbh_tests,[qw(flights)], \&changes);
+    if ($dstflightspec =~ m/^\d+$/) {
+        $dstflight = $dstflightspec;
+        db_retry($dstflight,'constructing',
+                 $dbh_tests, [qw(flights)], \&changes);
+    } elsif ($dstflightspec =~ m/^new:/) {
+        my $intended = $'; #';
+        db_retry($dbh_tests, [qw(flights)], sub {
+            $dstflight = $mjobdb->flight_create($intended, $c{DefaultBranch});
+            $mjobdb->dbfl_check($dstflight, 'constructing');
+            changes();
+        });
+        print "$dstflight\n" or die $!;
+    } else {
+        die "$dstflightspec ?";
+    }
 }
 
 main();

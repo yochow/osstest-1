@@ -178,6 +178,8 @@ sub readglobalconfig () {
 
     $c{OverlayLocal} ||= "overlay-local";
     $c{GuestDebianSuite} ||= $c{DebianSuite};
+
+    $c{DefaultBranch} ||= 'xen-unstable';
 }
 
 sub augmentconfigdefaults {
