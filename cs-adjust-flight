@@ -257,6 +257,16 @@ sub change__intended_blessing {
                    {}, $blessing, $dstflight);
 }
 
+sub change__branch {
+    die unless @changes >= 1;
+    my $branch = shift @changes;
+
+    $dbh_tests->do("UPDATE flights".
+                   "   SET branch = ?".
+                   " WHERE flight = ?",
+                   {}, $branch, $dstflight);
+}
+
 sub changes () {
     debug("CHANGES...\n");
 
