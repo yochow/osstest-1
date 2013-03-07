@@ -28,6 +28,9 @@ use POSIX;
 use Data::Dumper;
 use HTML::Entities;
 
+use Osstest::TestSupport;
+use Osstest::Executive;
+
 open DEBUG, ">/dev/null" or die $!;
 
 while (@ARGV and $ARGV[0] =~ m/^-/) {
