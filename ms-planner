@@ -571,8 +571,10 @@ sub cmd_show_html () {
                  " $evt->{Allocated}{Task}")." ".$evt->{Info};
 	    my $share= $evt->{Share};
 	    if ($share) {
+                my $sharetypeshow = $share->{Type};
+                $sharetypeshow =~ s/(\s\w{8})\w{32,}$/$1$2..$3/;
 		$show .= sprintf(" [%s %d/%d %d]",
-				 $share->{Type},
+				 $sharetypeshow,
 				 $share->{Shares} - $evt->{Avail},
 				 $share->{Shares},
 				 $share->{Wear});
