@@ -12,6 +12,7 @@
 #   runvar-del <job-spec> <var-spec>
 #   runvar-change <job-spec> <var-spec> <old-value> <new-value>
 #   runvar-perlop <job-spec> <var-spec> <perl-expr>
+#   intended-blessing <intended-blessing>
 #
 # <foo-spec>:
 #   <foo-name>
@@ -244,6 +245,16 @@ sub change__runvar_perlop {
         my ($job, $name, $varrow) = @_;
         runvar_set($job, $name, perlop_value($job, $name, $varrow->{Val}));
     }, 'IGNORE');
+}
+
+sub change__intended_blessing {
+    die unless @changes >= 1;
+    my $blessing = shift @changes;
+
+    $dbh_tests->do("UPDATE flights".
+                   "   SET intended = ?".
+                   " WHERE flight = ?",
+                   {}, $blessing, $dstflight);
 }
 
 sub changes () {
