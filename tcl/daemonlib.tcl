@@ -18,7 +18,9 @@
 
 
 
-source osstestlib.tcl
+source ./tcl/osstestlib.tcl
+readconfig
+source-method JobDB
 
 proc chan-error {chan emsg} {
     regsub -all {\n} $emsg { / } emsg

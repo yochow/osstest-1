@@ -19,9 +19,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-source daemonlib.tcl
+source ./tcl/daemonlib.tcl
 
-readconfig
 
 proc chan-destroy-stuff {chan} {
     dequeue-chan $chan destroy
@@ -112,7 +111,7 @@ proc runneeded-perhaps-start {} {
         return
     }
 
-    transaction resources {
+    jobdb::transaction resources {
         set nrows [pg_execute dbh {
             UPDATE resources
                SET owntaskid= (SELECT taskid FROM tasks
@@ -124,7 +123,7 @@ proc runneeded-perhaps-start {} {
 
     if {!($nrows || $needed>=2)} return
 
-    transaction resources {
+    jobdb::transaction resources {
         set cleaned [pg_execute dbh {
             DELETE FROM tasks
              WHERE type='ownd'
@@ -474,7 +473,7 @@ proc add-inhibit {why seconds} {
 main-daemon $c(QueueDaemonPort) {
     global owndchan chandesc inhibit plan
     
-    db-open
+    jobdb::db-open
 
     set plan {}
     set queue {}
