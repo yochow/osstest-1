@@ -510,6 +510,12 @@ sub show_rel_time ($) {
     return ($relstr, $abstr);
 }
 
+sub showsharetype ($) {
+    local ($_) = @_;
+    s/(\s\w{8})\w{32,}$/$1$2..$3/;
+    return $_;
+}
+
 sub cmd_show_html () {
     get_current_plan();
     my $now= time;
@@ -571,10 +577,8 @@ sub cmd_show_html () {
                  " $evt->{Allocated}{Task}")." ".$evt->{Info};
 	    my $share= $evt->{Share};
 	    if ($share) {
-                my $sharetypeshow = $share->{Type};
-                $sharetypeshow =~ s/(\s\w{8})\w{32,}$/$1$2..$3/;
 		$show .= sprintf(" [%s %d/%d %d]",
-				 $sharetypeshow,
+				 showsharetype($share->{Type}),
 				 $share->{Shares} - $evt->{Avail},
 				 $share->{Shares},
 				 $share->{Wear});
