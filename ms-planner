@@ -196,7 +196,7 @@ sub launder_check_plan () {
 			Time => $evt->{Time},
 			Type => Unshare,
 			Avail => 1,
-			Info => "$cshare->{Type}",
+			Info => $cshare->{Type},
 		    };
 		    $cshare= undef;
 		}
@@ -570,7 +570,8 @@ sub cmd_show_html () {
 	    my $type= $evt->{Type};
 	    my $show=
 		$type eq End ? ($evt->{Share} ? "End $evt->{Info}" : "") :
-		($type eq Overrun || $type eq Unshare || $type eq After)
+                $type eq Unshare ? "$type [".showsharetype($evt->{Info})."]" :
+		($type eq Overrun || $type eq After)
 		? ("$type $evt->{Info}") :
 		(!$evt->{Allocated} ? Booking :
                  ($evt->{Allocated}{Live} ? Allocation : Completed).
