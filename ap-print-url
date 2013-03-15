@@ -43,6 +43,9 @@ linux)
 linux-2.6.39)
 	echo $TREE_LINUX2639
 	;;
+linuxfirmware)
+	echo $UPSTREAM_TREE_LINUXFIRMWARE
+	;;
 osstest)
 	echo none:;
 	;;
