@@ -196,6 +196,8 @@ setopt CONFIG_XEN_KBDDEV_FRONTEND y
 
 setopt CONFIG_TUN y
 
+setopt CONFIG_DEVTMPFS y
+
 $config_hardware
 END
 
