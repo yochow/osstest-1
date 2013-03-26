@@ -25,19 +25,33 @@ use Osstest;
 
 csreadconfig();
 
+my $synthcond = '(NOT synth)';
+
+for (;;) {
+    last unless @ARGV;
+    last unless $ARGV[0] =~ m/^-/;
+    $_ = shift @ARGV;
+    last if m/^\-\-?$/;
+    if (m/^-a$/) {
+	$synthcond = 'TRUE';
+    } else {
+	die "$_ ?";
+    }
+}
+
 die unless @ARGV==1 && $ARGV[0] =~ m/^\d+/;
 
 our ($flight) = @ARGV;
 
 our @cols = qw(job name val);
 
-my $qfrom = "FROM runvars WHERE flight=$flight AND NOT synth";
+my $qfrom = "FROM runvars WHERE flight=$flight AND $synthcond";
 
 my @colws = $dbh_tests->selectrow_array
     ("SELECT ".(join ',', map { "max(length($_))" } @cols)." $qfrom");
 
 my $q = $dbh_tests->prepare
-    ("SELECT ".(join ',', @cols)." $qfrom ORDER BY job, name");
+    ("SELECT ".(join ',', @cols)." $qfrom ORDER BY name, job");
 $q->execute();
 
 while (my $row = $q->fetchrow_arrayref()) {
