@@ -46,6 +46,10 @@ sub checkout () {
             hg qpush -a
 END
     }
+
+    if ($r{tree_linuxfirmware}) {
+	build_clone($ho, 'linuxfirmware', $builddir, 'linux-firmware');
+    }
 }
 
 our $config_hardware= <<END;
@@ -192,6 +196,8 @@ setopt CONFIG_XEN_KBDDEV_FRONTEND y
 
 setopt CONFIG_TUN y
 
+setopt CONFIG_DEVTMPFS y
+
 $config_hardware
 END
 
@@ -263,8 +269,28 @@ END
 END
 }
 
+sub fwbuild () {
+    target_cmd_build($ho, 500, $builddir, <<END);
+	cd linux-firmware
+	make SHELL=/bin/bash all
+        echo ok.
+END
+}
+
+sub fwinstall () {
+    target_cmd_build($ho, 500, $builddir, <<END);
+	cd linux-firmware
+	make SHELL=/bin/bash DESTDIR=$builddir/dist install
+	echo ok.
+END
+}
+
 checkout();
 config();
 build();
 kinstall();
+if ($r{tree_linuxfirmware}) {
+    fwbuild();
+    fwinstall();
+}
 built_stash($ho, $builddir, 'dist', 'kerndist');

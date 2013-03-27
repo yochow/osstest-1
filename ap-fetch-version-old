@@ -69,6 +69,10 @@ linux-xen-*)
 	repo_tree_rev_fetch_git linux \
 		$OLD_TREE_LINUX $branch $OLD_LOCALREV_LINUX
 	;;
+linuxfirmware)
+	repo_tree_rev_fetch_git linuxfirmware \
+		$TREE_LINUXFIRMWARE master daily-cron-old.$branch
+	;;
 osstest)
 	git-fetch -f $HOME/testing.git incoming:ap-fetch
         git-rev-parse ap-fetch^0

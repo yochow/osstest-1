@@ -119,6 +119,10 @@ if [ "x$REVISION_LINUX" = x ]; then
 	determine_version REVISION_LINUX $linuxbranch LINUX
         export REVISION_LINUX
 fi
+if [ "x$REVISION_LINUXFIRMWARE" = x ]; then
+	determine_version REVISION_LINUXFIRMWARE linuxfirmware
+        export REVISION_LINUXFIRMWARE
+fi
 
 case "$tree" in
 xen)
@@ -141,6 +145,10 @@ osstest)
 qemuu)
 	realtree=qemu-upstream-${xenbranch#xen-}
 	NEW_REVISION=$REVISION_QEMU_UPSTREAM
+        ;;
+linuxfirmware)
+	realtree=linuxfirmware
+	NEW_REVISION=$REVISION_LINUXFIRMWARE
         ;;
 *)
 	NEW_REVISION=''

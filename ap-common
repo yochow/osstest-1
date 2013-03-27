@@ -37,6 +37,10 @@
 #: ${TREE_LINUX:=git://github.com/jsgf/linux-xen.git}
 : ${TAG_LINUX:=xen/next-2.6.32}
 
+: ${TREE_LINUXFIRMWARE:=git://xenbits.xen.org/osstest/linux-firmware.git}
+: ${PUSH_TREE_LINUXFIRMWARE:=$XENBITS:/home/osstest/ext/linux-firmware.git}
+: ${UPSTREAM_TREE_LINUXFIRMWARE:=$GIT_KERNEL_ORG/pub/scm/linux/kernel/git/firmware/linux-firmware.git}
+
 : ${PUSH_TREE_LINUX:=$XENBITS:/home/xen/git/linux-pvops.git}
 : ${BASE_TREE_LINUX:=git://xenbits.xen.org/linux-pvops.git}
 : ${BASE_TAG_LINUX:=master}

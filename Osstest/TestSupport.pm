@@ -984,7 +984,7 @@ sub store_vcs_revision ($$$) {
 
 sub built_stash ($$$$) {
     my ($ho, $builddir, $distroot, $item) = @_;
-    target_cmd($ho, <<END, 300);
+    target_cmd($ho, <<END, 600);
 	set -xe
 	cd $builddir
         cd $distroot
