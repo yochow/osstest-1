@@ -192,7 +192,12 @@ sub fetch_logs_guest ($) {
 
     if (defined $gho->{Vcpus}) {
         foreach (my $vcpu=0; $vcpu < $gho->{Vcpus}; $vcpu++) {
-            try_cmd_output_save("/usr/lib/xen/bin/xenctx $gho->{Domid} $vcpu");
+	    my $kernpath = guest_var($gho,'kernel_path',$r{xen_kernel_path});
+	    my $sysmaparg = !defined $kernpath ? '' :
+		$kernpath !~ m,/vmlinuz-, ? die "$kernpath ?" :
+		"-s $`/System.map-$'";
+	    try_cmd_output_save("/usr/lib/xen/bin/xenctx ".$sysmaparg.
+				" $gho->{Domid} $vcpu");
         }
     }
 
