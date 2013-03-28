@@ -41,6 +41,7 @@ select_xenbranch () {
         qemu-upstream-*)    tree=qemuu; xenbranch=xen-${branch#qemu-upstream-};;
 	linux)			tree=linux;	xenbranch=xen-unstable ;;
 	linux-*)		tree=linux;	xenbranch=xen-unstable ;;
+	linuxfirmware)	    tree=linuxfirmware;	xenbranch=xen-unstable ;;
 	osstest)		tree=osstest;	xenbranch=xen-unstable ;;
 	esac
 	if [ "x$tree" = xlinux ]; then
