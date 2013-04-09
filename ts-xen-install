@@ -127,6 +127,8 @@ sub setupboot () {
     }
     my $append= $r{xen_boot_append};
     $xenhopt .= " $append" if defined $append;
+    $append = get_host_property($ho, 'xen-commandline-append', undef);
+    $xenhopt .= " $append" if defined $append;
 
     my @hooks;
 
