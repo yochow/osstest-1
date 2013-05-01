@@ -851,8 +851,9 @@ END
             }
 
             foreach my $rts (@revs_to_show) {
-                my $revinfo=
-                    `./adhoc-revtuple-generator -S @revtuplegenargs $rts`;
+		my $revrune=
+		    "./adhoc-revtuple-generator -S @revtuplegenargs $rts";
+                my $revinfo= `$revrune`;
                 if (!$?) {
                     summary_report("",$revinfo,-1);
                 }
