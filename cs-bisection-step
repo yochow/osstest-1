@@ -840,7 +840,7 @@ END
                     next if $passrev[$i] eq $failrev[$i];
 
                     push @revs_to_show,
-                        "$treeinfos[$i]{Url}#$failrev[$i]-$failrev[$i]";
+                        "$treeinfos[$i]{Url}#$passrev[$i]-$failrev[$i]";
 
                     summary_report("",<<END, -1);
 Bug is in tree:  $treeinfos[$i]{Name} $treeinfos[$i]{Url}
