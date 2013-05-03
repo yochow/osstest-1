@@ -198,6 +198,8 @@ setopt CONFIG_TUN y
 
 setopt CONFIG_DEVTMPFS y
 
+setopt CONFIG_HYPERVISOR_GUEST y
+
 $config_hardware
 END
 
