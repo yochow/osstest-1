@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+export OSSTEST_CONFIG=production-config
+
 cd "${0%/*}"
 if [ "x$2" != x ]; then sleep $2; fi
 exec ./$1 2>&1 | exec logger -t $1 -p local4.info
