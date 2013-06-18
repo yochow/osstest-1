@@ -1,14 +1,25 @@
 # -*- bash -*-
 
-umask 002
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-getconfig () {
-        perl -e '
-                use Osstest;
-                readconfigonly();
-                print $c{'$1'} or die $!;
-        '
-}
+
+. cri-getconfig
+
+umask 002
 
 repo_tree_rev_fetch_git () {
 	local treename=$1
@@ -22,4 +33,33 @@ repo_tree_rev_fetch_git () {
 	cd $repos/$treename
 	git fetch -f $remoteurl $remotetag:$localtag
 	git-rev-parse $localtag^0
+}
+
+select_xenbranch () {
+	case "$branch" in
+	xen*)			tree=xen;	xenbranch=$branch ;;
+        qemu-upstream-*)    tree=qemuu; xenbranch=xen-${branch#qemu-upstream-};;
+	linux)			tree=linux;	xenbranch=xen-unstable ;;
+	linux-*)		tree=linux;	xenbranch=xen-unstable ;;
+	linuxfirmware)	    tree=linuxfirmware;	xenbranch=xen-unstable ;;
+	osstest)		tree=osstest;	xenbranch=xen-unstable ;;
+	esac
+	if [ "x$tree" = xlinux ]; then
+		linuxbranch=$branch
+	else
+		linuxbranch=linux
+	fi
+}
+
+select_branch () {
+	select_xenbranch
+
+	check_stop $branch.
+	check_stop $xenbranch.any.
+
+	mrof="$branch.mro"
+
+	if test -f branch-settings.$branch; then
+		. branch-settings.$branch
+	fi
 }

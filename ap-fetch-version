@@ -1,20 +1,58 @@
 #!/bin/bash
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 set -e
 
 branch=$1
-xenbranch=$1
-
 . cri-lock-repos
+. cri-common
+select_xenbranch
 . ap-common
 
+if info_linux_tree "$branch"; then
+	repo_tree_rev_fetch_git linux \
+		$TREE_LINUX_THIS $TAG_LINUX_THIS $LOCALREV_LINUX
+	exit 0
+fi
+
 case "$branch" in
-xen*)
+xen-3.*)
 	./sg-hg-heads sh -ec '
 		cd "'"$repos/$branch.hg"'"
 	        hg pull -u >&2
 	        eval "$1"
 	' x
 	;;
+xen-unstable)
+	repo_tree_rev_fetch_git xen \
+		$TREE_XEN staging $LOCALREV_XEN
+	;;
+xen-4.*-testing)
+	branchcore=${branch#xen-}
+	branchcore=${branchcore%-testing}
+	repo_tree_rev_fetch_git xen \
+		$TREE_XEN staging-$branchcore $LOCALREV_XEN
+	;;
+qemu-upstream-*)
+        repo_tree_rev_fetch_git $branch \
+		$TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM
+        ;;
 linux)
 	repo_tree_rev_fetch_git linux \
 		$TREE_LINUX $TAG_LINUX $LOCALREV_LINUX
@@ -27,6 +65,14 @@ linux-xen-*)
 	repo_tree_rev_fetch_git linux \
 		$TREE_LINUX xen/next-${branch#linux-xen-} $LOCALREV_LINUX
 	;;
+linuxfirmware)
+	repo_tree_rev_fetch_git linuxfirmware \
+		$UPSTREAM_TREE_LINUXFIRMWARE master daily-cron.$branch
+	;;
+osstest)
+	git-fetch $HOME/testing.git pretest:ap-fetch
+        git-rev-parse ap-fetch^0
+        ;;
 *)
 	echo >&2 "branch $branch ?"
 	exit 1

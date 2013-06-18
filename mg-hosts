@@ -1,10 +1,38 @@
 #!/usr/bin/perl -w
 
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 use strict qw(vars refs);
 use DBI;
 use Osstest;
 
 csreadconfig();
+
+our $checkhostq = $dbh_tests->prepare(<<END);
+    SELECT * FROM resources WHERE restype='host' AND resname=?
+END
+
+sub checkhost ($) {
+    my ($host) = @_;
+    $checkhostq->execute($host);
+    my $row = $checkhostq->fetchrow_hashref();
+    die "$host ?" unless $row;
+}
 
 sub l ($) { return split /,/, $_[0]; }
 
@@ -16,7 +44,7 @@ sub cmd_mkpxedir () {
         $macdir =~ s/\:/-/g;
         system_checked(<<END);
             set -e
-            cd $c{Tftp}
+	    cd $c{TftpPath}$c{TftpPxeDir}
             sudo chown root.$c{TftpPxeGroup} $macdir
             sudo chmod 2775 $macdir
             sudo rm -f $hn
@@ -54,24 +82,259 @@ END
     });
 }
 
-sub cmd_setflags () {
-    die unless @ARGV==2;
-    my ($flags,$dsts) = @ARGV; # each flag may start with - to remove
-    db_retry($dbh_tests, [qw(resources)], sub {
-        foreach my $flag (l($flags)) {
-            my $remove= $flag =~ s/^[-!]//;
-            foreach my $dst (l($dsts)) {
-                $dbh_tests->do(<<END,{}, $dst,$flag);
+sub arg_sections ($) {
+    # splits @ARGV into sublist by arguments '-' or '--'
+    # ('--' means all rest are plain args, no more sections)
+    # and calls $endsection->([ the arguments ]) for each section in turn
+    # does not eat @ARGV
+    my ($endsection) = @_;
+    my $section = [ ];
+    my $haduu= 0;
+    foreach my $a (@ARGV) {
+	if (!$haduu && ($a eq '-' or $a eq '--')) {
+	    $endsection->($section);
+	    $section = [ ];
+	    $haduu ||= ($a eq '--');
+	} else {
+	    push @$section, $a;
+	}
+    }
+    $endsection->($section);
+}
+
+sub update_hosts ($$) {
+    # splits args as above, expecting a list of hosts and then
+    # passes subsequent sections to
+    #   $host_update->($host, [ arguments indicating update ])
+    # incorporates a wrapping db_retry
+    my ($locktables, $host_update) = @_;
+
+    db_retry($dbh_tests, $locktables, sub {
+	my $hosts;
+	my $anydone;
+	arg_sections (sub {
+	    my ($section) = @_;
+	    if (!defined $hosts) {
+		die unless @$section;
+		$hosts = $section;
+	    } else {
+		$anydone = 1;
+		foreach my $host (@$hosts) {
+		    if ($host =~ m/\*/) {
+			my $re = $host;
+			$re =~ s/\*/.*/g;
+			my $hosts_q = $dbh_tests->prepare(<<END);
+			    SELECT resname FROM resources WHERE restype='host'
+END
+                        $hosts_q->execute();
+			while (my ($hname) = $hosts_q->fetchrow_array()) {
+			    next unless $hname =~ m/^$re$/;
+			    $host_update->($hname, $section);
+			}
+		    } else {
+			checkhost($host);
+			$host_update->($host, $section);
+		    }
+		}
+	    }
+	});
+	die unless $anydone;
+    });
+}
+
+sub cmd_showprops () {
+    my $prows = sub {
+	my ($q) = @_;
+	while (my (@row) = $q->fetchrow_array()) {
+	    printf " %-18s %-30s %s\n", $row[0],
+		    map {
+			!defined($_) ? '' :
+			(s/'\\/\\$&/g || m/\s/) ? "'$_'" : $_
+		    } @row[1..2]
+		or die $!;
+	}
+    };
+    if (!@ARGV) {
+	my $q = $dbh_tests->prepare(<<END);
+	    SELECT resname, name, val
+	      FROM resource_properties
+	     WHERE restype = 'host'
+	  ORDER BY name, val, resname
+END
+        $q->execute();
+	$prows->($q);
+    } else {
+	my $q = $dbh_tests->prepare(<<END);
+            SELECT r.resname, ?::varchar, val
+	      FROM resources r
+	 LEFT JOIN resource_properties p
+	        ON r.restype=p.restype
+	       AND r.resname=p.resname
+	       AND p.name=?
+	     WHERE r.restype='host'
+	  ORDER BY r.resname
+END
+	foreach my $name (@ARGV) {
+	    $q->execute($name, $name);
+	    $prows->($q);
+	}
+    }
+}
+
+sub cmd_setprops () {
+    my $oldvalq = $dbh_tests->prepare(<<END);
+	SELECT val FROM resource_properties
+	      WHERE restype='host' and resname=? AND name=?
+END
+    my $rmvalq = $dbh_tests->prepare(<<END);
+	DELETE FROM resource_properties
+	      WHERE restype='host' and resname=? AND name=?
+END
+    my $newvalq = $dbh_tests->prepare(<<END);
+	INSERT INTO resource_properties (restype,resname,name,val)
+	                         VALUES ('host', ?,?,?)
+END
+
+    my $update = sub {
+	my ($host,$name,$oldval,$val) = @_;
+	if (defined $oldval) {
+	    $oldvalq->execute($host,$name);
+	    my $row = $oldvalq->fetchrow_hashref();
+	    die if $row && !length $row->{'val'};
+	    my $gotoldval = $row ? $row->{'val'} : '';
+	    die "$host $name = '$gotoldval' != '$oldval'"
+		unless ($gotoldval eq $oldval || $gotoldval eq $val);
+	}
+	$rmvalq->execute($host,$name);
+	if (length $val) {
+	    $newvalq->execute($host,$name,$val);
+	}
+    };
+
+    update_hosts([qw(resources)], sub {
+	my ($host,$section) = @_;
+	my ($name,$oldval,$val);
+	if (@$section==2) {
+	    ($name,$val) = @$section;
+	} elsif (@$section==3) {
+	    ($name,$oldval,$val) = @$section;
+	} else {
+	    die "@$section ?";
+	}
+	$update->($host,$name,$oldval,$val);
+    });
+}
+
+sub cmd_previoustasks () {
+    my $doclear = (@ARGV==0 ? 0 :
+		   @ARGV==1 && $ARGV[0] eq '--clear' ? 1 :
+		   die "bad usage\n");
+
+    my $tasksq = $dbh_tests->prepare(<<END);
+        SELECT * FROM tasks
+	        WHERE refkey LIKE 'previous %'
+		  AND live
+		  AND type = 'ownd'
+             ORDER BY comment, refkey
+END
+
+    my $resq = $dbh_tests->prepare(<<END);
+        SELECT * FROM resources
+	        WHERE owntaskid = ?
+	     ORDER BY restype, resname
+END
+
+    my $clearq = $dbh_tests->prepare(<<END);
+        UPDATE tasks
+	   SET live = 'f'
+	 WHERE refkey LIKE 'previous %'
+	   AND live
+	   AND type = 'ownd'
+	   AND taskid = ?
+END
+
+    my $o = '';
+
+    db_retry($dbh_tests,[qw(resources)], sub {
+	$tasksq->execute();
+	while (my $trow = $tasksq->fetchrow_hashref()) {
+	    $o .= sprintf("%10d %-20s | %s\n",
+			  $trow->{taskid},
+			  $trow->{username},
+			  "$trow->{comment}");
+	    $resq->execute($trow->{taskid});
+	    while (my $rrow = $resq->fetchrow_hashref()) {
+		$o .= sprintf("      %-25s | %s\n",
+			      "$rrow->{restype}/$rrow->{resname}".
+			      ($rrow->{shareix} ? "/$rrow->{shareix}" : ''),
+			      $rrow->{subtask});
+
+	    }
+	    $o .= "\n";
+	    if ($doclear) {
+		$clearq->execute($trow->{taskid})
+		    or die "failed to clear task $trow->{taskid}";
+	    }
+	}
+    });
+    print $o or die $!;
+}
+
+our $flag_clear_q = $dbh_tests->prepare(<<END);
                     DELETE FROM hostflags
                           WHERE hostname=? AND hostflag=?
 END
-                $dbh_tests->do(<<END,{}, $dst,$flag) unless $remove;
+our $flag_set_q = $dbh_tests->prepare(<<END);
                     INSERT INTO hostflags
                                 (hostname, hostflag)
                          VALUES (?,        ?       )
 END
-            }
+
+sub setflagval ($$$) {
+    my ($dst,$flag,$value) = @_;
+    $flag_clear_q->execute($dst,$flag);
+    $flag_set_q->execute($dst,$flag) if $value;
+}
+
+sub cmd_setflags () {
+    update_hosts([qw(resources)], sub {
+	my ($dst,$section) = @_;
+	die unless @$section;
+	foreach my $flagorig (@$section) {
+	    my $flag = $flagorig;
+	    # each flag may start with - or ! to remove
+            my $remove= $flag =~ s/^[-!]//;
+	    setflagval($dst,$flag,!$remove);
         }
+    });
+}
+
+sub cmd_setflagexpr () {
+    my $test_q = $dbh_tests->prepare(<<END);
+        SELECT COUNT(*) FROM hostflags WHERE hostname=? AND hostflag=?
+END
+    update_hosts([qw(resources)], sub {
+	my ($dst,$section) = @_;
+	die unless @$section == 2;
+	my ($dstflag, $expr) = @$section;
+	die "$expr $& ?" if $expr =~ m/[^-0-9a-z_&|()!~]/;
+
+	my %inputs;
+	$expr =~ s{[-0-9a-z_]+}{
+                $inputs{$&} = undef;
+                " \$inputs{'$&'} ";
+            }ge;
+	$expr =~ s/\~/!/g;
+	$expr =~ s/[&|]/$&$&/g;
+
+	foreach my $flagorig (sort keys %inputs) {
+	    $test_q->execute($dst, $flagorig);
+	    ($inputs{$flagorig}) = $test_q->fetchrow_array();
+	}
+
+	my $newval;
+	eval "\$newval = $expr; 1;" or die "$expr $@ ?";
+	setflagval($dst, $dstflag, $newval);
     });
 }
 
@@ -114,7 +377,7 @@ END
         my $row;
         for ($row=0;
              defined($headlines[$row]) &&
-             length($headlines[$row]) >= $wantx;
+             length($headlines[$row])+1 >= $wantx;
              $row++) { }
 #print STDERR "CW $col $wantx $row $cols[$col]\n";
         $headlines[$row]='' if !defined $headlines[$row];

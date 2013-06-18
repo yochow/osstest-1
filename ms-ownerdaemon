@@ -2,9 +2,25 @@
 # -*- Tcl -*- 
 # usage: ./ms-ownerdaemon  ... | logger
 
-source daemonlib.tcl
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-readconfig
+
+source ./tcl/daemonlib.tcl
+
 
 proc chan-destroy-stuff {chan} {
     upvar #0 chanawait($chan) await
@@ -13,7 +29,7 @@ proc chan-destroy-stuff {chan} {
     upvar #0 chantasks($chan) tasks
     if {![info exists tasks]} return
 
-    transaction resources {
+    jobdb::transaction resources {
         puts-chan-desc $chan "-- $tasks"
         foreach task $tasks {
             pg_execute dbh "
@@ -45,7 +61,7 @@ proc cmd/create-task {chan desc} {
     } else {
         set taskdesc $desc
     }
-    transaction resources {
+    jobdb::transaction resources {
         pg_execute dbh "
             INSERT INTO tasks
                         ( type,  refkey,               refinfo,         live)
@@ -74,9 +90,9 @@ proc banner {chan} {
 }
 
 main-daemon $c(OwnerDaemonPort) {
-    db-open
+    jobdb::db-open
     
-    transaction resources {
+    jobdb::transaction resources {
         set nrows [pg_execute dbh "
             UPDATE tasks
                SET refkey = 'previous ' || refkey

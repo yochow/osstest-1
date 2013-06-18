@@ -1,11 +1,26 @@
 #!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 our ($mode, $whhost) = @ARGV;
 our $ho= selecthost($whhost);
@@ -109,7 +124,7 @@ sub inventory_processes () {
     while (my ($key, $vals) = each %procs) {
         next unless @$vals==2;
         $key =~ m/^\d+ / or die "$key ?";
-        $_= $';
+        $_= $'; #';
         my $suppress= (m/^\[\S+\]$/ ||
                        $_ eq '/sbin/getty');
         item('process', $key, $vals->[1], !$suppress);
@@ -129,7 +144,17 @@ sub inventory_files ($) {
     }
 }
 
+sub inventory_domains () {
+    my $doms= target_cmd_output_root($ho, "xl list");
+    $doms =~ s/^name\s.*\n//mi or die "$doms ?";
+    foreach (split /\n/, $doms) {
+        m, (\d+) +\S+ +\S+ +\S+ +\S+\s*$, or die "$_ ?";
+        item('domain', $1, $_, 1);
+    }
+}
+
 sub inventory () {
+    inventory_domains();
     inventory_processes();
     inventory_xenstore();
     inventory_files('/tmp /var/run /var/tmp /var/lib/xen');
@@ -159,6 +184,14 @@ xenstore /local/domain/0/memory/target
 xenstore /local/domain/0/memory/static-max
 xenstore /local/domain/0/memory/freemem-slack
 
+xenstore /local/domain/0/libxl
+xenstore /local/domain/0/libxl/disable_udev
+
 xenstore /vm
 
+xenstore /libxl
+
 process .* udevd
+
+file /var/run/xenstored/db
+file /var/run/xenstored/db.debug

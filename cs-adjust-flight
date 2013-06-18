@@ -1,0 +1,337 @@
+#!/usr/bin/perl -w
+#
+# destination flight must already exist
+#
+# args:
+#   <dst-flight> [<change> ...]
+#
+# <change>:
+#   copy <flight>
+#   copy-jobs <flight> <job-spec>
+#   runvar-set <job-spec> <var-spec> <value>
+#   runvar-del <job-spec> <var-spec>
+#   runvar-change <job-spec> <var-spec> <old-value> <new-value>
+#   runvar-perlop <job-spec> <var-spec> <perl-expr>
+#   intended-blessing <intended-blessing>
+#
+# <foo-spec>:
+#   <foo-name>
+#   .                 means all jobs
+#   ^<pcre>           means $foo =~ m/^<pcre>/
+#   /<pcre>/          means $foo =~ m/<pcre>/
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+use strict qw(vars);
+use DBI;
+use Osstest;
+
+csreadconfig();
+
+our $debug = 0;
+
+open VERBOSE, ">/dev/null" or die $!;
+our $verbose_buffer;
+
+while (@ARGV && $ARGV[0] =~ m/^\-/) {
+    $_ = shift @ARGV;
+    last if m/^\-\-?$/;
+    if (m/^-v$/) {
+	open VERBOSE, ">&STDERR" or die $!;
+    } elsif (m/^-D$/) {
+        $debug = 1;
+    } else {
+        die "$_ ?";
+    }
+}
+
+die unless @ARGV >= 1;
+our ($dstflightspec,@changes) = @ARGV;
+
+our $dstflight;
+
+sub spec_re ($) {
+    my ($spec) = @_;
+    if ($spec eq '.') { return '(?:)'; }
+    if ($spec =~ m/^\^/) { return $spec; }
+    if ($spec =~ m/^\//) { return $'; } #';}
+    return undef;
+}
+
+sub debug { print STDERR @_ if $debug; }
+
+sub verbose (@) { $verbose_buffer .= $_ foreach @_; }
+sub verbose_discard () { $verbose_buffer = ''; }
+sub verbose_flush () {
+    print VERBOSE $verbose_buffer or die $!;
+    verbose_discard();
+}
+
+sub for_things ($$$$$$$) {
+    my ($spec, $fn, $ifnone,
+        $table, $keycol, $basecond, $basecondvals) = @_;
+
+    our (%thing_q, %things_q);
+    my $thing_q = $thing_q{$table} ||= $dbh_tests->prepare
+        ("SELECT * FROM $table WHERE $basecond AND $keycol = ?");
+    my $things_q = $things_q{$table} ||= $dbh_tests->prepare
+        ("SELECT * FROM $table WHERE $basecond");
+
+    my $re = spec_re($spec);
+    debug("FOR_THINGS $table.$keycol \`$spec' RE ",
+          (defined($re) ? "/$re/" : "<undef>"), "\n");
+    if (!defined $re) {
+        $thing_q->execute(@$basecondvals, $spec);
+        my $row = $thing_q->fetchrow_hashref();
+        if ($row) {
+            debug("FOR_THINGS $table.$keycol \`$spec' EXACT\n");
+            $fn->($spec,$row);
+        } elsif ($ifnone) {
+            debug("FOR_THINGS $table.$keycol \`$spec' MISSING REPORT\n");
+            $ifnone->($spec);
+        } else {
+            debug("FOR_THINGS $table.$keycol \`$spec' MISSING IGNORED\n");
+        }
+    } else {
+        $things_q->execute(@$basecondvals);
+        while (my $row = $things_q->fetchrow_hashref()) {
+            my $thing = $row->{$keycol};
+            next unless $thing =~ m/$re/;
+            debug("FOR_THINGS $table.$keycol \`$spec' FOUND $row->{$keycol}\n");
+            $fn->($thing, $row);
+        }
+    }
+}
+
+sub for_jobs ($$$;$) {
+    my ($flight, $jobspec, $fn, $noneok) = @_;
+    # calls $fn->($jobname, $jobrow);
+    for_things($jobspec, $fn,
+               ($noneok ? undef : sub {
+                   die "job $flight.$jobspec does not exist\n";
+                }),
+               'jobs', 'job',
+               'flight = ?', [$flight]);
+}
+
+sub copy_jobs ($$) {
+    my ($srcflight, $jobs) = @_;
+    my @job_rm_qs = map { $dbh_tests->prepare($_) }
+        ("DELETE FROM runvars WHERE flight = ? AND job = ?",
+         "DELETE FROM jobs WHERE flight = ? AND job = ?"); 
+    my @job_copy_qs = map { $dbh_tests->prepare($_) }
+        ("INSERT INTO jobs".
+         "     SELECT ?, job, recipe, 'queued'".
+         "       FROM jobs".
+         "      WHERE flight = ? AND job = ?",
+         "INSERT INTO runvars".
+         "     SELECT ?, job, name, val, 'f'".
+         "       FROM runvars".
+         "      WHERE flight = ? AND job = ? AND NOT synth");
+    my $rm_job = sub {
+        my ($job) = @_;
+	my $count = 0;
+        $count += $_->execute($dstflight, $job) foreach @job_rm_qs;
+	verbose "$dstflight.$job job deleted\n" if $count;
+    };
+    for_jobs($dstflight, $jobs, $rm_job);
+    for_jobs($srcflight, $jobs, $rm_job);
+    for_jobs($srcflight, $jobs, sub {
+        my ($job) = @_;
+        $_->execute($dstflight, $srcflight, $job) foreach @job_copy_qs;
+	verbose "$dstflight.$job job created from $srcflight.$job\n";
+    });
+}
+
+sub change__copy {
+    die unless @changes >= 1;
+    my $srcflight = shift @changes;
+    copy_jobs($srcflight, '/.');
+}
+
+sub change__copy_jobs {
+    die unless @changes >= 2;
+    my $srcflight = shift @changes;
+    my $jobs = shift @changes;
+    copy_jobs($srcflight, $jobs);
+}
+
+our $runvar_rm_q = $dbh_tests->prepare
+    ("DELETE FROM runvars WHERE flight = ? AND job = ? AND name = ?");
+our $runvar_insert_q = $dbh_tests->prepare
+    ("INSERT INTO runvars VALUES (?, ?, ?, ?, 'f')");
+
+sub runvar_set ($$$;$) {
+    my ($job, $name, $val, $xwhat) = @_;
+    $runvar_rm_q->execute($dstflight, $job, $name);
+    $runvar_insert_q->execute($dstflight, $job, $name, $val);
+    verbose "$dstflight.$job $name := \`$val'";
+    verbose $xwhat if defined $xwhat;
+    verbose "\n";
+}
+
+sub for_runvars ($$$$) {
+    my ($jobspec, $varspec, $fn, $ifnone) = @_;
+    # calls $fn->($jobname, $varname, $varrow)
+    #    or $ifnone->($jobname, $varname, undef)
+    # $ifnone may be 'ANYWAY' in which case calls $fn-> instead
+    # $ifnone may be 'IGNORE' in which case is noop
+
+    if (defined($ifnone) && !ref($ifnone)) {
+        $ifnone =
+            $ifnone eq 'ANYWAY' ? $fn :
+            $ifnone eq 'IGNORE' ? sub { } :
+            die "$ifnone ?";
+    }
+
+    for_jobs($dstflight, $jobspec, sub {
+        my ($jobname) = @_;
+        for_things($varspec,
+                   sub { $fn->($jobname, @_); },
+                   sub { $ifnone->($jobname, @_); },
+                   'runvars', 'name',
+                   'flight = ? AND job = ?', [$dstflight, $jobname]);
+    });
+}
+
+sub change__runvar_set {
+    die unless @changes >= 3;
+    my $jobs = shift @changes;
+    my $vars = shift @changes;
+    my $val = shift @changes;
+
+    for_runvars($jobs, $vars, sub {
+        my ($job, $name) = @_;
+        runvar_set($job, $name, $val);
+    }, 'ANYWAY');
+}
+
+sub change__runvar_del {
+    die unless @changes >= 2;
+    my $jobs = shift @changes;
+    my $vars = shift @changes;
+
+    for_runvars($jobs, $vars, sub {
+        my ($job, $name) = @_;
+        runvar_rm_q->execute($dstflight, $job, $name);
+	verbose "$dstflight.$job $name runvar deleted\n";
+    }, 'IGNORE');
+}
+
+sub change__runvar_change {
+    die unless @changes >= 4;
+    my $jobs = shift @changes;
+    my $vars = shift @changes;
+    my $oldval = shift @changes;
+    my $newval = shift @changes;
+
+    for_runvars($jobs, $vars, sub {
+        my ($job, $name, $varrow) = @_;
+        runvar_set($job, $name, $newval, " (exactly matches \`$oldval')")
+	    if $varrow->{val} eq $oldval;
+    }, 'IGNORE');
+}
+
+sub perlop_value ($$$$) {
+    my $job = shift @_;
+    my $name = shift @_;
+    my $op = shift @_;
+    local $_ = shift @_;
+    $@ = '';
+    eval $op;
+    die "$@ executing perlop \`$op'\n" if $@;
+    return $_;
+}
+
+sub change__runvar_perlop {
+    die unless @changes >= 3;
+    my $jobs = shift @changes;
+    my $vars = shift @changes;
+    my $op = shift @changes;
+
+    for_runvars($jobs, $vars, sub {
+        my ($job, $name, $varrow) = @_;
+	my $oldval = $varrow->{val};
+	my $newval = perlop_value($job, $name, $op, $oldval);
+        runvar_set($job, $name, $newval, " (modified from \`$oldval')");
+    }, 'IGNORE');
+}
+
+sub change__intended_blessing {
+    die unless @changes >= 1;
+    my $blessing = shift @changes;
+
+    $dbh_tests->do("UPDATE flights".
+                   "   SET intended = ?".
+                   " WHERE flight = ?",
+                   {}, $blessing, $dstflight);
+    verbose "$dstflight blessing set to $blessing\n";
+}
+
+sub change__branch {
+    die unless @changes >= 1;
+    my $branch = shift @changes;
+
+    $dbh_tests->do("UPDATE flights".
+                   "   SET branch = ?".
+                   " WHERE flight = ?",
+                   {}, $branch, $dstflight);
+    verbose "$dstflight branch set to $branch\n";
+}
+
+sub changes () {
+    debug("CHANGES...\n");
+
+    my $steps_q = $dbh_tests->prepare("SELECT * FROM steps WHERE flight = ?");
+    $steps_q->execute($dstflight);
+    my $step = $steps_q->fetchrow_hashref();
+    die "$dstflight already has steps\n".Dumper($step) if $step;
+
+    while (@changes) {
+        my $change = shift @changes;
+        $change =~ s/-/_/g;
+        &{"change__$change"}();
+    }
+}
+
+sub main () {
+    if ($dstflightspec =~ m/^\d+$/) {
+        $dstflight = $dstflightspec;
+        db_retry($dstflight,'constructing',
+                 $dbh_tests, [qw(flights)], sub {
+            verbose_discard();
+            changes();
+        });
+    } elsif ($dstflightspec =~ m/^new:/) {
+        my $intended = $'; #';
+        db_retry($dbh_tests, [qw(flights)], sub {
+            verbose_discard();
+            $dstflight = $mjobdb->flight_create($intended, $c{DefaultBranch});
+            $mjobdb->dbfl_check($dstflight, 'constructing');
+	    verbose "$dstflight flight created, intended blessing $intended\n";
+            changes();
+        });
+	verbose_flush();
+        print "$dstflight\n" or die $!;
+    } else {
+        die "$dstflightspec ?";
+    }
+    verbose_flush();
+}
+
+main();

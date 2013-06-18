@@ -1,16 +1,31 @@
 #!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict qw(vars);
 use DBI;
 use Osstest;
 use File::Path;
 use POSIX;
-use OsstestDebian;
+use Osstest::Debian;
+use Osstest::TestSupport;
 
 my $checkmode= 0;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 our @hos;
 
@@ -33,8 +48,8 @@ my %distpath;
 
 sub packages () {
     target_install_packages($ho,
-                            qw(bridge-utils vncsnapshot
-                               libsdl1.2debian));
+                            qw(bridge-utils vncsnapshot libaio1 libpixman-1-0
+                               libsdl1.2debian libyajl1 libglib2.0-0));
     if ($r{arch} eq 'i386') {
 	target_install_packages($ho, 'libc6-xen');
     }
@@ -45,13 +60,14 @@ sub extract () {
         target_extract_jobdistpath($ho, $part, "path_${part}dist",
 				   $r{"${part}buildjob"}, \%distpath);
     }
+    target_cmd_root($ho, '/sbin/ldconfig');
 }
 
 sub adjustconfig () {
     target_editfile_root($ho, "/etc/xen/xend-config.sxp",
 			 "xend-config.sxp", sub {
 	my (@domains) = (qw(localhost localhost.localdomain),
-			 ".".$c{Domain}, ".".$c{TestHostDomain});
+			 ".".$c{DnsDomain}, ".".$c{TestHostDomain});
 	logm("relocation domains: @domains");
 	foreach (@domains) {
 	    s/\./\\$&/g;
@@ -110,6 +126,8 @@ sub setupboot () {
         $xenhopt .= " dom0_mem=512M";
     }
     my $append= $r{xen_boot_append};
+    $xenhopt .= " $append" if defined $append;
+    $append = get_host_property($ho, 'xen-commandline-append', undef);
     $xenhopt .= " $append" if defined $append;
 
     my @hooks;
@@ -219,6 +237,26 @@ END
     });
 }    
 
+sub forbidden () {
+    target_cmd_root($ho, <<'END');
+	outcome=true
+	for f in /usr/local/etc/* /usr/local/var/*; do
+	    if test -e "$f"; then
+	        case "$f" in
+		/usr/local/etc/qemu)
+                    echo >&2 "*** WARNING IGNORING FORBIDDEN PATH: $f"
+                    ;;
+                *)
+		    echo >&2 "*** FORBIDDEN PATH IN USE, install problem: $f"
+		    outcome=false
+                    ;;
+                esac
+	    fi
+	done
+	$outcome
+END
+}
+
 if ($checkmode) {
     extract();
 } else {
@@ -227,6 +265,7 @@ if ($checkmode) {
     
     packages();
     extract();
+    forbidden();
     adjustconfig();
     setupboot();
     setupinitd();

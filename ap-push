@@ -1,35 +1,81 @@
 #!/bin/bash
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 set -ex
 
 branch=$1
 revision=$2
-
 . cri-lock-repos
+. cri-common
+select_xenbranch
 
-: ${XENBITS:=xen@xenbits.xensource.com}
-: ${TREE_LINUX:=$XENBITS:git/linux-pvops}
 : ${TAG_LINUX:=master}
 : ${TAG_LINUX2639:=tested/2.6.39.x}
 
+. ap-common
+
+TREE_LINUX=$PUSH_TREE_LINUX
+TREE_QEMU_UPSTREAM=$XENBITS:/home/xen/git/qemu-upstream-${xenbranch#xen-}.git
+TREE_XEN=$PUSH_TREE_XEN
+
+if info_linux_tree "$branch"; then
+	cd $repos/linux
+	git push $GITFORCEFLAG_TREE_LINUX_THIS \
+		$PUSH_TREE_LINUX_THIS $revision:$PUSH_TAG_LINUX_THIS
+        exit 0
+fi
+
 case "$branch" in
-xen*)
+xen-3.*)
 	cd $repos/$branch.hg
-	hg push -r "$revision" ssh://$XENBITS/HG/$branch.hg
+	hg push -r "$revision" ssh://$XENBITS//home/xen/HG/$branch.hg
 	;;
-linux)
+xen-unstable)
 	cd $repos/xen
+	git push $TREE_XEN $revision:master
+	;;
+xen-*-testing)
+	cd $repos/xen
+	xenversion=$branch
+	xenversion=${branch%-testing}
+	xenversion=${xenversion#xen-}
+	git push $TREE_XEN $revision:stable-$xenversion
+	;;
+qemu-upstream-*)
+	cd $repos/$branch
+        git push $TREE_QEMU_UPSTREAM $revision:master
+        ;;
+linux)
+	cd $repos/linux
 	git push $TREE_LINUX $revision:$TAG_LINUX
 	;;
 linux-2.6.39)
-	cd $repos/xen
+	cd $repos/linux
 	git push $TREE_LINUX $revision:$TAG_LINUX2639
 	;;
 linux-xen-*)
-        cd $repos/xen
+        cd $repos/linux
         git push $TREE_LINUX $revision:refs/heads/$branch
         ;;
 osstest)
 	git push $HOME/testing.git $revision:incoming
+	git push $XENBITS:/home/xen/git/osstest.git $revision:master
 	;;
 *)
 	echo >&2 "branch $branch ?"

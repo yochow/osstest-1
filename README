@@ -1,0 +1,208 @@
+To run osstest in standalone mode:
+
+ - You need to install
+     sqlite3
+     tcl8.4 tclx8.4 libsqlite3-tcl
+     libdbi-perl libdbd-sqlite3-perl
+     pax rsync
+
+ - Write a config file
+    ~/.xen-osstest/config
+   See below.
+
+ - Select the "branch" and job to reproduce.  By default the system
+   gives you the "branch" consisting of tests run for the xen-unstable
+   push gate.  You need to select a job.  The list of available jobs
+   is that shown in the publicly emailed test reports on xen-devel, eg
+     http://lists.xen.org/archives/html/xen-devel/2013-01/msg02574.html
+
+   If you don't want to repro one of those and don't know how to
+   choose a job, choose one of
+      test-amd64-{i386,amd64}-xl       32/64-bit dom0,domU; Debian guest
+
+ - Run ./standalone-reset
+
+ - Then you can run
+      ./sg-run-job <job>
+   to run that job on the default host.  NB in most cases this will
+   wipe the test box!  Relevant environment variables here are:
+      OSSTEST_HOST_REUSE    if set to 1, does not reinstall the host
+      OSSTEST_HOST_HOST     override config file TestHost setting
+                             (strictly, the final `_HOST' is the
+			      uppercase of the host's `ident' in the job)
+
+ - Don't forget to set the machine to pxeboot in the BIOS.
+
+ - Currently you need a serial console at 115200 8n1; see TODO.
+
+ - If you have an existing test host and guest set up
+   you can run
+      OSSTEST_JOB=<job>  ./ts-debian-install host=bedbug
+   or some such to install a Debian guest on it.
+
+========================================
+
+Format of config file ~/.xen-osstest/config (you may set OSSTEST_CONFIG to
+point to a different file, or :-separates series of files):
+
+Lines containing:
+   Name value
+or
+   Name=  perl expression
+or
+   Name= <<'END'    or <<END
+   blah blah
+   END
+
+To set a value to the empty string, say
+   Name=''
+
+#-comments and blank lines are ignored.
+
+For an example see  ./standalone-config-example
+Values later in the file, or in a later file, take precedence.
+
+========================================
+
+Important config settings for standalone mode:
+
+DnsDomain
+   DNS domain to suffix to many things.  No default.
+   For example, test box hostnames will by default be qualified
+   with this name.
+
+NetNameservers
+   Space-separated list of nameserver IPv4 addresses
+
+DebianMirrorHost
+   Domain name or address of the Debian mirror to use.
+   Set DebianMirrorSubpath to the path inside the mirror if
+   your mirror isn't at http://<DebianMirrorHost>/debian/
+
+TestHost <hostname>
+TestHost_<ident> <hostname>
+   Specifies the test box to use.  Should be a bare hostname,
+   not an fqdn.
+
+HostProp_<testbox>_Ether
+   MAC address of the box <testbox>.  Only needed if you want
+   to use the osstest host and Xen installer.
+
+HostProp_<testbox>_NoSerial
+   Set to 1 if <testbox> has no serial, system will use VGA console
+   instead.
+
+HostProp_<testbox>_DIFrontend
+   Configure the frontend used by Debian installer. Default in osstest
+   is a very basic "text" interface but for standalone configurations,
+   especially on VGA, "newt" might be preferred.
+
+DebianPreseed
+   Text to add to the debian-installer preseed file.  Optional
+   but you will need to set some NTP servers here if your firewall
+   doesn't permit NTP to Debian's pool.ntp.org servers.
+
+DebianNonfreeFirmware
+  List of debs of non-free firmware to include in the massaged
+  debian-installer.  You will need this if you want to use network
+  card which requires non-free firmware.  The default is just
+  "firmware-bnx2'.  If your host operating system doesn't have
+  grep-dctrl (for example because it's not Debian) then you must set
+  this to the empty string, by writing  DebianNonfreeFirmware=''
+
+========================================
+
+Config settings relevant only to standalone mode
+
+JobDBStandaloneFilename
+   Database file to use to record the "jobs" and their run variables.
+   Default: ./standalone.db (sqlite3)
+
+CaptureLogs
+   boolean, set to 1 to enable ts-logs-capture
+
+TestHostDomain            defaults to DnsDomain
+
+TestHost_<ident>      where eg <ident> = "host"
+TestHost
+
+HostProp_<property>
+HostProp_<host>_<property>
+HostFlags                flag,flag,flag,...
+HostFlags_<host>         flag,!flag,!flag,flag...
+
+HostProp_DhcpWatchMethod
+   leases <format> <source>
+      where <format> is dhcp3
+            <source> is filename (with slash) or <host>:<port>
+
+AuthorizedKeysFiles
+     :-separated list of files to concatenate into authorized_keys
+AuthorizedKeysAppend
+     literal text to add
+The keys in ~/.ssh/id_{rsa,dsa}.pub and ~/.ssh/authorized_keys
+(if they exist) are copied anyway.
+
+TestHostKeypairPath
+
+HostProp_GenEtherPrefixBase 5e:36:0e:f5
+# 	                               :00:01 guest number in job appended
+#            in standalone jobdb, ^^^^^ xor'd with low 16 bits of your uid
+
+========================================
+
+General config settings
+
+Stash
+Images
+Logs
+
+DebianSuite
+GuestDebianSuite   defaults to DebianSuite
+
+DebianPreseed      added to existing preseed file
+
+TftpPxeTemplates
+    List (space-separated) of template filenames for writing
+    The templates contain variable substitutions %var%
+    The variables are the runvars plus
+        ether         host/guest mac address
+        etherhyp      ... in lowercase hyphen-separated form (for pxelinux)
+	ipaddr        host/guest static ip address
+	ipaddrhex     ... in uppercase hex form (for pxelinux)
+    Templates containing references to unknown %var%s - particularly,
+    the host mac address when not known, or the guest's dynamic
+    ip address - are skipped.  The first template all of whose ingredients
+    are known is used, with TftpPath and TftpPxeDir prepended.
+
+========================================
+
+Host-specific config settigs
+
+NetNameServers
+
+WebspaceFile
+WebspaceUrl
+WebspaceCommon
+WebspaceLog
+
+========================================
+
+Some of the config settings relevant to the production setup
+(`Executive') include:
+
+JobDB
+HostDB
+   Class name tails for the job and host databases.
+
+ExecutiveDbnamePat
+   Pattern for generating PostgreSQL dbname strings for the executive's
+   various databases.  Processed as follows:
+     1. <\w+> is replaced with variables:
+		 <dbname>    database name
+     2. <~/path> </path> <./path> are replaced with contents of specified file 
+     3. <[> and <]> are replaced with < and >
+
+ExecutiveDbname_<DB>
+   PostgreSQL dbname string for the database <DB>.  Default is to use
+   ExecutiveDbnamePat.

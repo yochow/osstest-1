@@ -1,26 +1,77 @@
 #!/bin/bash
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 set -ex
 
 . cri-args-hostlists
+. ap-common
 branch=$1; shift
 select_branch
+info_linux_tree $branch ||:
 
 tree_bisect=tree-bisect
 
 check_stop daily.
 
-fetch_version () {
-	if [ "x$1" = "x$branch" ]; then
-                if [ "x$FORCE_REVISION" != x ]; then
-                        echo "$FORCE_REVISION"
-                else
-        		./ap-fetch-version "$@"
-                fi
-	else
-		./ap-fetch-version-baseline "$@"
-	fi
+determine_tree () {
+	local treevarwhich=$1
+	local tsrcvarlhs=$2
+	local tsrcvarrhs=$3
+	if [ "x$treevarwhich" = x ]; then return; fi
+
+	for tsrcvarwhich in TREE TREEVCS; do
+		eval "ttreeval=\$${tsrcvarlhs}${tsrcvarwhich}${tsrcvarrhs}"
+		if [ "x$ttreeval" = x ]; then return; fi
+		eval "${tsrcvarwhich}_${treevarwhich}=\$ttreeval"
+		export "${tsrcvarwhich}_${treevarwhich}"
+	done
 }
 
+determine_version () {
+	local tversionvar=$1
+	local tbranch=$2
+	local treevarwhich=$3
+	if [ "x$tbranch" = "x$branch" ] && ! $force_baseline; then
+                if [ "x$FORCE_REVISION" != x ]; then
+                        tversion="$FORCE_REVISION"
+                else
+        		tversion=`./ap-fetch-version "$tbranch"`
+                fi
+		determine_tree "$treevarwhich" "" _${treevarwhich}
+		determine_tree "$treevarwhich" "" _${treevarwhich}_THIS
+	else
+		tversion=`./ap-fetch-version-baseline "$tbranch"`
+		determine_tree "$treevarwhich" BASE_ _${treevarwhich}
+		determine_tree "$treevarwhich" BASE_ _${treevarwhich}_THIS
+	fi
+	eval "$tversionvar=$tversion"
+}
+
+fetch_version () {
+	determine_version fetch_version_result "$@"
+	printf '%s\n' "$fetch_version_result"
+}
+
+treeurl=`./ap-print-url $branch`
+
+force_baseline=false
+skipidentical=true
 wantpush=$OSSTEST_PUSH
 
 if [ "x$OLD_REVISION" = x ]; then
@@ -28,27 +79,49 @@ if [ "x$OLD_REVISION" = x ]; then
         export OLD_REVISION
 fi
 
-testedflight=`./sg-check-tested --debug --branch=$branch \
-  --blessings=$OSSTEST_BLESSING --revision-$tree="$OLD_REVISION"`
+check_tested () {
+	./sg-check-tested --debug --branch=$branch \
+	  --blessings=${DAILY_BRANCH_TESTED_BLESSING:-$OSSTEST_BLESSING} \
+	  "$@"
+}
+
+testedflight=`check_tested --revision-$tree="$OLD_REVISION"`
 
 if [ "x$testedflight" = x ]; then
         wantpush=false
-        FORCE_REVISION=$OLD_REVISION
-        export FORCE_REVISION
-        OLD_REVISION=`./sg-check-tested --debug --branch=$branch \
-          --blessings=$OSSTEST_BLESSING --print-revision=$tree`
-        if [ "x$OLD_REVISION" = x ]; then
-                OLD_REVISION="$FORCE_revision"
-        fi
+        skipidentical=false
+        force_baseline=true
+	if [ "x$treeurl" != xnone: ]; then
+		treearg=--tree-$tree=$treeurl
+	fi
+	tested_revision=`check_tested $treearg --print-revision=$tree`
+	if [ "x$tested_revision" != x ]; then
+		OLD_REVISION="$tested_revision"
+	fi
 fi
 
 if [ "x$REVISION_XEN" = x ]; then
         REVISION_XEN="`fetch_version $xenbranch`"
         export REVISION_XEN
 fi
+if [ "x$REVISION_QEMU_UPSTREAM" = x ]; then
+	case "$xenbranch" in
+        xen-3.*|xen-4.[01]-*)
+        	;;
+	*)
+		REVISION_QEMU_UPSTREAM="`fetch_version \
+				qemu-upstream-${xenbranch#xen-}`"
+		;;
+        esac
+        export REVISION_QEMU_UPSTREAM
+fi
 if [ "x$REVISION_LINUX" = x ]; then
-        REVISION_LINUX="`fetch_version linux`"
+	determine_version REVISION_LINUX $linuxbranch LINUX
         export REVISION_LINUX
+fi
+if [ "x$REVISION_LINUXFIRMWARE" = x ]; then
+	determine_version REVISION_LINUXFIRMWARE linuxfirmware
+        export REVISION_LINUXFIRMWARE
 fi
 
 case "$tree" in
@@ -61,14 +134,22 @@ linux)
 	NEW_REVISION=$REVISION_LINUX
 	export REVISION_LINUX_XCP=disable
 	export REVISION_LINUX_OLD=disable
+	: ${GITFORCEFLAG:=$GITFORCEFLAG_TREE_LINUX_THIS}
 	;;
 osstest)
+	determine_version REVISION_OSSTEST osstest
         realtree=
-	git fetch -f $HOME/testing.git incoming:incoming
-	git fetch $HOME/testing.git pretest:incoming
-	git reset --hard incoming
-	NEW_REVISION=`git-rev-parse HEAD^0`
+	NEW_REVISION=$REVISION_OSSTEST
+	git reset --hard $REVISION_OSSTEST
 	;;
+qemuu)
+	realtree=qemu-upstream-${xenbranch#xen-}
+	NEW_REVISION=$REVISION_QEMU_UPSTREAM
+        ;;
+linuxfirmware)
+	realtree=linuxfirmware
+	NEW_REVISION=$REVISION_LINUXFIRMWARE
+        ;;
 *)
 	NEW_REVISION=''
 	wantpush=false
@@ -77,7 +158,6 @@ esac
 
 if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
         wantpush=false
-	skipidentical=true
 	for checkbranch in x $BRANCHES_ALWAYS; do
 		if [ x"$branch" = x"$checkbranch" ]; then
 			skipidentical=false
@@ -89,7 +169,23 @@ if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
         fi
 fi
 
+$DAILY_BRANCH_PREMAKE_HOOK
 flight=`./make-flight $branch $xenbranch $OSSTEST_BLESSING "$@"`
+$DAILY_BRANCH_POSTMAKE_HOOK
+
+heading=tmp/$flight.heading-info
+: >$heading
+sgr_args+=" --include-begin=$heading"
+
+if $force_baseline; then
+	subject_prefix="[$branch baseline test] "
+	cat >>$heading <<END
+"Old" tested version had not actually been tested; therefore in this
+flight we test it, rather than a new candidate.  The baseline, if
+any, is the most recent actually tested revision.
+
+END
+fi
 
 revlog=tmp/$flight.revision-log
 
@@ -97,13 +193,16 @@ case "$NEW_REVISION/$OLD_REVISION" in
 */*[^0-9a-f]* | *[^0-9a-f]*/*)
         echo >&2 "NO SGR COMPARISON badchar $NEW_REVISION/$OLD_REVISION"
         ;;
+[0-9a-f]*/)
+        sgr_args+=" --this-$tree=$NEW_REVISION"
+	;;
 [0-9a-f]*/[0-9a-f]*)
         sgr_args+=" --machine-readable-output=$mrof"
         sgr_args+=" --this-$tree=$NEW_REVISION"
         sgr_args+=" --that-$tree=$OLD_REVISION"
 
-        if [ "$realtree" ] && [ "x$NEW_REVISION" != "x$OLD_REVISION" ]; then
-                treeurl=`./ap-print-url $realtree`
+        if [ "$realtree" ] && [ "x$NEW_REVISION" != "x$OLD_REVISION" ] \
+	   && [ "x$GITFORCEFLAG" = x ]; then
                 ./adhoc-revtuple-generator >$revlog -S \
                         "$treeurl#$OLD_REVISION-$NEW_REVISION" \
 
@@ -134,8 +233,10 @@ END
         ;;
 esac
 
+: $flight $branch $OSSTEST_BLESSING $sgr_args
+$DAILY_BRANCH_PREEXEC_HOOK
 execute_flight $flight $OSSTEST_BLESSING
-start_email $flight $branch "$sgr_args"
+start_email $flight $branch "$sgr_args" "$subject_prefix"
 
 push=false
 if grep '^tolerable$' $mrof >/dev/null 2>&1; then push=$wantpush; fi

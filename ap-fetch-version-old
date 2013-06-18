@@ -1,26 +1,65 @@
 #!/bin/bash
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 set -e
 
 branch=$1
-
 . cri-lock-repos
+. cri-common
+select_xenbranch
+. ap-common
 
-: ${XENBITS:=xen@xenbits.xensource.com}
-: ${OLD_TREE_LINUX:=$XENBITS:git/linux-pvops}
-: ${OLD_TAG_LINUX:=master}
-: ${OLD_TAG_LINUX2639:=tested/2.6.39.x}
-: ${OLD_LOCALREV_LINUX:=daily-cron.$branch.old}
+: ${BASE_TAG_LINUX2639:=tested/2.6.39.x}
+: ${BASE_LOCALREV_LINUX:=daily-cron.$branch.old}
+
+: ${BASE_TREE_QEMU_UPSTREAM:=${TREE_QEMU_UPSTREAM/\/staging\//\/}}
+
+if info_linux_tree "$branch"; then
+	repo_tree_rev_fetch_git linux \
+		$BASE_TREE_LINUX_THIS $BASE_TAG_LINUX_THIS $BASE_LOCALREV_LINUX
+	exit 0
+fi
 
 case "$branch" in
-xen*)
+xen-3.*)
 	./sg-hg-heads ssh $XENBITS '
 	        set -e
 	        cd HG/"'"$branch.hg"'"
 	'
 	;;
+xen-unstable)
+	repo_tree_rev_fetch_git xen \
+		$TREE_XEN master $LOCALREV_XEN
+	;;
+xen-4.*-testing)
+	branchcore=${branch#xen-}
+	branchcore=${branchcore%-testing}
+	repo_tree_rev_fetch_git xen \
+		$TREE_XEN stable-$branchcore $LOCALREV_XEN
+	;;
+qemu-upstream-*)
+        repo_tree_rev_fetch_git $branch \
+		$BASE_TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM
+        ;;
 linux)
 	repo_tree_rev_fetch_git linux \
-		$OLD_TREE_LINUX $OLD_TAG_LINUX $OLD_LOCALREV_LINUX
+		$BASE_TREE_LINUX $BASE_TAG_LINUX $BASE_LOCALREV_LINUX
 	;;
 linux-2.6.39)
 	repo_tree_rev_fetch_git linux \
@@ -30,9 +69,13 @@ linux-xen-*)
 	repo_tree_rev_fetch_git linux \
 		$OLD_TREE_LINUX $branch $OLD_LOCALREV_LINUX
 	;;
+linuxfirmware)
+	repo_tree_rev_fetch_git linuxfirmware \
+		$TREE_LINUXFIRMWARE master daily-cron-old.$branch
+	;;
 osstest)
-        cd $HOME/testing.git
-        git-rev-parse incoming^0
+	git-fetch -f $HOME/testing.git incoming:ap-fetch
+        git-rev-parse ap-fetch^0
         ;;
 *)
 	echo >&2 "branch $branch ?"

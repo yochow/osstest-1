@@ -2,18 +2,35 @@
 # -*- Tcl -*- 
 # usage: ./sg-execute-flight FLIGHT BLESSING
 
-source osstestlib.tcl
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+source ./tcl/osstestlib.tcl
 readconfig
+source-method JobDB
 
 proc check {} {
     global flight jobinfo running blessing killing stopping startdelay
 
     if {$stopping} return
 
-    db-open
+    jobdb::db-open
 
-    set nqueued [pg_execute dbh "
+    set nqueued [jobdb::db-execute "
         SELECT job FROM jobs j
          WHERE j.flight = $flight
            AND j.status = 'queued'
@@ -29,7 +46,7 @@ proc check {} {
         exit 0
     }
 
-    pg_execute -array jobinfo dbh "
+    jobdb::db-execute-array jobinfo "
         SELECT * FROM jobs j
          WHERE j.flight = $flight
            AND j.status = 'queued'
@@ -52,7 +69,7 @@ proc check {} {
          ORDER BY job
     " maybe-spawn-job
 
-    db-close
+    jobdb::db-close
 }
 
 proc prequit {why} {
@@ -70,12 +87,7 @@ proc maybe-spawn-job {} {
         if {[string equal $job $jobinfo(job)]} return
     }
 
-    switch -glob $jobinfo(recipe) {
-        build* { set runner sg-run-builds }
-        test* { set runner sg-run-tests }
-        * { error "unknown runner for recipe $jobinfo(recipe)" }
-    }
-    log "flight $flight spawning $jobinfo(job) $jobinfo(recipe) $runner"
+    log "flight $flight spawning $jobinfo(job)"
 
     incr startdelay 300
 
@@ -97,8 +109,8 @@ proc maybe-spawn-job {} {
             execl sh {-c {trap '' TERM; read dummy}}
             error "execl sh returned success ?!"
         }
-        execl ./$runner [list --start-delay $startdelay \
-                             $flight --jobs=$jobinfo(job)]
+        execl ./sg-run-job [list --start-delay $startdelay \
+                             $flight $jobinfo(job)]
         error "execl returned success ?!"
     }
     close $waiter_sentinel_r
@@ -165,8 +177,8 @@ proc main_iteration {} {
 
     kill-term $job $pid
 
-    transaction flights {
-        set found [pg_execute -array jobinfo dbh "
+    jobdb::transaction flights {
+        set found [jobdb::db-execute-array jobinfo "
             SELECT * FROM jobs
                     WHERE flight=$flight
                       AND job=[pg_quote $job]
@@ -177,7 +189,7 @@ proc main_iteration {} {
             pass - fail - broken - blocked {
             }
             queued - preparing - running {
-                job-set-status-unlocked $flight $job broken
+                jobdb::job-set-status-unlocked $flight $job broken
                 if {$exitok} {
                     error "job $flight.$job runner exited 0\
                        but left job status $jobinfo(status)"
@@ -203,7 +215,7 @@ proc kill-kill {job pid} {
 
 proc parse-args {} {
     global argv blessing
-    set-flight
+    jobdb::set-flight
     if {[llength $argv]!=1} { error "wrong # args" }
     lassign $argv blessing
 }

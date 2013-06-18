@@ -1,0 +1,154 @@
+#!/bin/bash
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+usage(){
+	cat <<END
+usage: ./standalone-reset [<options>] [<branch> [<xenbranch> [<buildflight>]]]
+ branch and xenbranch default, separately, to xen-unstable
+options:
+ -f<flight>     generate flight "flight", default is "standalone"
+END
+}
+
+. cri-getconfig
+
+jobdb=`getconfig JobDB`
+if [ "$jobdb" != Standalone ]; then
+	echo >&2 "jobdb is $jobdb!"; exit 1
+fi
+
+ensure_dir () {
+	if test -d "$1"; then return; fi
+	mkdir "$1"
+}
+
+ensure_key () {
+	kpf=$1; shift
+	if test -f "$kpf"; then return; fi
+	ssh-keygen "$@" -N '' -f "$kpf"
+}
+
+#---------- ensuring we have a suitable rsa key ----------
+
+keypair=`getconfig TestHostKeypairPath`
+ensure_key "$keypair" -t rsa -b 1024
+
+#---------- ensuring we can visit our webspace ----------
+
+wsfile=`getconfig WebspaceFile``getconfig WebspaceCommon`
+wsurl=`getconfig WebspaceUrl``getconfig WebspaceCommon`
+
+ensure_dir "$wsfile"
+
+head -c10 /dev/urandom >${wsfile}standalone-test
+curl -sS >standalone-test.tmp ${wsurl}standalone-test
+cmp ${wsfile}standalone-test standalone-test.tmp
+rm -f ${wsfile}standalone-test standalone-test.tmp
+
+#---------- generate host keys in overlay ----------
+
+overlay=`getconfig OverlayLocal`
+
+ensure_dir "$overlay"
+mkdir -p "$overlay"/etc/ssh
+
+ensure_key "$overlay"/etc/ssh/ssh_host_rsa_key -t rsa -b 1024
+ensure_key "$overlay"/etc/ssh/ssh_host_dsa_key -t dsa
+
+#---------- ensuring we can update pxe files and have d-i ----------
+
+tftp=`getconfig TftpPath`
+if ! test -d "$tftp"; then
+	echo >&2 \
+'Warning, TftpPath variable would be needed for host installs &c'
+else
+
+	tftptmp=`getconfig TftpTmpDir`
+	ensure_dir "$tftp$tftptmp"
+
+	dibase=`getconfig TftpDiBase`
+	diver=`getconfig TftpDiVersion`
+	suite=`getconfig DebianSuite`
+	firmware=`getconfig DebianNonfreeFirmware`
+
+	if [ "x$diver" = xcurrent ]; then
+		for arch in i386 amd64; do
+			if test -d "$tftp/$dibase/$arch/$diver"
+				then continue; fi
+			mkdir -p "$tftp/$dibase/$arch"
+			echo "** need to generate d-i with firmware for $arch"
+			div=`./mg-debian-installer-update \
+					$suite $arch $firmware`
+			rm -f "$tftp/$dibase/$arch/current"
+			ln -s $div "$tftp/$dibase/$arch/current"
+		done
+	fi
+fi
+
+#---------- making the database with a flight and some jobs ----------
+
+branch=xen-unstable
+xenbranch=xen-unstable
+
+case $# in
+0)	;;
+1)	branch="$1"; shift;;
+2)	branch="$1"; shift; xenbranch="$1"; shift;;
+3)	branch="$1"; shift; xenbranch="$1"; shift; buildflight="$1"; shift;;
+*)	usage >&2; exit 1;;
+esac
+
+if test -f standalone.db; then
+	sqlite3 standalone.db <<END
+		DELETE FROM runvars WHERE flight='$flight';
+		DELETE FROM jobs    WHERE flight='$flight';
+		DELETE FROM flights WHERE flight='$flight';
+END
+else
+	sqlite3 standalone.db <<END
+		CREATE TABLE flights (
+			flight TEXT PRIMARY KEY,
+			intended TEXT,
+			branch TEXT
+			);
+		CREATE TABLE jobs (
+			flight TEXT NOT NULL,
+			job TEXT NOT NULL,
+			recipe TEXT NOT NULL,
+			status TEXT NOT NULL,
+			PRIMARY KEY(flight,job)
+			);
+		CREATE TABLE runvars (
+			flight TEXT NOT NULL,
+			job TEXT NOT NULL,
+			name TEXT NOT NULL,
+			val TEXT NOT NULL,
+			synth BOOLEAN NOT NULL,
+			PRIMARY KEY(flight,job,name)
+			);
+END
+fi
+
+OSSTEST_FLIGHT=$flight \
+./make-flight "$branch" "$xenbranch" play $buildflight >/dev/null
+
+#---------- done ----------
+
+echo ok.

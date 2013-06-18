@@ -1,7 +1,27 @@
 #!/bin/bash
 # usage
 #   ./mg-debian-installer-update lenny i386 'firmware-bnx2 firmware-spong'
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 set -e
+
+. cri-getconfig
 
 suite=$1
 arch=$2
@@ -9,14 +29,14 @@ packages="$3"
 
 fail () { echo >&2 "$0: $1"; exit 1; }
 
-site=http://ftp.debian.org/
-sbase=http://ftp.debian.org/dists/$suite
+site=http://ftp.debian.org/debian/
+sbase=$site/dists/$suite
 
 src=$sbase/main/installer-$arch/current/images/netboot/debian-installer/$arch
 pfile=$sbase/non-free/binary-$arch/Packages.bz2
 files='initrd.gz linux'
 
-dstroot=/tftpboot/pxe/osstest/debian-installer/
+dstroot=`getconfig TftpPath`/`getconfig TftpDiBase`/
 date=`date +%Y-%m-%d`-$suite
 dst=$arch/$date
 
@@ -25,7 +45,7 @@ mkdir -p $dst
 cd $dst
 
 for f in $files; do
-        echo "fetching $f"
+        echo >&2 "fetching $f"
         curl -s $src/$f >$f.new
 done
 
@@ -33,7 +53,7 @@ curl -s $pfile >Packages.bz2
 
 for p in $packages; do
         set +e
-        echo "collecting $p"
+        echo >&2 "collecting $p"
         pkgfile=`bzcat Packages.bz2 | grep-dctrl -PX $p -nsFilename`
         rc=$?
         set -e
@@ -58,4 +78,5 @@ rm Packages.bz2
 #ln -s $date current.new
 #mv -Tf current.new current
 
-echo "downloaded $dstroot/$arch/$date"
+echo $date
+echo >&2 "downloaded $dstroot/$arch/$date"

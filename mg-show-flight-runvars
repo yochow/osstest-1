@@ -1,0 +1,60 @@
+#!/usr/bin/perl -w
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# diff -b -u <(./mg-show-flight-runvars 11825) <(./mg-show-flight-runvars 11847) |less
+
+use strict qw(vars refs);
+use DBI;
+use Osstest;
+
+csreadconfig();
+
+my $synthcond = '(NOT synth)';
+
+for (;;) {
+    last unless @ARGV;
+    last unless $ARGV[0] =~ m/^-/;
+    $_ = shift @ARGV;
+    last if m/^\-\-?$/;
+    if (m/^-a$/) {
+	$synthcond = 'TRUE';
+    } else {
+	die "$_ ?";
+    }
+}
+
+die unless @ARGV==1 && $ARGV[0] =~ m/^\d+/;
+
+our ($flight) = @ARGV;
+
+our @cols = qw(job name val);
+
+my $qfrom = "FROM runvars WHERE flight=$flight AND $synthcond";
+
+my @colws = $dbh_tests->selectrow_array
+    ("SELECT ".(join ',', map { "max(length($_))" } @cols)." $qfrom");
+
+my $q = $dbh_tests->prepare
+    ("SELECT ".(join ',', @cols)." $qfrom ORDER BY name, job");
+$q->execute();
+
+while (my $row = $q->fetchrow_arrayref()) {
+    printf "%-*s %-*s %-*s\n", map { $colws[$_], $row->[$_] } qw(0 1 2)
+        or die $!;
+}

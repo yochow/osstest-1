@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+set -ex
+
+export OSSTEST_BLESSING=adhoc
+
+. cri-common
+
+nope () { echo "nope: $*"; exit 0; }
+
+if ! test -f job; then nope "no job"; exit 0; fi
+
+. ./job
+# job should set:
+#   branch=
+#   job=
+#   testid=
+#   bisect= list of args to cs-bisection-step, eg  '--fail-flight=<mumble>'
+
+. cri-bisect
+. cri-args-hostlists
+select_branch
+
+export OSSTEST_BLESSING=adhoc
+
+compute_state_callback () {
+	compute_state_core \
+        	--blessings=real,real-bisect,adhoc-bisect \
+                $bisect "$@" $branch $job $testid
+}
+
+compute_state_done_callback () {
+	mv -f job job.done
+}
+
+perhaps_bisect_step_core_testing_callback () {
+	:
+}
+
+subject_prefix="[adhoc $branch bisection]"
+
+perhaps_bisect_step_core real adhoc-bisect

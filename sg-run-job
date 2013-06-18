@@ -1,0 +1,322 @@
+#!/usr/bin/tclsh8.4
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# -*- Tcl -*- 
+# usage: ./sg-run-job <flight> <job>
+
+source ./tcl/osstestlib.tcl
+readconfig
+source-method JobDB
+
+proc run-job {job} {
+    global jobinfo builds flight ok need_xen_hosts anyfailed
+
+    set ok 1
+    set anyfailed 0
+    jobdb::prepare $job
+
+    set nh [need-hosts/$jobinfo(recipe)]
+    if {![string compare $nh BUILD]} {
+        set need_xen_hosts {}
+        set need_build_host 1
+    } else {
+        set need_xen_hosts $nh
+        set need_build_host 0
+    }
+
+    if {[llength $need_xen_hosts]} {
+               catching-otherwise blocked   check-not-blocked
+	if {!$ok} return
+        eval run-ts broken  =             ts-hosts-allocate + $need_xen_hosts
+    }
+
+    if {$need_build_host} { catching-otherwise broken prepare-build-host }
+
+    if {$ok} { setstatus running                                          }
+
+    per-host-ts broken  host-install/@(*) ts-host-install-twice
+    per-host-ts .       xen-install/@     ts-xen-install
+    per-host-ts .       xen-boot/@        ts-host-reboot
+
+    per-host-ts .       =(*)             {ts-leak-check basis}
+
+    if {$ok} { catching-otherwise fail      run-job/$jobinfo(recipe)      }
+    per-host-ts .       =                {ts-leak-check check}
+
+    if {!$need_build_host} {
+        per-host-ts !broken capture-logs/@(*) ts-logs-capture
+    } else {
+        if {$anyfailed} {
+            run-ts  !broken capture-logs      ts-logs-capture + host
+        }
+    }
+
+    if {$ok} { setstatus pass                                             }
+
+    if {$anyfailed} {
+        jobdb::logputs stdout "at least one test failed"
+    }
+}
+
+proc catching-otherwise {failst script} {
+    global anyfailed flight jobinfo ok
+
+    if {[catch {
+        uplevel 1 $script
+    } emsg]} {
+        jobdb::logputs stderr "$flight.$jobinfo(job) $script failed: $emsg"
+        set ok 0
+        set anyfailed 1
+	setstatus $failst
+    }
+}
+
+proc check-not-blocked {} {
+    run-ts blocked * ts-xen-build-check
+}
+
+proc setstatus {st} {
+    global flight jobinfo
+    jobdb::job-set-status $flight $jobinfo(job) $st
+}
+
+#---------- test script handling ----------
+
+proc run-ts {args} {
+    set reap [eval spawn-ts $args]
+    if {![reap-ts $reap]} { error "test script failed" }
+}
+
+proc spawn-ts {iffail testid ts args} {
+    global flight c jobinfo reap_details env
+
+    if {[file exists abort]} {
+        jobdb::logputs stdout \
+            "aborting - not executing $flight.$jobinfo(job) $ts $args"
+        job-set-status $flight $jobinfo(job) aborted
+        return {}
+    }
+
+    if {![string compare . $iffail]} { set iffail fail }
+
+    jobdb::spawn-step-begin $flight $jobinfo(job) $ts stepno
+
+    set real_args {}
+    set adding 1
+    set host_testid_suffix {}
+    foreach arg $args {
+        if {![string compare + $arg]} {
+            set adding 0
+            continue
+        }
+        lappend real_args $arg
+        if {$adding} { append host_testid_suffix "/$arg" }
+    }
+
+    regsub {^ts-} $ts {} deftestid
+    append deftestid /@
+
+    if {[string match =* $testid]} {
+        set testid "$deftestid[string range $testid 1 end]"
+    } elseif {![string compare $testid *]} {
+        set testid $deftestid
+        append testid (*)
+    }
+    regsub {/\@} $testid $host_testid_suffix testid
+    regsub {\(\*\)$} $testid ($stepno) testid
+
+    set detstr "$flight.$jobinfo(job) $ts $real_args"
+    set details [list $flight $jobinfo(job) $stepno $detstr $iffail]
+    jobdb::logputs stdout "starting $detstr $testid"
+
+    jobdb::spawn-step-commit $flight $jobinfo(job) $stepno $testid
+
+    set xprefix {}
+    if {[info exists env(OSSTEST_SIMULATE)]} { set xprefix echo }
+
+    set log [jobdb::step-log-filename $flight $jobinfo(job) $stepno $ts]
+    set redirects {< /dev/null}
+    if {[string length $log]} {
+        lappend redirects 2> $log
+    } else {
+        lappend redirects 2>@ stderr
+    }
+
+    set cmd [concat \
+                 [list sh -xc "
+                     OSSTEST_JOB=$jobinfo(job)
+                     export OSSTEST_JOB
+                     $xprefix \"$@\" >&2
+                     rc=\$?
+                     date -u +\"%Y-%m-%d %H:%M:%S Z exit status \$rc\" >&2
+                     exit \$rc
+                 " x ./$ts] \
+                 $real_args $redirects]
+    set fh [open |$cmd r]
+    set reap_details($fh) $details
+
+    return $fh
+}
+
+proc reap-ts {reap} {
+    if {![string length $reap]} { return 0 }
+
+    upvar #0 reap_details($reap) details
+    set detstr [lindex $details 3]
+    set iffail [lindex $details 4]
+    jobdb::logputs stdout "awaiting $detstr"
+    if {[catch { close $reap } emsg]} {
+        set result $iffail
+    } else {
+        set result pass
+    }
+
+    eval jobdb::step-set-status [lrange $details 0 2] $result
+    jobdb::logputs stdout "finished $detstr $result $emsg"
+    return [expr {![string compare $result pass]}]
+}
+
+#---------- per-host infrastructure (non-build tests only) ----------
+
+proc per-host-ts {iffail ident script args} {
+    global ok need_xen_hosts flight jobinfo
+    
+    if {![regsub {^!} $iffail {} iffail]} {
+	if {!$ok} return
+    }
+    if {![string compare . $iffail]} { set iffail fail }
+
+    set awaitl {}
+    foreach host $need_xen_hosts {
+        set hostargs {}
+        if {![string compare $host host]} {
+            lappend hostargs + $host
+        } else {
+            lappend hostargs $host +
+        }
+        lappend awaitl [eval spawn-ts $iffail $ident $script $hostargs $args]
+    }
+
+    set failed 0
+    foreach host $need_xen_hosts await $awaitl {
+        if {![reap-ts $await]} {
+            jobdb::logputs stderr "$flight.$jobinfo(job) @$host $args failed"
+            set failed 1
+            set ok 0
+        }
+    }
+
+    if {$failed} {
+        setstatus $iffail
+    }
+}
+
+#---------- test recipes ----------
+
+proc need-hosts/test-debian-nomigr {} { return host }
+proc run-job/test-debian-nomigr {} {
+    install-guest-debian
+    test-guest-nomigr debian
+}
+
+proc install-guest-debian {} {
+    run-ts . = ts-debian-install
+    run-ts . = ts-debian-fixup + debian
+    run-ts . = ts-guest-start + debian
+}
+
+proc need-hosts/test-debian {} { return host }
+proc run-job/test-debian {} {
+    install-guest-debian
+    test-guest debian
+}
+
+proc need-hosts/test-win {} { return host }
+proc run-job/test-win {} {
+    run-ts . = ts-windows-install
+    test-guest win
+}
+
+proc need-hosts/test-rhelhvm {} { return host }
+proc run-job/test-rhelhvm {} {
+    run-ts . = ts-redhat-install
+    test-guest-nomigr redhat
+}
+
+proc need-hosts/test-pair {} { return {src_host dst_host} }
+proc run-job/test-pair {} {
+    run-ts . =              ts-debian-install      dst_host
+    run-ts . =              ts-debian-fixup        dst_host          + debian
+    run-ts . =              ts-guests-nbd-mirror + dst_host src_host + debian
+    per-host-ts . =(*)     {ts-leak-check basis}
+    run-ts . =              ts-guest-start       + src_host          + debian
+    run-ts . =              ts-guest-migrate       src_host dst_host + debian
+    run-ts . =              ts-guest-migrate       dst_host src_host + debian
+    run-ts . =              ts-guest-stop          src_host          + debian
+#    run-ts . =              ts-remus-start       + src_host dst_host + debian
+#    run-ts . remus-run      ts-remus-check         src_host dst_host + debian
+#    run-ts . =              ts-host-fail         + src_host
+#    run-ts . remus-failover ts-remus-check         src_host dst_host + debian
+}
+
+proc test-guest {g} {
+    foreach iteration {{} .2} {
+        run-ts . =$iteration ts-guest-saverestore + host $g
+        run-ts . =$iteration ts-guest-localmigrate + host $g
+    }
+    run-ts . = ts-guest-localmigrate x10 + host $g
+    test-guest-nomigr $g
+}
+
+proc test-guest-nomigr {g} {
+    run-ts . =   ts-guest-stop    + host $g
+    run-ts . =.2 ts-guest-start   + host $g
+    run-ts . =   ts-guest-destroy + host $g
+}
+
+#---------- builds ----------
+
+proc need-hosts/build {} { return BUILD }
+proc need-hosts/build-kern {} { return BUILD }
+
+proc run-job/build {} {
+    run-ts . = ts-xen-build
+}
+
+proc run-job/build-kern {} {
+    run-ts . = ts-kernel-build
+}
+
+proc prepare-build-host {} {
+    global jobinfo
+    run-ts broken = ts-hosts-allocate + host
+    run-ts broken host-install(*) ts-host-install-twice
+    run-ts . host-build-prep ts-xen-build-prep
+}
+
+#---------- main program ----------
+
+jobdb::set-flight
+jobdb::become-task "$flight $argv"
+
+switch -glob [llength $argv].[lindex $argv 0] {
+    1.[0-9a-z]* { set job [lindex $argv 0] }
+    default { error "usage: \[OSSTEST_FLIGHT=<flight>] sg-run-job <JOB>" }
+}
+
+run-job $job

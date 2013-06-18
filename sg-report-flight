@@ -1,5 +1,22 @@
 #!/usr/bin/perl -w
 
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 use strict qw(refs vars);
 
 use DBI;
@@ -9,6 +26,10 @@ use HTML::Entities;
 use URI::Escape;
 use POSIX;
 use IPC::Open2;
+use Data::Dumper;
+
+use Osstest;
+use Osstest::Executive;
 
 our $specflight;
 our %specver;
@@ -17,7 +38,7 @@ our $mro;
 our $htmldir;
 our $branch;
 our @allows;
-our @includefiles;
+our (@includebeginfiles,@includefiles);
 
 open DEBUG, ">/dev/null";
 open MRO, ">/dev/null";
@@ -36,6 +57,8 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
         $htmldir= $1;
     } elsif (m/^--blessings?=(.*)$/) {
         push @blessings, split ',', $1;
+    } elsif (m/^--include-begin=(.*)$/) {
+        push @includebeginfiles, $1;
     } elsif (m/^--include=(.*)$/) {
         push @includefiles, $1;
     } elsif (m/^--max-flight=(\d+)$/) {
@@ -82,7 +105,7 @@ die if defined $specver{this}{flight};
 die if defined $specver{that}{flight} &&
     grep { $_ ne 'flight' } keys %{ $specver{that} };
 
-push @blessings, 'real' unless @blessings;
+push @blessings, 'real', 'real-bisect' unless @blessings;
 
 csreadconfig();
 
@@ -100,15 +123,29 @@ if (defined $maxflight) {
     $blessingscond= "( flight <= $maxflight AND $blessingscond )";
 }
 
+sub displayflightnum ($) {
+    my ($flight) = @_;
+    my $frow = $dbh_tests->selectrow_hashref
+	("SELECT * FROM flights WHERE flight = ?", {}, $flight);
+    if ($frow && $frow->{blessing} =~ m/-.*/) {
+	return "$flight$&";
+    } else {
+	return $flight;
+    }
+}
+
 sub findaflight ($$$$$) {
     my ($thisthat, $exceptflight, $job, $testid, $sub) = @_;
-
-    die $thisthat unless keys %{ $specver{$thisthat} };
 
     print DEBUG "FINDAFLIGHT $thisthat";
     print DEBUG " !$exceptflight" if defined $exceptflight;
     print DEBUG " $job.$testid" if defined $job;
     print DEBUG "\n";        
+
+    if (!keys %{ $specver{$thisthat} }) {
+        print DEBUG " unspecified\n";
+        return undef;
+    }
 
     my $checkq= $dbh_tests->prepare(<<END);
         SELECT status FROM steps WHERE flight=? AND job=? AND testid=?
@@ -126,21 +163,30 @@ END
     }
 
     my $flightsq= <<END;
-        SELECT flight FROM flights
+      SELECT * FROM (
+        SELECT flight, blessing FROM flights
             WHERE branch=?
               AND $blessingscond
             ORDER BY flight DESC
             LIMIT 1000
+      ) AS sub
+      ORDER BY blessing ASC, flight DESC
 END
     #print DEBUG "===\n$flightsq\n===\n";
     $flightsq= $dbh_tests->prepare($flightsq);
     $flightsq->execute($branch, @blessings);
 
+    my $buildflightsq= $dbh_tests->prepare(<<END);
+        SELECT val FROM runvars
+	 WHERE flight = ?
+           AND name LIKE '%buildjob'
+END
+
     my $revisionsq= <<END;
-            SELECT job, val FROM runvars
+            SELECT flight, job, val FROM runvars
                 WHERE flight=?
 		  AND name=?
-		GROUP BY job, val
+		GROUP BY flight, job, val
 END
     #print DEBUG "===\n$mismatchq\n===\n";
     $revisionsq= $dbh_tests->prepare($revisionsq);
@@ -151,28 +197,41 @@ END
 END
 
     while (my ($tflight) = $flightsq->fetchrow_array) {
+	my @bflights;
+	push @bflights, $tflight;
+	$buildflightsq->execute($tflight);
+	while (my $bflightrow = $buildflightsq->fetchrow_hashref()) {
+	    my $val = $bflightrow->{val};
+	    next unless $val =~ m/\./; # same flight, already added
+	    push @bflights, $`;
+	}
 	my $whynot;
 	foreach my $tree (keys %{ $specver{$thisthat} }) {
+	    my @revisions;
 	    my $v= $specver{$thisthat}{$tree};
-            my $revisions;
-            if ($tree ne 'osstest') {
-                $revisionsq->execute($tflight, "built_revision_$tree");
-                $revisions= $revisionsq->fetchall_arrayref({});
-            } else {
-                $revisionsosstestq->execute($tflight);
-                $revisions= $revisionsosstestq->fetchall_arrayref({});
-            }
-            if (!@$revisions) {
+	    foreach my $bflight (@bflights) {
+		my $revisions;
+		if ($tree ne 'osstest') {
+		    $revisionsq->execute($bflight, "built_revision_$tree");
+		    $revisions= $revisionsq->fetchall_arrayref({});
+		} else {
+		    $revisionsosstestq->execute($bflight);
+		    $revisions= $revisionsosstestq->fetchall_arrayref({});
+		}
+		push @revisions, @$revisions;
+	    }
+            if (!@revisions) {
                 $whynot= "no built/used $tree";
                 last;
             }
             my ($wrong) = grep {
                 $_->{val} !~ m/^(?: .*: )? $v /x;
-            } @$revisions;
+            } @revisions;
 
             if (defined $wrong) {
                 $whynot= "mismatch $tree ".
-                    (defined $wrong->{job} ? $wrong->{job} : "(osstest)").
+                    (defined $wrong->{job} ?
+		     "$wrong->{flight}.$wrong->{job}" : "(osstest)").
                     " $wrong->{val} != $v";
                 last;
             }
@@ -420,6 +479,12 @@ sub printout {
     print <<END or die $!;
 $r->{Flight}: $r->{OutcomeSummary}
 
+END
+    foreach my $include (@includebeginfiles) {
+        STDOUT->flush();
+        system_checked('cat','--',$include);
+    }
+    print <<END or die $!;
 flight $r->{Flight} $branch $r->{FlightInfo}{blessing} [$r->{FlightInfo}{intended}]
 $c{ReportHtmlPubBaseUrl}/$r->{Flight}/
 END
@@ -436,16 +501,21 @@ END
 
         my $cat;
         my $heisenflightp= $failv->{Flight} != $specflight;
+        print DEBUG "PRINTOUT ",Dumper($failv);
         if (!keys %{ $specver{that} }) {
-            $cat= "A Tests which did not succeed:";
+            $cat= "A Tests which did not succeed,\n".
+"including tests which could not be run:";
         } elsif ($failv->{Blocker}) {
-            $cat= "A Tests which did not succeed and are blocking:";
+            $cat= "A Tests which did not succeed and are blocking,\n".
+"including tests which could not be run:";
         } elsif ($failv->{Heisen}) {
             $cat= "K Tests which are failing intermittently (not blocking):";
+        } elsif ($failv->{Allow}) {
+            $cat= "M ".
+"Regressions which are regarded as allowable (not blocking):";
         } else {
             $cat= "P ".
-"Tests which did not succeed, but are not blocking,\n".
-"including regressions (tests previously passed) regarded as allowable:";
+"Tests which did not succeed, but are not blocking:";
         }
         my $heisencat= \$heisenreported_jobstep{"$j->{job} $s->{testid}"};
         next if defined $$heisencat && $$heisencat ge $cat;
@@ -521,8 +591,6 @@ sub justifyfailures ($;$) {
 
     print MRO "flight $fi->{Flight}\n" or die $!;
 
-    return unless keys %{ $specver{that} };
-
     my @failures= values %{ $fi->{Failures} };
 
     my $anypassq= <<END;
@@ -537,8 +605,9 @@ END
     my $duration_estimator= duration_estimator($branch, $blessings[0]);
     foreach my $failv (@failures) {
         my ($est) = $duration_estimator->($failv->{Job}{job},'','');
+        if (!defined $est) { $est = 1e5; }
         print DEBUG "DE $failv->{Job}{job} $est\n";
-        $failv->{DurationEstimate}= $est || 1e5;
+        $failv->{DurationEstimate}= $est;
     }
 
     @failures= sort { $a->{DurationEstimate} <=> $b->{DurationEstimate} }
@@ -560,6 +629,21 @@ END
             next;
         }
 
+	if ($st eq 'blocked') {
+	    print MRO "blocked $s->{job} $s->{testid}\n";
+	    print DEBUG " blocked, call it justifiable\n";
+	    $failv->{Summary}= 'n/a';
+            $failv->{Blocker}= '';
+	    next;
+	}
+        if (!($st eq 'fail' or $st eq 'broken')) {
+            print MRO "broken $j->{job} $s->{testid} $st\n";
+            print DEBUG " not a fail, unjustifiable\n";
+            $failv->{Summary}= "[st=$st!]";
+            $failv->{Blocker}= 'broken';
+            next;
+        }
+
         $anypassq->execute($branch, $j->{job}, $s->{testid}, @blessings);
         if (!$anypassq->fetchrow_hashref()) {
             print MRO "never-passed $j->{job} $s->{testid} $st\n";
@@ -569,27 +653,13 @@ END
             next;
         }
 
-	if ($st eq 'blocked') {
-	    print MRO "blocked $s->{job} $s->{testid}\n";
-	    print DEBUG " blocked, call it justifiable\n";
-	    $failv->{Summary}= 'n/a';
-            $failv->{Blocker}= '';
-	    next;
-	}
-        if ($st ne 'fail') {
-            print MRO "broken $j->{job} $s->{testid} $st\n";
-            print DEBUG " not a fail, unjustifiable\n";
-            $failv->{Summary}= '';
-            $failv->{Blocker}= 'broken';
-            next;
-        }
-
 	my @rtups;
 	push @rtups, [ 10, 0, "baseline untested", undef ];
 
 	findaflight('that', $fi->{Flight}, $j->{job}, $s->{testid}, sub {
             my ($chkflight, $chkst) = @_;
 	    my $rtup;
+            # NB magic priority threshold, >=500 prevents heisen search
 	    if (!defined $chkst) {
 		$rtup= [ 50, '', "blocked in", $chkflight ];
 	    } elsif ($chkst eq $st) {
@@ -597,7 +667,9 @@ END
 	    } elsif ($chkst eq 'fail') {
 		$rtup= [ 180, '', "failed in", $chkflight ];
 	    } elsif ($chkst eq 'pass') {
-		$rtup= [ 100, 'regression', "REGR. vs.", $chkflight ];
+                my $tblocker = $st eq 'fail' ? 'regression' : $st;
+                my $tpriority = $j->{job} =~ m/^build/ ? 600 : 100;
+		$rtup= [ $tpriority, $tblocker, "REGR. vs.", $chkflight ];
 	    } else {
 		$rtup= [ 170, '', "$chkst in", $chkflight ];
 	    }
@@ -605,14 +677,16 @@ END
 	    return $rtup->[2];
         });
 	@rtups= sort { $b->[0] <=> $a->[0] } @rtups;
-        my $blocker= $rtups[0][1];;
+        print DEBUG Dumper($failv,\@rtups);
+        my ($bpriority,$blocker) = @{ $rtups[0] };
         my $heisen;
-        if ($blocker eq 'regression') {
+        if ($blocker && $bpriority < 500) {
             my $heisengoodflight=
                 !keys %{ $specver{this} } ? undef :
               findaflight('this', $fi->{Flight}, $j->{job}, $s->{testid}, sub {
                 my ($heisenchkflight, $heisenchkst) = @_;
-                return "not pass" unless $heisenchkst eq "pass";
+                return "not executed" unless defined $heisenchkst;
+                return "not pass ($heisenchkst)" unless $heisenchkst eq "pass";
                 return undef;
             });
             if ($heisengoodflight) {
@@ -625,8 +699,8 @@ END
         if ($blocker) {
             my $item= "$failv->{Job}{job} $failv->{Step}{testid}";
             print DEBUG " allow $item?";
-            foreach my $allow (@allows) {
-                next unless $item =~ m/$allow/;
+            foreach my $allowpat (@allows) {
+                next unless $item =~ m/$allowpat/;
                 $blocker='';
                 print DEBUG " allowed";
                 last;
@@ -634,10 +708,11 @@ END
             print DEBUG "\n";
         }
 	$failv->{Blocker}= $blocker;
+        $failv->{Allow}= 1;
 	$failv->{SummaryCore}= $rtups[0][2];
 	$failv->{SummaryRefFlight}= $rtups[0][3];
 	$failv->{Summary}= $failv->{SummaryCore};
-        $failv->{Summary}.= ' '.$failv->{SummaryRefFlight}
+        $failv->{Summary}.= ' '.displayflightnum($failv->{SummaryRefFlight})
             if defined $failv->{SummaryRefFlight};
 	print DEBUG " so $failv->{Summary}\n";
         print DEBUG " blocker $failv->{Blocker}\n" if $failv->{Blocker};
@@ -658,19 +733,21 @@ END
               scalar(@failures), "\n";
     }
 
-    if (!@failures) {
-        print MRO "tolerable\nperfect\n" or die $!;
-         $fi->{Overall}.= "Perfect :-)\n";
-    } elsif (grep { $_->{Blocker} eq 'regression' } @failures) {
-        $fi->{OutcomeSummary}= "regressions - $fi->{OutcomeSummary}";
-        $fi->{Overall}.= "Regressions :-(\n";
-    } elsif (!grep { $_->{Blocker} } @failures) {
-        $fi->{OutcomeSummary}= "tolerable $fi->{OutcomeSummary}";
-        print MRO "tolerable\n" or die $!
-            unless defined $heisen_why;
-        $fi->{Overall}.= "Failures :-/ but no regressions.\n";
-    } else {
-        $fi->{Overall}.= "Failures and problems with tests :-(\n";
+    if (!$heisen_why) {
+	if (!@failures) {
+	    print MRO "tolerable\nperfect\n" or die $!;
+	    $fi->{Overall}.= "Perfect :-)\n";
+	} elsif (grep { $_->{Blocker} eq 'regression' } @failures) {
+	    $fi->{OutcomeSummary}= "regressions - $fi->{OutcomeSummary}";
+	    $fi->{Overall}.= "Regressions :-(\n";
+	} elsif (!grep { $_->{Blocker} } @failures) {
+	    $fi->{OutcomeSummary}= "tolerable $fi->{OutcomeSummary}";
+	    print MRO "tolerable\n" or die $!
+		unless defined $heisen_why;
+	    $fi->{Overall}.= "Failures :-/ but no regressions.\n";
+	} else {
+	    $fi->{Overall}.= "Failures and problems with tests :-(\n";
+	}
     }
 
     return @failures;
@@ -735,8 +812,12 @@ END
             encode_entities(strftime "%Y-%m-%d %H:%M:%S Z",
                             gmtime $step->{started});
 
-        printf H "<td align=right>%d</td>\n",
-            $step->{finished} - $step->{started};
+	if (defined $step->{finished} && defined $step->{started}) {
+	    printf H "<td align=right>%d</td>\n",
+                $step->{finished} - $step->{started};
+	} else {
+	    printf H "<td></td>\n";
+	}
     }
 
     print H <<END;
@@ -878,7 +959,8 @@ END
                 print H encode_entities($sum_core);
                 print H "</a>";
                 if (defined $sum_flight) {
-                    print H " <a href=\"../$sum_flight/\">$sum_flight</a>";
+                    print H " <a href=\"../$sum_flight/\">".
+			displayflightnum($sum_flight)."</a>";
                 }
                 print H "</td>";
             } else {

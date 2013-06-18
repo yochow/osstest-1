@@ -1,12 +1,36 @@
 #
 
-check_stop () {
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+export OSSTEST_CONFIG=production-config
+
+check_stop_core () {
+	if [ "x$OSSTEST_IGNORE_STOP" = xy ]; then return; fi
 	for stop_dir in '' $HOME/testing.git/; do
 		if test -f $stop_dir${1}stop; then
 			echo "$stop_dir${1}stop found - stopping"
 			exit 0
 		fi
 	done
+}
+
+check_stop () {
+	check_stop_core "$1"
 	if test -f ${1}xsettings; then
 		echo "loading ${1}xsettings"
 		. ${1}xsettings
@@ -16,24 +40,6 @@ check_stop () {
 check_stop ''
 
 . cri-common
-
-select_branch () {
-	case "$branch" in
-	xen*)		tree=xen;	xenbranch=$branch ;;
-	linux)		tree=linux;	xenbranch=xen-unstable ;;
-	linux-xen-*)	tree=linux;	xenbranch=xen-unstable ;;
-	osstest)	tree=osstest;	xenbranch=xen-unstable ;;
-	esac
-
-	check_stop $branch.
-	check_stop $xenbranch.any.
-
-	mrof="$branch.mro"
-
-	if test -f branch-settings.$branch; then
-		. branch-settings.$branch
-	fi
-}
 
 dcs=daily-cron-settings
 
@@ -66,7 +72,7 @@ execute_flight () {
         esac
 
         rm -f abort
-        if test -f stop; then return; fi
+        check_stop_core ''
 
         ./cr-ensure-disk-space
 
@@ -84,12 +90,13 @@ start_email () {
 	local flight=$1
 	local branch=$2
         local sgr_args=$3
+        local subject_prefix=$4
         # redirects stdout
 
 	exec >tmp/$flight.email
 	cat $OSSTEST_EMAIL_HEADER
 	echo "Message-ID: <osstest-$flight-mainreport@xen.org>"
-	printf 'Subject: [%s test] ' "$branch"
+	printf 'Subject: %s' "${subject_prefix:-[$branch test] }"
 
 	local flight_html_dir=$OSSTEST_HTMLPUB_DIR/
 	local job_html_dir=$OSSTEST_HTML_DIR/

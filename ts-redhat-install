@@ -1,11 +1,26 @@
 #!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 our $stage=0;
 if (@ARGV && $ARGV[0] =~ m/^--stage(\d+)$/) { $stage=$1; shift @ARGV; }
@@ -101,7 +116,9 @@ sub prep () {
 
     my $isotimeout= 600;
 
-    $gho= prepareguest($ho, $gn, $guesthost, 22, $disk_mb + 1);
+    $gho= prepareguest($ho, $gn, $guesthost, 22,
+                       $disk_mb + 1,
+                       100);
 
     my $newiso= '/root/newiso';
     my $emptydir= '/root/empty-dir';
@@ -168,7 +185,7 @@ if (!$stage) {
     prep();
     start();
 } else {
-    $gho= selectguest($gn);
+    $gho= selectguest($gn,$gho);
 }
 if ($stage<2) {
     guest_await_reboot($ho,$gho,2000);

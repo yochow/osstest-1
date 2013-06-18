@@ -1,22 +1,90 @@
 # -*- bash -*-
 
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 # $xenbranch must already be set
 
-: ${TREE_XEN:=http://hg.uk.xensource.com/$xenbranch.hg}
+: ${XENBITS:=osstest@xenbits.xensource.com}
+
+: ${TREE_XEN:=git://xenbits.xen.org/xen.git}
+: ${PUSH_TREE_XEN:=$XENBITS:/home/xen/git/xen.git}
 
 #: ${TREE_QEMU:=git://mariner.uk.xensource.com/qemu-$xenbranch.git}
-: ${TREE_QEMU:=git://hg.uk.xensource.com/HG/qemu-$xenbranch.git}
+: ${TREE_QEMU:=git://xenbits.xen.org/staging/qemu-$xenbranch.git}
 
 
-: ${GIT_KERNEL_ORG:=git://git.eu.kernel.org}
+: ${GIT_KERNEL_ORG:=git://git.kernel.org}
+: ${KERNEL_SCM:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git}
 
-: ${TREE_LINUX:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git/jeremy/xen.git}
+: ${TREEVCS_LINUX:=git}
+: ${TREE_LINUX:=${KERNEL_SCM}/jeremy/xen.git}
 #: ${TREE_LINUX:=git://mariner.uk.xensource.com/linux-2.6-jeremy-temp.git}
+#: ${TREE_LINUX:=git://github.com/jsgf/linux-xen.git}
 : ${TAG_LINUX:=xen/next-2.6.32}
 
-: ${TREE_LINUX2639:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git/konrad/xen.git}
+: ${TREE_LINUXFIRMWARE:=git://xenbits.xen.org/osstest/linux-firmware.git}
+: ${PUSH_TREE_LINUXFIRMWARE:=$XENBITS:/home/osstest/ext/linux-firmware.git}
+: ${UPSTREAM_TREE_LINUXFIRMWARE:=$GIT_KERNEL_ORG/pub/scm/linux/kernel/git/firmware/linux-firmware.git}
+
+: ${PUSH_TREE_LINUX:=$XENBITS:/home/xen/git/linux-pvops.git}
+: ${BASE_TREE_LINUX:=git://xenbits.xen.org/linux-pvops.git}
+: ${BASE_TAG_LINUX:=master}
+
+: ${TREE_LINUX2639:=${KERNEL_SCM}/konrad/xen.git}
 : ${TAG_LINUX2639:=stable/2.6.39.x}
 
+: ${LOCALREV_XEN:=daily-cron.$branch}
 : ${LOCALREV_LINUX:=daily-cron.$branch}
 
 : ${TREEBASE_LINUX_XCP:=http://hg.uk.xensource.com/carbon/trunk/linux-2.6.27}
+
+: ${TREE_QEMU_UPSTREAM:=git://xenbits.xen.org/staging/qemu-upstream-${xenbranch#xen-}.git}
+: ${LOCALREV_QEMU_UPSTREAM:=daily-cron.$branch}
+
+info_linux_tree () {
+	case $1 in
+
+	linux-linus)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/torvalds/linux-2.6.git}
+		;;
+	linux-3.0)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
+		: ${TAG_LINUX_THIS:=linux-3.0.y}
+		;;
+	linux-mingo-tip-master)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/tip/tip.git}
+		: ${GITFORCEFLAG_TREE_LINUX_THIS:=-f}
+		;;
+
+	*)
+		return 1
+		;;
+	esac
+
+	: ${TAG_LINUX_THIS:=master}
+
+	: ${TREEVCS_LINUX_THIS:=git}
+	: ${BASE_TREEVCS_LINUX_THIS:=$TREEVCS_LINUX_THIS}
+
+	: ${BASE_TREE_LINUX_THIS:=$BASE_TREE_LINUX}
+	: ${PUSH_TREE_LINUX_THIS:=$PUSH_TREE_LINUX}
+	: ${BASE_TAG_LINUX_THIS:=tested/$1}
+	: ${PUSH_TAG_LINUX_THIS:=$BASE_TAG_LINUX_THIS}
+
+	return 0
+}

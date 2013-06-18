@@ -1,19 +1,37 @@
 #!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict qw(vars);
 use DBI;
 use Osstest;
 use POSIX;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
+
 our ($whhost) = @ARGV;
 $whhost ||= 'host';
 our $ho= selecthost($whhost);
 exit 0 if $ho->{SharedReady};
 
-sub lvextend () {
-    my $vg=
+our ($vg);
+
+sub lvextend_stage1 () {
+    $vg=
         $ho->{Suite} =~ m/lenny/
         ? "$ho->{Name}.$c{TestHostDomain}"
         : $ho->{Name};
@@ -27,7 +45,45 @@ sub lvextend () {
         fi
 END
 
+    lvextend1('disk extend initial',       30, 0);
+}
+
+sub lvextend_stage2 () {
+    lvextend1('disk extend background', undef, 1);
+}
+
+sub vginfo () {
+    my $vginfo= target_cmd_output_root($ho, "vgdisplay --colon $vg");
+    my @vginfo= split /\:/, $vginfo;
+    @vginfo >= 17 or die "$vginfo ?";
+    return @vginfo;
+}
+
+sub lvextend1 ($$$) {
+    my ($what, $max_more_gb, $background)  = @_;
+
     my $lv= "/dev/$vg/root";
+
+    my @vginfo = vginfo();
+    my $pe_size= $vginfo[12];
+
+    my $do_limit_pe = sub { };
+    if (defined $max_more_gb) {
+	my $max_more_pe = floor($max_more_gb *1024.0*1024.0 / $pe_size);
+	$do_limit_pe = sub {
+	    my ($pevar, $twhat) = @_;
+	    logm("$what: $twhat: limit ${max_more_gb}G,".
+		 " want $$pevar<=$max_more_pe");
+	    if ($$pevar >= $max_more_pe) {
+		$$pevar = $max_more_pe;
+		$do_limit_pe = sub {
+		    my ($pevar, $twhat) = @_;
+		    logm("$what: $twhat: already limited");
+		    $$pevar = 0;
+		};
+	    }
+	};
+    }
 
     my $more_pe= 0;
 
@@ -41,10 +97,10 @@ END
         my $pv_vg= $pvinfo[1];
         my $pv_free_pe= $pvinfo[9];
         if ($pv_vg ne $vg) {
-            logm("disk extend: $pv_name: vg $pv_vg != $vg");
+            logm("$what: $pv_name: vg $pv_vg != $vg");
             next;
         }
-        logm("disk extend: $pv_name: $pv_free_pe free PEs");
+        logm("$what: $pv_name: $pv_free_pe free PEs");
         next unless $pv_free_pe;
         if (!defined($stripe_minfree) ||
             $pv_free_pe < $stripe_minfree) {
@@ -53,38 +109,45 @@ END
         $stripe_count++;
     }
     $stripe_minfree=0 if !defined $stripe_minfree;
-    logm("disk extend: $stripe_count stripe(s) x $stripe_minfree PEs");
+    logm("$what: $stripe_count stripe(s) x $stripe_minfree PEs");
+
+    my $stripes_free = $stripe_count * $stripe_minfree;
+    $do_limit_pe->(\$stripes_free, 'striped');
     if ($stripe_minfree && $stripe_count>1) {
-        my $stripes_free = $stripe_count * $stripe_minfree;
         $more_pe += $stripes_free;
         target_cmd_root($ho, "lvextend -i$stripe_count -l +$stripes_free $lv");
     }
 
-    my $vginfo= target_cmd_output_root($ho, "vgdisplay --colon $vg");
-    my @vginfo= split /\:/, $vginfo;
-    @vginfo >= 17 or die "$vginfo ?";
-    my $pe_size= $vginfo[12];
-    my $vg_free_pe= $vginfo[15];
+    @vginfo = vginfo();
+    my $vg_more_free_pe= $vginfo[15];
 
-    if ($vg_free_pe) {
-        logm("disk extend: unstriped $vg_free_pe PEs");
-        $more_pe += $vg_free_pe;
-        target_cmd_root($ho, "lvextend -i1 -l +$vg_free_pe $lv");
+    $do_limit_pe->(\$vg_more_free_pe, 'unstriped');
+
+    if ($vg_more_free_pe) {
+        logm("$what: unstriped $vg_more_free_pe PEs");
+        $more_pe += $vg_more_free_pe;
+        target_cmd_root($ho, "lvextend -i1 -l +$vg_more_free_pe $lv");
     }
 
     my $timeout = 2000 + int($pe_size * 0.000003 * $more_pe);
-    logm("disk extend: ${pe_size}k x $more_pe (timeout=$timeout)");
-    target_cmd_root($ho, "resize2fs $lv", $timeout);
+    logm("$what: ${pe_size}k x $more_pe (timeout=$timeout)");
+    my $cmd = "resize2fs $lv";
+    if (!$background) {
+	target_cmd_root($ho, $cmd, $timeout);
+    } else {
+	target_cmd_root($ho, "$cmd >>resizefs.log 2>&1 </dev/null &", 30);
+    }
 }
 
 sub prep () {
     target_install_packages($ho,
                             qw(mercurial
                                build-essential bin86 bcc iasl
-                               flex bison
+                               flex bison cmake
                                libpci-dev libncurses5-dev libssl-dev python-dev
                                libx11-dev git-core uuid-dev gettext gawk
-                               libsdl-dev
+                               libsdl-dev libyajl-dev libaio-dev libpixman-1-dev
+                               libglib2.0-dev pkg-config
 			       ccache));
 
     target_cmd_root($ho, "chmod -R a+r /usr/share/git-core/templates");
@@ -100,7 +163,7 @@ END
 
 sub cacheing_git_mount () {
     my $cache= $c{GitCache};
-    return unless defined $cache;
+    return unless $cache;
 
     if ($cache =~ m,/$,) {
         my $cachelocal= $c{GitCacheLocal};
@@ -141,7 +204,7 @@ END
             next if m/^\S+\s+\Q$mountpoint\E\s/o;
             print EO or die $!;
         }
-        printf EO "%s %s nfs rw\n", $cache, $mountpoint or die $!;
+        printf EO "%s %s nfs rw,fg,retry=1440\n", $cache, $mountpoint or die $!;
     });
 
     my $mount_retries=10;
@@ -160,6 +223,8 @@ END
 }
 
 sub cacheing_git_install () {
+    my $cache = $c{GitCache};
+    return unless $cache;
     target_install_packages($ho, qw(chiark-utils-bin));
     target_putfile_root($ho,10, "cacheing-git","/usr/local/bin/git", "-p");
 }
@@ -171,10 +236,13 @@ sub ccache_setup () {
     }
 }
 
-lvextend();
-prep();
-cacheing_git_mount();
-cacheing_git_install();
-ccache_setup();
-resource_shared_mark_ready($ho->{Ident}, $ho->{Name},
-                           "build-".$ho->{Suite}."-".$r{arch});
+if (!$ho->{Flags}{'no-reinstall'}) {
+    lvextend_stage1();
+    prep();
+    cacheing_git_mount();
+    cacheing_git_install();
+    ccache_setup();
+    lvextend_stage2();
+}
+$mjobdb->jobdb_resource_shared_mark_ready
+   ($ho->{Ident}, $ho->{Name}, "build-".$ho->{Suite}."-".$r{arch});

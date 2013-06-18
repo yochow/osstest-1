@@ -1,5 +1,22 @@
 #!/usr/bin/perl -w
 
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 use strict qw(vars);
 use IO::File;
 use IO::Handle;
@@ -7,6 +24,7 @@ no warnings qw(recursion);
 use Data::Dumper;
 use POSIX;
 use Osstest;
+use Osstest::Executive;
 
 our $num= 1000;
 our $doupdate= 1;
@@ -39,7 +57,7 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
     }
 }
 
-readconfigonly();
+readglobalconfig();
 
 grabrepolock_reexec(@org_argv);
 
@@ -65,9 +83,12 @@ sub shellcmd ($) {
 
 sub git_revshower ($) {
     my ($tree) = @_;
+    print DEBUG "GIT-REVSHOW TREE ", Dumper($tree);
     my $treedir= "$c{Repos}/$tree->{Treename}";
     chdir $treedir or die $treedir;
-    exec qw(git log -n1), "$tree->{Earliest}^..$tree->{Latest}";
+    my @cmd = (qw(git log), "$tree->{Earliest}..$tree->{Latest}");
+    print DEBUG "GIT-REVSHOW CMD ", Dumper(\@cmd);
+    exec @cmd;
     die $!;
 }
 
@@ -144,7 +165,10 @@ sub hg_revshower ($) {
 
     my $treedir= "$c{Repos}/$tree->{Treename}";
     chdir $treedir or die $treedir;
-    open P, "hg log -vr$tree->{Latest}:$tree->{Earliest} |" or die $!;
+    my $revspec = "$tree->{Latest}:$tree->{Earliest}";
+    my $cmd = "hg log -vr'$revspec' |";
+    print DEBUG "HG-REVSHOW CMD $cmd\n";
+    open P, $cmd or die $!;
     while (<P>) {
         if (s/^description:$//..
             !(!m/^changeset:   \d+:[0-9a-f]{12}$/ && s/^/    /)) {
@@ -572,8 +596,8 @@ sub main () {
     my (@xis, @qis);
     foreach (my $i=0; $i<@trees; $i++) {
         $_= $trees[$i]{Treename};
-        push @xis, $i if m/^xen-(?:unstable|4)/;
-        push @qis, $i if m/^qemu-(?:xen-unstable|4)/;
+        push @xis, $i if m/^xen-(?:unstable|[4-9])/;
+        push @qis, $i if m/^qemu-(?:xen-unstable|[4-9])/;
     }
     print DEBUG "MAIN xis=@xis qis=@qis.\n";
 
@@ -645,6 +669,7 @@ sub main () {
 
 sub showrev () {
     my @trees= parse_trees();
+    print DEBUG "SHOWREV TREES ", Dumper(@trees);
     die unless @trees == 1;
     my ($tree) = @trees;
     tree_get_gen($tree);

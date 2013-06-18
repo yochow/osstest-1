@@ -2,6 +2,24 @@
 # usage: cr-for-branches BRANCHESDIR WLEM "SCRIPT OPTIONS" ARGS...
 # will run   cd BRANCHESDIR && with-lock-ex WLEM SCRIPT OPTIONS BRANCH ARGS...
 
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
 set -e
 
 export FOR_LOGFILE="$*"
@@ -13,7 +31,7 @@ scriptoptions="$1"; shift
 LOGFILE=tmp/cr-for-branches.log
 export LOGFILE
 
-: ${BRANCHES:=osstest xen-4.0-testing xen-4.1-testing xen-unstable linux}
+: ${BRANCHES:=osstest xen-4.0-testing xen-4.1-testing xen-4.2-testing xen-unstable qemu-upstream-unstable qemu-upstream-4.2-testing linux ${EXTRA_BRANCHES}}
 export BRANCHES
 
 with-lock-ex -w data-tree-lock bash -ec '
@@ -50,7 +68,7 @@ for branch in $BRANCHES; do
 
 		mkdir -p tmp
 
-		savelog -n 500 $LOGFILE >/dev/null
+		savelog -c 28 -n 500 $LOGFILE >/dev/null
 		exec >>$LOGFILE
 
 		log () {
@@ -91,6 +109,6 @@ END
 	' x $scriptoptions $branch "$@"
  ) &
 
-${OSSTEST_FOR_BRANCHES_WAIT-sleep 100}
+${OSSTEST_FOR_BRANCHES_WAIT-sleep 10}
 
 done

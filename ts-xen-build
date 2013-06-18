@@ -1,19 +1,36 @@
 #!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict qw(vars);
 use DBI;
 use Osstest;
 use File::Path;
 use POSIX;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
+
 our ($whhost) = @ARGV;
 $whhost ||= 'host';
 our $ho= selecthost($whhost);
 
 my $leaf= "build.$flight.$job";
-my $builddir= "/home/osstest/$leaf";
+my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
+my $builddir= "$homedir/$leaf";
 
 my $makeflags= get_host_property($ho, 'build make flags', '-j4');
     
@@ -28,35 +45,61 @@ sub checkout () {
 
     my $linux_url_envvar= 'XEN_LINUX_GIT_URL';
     my $linux_rev_envvar= 'XEN_LINUX_GITREV';
-    if (length $r{tree_linux} && $r{tree_linux} =~ m/\.hg$/) {
+    if (defined $r{tree_linux} && $r{tree_linux} =~ m/\.hg$/) {
         $linux_url_envvar= 'XEN_LINUX_HGREPO';
         $linux_rev_envvar= 'XEN_LINUX_HGREV';
     }
 
+    my $debug_build = $r{xen_build_debug} || 'y';
+
     target_cmd_build($ho, 100, $builddir, <<END.
         cd $builddir/xen-unstable
 	>.config
+	echo >>.config debug=$debug_build
 	echo >>.config GIT_HTTP=y
 	echo >>.config QEMU_REMOTE='$r{tree_qemu}'
 END
-               (length($r{revision_qemu}) ? <<END : '').
+               (nonempty($r{revision_qemu}) ? <<END : '').
 	echo >>.config QEMU_TAG='$r{revision_qemu}'
 END
-               (length($r{tree_linux}) ? <<END : '').
+               (nonempty($r{tree_qemuu}) ? <<END : '').
+	echo >>.config QEMU_UPSTREAM_URL='$r{tree_qemuu}'
+END
+               (nonempty($r{revision_qemuu}) ? <<END : '').
+	echo >>.config QEMU_UPSTREAM_REVISION='$r{revision_qemuu}'
+END
+               (nonempty($r{revision_seabios}) ? <<END : '').
+	echo >>.config SEABIOS_UPSTREAM_TAG='$r{revision_seabios}'
+END
+               (nonempty($r{tree_linux}) ? <<END : '').
 	echo >>.config export $linux_url_envvar='$r{tree_linux}'
 END
-               (length($r{revision_linux}) ? <<END : '').
+               (nonempty($r{revision_linux}) ? <<END : '').
 	echo >>.config export $linux_rev_envvar='$r{revision_linux}'
 END
                ($ho->{Suite} =~ m/squeeze/ ? <<END : '').
 	echo >>.config PYTHON_PREFIX_ARG=
 END
-               (length($kerns) ? <<END : <<END)
+               (nonempty($kerns) ? <<END : <<END)
 	echo >>.config KERNELS='$kerns'
 END
 	echo >>.config KERNELS=''
 END
                );
+}
+
+sub buildcmd_stamped_logged ($$$$$) {
+    my ($timeout, $stampname, $prefix, $cmd, $suffix) = @_;
+    target_cmd_build($ho, $timeout, $builddir, <<END);
+        cd xen-unstable
+        $prefix
+        ( $cmd 2>&1 &&             touch ../$stampname-ok-stamp
+        ) |tee ../$stampname-log
+        test -f ../$stampname-ok-stamp
+        $suffix
+        echo ok.
+END
+#/;
 }
 
 sub build () {
@@ -70,16 +113,25 @@ sub build () {
                 print "setopt CONFIG_DEBUG_INFO y\\n" or die \$!;
         ' buildconfigs/enable-xen-config
 END
-    target_cmd_build($ho, 9000, $builddir, <<END);
-        cd xen-unstable
-        (make $makeflags 2>&1 && touch ../build-ok-stamp) |tee ../log
-        test -f ../build-ok-stamp
-        echo ok.
+    buildcmd_stamped_logged(300, 'configure', <<END,<<END,<<END);
+            if test -f configure; then
+END
+                ./configure --sysconfdir=/etc
+END
+            fi
+END
+#/;
+    buildcmd_stamped_logged(9000, 'build', '',<<END,'');
+            make $makeflags
 END
 }
 
 sub collectversion_qemu () {
-    store_revision($ho, 'qemu', "$builddir/xen-unstable/tools/ioemu-dir");
+    my $tools="$builddir/xen-unstable/tools";
+    store_revision($ho, 'qemu', "$tools/ioemu-dir", 1);
+    store_revision($ho, 'qemu', "$tools/qemu-xen-traditional-dir", 1);
+    store_revision($ho, 'qemuu', "$tools/qemu-xen-dir", 1);
+    store_revision($ho, 'seabios', "$tools/seabios-dir", 1);
 }
 
 sub collectversions_kernel () {
@@ -108,10 +160,12 @@ sub divide () {
     target_cmd_build($ho, 100, $builddir, <<END);
         cd xen-unstable/dist
         mkdir kerninstall xeninstall
+	for f in *install; do
+	    mkdir -p \$f/lib
+	done
         if test -d install/boot; then
             mv install/boot kerninstall/.
             if test -d install/lib/modules; then
-                mkdir kerninstall/lib
                 mv install/lib/modules kerninstall/lib/.
             fi
             if test -f kerninstall/boot/xen.gz; then

@@ -1,11 +1,26 @@
 #!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
-readconfig();
-opendb_state();
+tsreadconfig();
 
 our ($whhost) = @ARGV;
 $whhost ||= 'host';
@@ -21,8 +36,15 @@ our $guesthost= 'win.guest.osstest';
 sub prep () {
     target_install_packages_norec($ho, qw(lvm2 rsync));
 
-    $gho= prepareguest($ho, 'win', $guesthost, 8936, $disk_mb + 1);
-    more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb);
+    $gho= prepareguest($ho, 'win', $guesthost, 8936,
+                       $disk_mb + 1,
+                       300);
+
+    my $viridian = guest_var($gho, 'viridian', 1);
+
+    more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb, ExtraConfig => <<END);
+viridian=$viridian
+END
 
     store_runvar("$gho->{Guest}_pingbroken", 1);
 }
