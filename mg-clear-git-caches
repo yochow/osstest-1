@@ -31,9 +31,13 @@ for lockfile in $cache/*/lock; do
 	printf "===== %s =====\n" $host
 	aside=$cache/$host.$$.`date +%s`.to-delete
 	mkdir $aside
-	if ! ./mg-allocate $host; then continue; fi
+	if ! ./mg-allocate -U 10 $host; then continue; fi
+	set +e
 	mv $hostdir $aside/.
+	r=$?
+	set -e
 	./mg-allocate !$host
+	if [ $r != 0 ]; then echo >&2 ' failed'; exit $r; fi
 	printf ' deleting\n'
 	sudo rm -rf $aside
 done
