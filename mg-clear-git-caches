@@ -48,3 +48,5 @@ done
 echo "===== (waiting) ====="
 
 wait
+
+echo "===== DONE ====="
