@@ -28,16 +28,23 @@ cache=`getconfig GitCacheLocal`
 for lockfile in $cache/*/lock; do
 	hostdir=${lockfile%/lock}
 	host=${hostdir##*/}
-	printf "===== %s =====\n" $host
-	aside=$cache/$host.$$.`date +%s`.to-delete
-	mkdir $aside
-	if ! ./mg-allocate -U 10 $host; then continue; fi
-	set +e
-	mv $hostdir $aside/.
-	r=$?
-	set -e
-	./mg-allocate !$host
-	if [ $r != 0 ]; then echo >&2 ' failed'; exit $r; fi
-	printf ' deleting\n'
-	sudo rm -rf $aside
+	(
+		printf "===== %s =====\n" $host
+		aside=$cache/$host.$$.`date +%s`.to-delete
+		mkdir $aside
+		if ! ./mg-allocate -U 10 $host; then continue; fi
+		set +e
+		mv $hostdir $aside/.
+		r=$?
+		set -e
+		./mg-allocate !$host
+		if [ $r != 0 ]; then echo >&2 ' failed'; exit $r; fi
+		printf ' deleting\n'
+		sudo rm -rf $aside
+	) &
+	sleep 0.5
 done
+
+echo "===== (waiting) ====="
+
+wait
