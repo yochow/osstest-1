@@ -25,7 +25,7 @@ xenrevision=$2
 . cri-lock-repos
 . ap-common
 
-cd "$repos/$xenbranch.hg"
-hg cat -r $xenrevision Config.mk | perl -ne '
+cd "$repos/xen"
+git cat-file $xenrevision:Config.mk | perl -ne '
         print if s/^QEMU_TAG ?\??= ?([0-9a-f]+)$/$1/;
 '
