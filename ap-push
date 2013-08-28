@@ -25,7 +25,6 @@ revision=$2
 . cri-common
 select_xenbranch
 
-: ${TAG_LINUX:=master}
 : ${TAG_LINUX2639:=tested/2.6.39.x}
 
 . ap-common
@@ -61,9 +60,9 @@ qemu-upstream-*)
 	cd $repos/$branch
         git push $TREE_QEMU_UPSTREAM $revision:master
         ;;
-linux)
+linux-3.*)
 	cd $repos/linux
-	git push $TREE_LINUX $revision:$TAG_LINUX
+	git push $TREE_LINUX $revision:tested/$branch
 	;;
 linux-2.6.39)
 	cd $repos/linux

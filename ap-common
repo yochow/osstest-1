@@ -32,10 +32,7 @@
 : ${KERNEL_SCM:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git}
 
 : ${TREEVCS_LINUX:=git}
-: ${TREE_LINUX:=${KERNEL_SCM}/jeremy/xen.git}
-#: ${TREE_LINUX:=git://mariner.uk.xensource.com/linux-2.6-jeremy-temp.git}
-#: ${TREE_LINUX:=git://github.com/jsgf/linux-xen.git}
-: ${TAG_LINUX:=xen/next-2.6.32}
+: ${TREE_LINUX:=${KERNEL_SCM}/stable/linux-stable.git}
 
 : ${TREE_LINUXFIRMWARE:=git://xenbits.xen.org/osstest/linux-firmware.git}
 : ${PUSH_TREE_LINUXFIRMWARE:=$XENBITS:/home/osstest/ext/linux-firmware.git}
@@ -43,7 +40,7 @@
 
 : ${PUSH_TREE_LINUX:=$XENBITS:/home/xen/git/linux-pvops.git}
 : ${BASE_TREE_LINUX:=git://xenbits.xen.org/linux-pvops.git}
-: ${BASE_TAG_LINUX:=master}
+: ${BASE_TAG_LINUX:=tested/linux-3.10}
 
 : ${TREE_LINUX2639:=${KERNEL_SCM}/konrad/xen.git}
 : ${TAG_LINUX2639:=stable/2.6.39.x}
@@ -65,6 +62,10 @@ info_linux_tree () {
 	linux-3.0)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
 		: ${TAG_LINUX_THIS:=linux-3.0.y}
+		;;
+	linux-3.*)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
+		: ${TAG_LINUX_THIS:=$1.y}
 		;;
 	linux-mingo-tip-master)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/tip/tip.git}
