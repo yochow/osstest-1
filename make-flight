@@ -189,11 +189,21 @@ job_create_test () {
 		$RUNVARS $TEST_RUNVARS $most_runvars "$@"
 }
 
-for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
+for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
   if [ "x$xenarch" = xdisable ]; then continue; fi
 
   case "$xenarch" in
+  armhf)
+	# Arm from 4.3 onwards only
+	case "$xenbranch" in
+	xen-3.*-testing) continue;;
+	xen-4.0-testing) continue;;
+	xen-4.1-testing) continue;;
+	xen-4.2-testing) continue;;
+	*) ;;
+	esac
+	;;
   i386)
 	# 32-bit Xen is dropped from 4.3 onwards
 	case "$xenbranch" in
@@ -203,6 +213,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
 	xen-4.2-testing) ;;
 	*) continue ;;
 	esac
+	;;
   esac
 
   for kern in ''; do
@@ -220,7 +231,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
     *)		echo >&2 "kernkind ?  $kern"; exit 1 ;;
     esac
 
-    for dom0arch in i386 amd64; do
+    for dom0arch in i386 amd64 armhf; do
 
       eval "
 	  arch_runvars=\"\$ARCH_RUNVARS_$dom0arch\"
@@ -240,6 +251,13 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
 		kernkind=$kernkind		        	\
 		$arch_runvars
 		"
+      if [ $dom0arch = armhf ]; then
+	  job_create_test test-$xenarch$kern-$dom0arch-xl test-debian xl \
+		debian_kernkind=$kernkind				  \
+		debian_arch=$dom0arch   				  \
+		all_hostflags=$most_hostflags
+	  continue
+      fi
 
       job_create_test test-$xenarch$kern-$dom0arch-pv test-debian xend \
 		debian_kernkind=$kernkind				  \
