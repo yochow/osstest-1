@@ -695,7 +695,7 @@ sub selecthost ($) {
 
     # Finally, we override any host-specific properties from the config
     foreach my $k (keys %c) {
-	next unless $k =~ m/^HostProp_([a-z0-9]+)_(.*)$/;
+	next unless $k =~ m/^HostProp_([-a-z0-9]+)_(.*)$/;
 	next unless $1 eq $name;
 	$setprop->($2, $c{$k});
     }
