@@ -88,8 +88,9 @@ HostProp_<testbox>_Ether
    MAC address of the box <testbox>.  Only needed if you want
    to use the osstest host and Xen installer.
 
-HostProp_<testbox>_NoSerial
-   Set to 1 if <testbox> has no serial, system will use VGA console
+HostProp_<testbox>_SerialConsole
+   Set to the serial console device on the platform. Defaults to
+   ttyS0. If set to "NONE" then the system will use VGA console
    instead.
 
 HostProp_<testbox>_DIFrontend
