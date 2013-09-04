@@ -130,6 +130,8 @@ sub setup_pxeboot_firstboot($) {
     my $src_initrd= "$d_i/initrd.gz";
     my @initrds= "$c{TftpPath}/$src_initrd";
 
+    my $kernel;
+
     foreach my $fp (keys %{ $ho->{Flags} }) {
         $fp =~ s/^need-firmware-deb-// or next;
         my $cpio= "$c{TftpPath}/$d_i/$fp.cpio.gz";
@@ -142,6 +144,31 @@ sub setup_pxeboot_firstboot($) {
             die "$fp $cpio $!";
         }
     }
+
+    foreach my $kp (keys %{ $ho->{Flags} }) {
+        $kp =~ s/need-kernel-deb-// or next;
+        my $kern= "$c{TftpPath}/$d_i/linux.$kp";
+        if (stat $kern) {
+            logm("using kernel from: $kern");
+            $kernel = "/$d_i/linux.$kp";
+        } elsif ($! == &ENOENT) {
+            logm("warning: no kernel found for $kp at $kern");
+        } else {
+            die "$kp $kern $!";
+        }
+
+        my $cpio= "$c{TftpPath}/$d_i/$kp.cpio.gz";
+        if (stat $cpio) {
+            logm("using kernel modules from: $cpio");
+            push @initrds, $cpio;
+        } elsif ($! == &ENOENT) {
+            logm("warning: no kernel module cpio found for $kp at $cpio");
+        } else {
+            die "$kp $cpio $!";
+        }
+    }
+
+    $kernel = "/$d_i/linux" unless $kernel;
 
     my $initrd_overlay= "tmp/t.$ho->{Name}.initrd";
     system qw(rm -rf --),"$initrd_overlay.d";
@@ -190,7 +217,7 @@ timeout 5
 label overwrite
 	menu label ^Overwrite
 	menu default
-	kernel /$d_i/linux
+	kernel $kernel
 	append $installcmdline
 default overwrite
 END
