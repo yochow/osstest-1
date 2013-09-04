@@ -599,6 +599,14 @@ END
             (join ' && ', @{ $preseed_cmds{$di_key} }). "\n";
     }
 
+    if ($ho->{Flags}{'no-di-kernel'}) {
+	$preseed_file .= <<END;
+d-i anna/no_kernel_modules boolean true
+d-i base-installer/kernel/skip-install boolean true
+d-i nobootloader/confirmation_common boolean true
+END
+    }
+
     $preseed_file .= "$c{DebianPreseed}\n";
 
     foreach my $name (keys %{ $xopts{Properties} }) {
