@@ -32,9 +32,20 @@ fail () { echo >&2 "$0: $1"; exit 1; }
 site=http://ftp.debian.org/debian/
 sbase=$site/dists/$suite
 
-src=$sbase/main/installer-$arch/current/images/netboot/debian-installer/$arch
+case $arch in
+    i386|amd64)
+        src=$sbase/main/installer-$arch/current/images/netboot/debian-installer/$arch
+        files='initrd.gz linux'
+        ;;
+    armhf)
+        # Use the vexpress image, we are going to bash in our own
+        # kernel+modules anyway.
+        src=$sbase/main/installer-$arch/current/images/vexpress/netboot
+        files='initrd.gz' # no kernel -- needs a newer kernel
+        ;;
+esac
+
 pfile=$sbase/non-free/binary-$arch/Packages.bz2
-files='initrd.gz linux'
 
 dstroot=`getconfig TftpPath`/`getconfig TftpDiBase`/
 date=`date +%Y-%m-%d`-$suite
@@ -66,6 +77,54 @@ for p in $packages; do
         mv cpio.gz $p.cpio.gz
         rm -rf x
 done
+
+# armhf requires a newer kernel than was in Wheezy for most
+# platforms. Construct something suitable from the latest kernel in
+# wheezy-backports.
+if [ $arch = armhf ]; then
+    bp="$sbase-backports"
+    pfile=$bp/main/binary-armhf/Packages.bz2
+
+    curl -s $pfile >Packages.bz2
+
+    # Newer kernel often needs a newer initramfs-tools. Make that available
+    echo >&2 "collecting backports initramfs-tools"
+    pkgfile=`bzcat Packages.bz2 | grep-dctrl -PX initramfs-tools -nsFilename | sort -n | head -n1`
+    rc=$?
+    set -e
+    if [ $rc != 0 ]; then fail "initramfs-tools package not found"; fi
+    curl -s "$site/$pkgfile" >initramfs-tools.deb
+
+    set +e
+    echo >&2 "collecting armmp kernel"
+    # Be careful to pickup the actual kernel package from the 'linux'
+    # source and not a meta package from 'linux-latest'
+    pkgfile=`bzcat Packages.bz2 | grep-dctrl -S linux | grep-dctrl -Pe linux-image-.*-armmp -nsFilename | sort -n | head -n1`
+    rc=$?
+    set -e
+    if [ $rc != 0 ]; then fail "armmp kernel package not found"; fi
+    curl -s "$site/$pkgfile" >armmp.deb
+    dpkg-deb -x armmp.deb x
+    cp x/boot/vmlinuz-* linux.armmp
+    # The full set of modules is pretty large and not that
+    # useful. Just pull in the ones we need for our particular
+    # preseed, which is basically disk, net, filesystems and LVM.
+    cd x; find lib -type d \
+                   -o -type f -name modules.\* \
+                   -o -type f -name \*.ko \
+                      \( -path \*/kernel/lib/\* -o \
+                         -path \*/kernel/fs/mbcache.ko -o \
+                         -path \*/kernel/fs/ext\* -o \
+                         -path \*/kernel/fs/jbd\* -o \
+                         -path \*/kernel/drivers/net/\* -o \
+                         -path \*/kernel/drivers/ata/\* -o \
+                         -path \*/kernel/drivers/scsi/\* -o \
+                         -path \*/kernel/drivers/md/\* \) \
+          |pax -x sv4cpio -s '%lib%/lib%' -d -w >../cpio; cd ..
+    gzip -9f cpio
+    mv cpio.gz armmp.cpio.gz
+    rm -rf x
+fi
 
 for f in $files; do
         mv -f $f.new $f
