@@ -89,7 +89,7 @@ else
 	firmware=`getconfig DebianNonfreeFirmware`
 
 	if [ "x$diver" = xcurrent ]; then
-		for arch in i386 amd64; do
+		for arch in i386 amd64 armhf; do
 			if test -d "$tftp/$dibase/$arch/$diver"
 				then continue; fi
 			mkdir -p "$tftp/$dibase/$arch"
