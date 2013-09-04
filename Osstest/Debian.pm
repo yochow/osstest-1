@@ -470,6 +470,35 @@ in-target apt-get install -f -y
 END
     }
 
+    if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
+	my $vg = "$ho->{Name}-p0"; # host name is p0
+
+	$vg =~ s/-/--/g; # Escape the dashes
+	my $root="/dev/mapper/$vg-root";
+
+	preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+r=/target
+
+
+kernel=`readlink \$r/vmlinuz | sed -e 's|boot/||'`
+initrd=`readlink \$r/initrd.img | sed -e 's|boot/||'`
+
+cat >\$r/boot/boot <<EOF
+setenv bootargs console=ttyAMA0 root=$root
+mw.l 800000 0 10000
+scsi scan
+ext2load scsi 0 0x800000 \$kernel
+ext2load scsi 0 0x1000000 \$initrd
+bootz 0x800000 0x1000000:\\\${filesize} 0x1000
+EOF
+
+in-target mkimage -A arm -T script -d /boot/boot /boot/boot.scr
+END
+    }
+
     my $preseed_file= (<<END);
 d-i mirror/suite string $suite
 
@@ -551,7 +580,7 @@ console-data console-data/keymap/template/layout select British
 popularity-contest popularity-contest/participate boolean false
 tasksel tasksel/first multiselect standard, web-server
 
-d-i pkgsel/include string openssh-server
+d-i pkgsel/include string openssh-server, u-boot-tools
 
 d-i grub-installer/only_debian boolean true
 
