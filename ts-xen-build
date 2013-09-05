@@ -168,7 +168,7 @@ sub divide () {
             if test -d install/lib/modules; then
                 mv install/lib/modules kerninstall/lib/.
             fi
-            if test -f kerninstall/boot/xen.gz; then
+            if test -f kerninstall/boot/xen.gz || test -f kerninstall/boot/xen; then
                 mkdir xeninstall/boot
                 mv kerninstall/boot/xen* xeninstall/boot/.
             fi
