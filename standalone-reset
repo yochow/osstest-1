@@ -27,6 +27,10 @@ options:
 END
 }
 
+if [ -f standalone.config ] ; then
+    . standalone.config
+fi
+
 . cri-getconfig
 
 jobdb=`getconfig JobDB`
