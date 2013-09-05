@@ -184,7 +184,7 @@ sub setupboot_grub1 ($$$) {
 }
 
 sub setupboot_grub2 ($$$) {
-    my ($ho,$wantkernver,$xenhopt,$xenkopt) = @_;
+    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= '/boot/grub/grub.cfg';
