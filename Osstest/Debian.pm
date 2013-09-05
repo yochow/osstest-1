@@ -580,7 +580,7 @@ console-data console-data/keymap/template/layout select British
 popularity-contest popularity-contest/participate boolean false
 tasksel tasksel/first multiselect standard, web-server
 
-d-i pkgsel/include string openssh-server, u-boot-tools
+d-i pkgsel/include string openssh-server, u-boot-tools, ntp, ntpdate
 
 d-i grub-installer/only_debian boolean true
 
