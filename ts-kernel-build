@@ -242,6 +242,7 @@ sub build () {
         test -f ../build-ok-stamp
         echo ok.
 END
+#/
 }
 
 sub kinstall () {
