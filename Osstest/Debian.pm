@@ -166,6 +166,8 @@ sub setupboot_grub1 ($$$) {
             }
             if (m/^module\b/ && defined $xenhopt) {
                 die "$_ ?" unless m,^module\s+/((?:boot/)?\S+)(?:\s.*)?$,;
+		die "unimplemented kernel version check for grub1"
+		    if defined $want_kernver;
                 $kern= $1;
                 logm("boot check: kernel: $kern");
                 last;
@@ -200,10 +202,19 @@ sub setupboot_grub2 ($$$) {
                 my (@missing) =
                     grep { !defined $entry->{$_} } 
 		        (defined $xenhopt
-			 ? qw(Title Hv KernDom0)
-			 : qw(Title Hv KernOnly));
-                last if !@missing;
-                logm("(skipping entry at $entry->{StartLine}; no @missing)");
+			 ? qw(Title Hv KernDom0 KernVer)
+			 : qw(Title Hv KernOnly KernVer));
+		if (@missing) {
+		    logm("(skipping entry at $entry->{StartLine};".
+			 " no @missing)");
+		} elsif (defined $want_kernver &&
+			 $entry->{KernVer} ne $want_kernver) {
+		    logm("(skipping entry at $entry->{StartLine};".
+			 " kernel $entry->{KernVer}, not $want_kernver)");
+		} else {
+		    # yes!
+		    last;
+		}
                 $entry= undef;
                 next;
             }
@@ -219,13 +230,15 @@ sub setupboot_grub2 ($$$) {
                 die unless $entry;
                 $entry->{Hv}= $1;
             }
-            if (m/^\s*multiboot\s*\/(vmlinu[xz]-\S+)/) {
+            if (m/^\s*multiboot\s*\/(vmlinu[xz]-(\S+))/) {
                 die unless $entry;
                 $entry->{KernOnly}= $1;
+                $entry->{KernVer}= $2;
             }
-            if (m/^\s*module\s*\/(vmlinu[xz]-\S+)/) {
+            if (m/^\s*module\s*\/(vmlinu[xz]-(\S+))/) {
                 die unless $entry;
                 $entry->{KernDom0}= $1;
+                $entry->{KernVer}= $2;
             }
             if (m/^\s*module\s*\/(initrd\S+)/) {
                 $entry->{Initrd}= $1;
