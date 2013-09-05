@@ -76,7 +76,7 @@ sub debian_boot_setup ($$$;$) {
         $bootloader= setupboot_grub2($ho, $xenhopt, $kopt);
     }
 
-    target_cmd_root($ho, "update-grub");
+    $bootloader->{UpdateConfig}($ho);
 
     my $kern= $bootloader->{GetBootKern}();
     logm("dom0 kernel is $kern");
@@ -96,7 +96,7 @@ sub debian_boot_setup ($$$;$) {
 
     $bootloader->{PreFinalUpdate}();
 
-    target_cmd_root($ho, "update-grub");
+    $bootloader->{UpdateConfig}($ho);
 
     store_runvar(target_var_prefix($ho).'xen_kernel_path',$kernpath);
     store_runvar(target_var_prefix($ho).'xen_kernel_ver',$kernver);
@@ -126,6 +126,11 @@ sub setupboot_grub1 ($$$) {
             print ::EO or die $!;
         }
     });
+
+    $bl->{UpdateConfig}= sub {
+	my ( $ho ) = @_;
+	target_cmd_root($ho, "update-grub");
+    };
 
     $bl->{GetBootKern}= sub {
         my $f= bl_getmenu_open($ho, $rmenu, $lmenu);
@@ -244,6 +249,12 @@ sub setupboot_grub2 ($$$) {
 	}
 
         return $entry;
+    };
+
+
+    $bl->{UpdateConfig}= sub {
+	my ( $ho ) = @_;
+	target_cmd_root($ho, "update-grub");
     };
 
     $bl->{GetBootKern}= sub { return $parsemenu->()->{$kernkey}; };
