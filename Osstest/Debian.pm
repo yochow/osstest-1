@@ -43,9 +43,9 @@ BEGIN {
 
 #---------- manipulation of Debian bootloader setup ----------
 
-sub debian_boot_setup ($$$;$) {
+sub debian_boot_setup ($$$$;$) {
     # $xenhopt==undef => is actually a guest, do not set up a hypervisor
-    my ($ho, $xenhopt, $distpath, $hooks) = @_;
+    my ($ho, $want_kernver, $xenhopt, $distpath, $hooks) = @_;
 
     target_kernkind_check($ho);
     target_kernkind_console_inittab($ho,$ho,"/");
@@ -70,9 +70,9 @@ sub debian_boot_setup ($$$;$) {
 
     my $bootloader;
     if ($ho->{Suite} =~ m/lenny/) {
-        $bootloader= setupboot_grub1($ho, $xenhopt, $kopt);
+        $bootloader= setupboot_grub1($ho, $want_kernver, $xenhopt, $kopt);
     } else {
-        $bootloader= setupboot_grub2($ho, $xenhopt, $kopt);
+        $bootloader= setupboot_grub2($ho, $want_kernver, $xenhopt, $kopt);
     }
 
     target_cmd_root($ho, "update-grub");
@@ -109,7 +109,7 @@ sub bl_getmenu_open ($$$) {
 }
 
 sub setupboot_grub1 ($$$) {
-    my ($ho,$xenhopt,$xenkopt) = @_;
+    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= "/boot/grub/menu.lst";
@@ -182,7 +182,7 @@ sub setupboot_grub1 ($$$) {
 }
 
 sub setupboot_grub2 ($$$) {
-    my ($ho,$xenhopt,$xenkopt) = @_;
+    my ($ho,$wantkernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= '/boot/grub/grub.cfg';
