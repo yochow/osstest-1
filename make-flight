@@ -64,10 +64,6 @@ if [ x$buildflight = x ]; then
 		revision_qemu=$REVISION_QEMU				     \
 		revision_qemuu=$REVISION_QEMU_UPSTREAM
 
-    case "$arch" in
-    armhf) continue;; # don't do any kernel builds
-    esac
-
     ./cs-job-create $flight build-$arch-pvops build-kern		     \
 		arch=$arch kconfighow=xen-enable-xen-config		     \
 	tree_xen=$TREE_XEN		     \
@@ -80,6 +76,10 @@ if [ x$buildflight = x ]; then
 		revision_linux=$REVISION_LINUX				\
 		tree_linuxfirmware=$TREE_LINUXFIRMWARE			     \
 		revision_linuxfirmware=$REVISION_LINUXFIRMWARE
+
+    case "$arch" in
+    armhf) continue;; # don't do any other kernel builds
+    esac
 
     if [ "x$REVISION_LINUX_OLD" != xdisable ]; then
 
