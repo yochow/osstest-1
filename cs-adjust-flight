@@ -149,7 +149,7 @@ sub copy_jobs ($$) {
         $count += $_->execute($dstflight, $job) foreach @job_rm_qs;
 	verbose "$dstflight.$job job deleted\n" if $count;
     };
-    for_jobs($dstflight, $jobs, $rm_job);
+    for_jobs($dstflight, $jobs, $rm_job, 1);
     for_jobs($srcflight, $jobs, $rm_job);
     for_jobs($srcflight, $jobs, sub {
         my ($job) = @_;
