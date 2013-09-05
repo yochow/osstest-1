@@ -749,6 +749,9 @@ sub propname_massage ($) {
     # and are moving to WordWordWord
     my ($prop) = @_;
 
+    # some property names are "word word word". make it word-word-word
+    # before massaging into WordWordWord
+    $prop =~ s/ /-/g;
     $prop = ucfirst $prop;
     while ($prop =~ m/-/) {
 	$prop = $`.ucfirst $'; #';
