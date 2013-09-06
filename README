@@ -89,9 +89,18 @@ HostProp_<testbox>_Ether
    to use the osstest host and Xen installer.
 
 HostProp_<testbox>_LinuxSerialConsole
-   Set to the serial console device on the platform. Defaults to
-   ttyS0. If set to "NONE" then the system will use VGA console
-   instead.
+   Set to Linux's name for the serial console device on the
+   platform. Defaults to ttyS0. If set to "NONE" then the system will
+   use VGA console instead.
+
+HostProp_<testbox>_XenSerialConsole
+   Set to Xen's name for the serial console device on the
+   platform. Defaults to com1.
+
+HostProp_<testbox>_DTUARTPath
+   If XenSerialConsole is "dtuart" then this specifies the path in the
+   DTB to the device to use. Can also specify an alias defined in the
+   platforms DTB.
 
 HostProp_<testbox>_DIFrontend
    Configure the frontend used by Debian installer. Default in osstest

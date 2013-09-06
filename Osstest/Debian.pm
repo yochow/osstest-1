@@ -70,7 +70,9 @@ sub debian_boot_setup ($$$$;$) {
     }
 
     my $bootloader;
-    if ($ho->{Suite} =~ m/lenny/) {
+    if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
+	$bootloader= setupboot_uboot($ho, $want_kernver, $xenhopt, $kopt);
+    } elsif ($ho->{Suite} =~ m/lenny/) {
         $bootloader= setupboot_grub1($ho, $want_kernver, $xenhopt, $kopt);
     } else {
         $bootloader= setupboot_grub2($ho, $want_kernver, $xenhopt, $kopt);
@@ -107,6 +109,74 @@ sub bl_getmenu_open ($$$) {
     target_getfile($ho, 60, $rmenu, $lmenu);
     my $f= new IO::File $lmenu, 'r' or die "$lmenu $?";
     return $f;
+}
+
+sub lvm_lv_name($$) {
+    my ($ho, $lv) = @_;
+
+    my $vg = "$ho->{Name}";
+    # Dashes are escaped in the VG name
+    $vg =~ s/-/--/g;
+    return "/dev/mapper/$vg-$lv";
+}
+
+sub setupboot_uboot ($$$$) {
+    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
+    my $bl= { };
+
+    $bl->{UpdateConfig}= sub {
+
+	my $xen = "xen";
+	my $kern = "vmlinuz-$want_kernver";
+	my $initrd = "initrd.img-$want_kernver";
+
+	my $root= lvm_lv_name($ho,"root");
+
+	target_cmd_root($ho, <<END);
+if test ! -f /boot/$kern ; then
+    exit 1
+fi
+# Save a copy of the original
+cp -n /boot/boot /boot/boot.bak
+cp -n /boot/boot.scr /boot/boot.scr.bak
+
+xen=`readlink /boot/$xen`
+
+cat >/boot/boot <<EOF
+
+mw.l 800000 0 10000
+scsi scan
+
+fdt addr \\\${fdt_addr}
+fdt resize
+
+ext2load scsi 0 0x600000 \$xen
+setenv bootargs $xenhopt
+
+ext2load scsi 0 \\\${kernel_addr_r} $kern
+fdt mknod /chosen module\@0
+fdt set /chosen/module\@0 compatible "xen,linux-zimage"
+fdt set /chosen/module\@0 reg <\\\${kernel_addr_r} \\\${filesize}>
+fdt set /chosen/module\@0 bootargs "$xenkopt ro root=$root"
+
+ext2load scsi 0 \\\${ramdisk_addr_r} $initrd
+fdt mknod /chosen module\@1
+fdt set /chosen/module\@1 compatible "xen,linux-initrd"
+fdt set /chosen/module\@1 reg < \\\${ramdisk_addr_r} \\\${filesize} >
+
+bootz 0x600000 - 0x1000
+EOF
+mkimage -A arm -T script -d /boot/boot /boot/boot.scr
+END
+    };
+
+    $bl->{GetBootKern}= sub {
+	return "vmlinuz-$want_kernver";
+    };
+
+    $bl->{PreFinalUpdate}= sub { };
+
+    return $bl;
 }
 
 sub setupboot_grub1 ($$$) {
@@ -495,10 +565,7 @@ END
     }
 
     if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
-	my $vg = "$ho->{Name}";
-
-	$vg =~ s/-/--/g; # Escape the dashes
-	my $root="/dev/mapper/$vg-root";
+	my $root=lvm_lv_name($ho,"root");
 
 	preseed_hook_command($ho, 'late_command', $sfx, <<END);
 #!/bin/sh
@@ -514,9 +581,9 @@ cat >\$r/boot/boot <<EOF
 setenv bootargs console=ttyAMA0 root=$root
 mw.l 800000 0 10000
 scsi scan
-ext2load scsi 0 0x800000 \$kernel
-ext2load scsi 0 0x1000000 \$initrd
-bootz 0x800000 0x1000000:\\\${filesize} 0x1000
+ext2load scsi 0 \\\${kernel_addr_r} \$kernel
+ext2load scsi 0 \\\${ramdisk_addr_r} \$initrd
+bootz \\\${kernel_addr_r} \\\${ramdisk_addr_r}:\\\${filesize} 0x1000
 EOF
 
 in-target mkimage -A arm -T script -d /boot/boot /boot/boot.scr

@@ -121,8 +121,19 @@ sub adjustconfig () {
 }
 
 sub setupboot () {
-    my $xenhopt= "com1=$c{Baud},8n1 console=com1,vga gdb=com1 conswitch=x".
-        " watchdog";
+    my $xenhopt= "conswitch=x watchdog";
+
+    my $cons= get_host_property($ho, 'XenSerialConsole', 'com1');
+
+    if ( $cons eq "com1" ) {
+	$xenhopt .= " com1=$c{Baud},8n1 console=com1,vga gdb=com1";
+    } elsif ( $cons eq "dtuart" ) {
+	$xenhopt .= " console=dtuart";
+	my $dtuart= get_host_property($ho, 'XenDTUARTPath', undef);
+	$xenhopt .= " dtuart=$dtuart" if $dtuart;
+    } else {
+	mlog("No Xen console device defined for host");
+    }
     if (toolstack()->{Dom0MemFixed}) {
         $xenhopt .= " dom0_mem=512M,max:512M";
     }
