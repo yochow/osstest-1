@@ -205,7 +205,7 @@ END
 
     push @installcmdline, qw(--);
 
-    my $console = get_host_property($ho, "SerialConsole", "ttyS0");
+    my $console = get_host_property($ho, "LinuxSerialConsole", "ttyS0");
     push @installcmdline, "console=$console,$c{Baud}n8"
         unless $console eq "NONE";
 
