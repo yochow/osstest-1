@@ -27,9 +27,6 @@
 
 
 NAME=stop-bootlogd
-DAEMON=/sbin/bootlogd
-
-[ -x "$DAEMON" ] || exit 0
 
 case "$1" in
   stop|restart)
