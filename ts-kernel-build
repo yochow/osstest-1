@@ -167,6 +167,12 @@ setopt CONFIG_EXT4_FS m
 
 END
 
+our $config_features= <<END;
+setopt CONFIG_MD y
+setopt CONFIG_BLK_DEV_DM y
+setopt CONFIG_DM_UEVENT y
+
+END
 sub stash_config_edscript ($) {
     my ($settings) = @_;
     my $edscript= "$builddir/change-settings.ed";
@@ -207,6 +213,7 @@ setopt CONFIG_DEVTMPFS y
 setopt CONFIG_HYPERVISOR_GUEST y
 
 $config_hardware
+$config_features
 END
 
     target_cmd_build($ho, 1000, $builddir, <<END);
@@ -224,8 +231,10 @@ END
 }
 
 sub config_intree_buildconfigs () {
-    my $edscript= stash_config_edscript($config_hardware);
-    
+    my $edscript= stash_config_edscript(<<END);
+$config_hardware
+$config_features
+END
     target_cmd_build($ho, 1000, $builddir, <<END);
         sed 's/setopt CONFIG/true &/' xen-unstable/buildconfigs/enable-xen-config >enable-device-configs
         ed <$edscript enable-device-configs
