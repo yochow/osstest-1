@@ -172,6 +172,10 @@ setopt CONFIG_MD y
 setopt CONFIG_BLK_DEV_DM y
 setopt CONFIG_DM_UEVENT y
 
+setopt CONFIG_SYSVIPC y
+
+setopt CONFIG_BLK_DEV_LOOP y
+
 END
 sub stash_config_edscript ($) {
     my ($settings) = @_;
