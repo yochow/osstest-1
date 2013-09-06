@@ -124,7 +124,7 @@ sub setupboot () {
     my $xenhopt= "com1=$c{Baud},8n1 console=com1,vga gdb=com1 conswitch=x".
         " watchdog";
     if (toolstack()->{Dom0MemFixed}) {
-        $xenhopt .= " dom0_mem=512M";
+        $xenhopt .= " dom0_mem=512M,max:512M";
     }
     my $append= $r{xen_boot_append};
     $xenhopt .= " $append" if defined $append;
@@ -146,6 +146,7 @@ sub setupboot () {
         };
     }
 
+    my $want_kernver = get_runvar('kernel_ver','kernbuildjob');
     debian_boot_setup($ho, $xenhopt, \%distpath, \@hooks);
 
     logm("ready to boot Xen");

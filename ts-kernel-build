@@ -250,6 +250,7 @@ sub build () {
         test -f ../build-ok-stamp
         echo ok.
 END
+#/
 }
 
 sub kinstall () {
@@ -270,6 +271,8 @@ END
 END
     die "$kernver ?" unless $kernver =~ m/^\d\S+$/;
     logm("built $kernver");
+
+    store_runvar('kernel_ver',$kernver);
 
     target_cmd_build($ho, 100, $builddir, <<END);
 	cd dist/boot

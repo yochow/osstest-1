@@ -44,9 +44,9 @@ BEGIN {
 
 #---------- manipulation of Debian bootloader setup ----------
 
-sub debian_boot_setup ($$$;$) {
+sub debian_boot_setup ($$$$;$) {
     # $xenhopt==undef => is actually a guest, do not set up a hypervisor
-    my ($ho, $xenhopt, $distpath, $hooks) = @_;
+    my ($ho, $want_kernver, $xenhopt, $distpath, $hooks) = @_;
 
     target_kernkind_check($ho);
     target_kernkind_console_inittab($ho,$ho,"/");
@@ -71,9 +71,9 @@ sub debian_boot_setup ($$$;$) {
 
     my $bootloader;
     if ($ho->{Suite} =~ m/lenny/) {
-        $bootloader= setupboot_grub1($ho, $xenhopt, $kopt);
+        $bootloader= setupboot_grub1($ho, $want_kernver, $xenhopt, $kopt);
     } else {
-        $bootloader= setupboot_grub2($ho, $xenhopt, $kopt);
+        $bootloader= setupboot_grub2($ho, $want_kernver, $xenhopt, $kopt);
     }
 
     $bootloader->{UpdateConfig}($ho);
@@ -110,7 +110,7 @@ sub bl_getmenu_open ($$$) {
 }
 
 sub setupboot_grub1 ($$$) {
-    my ($ho,$xenhopt,$xenkopt) = @_;
+    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= "/boot/grub/menu.lst";
@@ -172,6 +172,8 @@ sub setupboot_grub1 ($$$) {
             }
             if (m/^module\b/ && defined $xenhopt) {
                 die "$_ ?" unless m,^module\s+/((?:boot/)?\S+)(?:\s.*)?$,;
+		die "unimplemented kernel version check for grub1"
+		    if defined $want_kernver;
                 $kern= $1;
                 logm("boot check: kernel: $kern");
                 last;
@@ -188,7 +190,7 @@ sub setupboot_grub1 ($$$) {
 }
 
 sub setupboot_grub2 ($$$) {
-    my ($ho,$xenhopt,$xenkopt) = @_;
+    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= '/boot/grub/grub.cfg';
@@ -206,10 +208,19 @@ sub setupboot_grub2 ($$$) {
                 my (@missing) =
                     grep { !defined $entry->{$_} } 
 		        (defined $xenhopt
-			 ? qw(Title Hv KernDom0)
-			 : qw(Title Hv KernOnly));
-                last if !@missing;
-                logm("(skipping entry at $entry->{StartLine}; no @missing)");
+			 ? qw(Title Hv KernDom0 KernVer)
+			 : qw(Title Hv KernOnly KernVer));
+		if (@missing) {
+		    logm("(skipping entry at $entry->{StartLine};".
+			 " no @missing)");
+		} elsif (defined $want_kernver &&
+			 $entry->{KernVer} ne $want_kernver) {
+		    logm("(skipping entry at $entry->{StartLine};".
+			 " kernel $entry->{KernVer}, not $want_kernver)");
+		} else {
+		    # yes!
+		    last;
+		}
                 $entry= undef;
                 next;
             }
@@ -225,13 +236,15 @@ sub setupboot_grub2 ($$$) {
                 die unless $entry;
                 $entry->{Hv}= $1;
             }
-            if (m/^\s*multiboot\s*\/(vmlinu[xz]-\S+)/) {
+            if (m/^\s*multiboot\s*\/(vmlinu[xz]-(\S+))/) {
                 die unless $entry;
                 $entry->{KernOnly}= $1;
+                $entry->{KernVer}= $2;
             }
-            if (m/^\s*module\s*\/(vmlinu[xz]-\S+)/) {
+            if (m/^\s*module\s*\/(vmlinu[xz]-(\S+))/) {
                 die unless $entry;
                 $entry->{KernDom0}= $1;
+                $entry->{KernVer}= $2;
             }
             if (m/^\s*module\s*\/(initrd\S+)/) {
                 $entry->{Initrd}= $1;
