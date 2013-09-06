@@ -41,7 +41,13 @@ esac
 
 case "$1" in
   start|reload|force-reload)
-        if mount | egrep '^[^ 	][^ 	]* on /dev/shm type tmpfs ' >/dev/null
+        if mount | egrep '^[^ 	][^ 	]* on /run/shm type tmpfs ' >/dev/null
+        then
+                if [ `readlink -f /dev/shm` != "/run/shm" ] ; then
+                        echo >&2 '/dev/shm not a link to /run/shm ?'; exit 1
+                fi
+                touch /dev/shm/osstest-confirm-booted
+        elif mount | egrep '^[^ 	][^ 	]* on /dev/shm type tmpfs ' >/dev/null
         then
                 touch /dev/shm/osstest-confirm-booted
         else
