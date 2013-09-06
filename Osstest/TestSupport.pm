@@ -1543,7 +1543,7 @@ sub target_extract_jobdistpath ($$$$$) {
     my $local= $path;  $local =~ s/path_//;
     my $distcopy= "/root/extract_$local.tar.gz";
     target_putfile_root($ho, 300, $distpath->{$part}, $distcopy);
-    target_cmd_root($ho, "cd / && tar zxf $distcopy", 300);
+    target_cmd_root($ho, "cd / && tar -hzxf $distcopy", 300);
 }
 
 sub guest_find_domid ($$) {
