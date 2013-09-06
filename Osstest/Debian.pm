@@ -482,7 +482,7 @@ END
     }
 
     if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
-	my $vg = "$ho->{Name}-p0"; # host name is p0
+	my $vg = "$ho->{Name}";
 
 	$vg =~ s/-/--/g; # Escape the dashes
 	my $root="/dev/mapper/$vg-root";
