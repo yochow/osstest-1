@@ -40,7 +40,7 @@
 
 : ${PUSH_TREE_LINUX:=$XENBITS:/home/xen/git/linux-pvops.git}
 : ${BASE_TREE_LINUX:=git://xenbits.xen.org/linux-pvops.git}
-: ${BASE_TAG_LINUX:=tested/linux-3.10}
+: ${BASE_TAG_LINUX:=tested/linux-3.4}
 
 : ${TREE_LINUX2639:=${KERNEL_SCM}/konrad/xen.git}
 : ${TAG_LINUX2639:=stable/2.6.39.x}
