@@ -141,6 +141,7 @@ sub fetch_logs_host_guests () {
             logm("host reboot failed, abandoning log fetches: $@");
             return;
         }
+	try_fetch_logs($ho, $logs);
     }
 
     foreach my $cmd
