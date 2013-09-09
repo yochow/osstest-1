@@ -589,6 +589,11 @@ in-target mkimage -A arm -T script -d /boot/boot /boot/boot.scr
 END
     }
 
+    my @extra_packages = [];
+    push(@extra_packages, "u-boot-tools") if $ho->{Flags}{'need-uboot-bootscr'};
+
+    my $extra_packages = join(",",@extra_packages);
+
     my $preseed_file= (<<END);
 d-i mirror/suite string $suite
 
@@ -670,7 +675,7 @@ console-data console-data/keymap/template/layout select British
 popularity-contest popularity-contest/participate boolean false
 tasksel tasksel/first multiselect standard, web-server
 
-d-i pkgsel/include string openssh-server, u-boot-tools, ntp, ntpdate
+d-i pkgsel/include string openssh-server, ntp, ntpdate, $extra_packages
 
 d-i grub-installer/only_debian boolean true
 
