@@ -589,7 +589,7 @@ in-target mkimage -A arm -T script -d /boot/boot /boot/boot.scr
 END
     }
 
-    my @extra_packages = [];
+    my @extra_packages = ();
     push(@extra_packages, "u-boot-tools") if $ho->{Flags}{'need-uboot-bootscr'};
 
     my $extra_packages = join(",",@extra_packages);
