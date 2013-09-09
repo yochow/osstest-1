@@ -52,6 +52,12 @@ sub checkout () {
 
     my $debug_build = $r{xen_build_debug} || 'y';
 
+    # Do not set this unless you know what you are doing. This arm
+    # option makes the build specific to a particular type of
+    # hardware.  This is only really useful in the standalone
+    # configuration and even then you are still responsible for
+    # ensuring that this build only gets run on hardware which
+    # supports the given early printk mechanism.
     my $earlyprintk = get_host_property($ho, 'EarlyPrintk', undef);
 
     target_cmd_build($ho, 100, $builddir, <<END.
