@@ -746,16 +746,25 @@ sub selecthost ($) {
 
 sub propname_massage ($) {
     # property names used to be in the form word-word-word
-    # and are moving to WordWordWord
-    my ($prop) = @_;
+    # and are moving to WordWordWord.
+    #
+    # Some property names are "some-words other-words". Massage them
+    # into "some-words_other-words" and then into
+    # "SomeWords_OtherWords".
 
-    # some property names are "word word word". make it word-word-word
-    # before massaging into WordWordWord
-    $prop =~ s/ /-/g;
+    my ($prop) = @_;
+    my $before = $prop;
+
     $prop = ucfirst $prop;
+
+    while ($prop =~ m/ /) {
+	$prop = $`."_".ucfirst $'; #';
+    }
+
     while ($prop =~ m/-/) {
 	$prop = $`.ucfirst $'; #';
     }
+
     return $prop;
 }
 
