@@ -88,6 +88,9 @@ HostProp_<testbox>_Ether
    MAC address of the box <testbox>.  Only needed if you want
    to use the osstest host and Xen installer.
 
+HostProp_<testbox>_Build_Make_Flags
+   Extra flags to pass to "make". e.g. "-j<SOMETHING>"
+
 HostProp_<testbox>_LinuxSerialConsole
    Set to Linux's name for the serial console device on the
    platform. Defaults to ttyS0. If set to "NONE" then the system will
