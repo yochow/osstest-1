@@ -47,10 +47,11 @@ our $ho;
 my %distpath;
 
 sub packages () {
-    my $yajl = $ho->{Suite} =~ "/wheezy/" ? "libyajl2" : "libyajl1";
     target_install_packages($ho,
                             qw(bridge-utils vncsnapshot libaio1 libpixman-1-0
-                               libsdl1.2debian $yajl libglib2.0-0));
+                               libsdl1.2debian libglib2.0-0));
+    target_install_packages($ho,
+			    $ho->{Suite} =~ /squeeze/ ? "libyajl1" : "libyajl2");
     if ($r{arch} eq 'i386') {
 	target_install_packages($ho, 'libc6-xen');
     }
