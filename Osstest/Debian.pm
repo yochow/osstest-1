@@ -571,8 +571,7 @@ END
 #!/bin/sh
 set -ex
 
-r=/target
-
+r=/target #/
 
 kernel=`readlink \$r/vmlinuz | sed -e 's|boot/||'`
 initrd=`readlink \$r/initrd.img | sed -e 's|boot/||'`
