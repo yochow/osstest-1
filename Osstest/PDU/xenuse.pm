@@ -49,7 +49,7 @@ sub pdu_power_state {
 
     if ( $on ) {
 	#XXX this should be conditional
-	system_checked(qw(ipmitool -H), "$mo->{Host}{Name}-mgmt",qw(-U admin -P admin chassis bootdev pxe));
+	system_checked(qw(ipmitool -H), "$mo->{Host}{Name}-mgmt",qw(-U admin -P admin chassis bootdev pxe)) if $mo->{Host}{Flags}{'need-ipmi-pxe'};
 	system_checked(qw(xenuse --on), "$mo->{Host}{Name}");
     } else {
 	system_checked(qw(xenuse --off), "$mo->{Host}{Name}");
