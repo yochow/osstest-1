@@ -29,6 +29,8 @@ flight=`./cs-flight-create $blessing $branch`
 . ap-common
 . cri-common
 
+: ${REVISION_LINUX:=${DEFAULT_REVISION_LINUX}}
+
 suite=`getconfig DebianSuite`
 
 xenrt_images=/usr/groups/images/autoinstall

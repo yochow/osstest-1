@@ -32,7 +32,6 @@
 : ${KERNEL_SCM:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git}
 
 : ${TREEVCS_LINUX:=git}
-: ${TREE_LINUX:=${KERNEL_SCM}/stable/linux-stable.git}
 
 : ${TREE_LINUXFIRMWARE:=git://xenbits.xen.org/osstest/linux-firmware.git}
 : ${PUSH_TREE_LINUXFIRMWARE:=$XENBITS:/home/osstest/ext/linux-firmware.git}
@@ -41,6 +40,11 @@
 : ${PUSH_TREE_LINUX:=$XENBITS:/home/xen/git/linux-pvops.git}
 : ${BASE_TREE_LINUX:=git://xenbits.xen.org/linux-pvops.git}
 : ${BASE_TAG_LINUX:=tested/linux-3.4}
+
+if [ "x${TREE_LINUX}" = x ]; then
+	: ${TREE_LINUX:=${KERNEL_SCM}/stable/linux-stable.git}
+	: ${DEFAULT_REVISION_LINUX:=${BASE_TAG_LINUX}}
+fi
 
 : ${TREE_LINUX2639:=${KERNEL_SCM}/konrad/xen.git}
 : ${TAG_LINUX2639:=stable/2.6.39.x}
