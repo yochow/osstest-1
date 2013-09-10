@@ -44,6 +44,8 @@ while [ $# != 0 ]; do
 	esac
 done
 
+. cri-getconfig
+
 if [ x"$flight" = x ]; then badusage; fi
 
 : ${blessing:=play}
@@ -58,7 +60,7 @@ export OSSTEST_RESOURCE_PRIORITY=${OSSTEST_RESOURCE_PRIORITY--8}
 export OSSTEST_RESOURCE_PREINFO="[adhoc $blessing]\
  <${PWD##*/}${branch:+ }$branch${tty:+ }$tty>"
 
- : ${OSSTEST_HTMLPUB_DIR:=`getconfig Logs`}
+: ${OSSTEST_HTMLPUB_DIR:=`getconfig Logs`}
 
 (./sg-execute-flight $flight $blessing ||
  echo "sg-execute-flight $flight $blessing failed: $?") \
