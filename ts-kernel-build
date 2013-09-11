@@ -31,6 +31,12 @@ my $builddir= "/home/osstest/$leaf";
 
 my $makeflags= get_host_property($ho, 'build make flags', '-j4');
 
+my $archparms = {
+    'armhf' => { DefConfig => 'multi_v7_defconfig', KernelImage => 'arch/arm/boot/zImage' },
+    'i386'  => { DefConfig => 'defconfig',          KernelImage => 'arch/x86/boot/bzImage' },
+    'amd64' => { DefConfig => 'defconfig',          KernelImage => 'arch/x86/boot/bzImage' }
+};
+
 sub checkout () {
     target_cmd($ho, "rm -rf $builddir && mkdir $builddir", 600);
 
@@ -161,6 +167,16 @@ setopt CONFIG_EXT4_FS m
 
 END
 
+our $config_features= <<END;
+setopt CONFIG_MD y
+setopt CONFIG_BLK_DEV_DM y
+setopt CONFIG_DM_UEVENT y
+
+setopt CONFIG_SYSVIPC y
+
+setopt CONFIG_BLK_DEV_LOOP y
+
+END
 sub stash_config_edscript ($) {
     my ($settings) = @_;
     my $edscript= "$builddir/change-settings.ed";
@@ -201,6 +217,7 @@ setopt CONFIG_DEVTMPFS y
 setopt CONFIG_HYPERVISOR_GUEST y
 
 $config_hardware
+$config_features
 END
 
     target_cmd_build($ho, 1000, $builddir, <<END);
@@ -208,7 +225,9 @@ END
         ed <$edscript enable-xen-config
         chmod +x enable-xen-config
         cd linux
-        make defconfig
+        make $archparms->{ $r{arch} }->{DefConfig}
+        # ARM defconfig omits modules for some reason...
+        sed -e "s/^# CONFIG_MODULES is not set\$/CONFIG_MODULES=y/g" -i .config
         ../enable-xen-config .config
         yes '' | make oldconfig
 END
@@ -216,8 +235,10 @@ END
 }
 
 sub config_intree_buildconfigs () {
-    my $edscript= stash_config_edscript($config_hardware);
-    
+    my $edscript= stash_config_edscript(<<END);
+$config_hardware
+$config_features
+END
     target_cmd_build($ho, 1000, $builddir, <<END);
         sed 's/setopt CONFIG/true &/' xen-unstable/buildconfigs/enable-xen-config >enable-device-configs
         ed <$edscript enable-device-configs
@@ -247,7 +268,7 @@ END
 
 sub kinstall () {
     my $kernfile= $r{kimagefile};
-    $kernfile= 'arch/x86/boot/bzImage' if !defined $kernfile;
+    $kernfile= $archparms->{$r{arch}}->{KernelImage} if !defined $kernfile;
 
     target_cmd_build($ho, 300, $builddir, <<END);
 	mkdir -p dist/boot dist/lib/modules
@@ -263,6 +284,8 @@ END
 END
     die "$kernver ?" unless $kernver =~ m/^\d\S+$/;
     logm("built $kernver");
+
+    store_runvar('kernel_ver',$kernver);
 
     target_cmd_build($ho, 100, $builddir, <<END);
 	cd dist/boot

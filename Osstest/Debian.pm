@@ -21,6 +21,7 @@ use strict;
 use warnings;
 
 use IO::File;
+use File::Copy;
 
 use Osstest;
 use Osstest::TestSupport;
@@ -43,9 +44,9 @@ BEGIN {
 
 #---------- manipulation of Debian bootloader setup ----------
 
-sub debian_boot_setup ($$$;$) {
+sub debian_boot_setup ($$$$;$) {
     # $xenhopt==undef => is actually a guest, do not set up a hypervisor
-    my ($ho, $xenhopt, $distpath, $hooks) = @_;
+    my ($ho, $want_kernver, $xenhopt, $distpath, $hooks) = @_;
 
     target_kernkind_check($ho);
     target_kernkind_console_inittab($ho,$ho,"/");
@@ -69,13 +70,15 @@ sub debian_boot_setup ($$$;$) {
     }
 
     my $bootloader;
-    if ($ho->{Suite} =~ m/lenny/) {
-        $bootloader= setupboot_grub1($ho, $xenhopt, $kopt);
+    if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
+	$bootloader= setupboot_uboot($ho, $want_kernver, $xenhopt, $kopt);
+    } elsif ($ho->{Suite} =~ m/lenny/) {
+        $bootloader= setupboot_grub1($ho, $want_kernver, $xenhopt, $kopt);
     } else {
-        $bootloader= setupboot_grub2($ho, $xenhopt, $kopt);
+        $bootloader= setupboot_grub2($ho, $want_kernver, $xenhopt, $kopt);
     }
 
-    target_cmd_root($ho, "update-grub");
+    $bootloader->{UpdateConfig}($ho);
 
     my $kern= $bootloader->{GetBootKern}();
     logm("dom0 kernel is $kern");
@@ -95,7 +98,7 @@ sub debian_boot_setup ($$$;$) {
 
     $bootloader->{PreFinalUpdate}();
 
-    target_cmd_root($ho, "update-grub");
+    $bootloader->{UpdateConfig}($ho);
 
     store_runvar(target_var_prefix($ho).'xen_kernel_path',$kernpath);
     store_runvar(target_var_prefix($ho).'xen_kernel_ver',$kernver);
@@ -108,8 +111,76 @@ sub bl_getmenu_open ($$$) {
     return $f;
 }
 
+sub lvm_lv_name($$) {
+    my ($ho, $lv) = @_;
+
+    my $vg = "$ho->{Name}";
+    # Dashes are escaped in the VG name
+    $vg =~ s/-/--/g;
+    return "/dev/mapper/$vg-$lv";
+}
+
+sub setupboot_uboot ($$$$) {
+    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
+    my $bl= { };
+
+    $bl->{UpdateConfig}= sub {
+
+	my $xen = "xen";
+	my $kern = "vmlinuz-$want_kernver";
+	my $initrd = "initrd.img-$want_kernver";
+
+	my $root= lvm_lv_name($ho,"root");
+
+	target_cmd_root($ho, <<END);
+if test ! -f /boot/$kern ; then
+    exit 1
+fi
+# Save a copy of the original
+cp -n /boot/boot /boot/boot.bak
+cp -n /boot/boot.scr /boot/boot.scr.bak
+
+xen=`readlink /boot/$xen`
+
+cat >/boot/boot <<EOF
+
+mw.l 800000 0 10000
+scsi scan
+
+fdt addr \\\${fdt_addr}
+fdt resize
+
+ext2load scsi 0 0x600000 \$xen
+setenv bootargs $xenhopt
+
+ext2load scsi 0 \\\${kernel_addr_r} $kern
+fdt mknod /chosen module\@0
+fdt set /chosen/module\@0 compatible "xen,linux-zimage"
+fdt set /chosen/module\@0 reg <\\\${kernel_addr_r} \\\${filesize}>
+fdt set /chosen/module\@0 bootargs "$xenkopt ro root=$root"
+
+ext2load scsi 0 \\\${ramdisk_addr_r} $initrd
+fdt mknod /chosen module\@1
+fdt set /chosen/module\@1 compatible "xen,linux-initrd"
+fdt set /chosen/module\@1 reg < \\\${ramdisk_addr_r} \\\${filesize} >
+
+bootz 0x600000 - 0x1000
+EOF
+mkimage -A arm -T script -d /boot/boot /boot/boot.scr
+END
+    };
+
+    $bl->{GetBootKern}= sub {
+	return "vmlinuz-$want_kernver";
+    };
+
+    $bl->{PreFinalUpdate}= sub { };
+
+    return $bl;
+}
+
 sub setupboot_grub1 ($$$) {
-    my ($ho,$xenhopt,$xenkopt) = @_;
+    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= "/boot/grub/menu.lst";
@@ -125,6 +196,11 @@ sub setupboot_grub1 ($$$) {
             print ::EO or die $!;
         }
     });
+
+    $bl->{UpdateConfig}= sub {
+	my ( $ho ) = @_;
+	target_cmd_root($ho, "update-grub");
+    };
 
     $bl->{GetBootKern}= sub {
         my $f= bl_getmenu_open($ho, $rmenu, $lmenu);
@@ -166,6 +242,8 @@ sub setupboot_grub1 ($$$) {
             }
             if (m/^module\b/ && defined $xenhopt) {
                 die "$_ ?" unless m,^module\s+/((?:boot/)?\S+)(?:\s.*)?$,;
+		die "unimplemented kernel version check for grub1"
+		    if defined $want_kernver;
                 $kern= $1;
                 logm("boot check: kernel: $kern");
                 last;
@@ -182,7 +260,7 @@ sub setupboot_grub1 ($$$) {
 }
 
 sub setupboot_grub2 ($$$) {
-    my ($ho,$xenhopt,$xenkopt) = @_;
+    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= '/boot/grub/grub.cfg';
@@ -200,10 +278,19 @@ sub setupboot_grub2 ($$$) {
                 my (@missing) =
                     grep { !defined $entry->{$_} } 
 		        (defined $xenhopt
-			 ? qw(Title Hv KernDom0)
-			 : qw(Title Hv KernOnly));
-                last if !@missing;
-                logm("(skipping entry at $entry->{StartLine}; no @missing)");
+			 ? qw(Title Hv KernDom0 KernVer)
+			 : qw(Title Hv KernOnly KernVer));
+		if (@missing) {
+		    logm("(skipping entry at $entry->{StartLine};".
+			 " no @missing)");
+		} elsif (defined $want_kernver &&
+			 $entry->{KernVer} ne $want_kernver) {
+		    logm("(skipping entry at $entry->{StartLine};".
+			 " kernel $entry->{KernVer}, not $want_kernver)");
+		} else {
+		    # yes!
+		    last;
+		}
                 $entry= undef;
                 next;
             }
@@ -219,13 +306,15 @@ sub setupboot_grub2 ($$$) {
                 die unless $entry;
                 $entry->{Hv}= $1;
             }
-            if (m/^\s*multiboot\s*\/(vmlinu[xz]-\S+)/) {
+            if (m/^\s*multiboot\s*\/(vmlinu[xz]-(\S+))/) {
                 die unless $entry;
                 $entry->{KernOnly}= $1;
+                $entry->{KernVer}= $2;
             }
-            if (m/^\s*module\s*\/(vmlinu[xz]-\S+)/) {
+            if (m/^\s*module\s*\/(vmlinu[xz]-(\S+))/) {
                 die unless $entry;
                 $entry->{KernDom0}= $1;
+                $entry->{KernVer}= $2;
             }
             if (m/^\s*module\s*\/(initrd\S+)/) {
                 $entry->{Initrd}= $1;
@@ -243,6 +332,12 @@ sub setupboot_grub2 ($$$) {
 	}
 
         return $entry;
+    };
+
+
+    $bl->{UpdateConfig}= sub {
+	my ( $ho ) = @_;
+	target_cmd_root($ho, "update-grub");
     };
 
     $bl->{GetBootKern}= sub { return $parsemenu->()->{$kernkey}; };
@@ -440,6 +535,65 @@ $overlays
 echo latecmd done.
 END
 
+    foreach my $kp (keys %{ $ho->{Flags} }) {
+	$kp =~ s/need-kernel-deb-// or next;
+
+	my $d_i= $c{TftpPath}.'/'.$c{TftpDiBase}.'/'.$r{arch}.'/'.$c{TftpDiVersion};
+
+	my $kurl = create_webfile($ho, "kernel", sub {
+	    copy("$d_i/$kp.deb", $_[0]);
+        });
+
+	my $iurl = create_webfile($ho, "initramfs-tools", sub {
+	    copy("$d_i/initramfs-tools.deb", $_[0]);
+        });
+
+	preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+r=/target
+
+wget -O \$r/tmp/kern.deb $kurl
+wget -O \$r/tmp/initramfs-tools.deb $iurl
+
+# This will fail due to dependencies...
+in-target dpkg -i /tmp/kern.deb /tmp/initramfs-tools.deb || true
+# ... Now fix everything up...
+in-target apt-get install -f -y
+END
+    }
+
+    if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
+	my $root=lvm_lv_name($ho,"root");
+
+	preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+r=/target #/
+
+kernel=`readlink \$r/vmlinuz | sed -e 's|boot/||'`
+initrd=`readlink \$r/initrd.img | sed -e 's|boot/||'`
+
+cat >\$r/boot/boot <<EOF
+setenv bootargs console=ttyAMA0 root=$root
+mw.l 800000 0 10000
+scsi scan
+ext2load scsi 0 \\\${kernel_addr_r} \$kernel
+ext2load scsi 0 \\\${ramdisk_addr_r} \$initrd
+bootz \\\${kernel_addr_r} \\\${ramdisk_addr_r}:\\\${filesize} 0x1000
+EOF
+
+in-target mkimage -A arm -T script -d /boot/boot /boot/boot.scr
+END
+    }
+
+    my @extra_packages = ();
+    push(@extra_packages, "u-boot-tools") if $ho->{Flags}{'need-uboot-bootscr'};
+
+    my $extra_packages = join(",",@extra_packages);
+
     my $preseed_file= (<<END);
 d-i mirror/suite string $suite
 
@@ -521,7 +675,7 @@ console-data console-data/keymap/template/layout select British
 popularity-contest popularity-contest/participate boolean false
 tasksel tasksel/first multiselect standard, web-server
 
-d-i pkgsel/include string openssh-server
+d-i pkgsel/include string openssh-server, ntp, ntpdate, $extra_packages
 
 d-i grub-installer/only_debian boolean true
 
@@ -538,6 +692,14 @@ END
     foreach my $di_key (keys %preseed_cmds) {
         $preseed_file .= "d-i preseed/$di_key string ".
             (join ' && ', @{ $preseed_cmds{$di_key} }). "\n";
+    }
+
+    if ($ho->{Flags}{'no-di-kernel'}) {
+	$preseed_file .= <<END;
+d-i anna/no_kernel_modules boolean true
+d-i base-installer/kernel/skip-install boolean true
+d-i nobootloader/confirmation_common boolean true
+END
     }
 
     $preseed_file .= "$c{DebianPreseed}\n";

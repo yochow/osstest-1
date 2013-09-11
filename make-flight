@@ -66,10 +66,6 @@ if [ x$buildflight = x ]; then
 		revision_qemu=$REVISION_QEMU				     \
 		revision_qemuu=$REVISION_QEMU_UPSTREAM
 
-    case "$arch" in
-    armhf) continue;; # don't do any kernel builds
-    esac
-
     ./cs-job-create $flight build-$arch-pvops build-kern		     \
 		arch=$arch kconfighow=xen-enable-xen-config		     \
 	tree_xen=$TREE_XEN		     \
@@ -82,6 +78,10 @@ if [ x$buildflight = x ]; then
 		revision_linux=$REVISION_LINUX				\
 		tree_linuxfirmware=$TREE_LINUXFIRMWARE			     \
 		revision_linuxfirmware=$REVISION_LINUXFIRMWARE
+
+    case "$arch" in
+    armhf) continue;; # don't do any other kernel builds
+    esac
 
     if [ "x$REVISION_LINUX_OLD" != xdisable ]; then
 
@@ -191,11 +191,21 @@ job_create_test () {
 		$RUNVARS $TEST_RUNVARS $most_runvars "$@"
 }
 
-for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
+for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
   if [ "x$xenarch" = xdisable ]; then continue; fi
 
   case "$xenarch" in
+  armhf)
+	# Arm from 4.3 onwards only
+	case "$xenbranch" in
+	xen-3.*-testing) continue;;
+	xen-4.0-testing) continue;;
+	xen-4.1-testing) continue;;
+	xen-4.2-testing) continue;;
+	*) ;;
+	esac
+	;;
   i386)
 	# 32-bit Xen is dropped from 4.3 onwards
 	case "$xenbranch" in
@@ -205,6 +215,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
 	xen-4.2-testing) ;;
 	*) continue ;;
 	esac
+	;;
   esac
 
   for kern in ''; do
@@ -222,13 +233,19 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
     *)		echo >&2 "kernkind ?  $kern"; exit 1 ;;
     esac
 
-    for dom0arch in i386 amd64; do
+    for dom0arch in i386 amd64 armhf; do
+
+      case ${xenarch}_${dom0arch} in
+	  amd64_amd64) ;;
+	  amd64_i386) ;;
+	  i386_i386) ;;
+	  armhf_armhf) ;;
+	  *) continue ;;
+      esac
 
       eval "
 	  arch_runvars=\"\$ARCH_RUNVARS_$dom0arch\"
       "
-
-      if [ $dom0arch != $xenarch -a $xenarch != amd64 ]; then continue; fi
 
       if [ x$kern = x-xcpkern -a $dom0arch != i386 ]; then continue; fi
 
@@ -242,6 +259,13 @@ for xenarch in ${TEST_ARCHES- i386 amd64 } ; do
 		kernkind=$kernkind		        	\
 		$arch_runvars
 		"
+      if [ $dom0arch = armhf ]; then
+	  job_create_test test-$xenarch$kern-$dom0arch-xl test-debian xl \
+		debian_kernkind=$kernkind				  \
+		debian_arch=$dom0arch   				  \
+		all_hostflags=$most_hostflags
+	  continue
+      fi
 
       job_create_test test-$xenarch$kern-$dom0arch-pv test-debian xend \
 		debian_kernkind=$kernkind				  \

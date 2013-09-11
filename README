@@ -14,7 +14,7 @@ To run osstest in standalone mode:
    gives you the "branch" consisting of tests run for the xen-unstable
    push gate.  You need to select a job.  The list of available jobs
    is that shown in the publicly emailed test reports on xen-devel, eg
-     http://lists.xen.org/archives/html/xen-devel/2013-01/msg02574.html
+     http://lists.xen.org/archives/html/xen-devel/2013-08/msg02529.html
 
    If you don't want to repro one of those and don't know how to
    choose a job, choose one of
@@ -88,9 +88,22 @@ HostProp_<testbox>_Ether
    MAC address of the box <testbox>.  Only needed if you want
    to use the osstest host and Xen installer.
 
-HostProp_<testbox>_NoSerial
-   Set to 1 if <testbox> has no serial, system will use VGA console
-   instead.
+HostProp_<testbox>_Build_Make_Flags
+   Extra flags to pass to "make". e.g. "-j<SOMETHING>"
+
+HostProp_<testbox>_LinuxSerialConsole
+   Set to Linux's name for the serial console device on the
+   platform. Defaults to ttyS0. If set to "NONE" then the system will
+   use VGA console instead.
+
+HostProp_<testbox>_XenSerialConsole
+   Set to Xen's name for the serial console device on the
+   platform. Defaults to com1.
+
+HostProp_<testbox>_DTUARTPath
+   If XenSerialConsole is "dtuart" then this specifies the path in the
+   DTB to the device to use. Can also specify an alias defined in the
+   platforms DTB.
 
 HostProp_<testbox>_DIFrontend
    Configure the frontend used by Debian installer. Default in osstest

@@ -49,7 +49,9 @@ my %distpath;
 sub packages () {
     target_install_packages($ho,
                             qw(bridge-utils vncsnapshot libaio1 libpixman-1-0
-                               libsdl1.2debian libyajl1 libglib2.0-0));
+                               libsdl1.2debian libglib2.0-0));
+    target_install_packages($ho,
+			    $ho->{Suite} =~ /squeeze/ ? "libyajl1" : "libyajl2");
     if ($r{arch} eq 'i386') {
 	target_install_packages($ho, 'libc6-xen');
     }
@@ -120,8 +122,19 @@ sub adjustconfig () {
 }
 
 sub setupboot () {
-    my $xenhopt= "com1=$c{Baud},8n1 console=com1,vga gdb=com1 conswitch=x".
-        " watchdog";
+    my $xenhopt= "conswitch=x watchdog";
+
+    my $cons= get_host_property($ho, 'XenSerialConsole', 'com1');
+
+    if ( $cons eq "com1" ) {
+	$xenhopt .= " com1=$c{Baud},8n1 console=com1,vga gdb=com1";
+    } elsif ( $cons eq "dtuart" ) {
+	$xenhopt .= " console=dtuart";
+	my $dtuart= get_host_property($ho, 'XenDTUARTPath', undef);
+	$xenhopt .= " dtuart=$dtuart" if $dtuart;
+    } else {
+	mlog("No Xen console device defined for host");
+    }
     if (toolstack()->{Dom0MemFixed}) {
         $xenhopt .= " dom0_mem=512M,max:512M";
     }
@@ -145,7 +158,8 @@ sub setupboot () {
         };
     }
 
-    debian_boot_setup($ho, $xenhopt, \%distpath, \@hooks);
+    my $want_kernver = get_runvar('kernel_ver',$r{'kernbuildjob'});
+    debian_boot_setup($ho, $want_kernver, $xenhopt, \%distpath, \@hooks);
 
     logm("ready to boot Xen");
 }

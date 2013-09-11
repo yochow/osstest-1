@@ -52,6 +52,14 @@ sub checkout () {
 
     my $debug_build = $r{xen_build_debug} || 'y';
 
+    # Do not set this unless you know what you are doing. This arm
+    # option makes the build specific to a particular type of
+    # hardware.  This is only really useful in the standalone
+    # configuration and even then you are still responsible for
+    # ensuring that this build only gets run on hardware which
+    # supports the given early printk mechanism.
+    my $earlyprintk = get_host_property($ho, 'EarlyPrintk', undef);
+
     target_cmd_build($ho, 100, $builddir, <<END.
         cd $builddir/xen-unstable
 	>.config
@@ -70,6 +78,9 @@ END
 END
                (nonempty($r{revision_seabios}) ? <<END : '').
 	echo >>.config SEABIOS_UPSTREAM_TAG='$r{revision_seabios}'
+END
+               (nonempty($earlyprintk) ? <<END : '').
+	echo >>.config CONFIG_EARLY_PRINTK=$earlyprintk
 END
                (nonempty($r{tree_linux}) ? <<END : '').
 	echo >>.config export $linux_url_envvar='$r{tree_linux}'
@@ -168,7 +179,7 @@ sub divide () {
             if test -d install/lib/modules; then
                 mv install/lib/modules kerninstall/lib/.
             fi
-            if test -f kerninstall/boot/xen.gz; then
+            if test -f kerninstall/boot/xen.gz || test -f kerninstall/boot/xen; then
                 mkdir xeninstall/boot
                 mv kerninstall/boot/xen* xeninstall/boot/.
             fi

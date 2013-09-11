@@ -695,7 +695,7 @@ sub selecthost ($) {
 
     # Finally, we override any host-specific properties from the config
     foreach my $k (keys %c) {
-	next unless $k =~ m/^HostProp_([a-z0-9]+)_(.*)$/;
+	next unless $k =~ m/^HostProp_([-a-z0-9]+)_(.*)$/;
 	next unless $1 eq $name;
 	$setprop->($2, $c{$k});
     }
@@ -746,13 +746,25 @@ sub selecthost ($) {
 
 sub propname_massage ($) {
     # property names used to be in the form word-word-word
-    # and are moving to WordWordWord
+    # and are moving to WordWordWord.
+    #
+    # Some property names are "some-words other-words". Massage them
+    # into "some-words_other-words" and then into
+    # "SomeWords_OtherWords".
+
     my ($prop) = @_;
+    my $before = $prop;
 
     $prop = ucfirst $prop;
+
+    while ($prop =~ m/ /) {
+	$prop = $`."_".ucfirst $'; #';
+    }
+
     while ($prop =~ m/-/) {
 	$prop = $`.ucfirst $'; #';
     }
+
     return $prop;
 }
 
@@ -1540,7 +1552,7 @@ sub target_extract_jobdistpath ($$$$$) {
     my $local= $path;  $local =~ s/path_//;
     my $distcopy= "/root/extract_$local.tar.gz";
     target_putfile_root($ho, 300, $distpath->{$part}, $distcopy);
-    target_cmd_root($ho, "cd / && tar zxf $distcopy", 300);
+    target_cmd_root($ho, "cd / && tar -hzxf $distcopy", 300);
 }
 
 sub guest_find_domid ($$) {
