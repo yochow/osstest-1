@@ -54,7 +54,7 @@ END
     }
 }
 
-sub cmd_copy () {
+sub cmd_create_like () {
     die unless @ARGV==2;
     my ($src,$dsts) = @ARGV;
 
@@ -70,13 +70,6 @@ sub cmd_copy () {
                          AS owntaskid
                   FROM resources
                  WHERE restype='host' AND resname=?
-END
-            $dbh_tests->do(<<END,{}, $dst,$src);
-                INSERT INTO hostflags
-                SELECT ? AS hostname,
-                       hostflag
-                  FROM hostflags
-                 WHERE hostname=?
 END
         }
     });
@@ -405,6 +398,7 @@ END
 
 die unless @ARGV;
 my $subcmd= shift @ARGV;
+$subcmd =~ s/-/_/g;
 my $subcmdproc;
 {
     $subcmdproc= \&{ "cmd_$subcmd" };
