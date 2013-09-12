@@ -150,21 +150,28 @@ scsi scan
 fdt addr \\\${fdt_addr}
 fdt resize
 
-ext2load scsi 0 0x600000 \$xen
-setenv bootargs $xenhopt
+fdt set /chosen \\\#address-cells <1>
+fdt set /chosen \\\#size-cells <1>
+
+setenv xen_addr_r 0x01000000
+#   kernel_addr_r=0x02000000
+#  ramdisk_addr_r=0x04000000
+
+ext2load scsi 0 \\\${xen_addr_r} \$xen
+setenv bootargs "$xenhopt"
 
 ext2load scsi 0 \\\${kernel_addr_r} $kern
 fdt mknod /chosen module\@0
-fdt set /chosen/module\@0 compatible "xen,linux-zimage"
+fdt set /chosen/module\@0 compatible "xen,linux-zimage" "xen,multiboot-module"
 fdt set /chosen/module\@0 reg <\\\${kernel_addr_r} \\\${filesize}>
 fdt set /chosen/module\@0 bootargs "$xenkopt ro root=$root"
 
 ext2load scsi 0 \\\${ramdisk_addr_r} $initrd
 fdt mknod /chosen module\@1
-fdt set /chosen/module\@1 compatible "xen,linux-initrd"
+fdt set /chosen/module\@1 compatible "xen,linux-initrd" "xen,multiboot-module"
 fdt set /chosen/module\@1 reg < \\\${ramdisk_addr_r} \\\${filesize} >
 
-bootz 0x600000 - 0x1000
+bootz \\\${xen_addr_r} \\\${ramdisk_addr_r} \\\${fdt_addr_r}
 EOF
 mkimage -A arm -T script -d /boot/boot /boot/boot.scr
 END
