@@ -126,8 +126,11 @@ sub build () {
 END
     buildcmd_stamped_logged(300, 'configure', <<END,<<END,<<END);
             if test -f configure; then
+                if grep -q -- --enable-xend tools/configure ; then
+                    enable_xend=--enable-xend
+                fi
 END
-                ./configure --sysconfdir=/etc
+                ./configure --sysconfdir=/etc \$enable_xend
 END
             fi
 END
