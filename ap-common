@@ -40,10 +40,15 @@
 : ${PUSH_TREE_LINUX:=$XENBITS:/home/xen/git/linux-pvops.git}
 : ${BASE_TREE_LINUX:=git://xenbits.xen.org/linux-pvops.git}
 : ${BASE_TAG_LINUX:=tested/linux-3.4}
+: ${BASE_TAG_LINUX_ARM:=tested/linux-arm-xen}
 
 if [ "x${TREE_LINUX}" = x ]; then
 	: ${TREE_LINUX:=${BASE_TREE_LINUX}}
 	: ${DEFAULT_REVISION_LINUX:=${BASE_TAG_LINUX}}
+fi
+if [ "x${TREE_LINUX_ARM}" = x ]; then
+	: ${TREE_LINUX_ARM:=${BASE_TREE_LINUX}}
+	: ${DEFAULT_REVISION_LINUX_ARM:=${BASE_TAG_LINUX_ARM}}
 fi
 
 : ${TREE_LINUX2639:=${KERNEL_SCM}/konrad/xen.git}
@@ -66,6 +71,10 @@ info_linux_tree () {
 	linux-3.0)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
 		: ${TAG_LINUX_THIS:=linux-3.0.y}
+		;;
+	linux-arm-xen)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/sstabellini/xen.git}
+		: ${TAG_LINUX_THIS:=linux-arm-xen}
 		;;
 	linux-3.*)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}

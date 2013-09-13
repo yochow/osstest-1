@@ -29,8 +29,6 @@ flight=`./cs-flight-create $blessing $branch`
 . ap-common
 . cri-common
 
-: ${REVISION_LINUX:=${DEFAULT_REVISION_LINUX}}
-
 suite=`getconfig DebianSuite`
 
 xenrt_images=/usr/groups/images/autoinstall
@@ -46,6 +44,16 @@ if [ x$buildflight = x ]; then
       case "$xenbranch" in
       3.*|4.0|4.1|4.2) continue;;
       esac
+      pvops_kernel="
+	tree_linux=$TREE_LINUX_ARM
+	revision_linux=${REVISION_LINUX_ARM-${DEFAULT_REVISION_LINUX_ARM}}
+      "
+      ;;
+    *)
+      pvops_kernel="
+	tree_linux=$TREE_LINUX
+	revision_linux=${REVISION_LINUX-${DEFAULT_REVISION_LINUX}}
+      "
       ;;
     esac
 
@@ -73,9 +81,8 @@ if [ x$buildflight = x ]; then
 		host_hostflags=$build_hostflags    \
 		xen_kernels=linux-2.6-pvops				     \
 		revision_xen=$REVISION_XEN				     \
-		tree_linux=$TREE_LINUX					     \
+		$pvops_kernel						\
 		${TREEVCS_LINUX:+treevcs_linux=}${TREEVCS_LINUX}	\
-		revision_linux=$REVISION_LINUX				\
 		tree_linuxfirmware=$TREE_LINUXFIRMWARE			     \
 		revision_linuxfirmware=$REVISION_LINUXFIRMWARE
 
