@@ -218,6 +218,11 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 	;;
   esac
 
+  case "$xenbranch" in
+  3.*|4.1)	onetoolstack=xend ;;
+  *)		onetoolstack=xl ;;
+  esac
+
   for kern in ''; do
 
     case $kern in
@@ -344,7 +349,8 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
       done # qemuu_suffix
 
-      job_create_test test-$xenarch$kern-$dom0arch-pair test-pair xend \
+      job_create_test test-$xenarch$kern-$dom0arch-pair test-pair \
+		$onetoolstack \
                 !host !host_hostflags \
 		debian_kernkind=$kernkind				  \
 		debian_arch=$dom0arch   				  \
