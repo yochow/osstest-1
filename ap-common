@@ -42,7 +42,7 @@
 : ${BASE_TAG_LINUX:=tested/linux-3.4}
 
 if [ "x${TREE_LINUX}" = x ]; then
-	: ${TREE_LINUX:=${KERNEL_SCM}/stable/linux-stable.git}
+	: ${TREE_LINUX:=${BASE_TREE_LINUX}}
 	: ${DEFAULT_REVISION_LINUX:=${BASE_TAG_LINUX}}
 fi
 
