@@ -114,7 +114,7 @@ start_email () {
 publish_send_email () {
 	local flight=$1
 	exec >&2
-	./cr-publish-flight-logs $flight
+	./cr-publish-flight-logs --push-harness $flight
 	send_email tmp/$flight.email
 }
 

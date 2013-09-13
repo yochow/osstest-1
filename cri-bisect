@@ -110,7 +110,7 @@ END
         if $flight_executed; then
                 echo >&3 ----------------------------------------
                 ./sg-report-flight >&3 $flight
-                ./cr-publish-flight-logs $flight
+                ./cr-publish-flight-logs --push-harness $flight
         fi
         exec 3>&-
         send_email tmp/$flight.email

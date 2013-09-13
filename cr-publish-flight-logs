@@ -25,6 +25,12 @@ our %c;
 
 readglobalconfig();
 
+my $push_harness = 0;
+if (@ARGV && $ARGV[0] eq '--push-harness') {
+    shift @ARGV;
+    $push_harness = 1;
+}
+
 die "usage: ./cr-publish-flight-logs <flight>" unless @ARGV==1;
 
 my $flight= shift @ARGV;
@@ -33,11 +39,13 @@ die unless $flight =~ m/^\d+$/;
 open LOCK, "> $c{GlobalLockDir}/publish-lock" or die $!;
 flock LOCK, LOCK_EX or die $!;
 
-my $githost= $c{HarnessPublishGitUserHost};
-my $gitdir= $c{HarnessPublishGitRepoDir};
+if ($push_harness) {
+    my $githost= $c{HarnessPublishGitUserHost};
+    my $gitdir= $c{HarnessPublishGitRepoDir};
 
-system_checked("git-push $githost:$gitdir HEAD:flight-$flight");
-system_checked("ssh $githost 'cd $gitdir && git update-server-info'");
+    system_checked("git-push $githost:$gitdir HEAD:flight-$flight");
+    system_checked("ssh $githost 'cd $gitdir && git update-server-info'");
+}
 
 sub copydir ($$) {
     my ($src,$dst) = @_;
