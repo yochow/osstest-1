@@ -47,7 +47,7 @@ select_xenbranch () {
 	if [ "x$tree" = xlinux ]; then
 		linuxbranch=$branch
 	else
-		linuxbranch=linux
+		linuxbranch=''
 	fi
 }
 
