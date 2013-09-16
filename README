@@ -5,6 +5,8 @@ To run osstest in standalone mode:
      tcl8.4 tclx8.4 libsqlite3-tcl
      libdbi-perl libdbd-sqlite3-perl
      pax rsync
+     curl
+     netcat
 
  - Optional: ipmitool
 
