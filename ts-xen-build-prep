@@ -31,10 +31,23 @@ exit 0 if $ho->{SharedReady};
 our ($vg);
 
 our $pe_size;
+our $extended_pes = 0;
 
 sub gb2pe ($) {
     my ($gb) = @_;
     return $gb *1024.0*1024.0 / $pe_size;
+}
+
+sub overall_limit_pe ($) {
+    my ($pevar) = @_;
+    my $overall_limit = $r{build_lvextend_max};
+    return unless defined $overall_limit && $overall_limit =~ m/^\d/;
+    my $allow = floor(gb2pe($overall_limit)) - $extended_pes;
+    if ($$pevar > $allow) {
+	logm("applying overall lvextend limit ${overall_limit}G");
+	$$pevar = $allow;
+    }
+    $extended_pes += $$pevar;
 }
 
 sub lvextend_stage1 () {
@@ -120,6 +133,7 @@ sub lvextend1 ($$$) {
 
     my $stripes_free = $stripe_count * $stripe_minfree;
     $do_limit_pe->(\$stripes_free, 'striped');
+    overall_limit_pe(\$stripes_free);
     if ($stripe_minfree && $stripe_count>1) {
         $more_pe += $stripes_free;
         target_cmd_root($ho, "lvextend -i$stripe_count -l +$stripes_free $lv");
