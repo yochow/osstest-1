@@ -32,6 +32,11 @@ our ($vg);
 
 our $pe_size;
 
+sub gb2pe ($) {
+    my ($gb) = @_;
+    return $gb *1024.0*1024.0 / $pe_size;
+}
+
 sub lvextend_stage1 () {
     $vg=
         $ho->{Suite} =~ m/lenny/
@@ -71,7 +76,7 @@ sub lvextend1 ($$$) {
 
     my $do_limit_pe = sub { };
     if (defined $max_more_gb) {
-	my $max_more_pe = floor($max_more_gb *1024.0*1024.0 / $pe_size);
+	my $max_more_pe = floor(gb2pe($max_more_gb));
 	$do_limit_pe = sub {
 	    my ($pevar, $twhat) = @_;
 	    logm("$what: $twhat: limit ${max_more_gb}G,".
