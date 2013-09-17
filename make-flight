@@ -46,13 +46,13 @@ if [ x$buildflight = x ]; then
       esac
       pvops_kernel="
 	tree_linux=$TREE_LINUX_ARM
-	revision_linux=${REVISION_LINUX_ARM-${DEFAULT_REVISION_LINUX_ARM}}
+	revision_linux=${REVISION_LINUX_ARM:-${DEFAULT_REVISION_LINUX_ARM}}
       "
       ;;
     *)
       pvops_kernel="
 	tree_linux=$TREE_LINUX
-	revision_linux=${REVISION_LINUX-${DEFAULT_REVISION_LINUX}}
+	revision_linux=${REVISION_LINUX:-${DEFAULT_REVISION_LINUX}}
       "
       ;;
     esac

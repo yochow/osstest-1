@@ -116,11 +116,11 @@ if [ "x$REVISION_QEMU_UPSTREAM" = x ]; then
         export REVISION_QEMU_UPSTREAM
 fi
 if [ "x$REVISION_LINUX" = x ]; then
-	determine_version REVISION_LINUX ${linuxbranch-linux} LINUX
+	determine_version REVISION_LINUX ${linuxbranch:-linux} LINUX
         export REVISION_LINUX
 fi
 if [ "x$REVISION_LINUX_ARM" = x ]; then
-	determine_version REVISION_LINUX_ARM ${linuxbranch-linux-arm-xen} \
+	determine_version REVISION_LINUX_ARM ${linuxbranch:-linux-arm-xen} \
 		LINUX_ARM
         export REVISION_LINUX_ARM
 fi
