@@ -133,8 +133,8 @@ sub lvextend1 ($$$) {
 
     my $stripes_free = $stripe_count * $stripe_minfree;
     $do_limit_pe->(\$stripes_free, 'striped');
-    overall_limit_pe(\$stripes_free);
     if ($stripe_minfree && $stripe_count>1) {
+        overall_limit_pe(\$stripes_free);
         $more_pe += $stripes_free;
         target_cmd_root($ho, "lvextend -i$stripe_count -l +$stripes_free $lv");
     }
@@ -146,6 +146,7 @@ sub lvextend1 ($$$) {
 
     if ($vg_more_free_pe) {
         logm("$what: unstriped $vg_more_free_pe PEs");
+        overall_limit_pe(\$vg_more_free_pe);
         $more_pe += $vg_more_free_pe;
         target_cmd_root($ho, "lvextend -i1 -l +$vg_more_free_pe $lv");
     }
