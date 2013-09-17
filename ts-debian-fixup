@@ -163,23 +163,6 @@ sub writecfg () {
     target_putfile_root($ho,10, $cfgstash, $cfgfile);
 }
 
-sub xlcfg () {
-    my $cfg_xend= target_var($gho,'cfgpath');
-    my $cfg_xl= "/etc/xen/$gho->{Name}.xl";
-    store_runvar("$gho->{Guest}_xlpath", $cfg_xl);
-    target_editfile_root($ho, $cfg_xend, undef, $cfg_xl, sub {
-        local ($/)= undef;
-        $_= <EI>;
-        s/^ [ \t]* memory [ \t]* \= [ \t]* ['"] (.+) ['"] [ \t]*
-          $/memory=$1/mx;
-        s/([[,])\s*\n/$1/g;
-        s/,\s*\]/\]/g;
-        s/([^#\n].*)\n/$1;\n/mg;
-        s/\n\n+/\n/g;
-        print EO or die $!;
-    });
-}
-
 savecfg();
 ether();
 target_kernkind_check($gho);
@@ -188,5 +171,4 @@ console();
 filesystems();
 otherfixupcfg();
 writecfg();
-xlcfg();
 unmount();
