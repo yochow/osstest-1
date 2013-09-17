@@ -30,6 +30,8 @@ exit 0 if $ho->{SharedReady};
 
 our ($vg);
 
+our $pe_size;
+
 sub lvextend_stage1 () {
     $vg=
         $ho->{Suite} =~ m/lenny/
@@ -65,7 +67,7 @@ sub lvextend1 ($$$) {
     my $lv= "/dev/$vg/root";
 
     my @vginfo = vginfo();
-    my $pe_size= $vginfo[12];
+    $pe_size= $vginfo[12];
 
     my $do_limit_pe = sub { };
     if (defined $max_more_gb) {
