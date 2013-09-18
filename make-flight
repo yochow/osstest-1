@@ -29,7 +29,7 @@ flight=`./cs-flight-create $blessing $branch`
 . ap-common
 . cri-common
 
-suite=`getconfig DebianSuite`
+defsuite=`getconfig DebianSuite`
 
 xenrt_images=/usr/groups/images/autoinstall
 
@@ -57,11 +57,16 @@ if [ x$buildflight = x ]; then
       ;;
     esac
 
+    case "$arch" in
+    armhf) suite="wheezy";;
+    *)     suite=$defsuite;;
+    esac
+
     eval "
 	arch_runvars=\"\$ARCH_RUNVARS_$arch\"
     "
 
-    build_hostflags=share-build-$suite-$arch,arch-$arch,purpose-build
+    build_hostflags=share-build-$suite-$arch,arch-$arch,suite-$suite,purpose-build
 
     ./cs-job-create $flight build-$arch build				     \
 		arch=$arch						     \
@@ -225,6 +230,11 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 	;;
   esac
 
+  case "$xenarch" in
+  armhf) suite="wheezy";;
+  *)     suite=$defsuite;;
+  esac
+
   case "$xenbranch" in
   3.*|4.1)	onetoolstack=xend ;;
   *)		onetoolstack=xl ;;
@@ -261,7 +271,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
       if [ x$kern = x-xcpkern -a $dom0arch != i386 ]; then continue; fi
 
-      most_hostflags="arch-$dom0arch,arch-xen-$xenarch,purpose-test"
+      most_hostflags="arch-$dom0arch,arch-xen-$xenarch,suite-$suite,purpose-test"
 
       most_runvars="
 		arch=$dom0arch			        	\
