@@ -159,19 +159,25 @@ setenv xen_addr_r 0x01000000
 
 ext2load scsi 0 \\\${xen_addr_r} \$xen
 setenv bootargs "$xenhopt"
+echo Loaded \$xen to \\\${xen_addr_r} (\\\${filesize})
+echo command line: $xenhopt
 
 ext2load scsi 0 \\\${kernel_addr_r} $kern
 fdt mknod /chosen module\@0
 fdt set /chosen/module\@0 compatible "xen,linux-zimage" "xen,multiboot-module"
 fdt set /chosen/module\@0 reg <\\\${kernel_addr_r} \\\${filesize}>
 fdt set /chosen/module\@0 bootargs "$xenkopt ro root=$root"
+echo Loaded $kern to \\\${kernel_addr_r} (\\\${filesize})
+echo command line: $xenkopt ro root=$root
 
 ext2load scsi 0 \\\${ramdisk_addr_r} $initrd
 fdt mknod /chosen module\@1
 fdt set /chosen/module\@1 compatible "xen,linux-initrd" "xen,multiboot-module"
-fdt set /chosen/module\@1 reg < \\\${ramdisk_addr_r} \\\${filesize} >
+fdt set /chosen/module\@1 reg <\\\${ramdisk_addr_r} \\\${filesize}>
+echo Loaded $initrd to \\\${ramdisk_addr_r} (\\\${filesize})
 
-bootz \\\${xen_addr_r} \\\${ramdisk_addr_r} \\\${fdt_addr_r}
+echo Booting \\\${xen_addr_r} - \\\${fdt_addr}
+bootz \\\${xen_addr_r} - \\\${fdt_addr}
 EOF
 mkimage -A arm -T script -d /boot/boot /boot/boot.scr
 END
