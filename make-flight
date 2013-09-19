@@ -66,6 +66,12 @@ if [ x$buildflight = x ]; then
     *)     suite=$defsuite;;
     esac
 
+    if [ $suite != $defsuite ] ; then
+        suite_runvars="host_suite=$suite"
+    else
+        suite_runvars=
+    fi
+
     eval "
 	arch_runvars=\"\$ARCH_RUNVARS_$arch\"
     "
@@ -78,6 +84,7 @@ if [ x$buildflight = x ]; then
 	tree_qemuu=$TREE_QEMU_UPSTREAM	     \
 	tree_xen=$TREE_XEN		     \
 		$RUNVARS $BUILD_RUNVARS $BUILD_XEN_RUNVARS $arch_runvars     \
+		$suite_runvars                                               \
 		host_hostflags=$build_hostflags    \
 		revision_xen=$REVISION_XEN				     \
 		revision_qemu=$REVISION_QEMU				     \
@@ -87,6 +94,7 @@ if [ x$buildflight = x ]; then
 		arch=$arch kconfighow=xen-enable-xen-config		     \
 	tree_xen=$TREE_XEN		     \
 		$RUNVARS $BUILD_RUNVARS $BUILD_LINUX_RUNVARS $arch_runvars   \
+		$suite_runvars                                               \
 		host_hostflags=$build_hostflags    \
 		xen_kernels=linux-2.6-pvops				     \
 		revision_xen=$REVISION_XEN				     \
@@ -107,7 +115,7 @@ if [ x$buildflight = x ]; then
 	tree_qemuu=$TREE_QEMU_UPSTREAM	     \
 	tree_xen=$TREE_XEN		\
 		$RUNVARS $BUILD_RUNVARS $BUILD_LINUX_OLD_RUNVARS	\
-		$arch_runvars						\
+		$arch_runvars $suite_runvars				\
 		host_hostflags=$build_hostflags \
 		xen_kernels=linux-2.6-xen				\
 		revision_xen=$REVISION_XEN				\
@@ -123,7 +131,7 @@ if [ x$buildflight = x ]; then
 
       ./cs-job-create $flight build-$arch-xcpkern build-kern		      \
 		$RUNVARS $BUILD_RUNVARS $BUILD_LINUX_XCP_RUNVARS	      \
-		$arch_runvars						      \
+		$arch_runvars $suite_runvars				      \
 		arch=$arch						\
 	kconfighow=intree-buildconfigs kimagefile=arch/x86/boot/vmlinuz \
 		host_hostflags=$build_hostflags     \
@@ -239,6 +247,12 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
   *)     suite=$defsuite;;
   esac
 
+  if [ $suite != $defsuite ] ; then
+      suite_runvars="host_suite=$suite"
+  else
+      suite_runvars=
+  fi
+
   case "$xenbranch" in
   3.*|4.1)	onetoolstack=xend ;;
   *)		onetoolstack=xl ;;
@@ -283,7 +297,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 		kernbuildjob=${bfi}build-$dom0arch-$kernbuild 	\
 		buildjob=${bfi}build-$dom0arch	        	\
 		kernkind=$kernkind		        	\
-		$arch_runvars
+		$arch_runvars $suite_runvars
 		"
       if [ $dom0arch = armhf ]; then
 	  job_create_test test-$xenarch$kern-$dom0arch-xl test-debian xl \
