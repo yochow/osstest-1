@@ -35,6 +35,10 @@ xenrt_images=/usr/groups/images/autoinstall
 
 if [ x$buildflight = x ]; then
 
+  if [ "x$BUILD_LVEXTEND_MAX" != x ]; then
+     BUILD_RUNVARS+=" build_lvextend_max=$BUILD_LVEXTEND_MAX "
+  fi
+
   for arch in ${BUILD_ARCHES- i386 amd64 armhf }; do
 
     if [ "x$arch" = xdisable ]; then continue; fi

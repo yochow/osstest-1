@@ -150,6 +150,9 @@ else
 END
 fi
 
+: ${BUILD_LVEXTEND_MAX:=50}
+export BUILD_LVEXTEND_MAX
+
 OSSTEST_FLIGHT=$flight \
 ./make-flight "$branch" "$xenbranch" play $buildflight >/dev/null
 
