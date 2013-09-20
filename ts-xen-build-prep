@@ -181,6 +181,10 @@ sub prep () {
 mq=
 END
     }
+
+    if ($r{arch} eq 'amd64' && $ho->{Suite} =~ m/wheezy/) {
+        target_install_packages($ho, 'libc6-dev-i386');
+    }
 }
 
 sub cacheing_git_mount () {
