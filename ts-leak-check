@@ -195,3 +195,4 @@ process .* udevd
 
 file /var/run/xenstored/db
 file /var/run/xenstored/db.debug
+file /tmp/xm-deprecation-long-warning
