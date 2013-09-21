@@ -72,6 +72,11 @@ if [ x$buildflight = x ]; then
         suite_runvars=
     fi
 
+    case "$arch" in
+    i386|amd64) enable_xend=true;;
+    *) enable_xend=false;;
+    esac
+
     eval "
 	arch_runvars=\"\$ARCH_RUNVARS_$arch\"
     "
@@ -79,7 +84,7 @@ if [ x$buildflight = x ]; then
     build_hostflags=share-build-$suite-$arch,arch-$arch,suite-$suite,purpose-build
 
     ./cs-job-create $flight build-$arch build				     \
-		arch=$arch						     \
+		arch=$arch enable_xend=$enable_xend						     \
 	tree_qemu=$TREE_QEMU	     \
 	tree_qemuu=$TREE_QEMU_UPSTREAM	     \
 	tree_xen=$TREE_XEN		     \

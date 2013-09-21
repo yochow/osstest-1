@@ -124,13 +124,15 @@ sub build () {
                 print "setopt CONFIG_DEBUG_INFO y\\n" or die \$!;
         ' buildconfigs/enable-xen-config
 END
+    my $xend_opt= $r{enable_xend} =~ m/true/ ? "--enable-xend" : "--disable-xend";
+
     buildcmd_stamped_logged(300, 'configure', <<END,<<END,<<END);
             if test -f configure; then
-                if grep -q -- --enable-xend tools/configure ; then
-                    enable_xend=--enable-xend
+                if grep -q -- $xend_opt tools/configure ; then
+		    xend=$xend_opt
                 fi
 END
-                ./configure --sysconfdir=/etc \$enable_xend
+                ./configure --sysconfdir=/etc \$xend
 END
             fi
 END
