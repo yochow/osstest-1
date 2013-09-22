@@ -74,6 +74,8 @@ TftpPxeTemplates %ipaddrhex%/pxelinux.cfg
 TftpPxeGroup osstest
 TftpDiVersion 2012-01-30-squeeze
 
+XenUsePath /usr/groups/xencore/systems/bin/xenuse
+
 # We use the IP address because Citrix can't manage reliable nameservice
 #DebianMirrorHost debian.uk.xensource.com
 DebianMirrorHost 10.80.16.196

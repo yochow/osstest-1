@@ -43,8 +43,9 @@ sub new {
 sub pdu_power_state {
     my ($mo, $on) = @_;
     my $onoff= $on ? "on" : "off";
+    my $xenuse= $c{XenUsePath} || "xenuse";
 
-    system_checked("xenuse", "--$onoff", "$mo->{Host}{Name}");
+    system_checked($xenuse, "--$onoff", "$mo->{Host}{Name}");
 }
 
 1;
