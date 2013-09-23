@@ -122,7 +122,7 @@ END
 sub setup_pxeboot_firstboot($) {
     my ($ps_url) = @_;
     
-    my $d_i= $c{TftpDiBase}.'/'.$r{arch}.'/'.$c{TftpDiVersion};
+    my $d_i= $c{TftpDiBase}.'/'.$r{arch}.'/'.$c{TftpDiVersion}.'-'.$ho->{Suite};
     
     my @installcmdline= qw(vga=normal);
     push @installcmdline, di_installcmdline_core($ho, $ps_url, %xopts);
