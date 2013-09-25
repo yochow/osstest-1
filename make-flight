@@ -46,7 +46,10 @@ if [ x$buildflight = x ]; then
     case "$arch" in
     armhf)
       case "$xenbranch" in
-      3.*|4.0|4.1|4.2) continue;;
+      xen-3.*-testing) continue;;
+      xen-4.0-testing) continue;;
+      xen-4.1-testing) continue;;
+      xen-4.2-testing) continue;;
       esac
       pvops_kernel="
 	tree_linux=$TREE_LINUX_ARM
@@ -259,8 +262,10 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
   fi
 
   case "$xenbranch" in
-  3.*|4.1)	onetoolstack=xend ;;
-  *)		onetoolstack=xl ;;
+  xen-3.*-testing)	onetoolstack=xend ;;
+  xen-4.0-testing)	onetoolstack=xend ;;
+  xen-4.1-testing)	onetoolstack=xend ;;
+  *)			onetoolstack=xl ;;
   esac
 
   for kern in ''; do
@@ -332,7 +337,9 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
                 ;;
           -qemuu)
                 case $xenbranch in
-                3.4|4.0|4.1)    continue ;;
+                xen-3.*-testing) continue;;
+                xen-4.0-testing) continue;;
+                xen-4.1-testing) continue;;
                 esac
                 qemuu_runvar=device_model_version=qemu-xen
                 ;;
