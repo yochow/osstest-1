@@ -497,10 +497,12 @@ sub target_editfile_root ($$$;$$) {
 
 sub target_cmd_build ($$$$) {
     my ($ho,$timeout,$builddir,$script) = @_;
+    my $cacheing_git;
+    $cacheing_git = ":\$HOME/bin" if $ho->{Flags}{'no-reinstall'};
     target_cmd($ho, <<END.$script, $timeout);
 	set -xe
         LC_ALL=C; export LC_ALL
-        PATH=/usr/lib/ccache:\$PATH:/usr/lib/git-core
+        PATH=/usr/lib/ccache$cacheing_git:\$PATH:/usr/lib/git-core
         exec </dev/null
         cd $builddir
 END
