@@ -45,6 +45,11 @@ if [ x$buildflight = x ]; then
 
     case "$arch" in
     armhf)
+      case "$branch" in
+      linux-arm-xen) ;;
+      linux-*) continue;;
+      qemu-*) continue;;
+      esac
       case "$xenbranch" in
       xen-3.*-testing) continue;;
       xen-4.0-testing) continue;;
@@ -57,6 +62,9 @@ if [ x$buildflight = x ]; then
       "
       ;;
     *)
+      case "$branch" in
+      linux-arm-xen) continue;;
+      esac
       pvops_kernel="
 	tree_linux=$TREE_LINUX
 	revision_linux=${REVISION_LINUX:-${DEFAULT_REVISION_LINUX}}
@@ -237,6 +245,11 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 	xen-4.2-testing) continue;;
 	*) ;;
 	esac
+	case "$branch" in
+	linux-arm-xen) ;;
+	linux-*) continue;;
+	qemu-*) continue;;
+	esac
 	;;
   i386)
 	# 32-bit Xen is dropped from 4.3 onwards
@@ -247,7 +260,14 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 	xen-4.2-testing) ;;
 	*) continue ;;
 	esac
+	case "$branch" in
+	linux-arm-xen) continue;;
+	esac
 	;;
+  amd64)
+	case "$branch" in
+	linux-arm-xen) continue;;
+	esac
   esac
 
   case "$xenarch" in
