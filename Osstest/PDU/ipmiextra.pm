@@ -35,9 +35,10 @@ BEGIN {
 }
 
 sub new {
-    my ($class, $ho, $methname, $when, $user, $pass, @opts) = @_;
+    my ($class, $ho, $methname, $when, $mgmt, $user, $pass, @opts) = @_;
     return bless { Host => $ho,
 		   When => $when,
+		   Mgmt => $mgmt,
 		   User => $user,
 		   Pass => $pass,
 		   Opts => \@opts }, $class;
@@ -48,7 +49,7 @@ sub pdu_power_state {
     my $onoff= $on ? "on" : "off";
 
     system_checked("ipmitool",
-		   "-H", "$mo->{Host}{Name}-mgmt",
+		   "-H", "$mo->{Mgmt}",
 		   "-U", $mo->{User},
 		   "-P", $mo->{Pass},
 		   @{$mo->{Opts}})

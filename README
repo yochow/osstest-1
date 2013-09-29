@@ -6,6 +6,8 @@ To run osstest in standalone mode:
      libdbi-perl libdbd-sqlite3-perl
      pax rsync
 
+ - Optional: ipmitool
+
  - Write a config file
     ~/.xen-osstest/config
    See below.
