@@ -91,7 +91,7 @@ sub adjustconfig () {
 	    }
 	}
 	print EO $extra or die $!;
-    });
+    }) if toolstack()->{Name} eq "xend";
 
     my $trace_config_file;
     foreach my $try (qw(/etc/default/xencommons
