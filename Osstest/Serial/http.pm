@@ -24,7 +24,8 @@ use warnings;
 use Osstest;
 use Osstest::TestSupport;
 
-use File::Temp;
+use File::Path qw / rmtree /;
+use File::Temp qw / mkdtemp /;
 use File::Copy;
 
 BEGIN {
@@ -64,8 +65,7 @@ sub fetch_logs {
 
     logm("serial http from $mo->{Name} fetching $mo->{Pattern} from $mo->{Server}");
 
-    my $dir = File::Temp->newdir();
-    my $tdir = $dir->dirname;
+    my $tdir = mkdtemp("osstest.log.XXXXX") or die $!;
 
     my $lrf = "$tdir/log-retrieval.log";
 
@@ -93,7 +93,7 @@ sub fetch_logs {
         $df =~ s,.*/,,;
 	if ($lfage < $started) {
 	    next if $done{$inum};
-	    logm("$df modified $lfage, skipping")
+	    logm("$df modified $lfage ($started), skipping")
 		unless $done{$inum};
 	    $done{$inum}= 1;
 	    next;
@@ -107,8 +107,9 @@ sub fetch_logs {
         my $dh= open_unique_stashfile(\$df);
         File::Copy::copy($logfile, $dh);
     }
-    return;
 
+    rmtree($tdir);
+    return;
 }
 
 1;
