@@ -63,6 +63,7 @@ BEGIN {
 
                       selecthost get_hostflags get_host_property
                       power_state power_cycle power_cycle_time
+                      serial_fetch_logs
                       propname_massage
          
                       get_stashed open_unique_stashfile
@@ -620,6 +621,26 @@ sub guest_check_ip ($) {
     $gho->{DhcpWatch}->check_ip($gho);
 }
 
+#-------------- serial -------------
+
+sub serial_host_setup ($) {
+    my ($ho) = @_;
+    my $methobjs = [ ];
+    my $serialmeth = get_host_property($ho,'serial','noop');
+    foreach my $meth (split /\;\s*/, $serialmeth) {
+	push @$methobjs, get_host_method_object($ho,'Serial',$meth);
+    }
+    $ho->{SerialMethobjs} = $methobjs;
+}
+
+sub serial_fetch_logs ($) {
+    my ($ho) = @_;
+    logm("serial: collecting logs for $ho->{Name}");
+    foreach my $mo (@{ $ho->{SerialMethobjs} }) {
+	$mo->fetch_logs();
+    }
+}
+
 #---------- power cycling ----------
 
 sub power_cycle_host_setup ($) {
@@ -721,9 +742,7 @@ sub selecthost ($) {
 
     dhcp_watch_setup($ho,$ho);
     power_cycle_host_setup($ho);
-
-    my $serialmeth = get_host_property($ho,'serial','noop');
-    $ho->{SerialMethobj} = get_host_method_object($ho,'Serial',$serialmeth);
+    serial_host_setup($ho);
 
     $ho->{IpStatic} = get_host_property($ho,'ip-addr');
     if (!defined $ho->{IpStatic}) {

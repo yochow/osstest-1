@@ -211,6 +211,6 @@ sub fetch_logs_guest ($) {
     }
 }
 
-$ho->{SerialMethobj}->fetch_logs();
+serial_fetch_logs($ho);
 fetch_logs_host_guests();
 logm("logs captured to $stash");
