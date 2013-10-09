@@ -543,6 +543,8 @@ mkdir /target\$h/.ssh
 cp .ssh/authorized_keys /target\$h/.ssh
 chroot /target chown -R \$u.\$u \$h/.ssh
 
+echo FANCYTTY=0 >> /target/etc/lsb-base-logging.sh
+
 $overlays
 
 echo latecmd done.
