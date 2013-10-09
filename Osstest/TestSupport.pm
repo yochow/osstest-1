@@ -497,7 +497,7 @@ sub target_editfile_root ($$$;$$) {
 
 sub target_cmd_build ($$$$) {
     my ($ho,$timeout,$builddir,$script) = @_;
-    my $cacheing_git;
+    my $cacheing_git = "";
     $cacheing_git = ":\$HOME/bin" if $ho->{Flags}{'no-reinstall'};
     target_cmd($ho, <<END.$script, $timeout);
 	set -xe
