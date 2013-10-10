@@ -101,7 +101,8 @@ sub jobdb_check_other_job { } #method
 
 sub jobdb_flight_started_for_log_capture ($$) { #method
     my ($mo, $flight) = @_;
-    return time - 1; # just the most recent serial log then
+    return time - 60*60; # just the most recent serial log then,
+                         # modified in the last hour
 }
 
 sub jobdb_enable_log_capture ($) { #method
