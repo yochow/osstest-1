@@ -635,7 +635,19 @@ sub serial_host_setup ($) {
 
 sub serial_fetch_logs ($) {
     my ($ho) = @_;
+
+    logm("serial: requesting debug information from $ho->{Name}");
+
+    foreach my $mo (@{ $ho->{SerialMethobjs} }) {
+	$mo->request_debug("\x18\x18\x18",
+			   "0HMQacdegimnrstuvz",
+			   "q") or next;
+	# use the first method which supports ->request_debug.
+	last;
+    }
+
     logm("serial: collecting logs for $ho->{Name}");
+
     foreach my $mo (@{ $ho->{SerialMethobjs} }) {
 	$mo->fetch_logs();
     }

@@ -57,21 +57,15 @@ sub new {
     return bless $mo, $class;
 }
 
-sub fetch_logs {
-    my ($mo) = @_;
+sub request_debug {
+    my ($mo,$conswitch,$xenkeys,$guestkeys) = @_;
 
-    my $started= $mjobdb->jobdb_flight_started_for_log_capture($flight);
-
-    my $ho = $mo->{Host};
-    my $logpat = $mo->{Pattern};
     my $targhost= $mo->{Server};
-
-    logm("requesting debug information");
 
     my ($sshopts) = sshopts();
     my $sympwrite= sub {
         my ($what,$str,$pause) = @_;
-        logm("sending $what");
+        logm("sympathy sending $what");
         if (!eval {
             local ($SIG{'PIPE'}) = 'IGNORE';
             my $sock= $mo->{Socket};
@@ -89,18 +83,32 @@ sub fetch_logs {
         }
         return 1;
     };
+
     my $debugkeys= sub {
-        my ($what, $keys) = @_;
-        foreach my $k (split //, $keys) {
-            $sympwrite->("$what debug info request, debug key $k", $k, 2);
-        }
+	my ($what, $keys) = @_;
+	foreach my $k (split //, $keys) {
+	    $sympwrite->("$what debug info request, debug key $k", $k, 2);
+	}
     };
-    $sympwrite->('request for input to Xen',"\x18\x18\x18",1);
-    $debugkeys->('Xen',"0HMQacdegimnrstuvz");
+
+    $sympwrite->('request for input to Xen', $conswitch, 1);
+    $debugkeys->('Xen', $xenkeys);
     sleep(10);
-    $debugkeys->('guest',"q");
+    $debugkeys->('guest', $guestkeys);
     sleep(10);
-    $sympwrite->("RET to dom0","\x18\x18\x18\r", 5);
+    $sympwrite->("RET to dom0","$conswitch\r", 5);
+
+    return 1;
+}
+
+sub fetch_logs {
+    my ($mo) = @_;
+
+    my $started= $mjobdb->jobdb_flight_started_for_log_capture($flight);
+
+    my $ho = $mo->{Host};
+    my $logpat = $mo->{Pattern};
+    my $targhost= $mo->{Server};
 
     logm("collecting serial logs since $started from $targhost");
 

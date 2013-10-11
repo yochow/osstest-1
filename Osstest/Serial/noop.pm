@@ -39,6 +39,10 @@ sub new {
     return bless { }, $class;
 }
 
+sub request_debug {
+    return 0;
+}
+
 sub fetch_logs {
     my ($mo) = @_;
     logm("serial access method \`noop',".
