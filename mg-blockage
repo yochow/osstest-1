@@ -1,0 +1,111 @@
+#!/usr/bin/perl -w
+#
+# usage: ./mg-blockage <date-from> <date-to> <hostflag> [<extra-xinfo>]
+
+use strict qw(vars refs);
+use DBI;
+use Data::Dumper;
+use Osstest;
+use Osstest::TestSupport;
+use Osstest::Executive;
+
+csreadconfig();
+
+die unless @ARGV==3 || @ARGV==4;
+die if $ARGV[0] =~ m/^=/;
+
+our ($start,$end,$hostflag,$mxinfo) = @ARGV;
+
+sub parsedate ($) {
+    open D, "-|", qw(date +%s -d), @_ or die $!;
+    my $r = <D>;
+    chomp $r or die;
+    system qw(date -d), "\@$r";
+    return $r;
+}
+
+my $whoami = `whoami`; chomp $whoami;
+my $hostname = `uname -n`; chomp $hostname;
+my $xinfo = "blockage $whoami\@$hostname [$start .. $end]";
+$xinfo .= " $mxinfo" if defined $mxinfo;
+
+$start = parsedate $start;
+$end   = parsedate $end;
+print $xinfo, "\n" or die $!;
+
+die unless $end > $start;
+
+sub min { (sort @_)[0]; }
+sub max { (reverse sort @_)[0]; }
+
+sub plan () {
+    alloc_resources(sub {
+	my ($plan) = @_;
+
+	my $now = time;
+	if ($now > $end) { return (1, { Bookings => [ ] }); }
+
+        my @bookings;
+ 
+	my $resq = $dbh_tests->prepare(<<END);
+	    SELECT * FROM resources r
+		    WHERE ( restype = 'host' )
+		      AND EXISTS ( SELECT * FROM hostflags f
+					   WHERE f.hostname = r.resname
+					     AND f.hostflag = ? )
+END
+
+	$resq->execute($hostflag);
+	our $resources = $resq->fetchall_arrayref({ });
+	$resq->finish;
+
+	foreach my $res (@$resources) {
+	    my $host = $res->{resname};
+	    my $events = $plan->{Events}{"host $host"};
+
+	    my $avail = 1;
+
+	    my $book = sub {
+		my ($bookstart,$bookend,$eshare) = @_;
+		$bookstart = max($bookstart,$now);
+		$bookend   = max($bookend,  $now);
+		return unless $bookstart < $bookend;
+		foreach (my $ix=0; $ix<$avail; $ix++) {
+		    my $booking =  {
+			Reso => $res->{restype}.' '.$res->{resname},
+			Xinfo => $xinfo,
+			Start => $bookstart - $now,
+			End => $bookend - $now,
+		    };
+		    if ($eshare) {
+			$booking->{Share} = {
+			    Type => $eshare->{Type},
+			    Shares => $eshare->{Shares},
+			};
+		    }
+		    push @bookings, $booking;
+		}
+	    };
+
+	    my $periodstart = 1;
+	    foreach my $ev (@$events) {
+		my $periodend = $ev->{Time} + $now;
+		$book->(max($periodstart,$start),
+			min($periodend,  $end),
+		        $ev->{Share});
+		$avail = $ev->{Avail};
+		$periodstart = $periodend;
+	    }
+	    $book->(max($periodstart,$start),
+		    $end,
+		    undef);
+	}
+	print STDERR Dumper(\@bookings);
+
+	return (0, { Bookings => \@bookings });
+    });
+}
+
+$ENV{OSSTEST_RESOURCE_PRIORITY}= -2000000;
+
+plan();
