@@ -218,6 +218,17 @@ END
     });
 }
 
+sub cmd_manual_task_create () {
+    @ARGV==1 or die "bad usage\n";
+    my $refkey = shift @ARGV;
+    $refkey =~ m/^\w+/ or die "bad task refkey\n";
+    my $q = $dbh_tests->prepare(<<END);
+        INSERT INTO tasks (type,    refkey,username,comment, live,refinfo)
+                   VALUES ('static',?,     ?,       'manual','t', '')
+END
+    db_retry($dbh_tests,[qw(resources)], sub { $q->execute($refkey,$refkey); });
+}
+
 sub cmd_previoustasks () {
     my $doclear = (@ARGV==0 ? 0 :
 		   @ARGV==1 && $ARGV[0] eq '--clear' ? 1 :
