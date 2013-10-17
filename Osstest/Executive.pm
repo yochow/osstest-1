@@ -474,8 +474,6 @@ sub alloc_resources {
 		print $qserv $jbookings or die $!;
 		$_= <$qserv>; defined && m/^OK book-resources\s/ or die "$_ ?";
 
-                $bookinglist= undef; # no need to undo these then
-
 		logm("resource allocation: we are in the plan.");
 	    }
 
@@ -507,7 +505,8 @@ sub alloc_resources {
                         my @reskey= ((split / /, $book->{Reso}, 2),
                                      $alloc->{Shareix});
                         $reskey[0]= "share-$reskey[0]" if $reskey[2];
-                        logm("resource allocation: unwinding @reskey");
+                        logm("resource allocation: unwinding ".
+			     join '/', @reskey);
                         my $undone= $dbh_tests->do(<<END,{},$freetask,@reskey);
                             UPDATE resources
                                SET owntaskid=(SELECT taskid FROM tasks
