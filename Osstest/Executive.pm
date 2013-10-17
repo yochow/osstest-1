@@ -350,7 +350,6 @@ sub alloc_resources {
     #  values of $ok
     #            0  rollback, wait and try again
     #            1  commit, completed ok
-    #            2  commit, wait and try again
     #  $bookinglist should be undef or a hash for making a booking
     #
     # $resourcecall should not look at tasks.live
@@ -388,7 +387,7 @@ sub alloc_resources {
         }
     }
 
-    while ($ok==0 || $ok==2) {
+    while ($ok==0) {
         my $bookinglist;
         if (!eval {
             if (!defined $qserv) {
@@ -484,9 +483,8 @@ sub alloc_resources {
                 print $qserv "thought-done\n" or die $!;
             } elsif ($ok<0) {
                 return 1;
-            } else { # 0 or 2
-                logm("resource allocation: deferring") if $ok==0;
-                logm("resource allocation: partial commit, deferring");
+            } else { # 0
+                logm("resource allocation: deferring");
                 print $qserv "thought-wait\n" or die $!;
             }
             $_= <$qserv>;  defined && m/^OK thought\s$/ or die "$_ ?";
