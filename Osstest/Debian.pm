@@ -120,17 +120,21 @@ sub lvm_lv_name($$) {
     return "/dev/mapper/$vg-$lv";
 }
 
-sub setupboot_uboot ($$$$) {
+sub setupboot_uboot ($$$) {
     my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     $bl->{UpdateConfig}= sub {
+	my ( $ho ) = @_;
 
 	my $xen = "xen";
 	my $kern = "vmlinuz-$want_kernver";
 	my $initrd = "initrd.img-$want_kernver";
 
 	my $root= lvm_lv_name($ho,"root");
+
+	logm("Xen options: $xenhopt");
+	logm("Linux options: $xenkopt");
 
 	target_cmd_root($ho, <<END);
 if test ! -f /boot/$kern ; then
@@ -160,7 +164,7 @@ setenv xen_addr_r 0x01000000
 ext2load scsi 0 \\\${xen_addr_r} \$xen
 setenv bootargs "$xenhopt"
 echo Loaded \$xen to \\\${xen_addr_r} (\\\${filesize})
-echo command line: $xenhopt
+echo command line: \\\${bootargs}
 
 ext2load scsi 0 \\\${kernel_addr_r} $kern
 fdt mknod /chosen module\@0
@@ -175,6 +179,8 @@ fdt mknod /chosen module\@1
 fdt set /chosen/module\@1 compatible "xen,linux-initrd" "xen,multiboot-module"
 fdt set /chosen/module\@1 reg <\\\${ramdisk_addr_r} \\\${filesize}>
 echo Loaded $initrd to \\\${ramdisk_addr_r} (\\\${filesize})
+
+fdt print /chosen
 
 echo Booting \\\${xen_addr_r} - \\\${fdt_addr}
 bootz \\\${xen_addr_r} - \\\${fdt_addr}
