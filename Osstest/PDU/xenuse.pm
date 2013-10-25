@@ -44,7 +44,12 @@ sub pdu_power_state {
     my ($mo, $on) = @_;
     my $onoff= $on ? "on" : "off";
     my $xenuse= $c{XenUsePath} || "xenuse";
+    my $user= get_host_property($mo->{Host}, "XenUseUser", $c{XenUseUser} || undef);
 
+    (
+	logm("XenUse overriding \$USER to $user"),
+	local $ENV{USER} = $user
+    ) if $user;
     system_checked($xenuse, "--$onoff", "$mo->{Host}{Name}");
 }
 
