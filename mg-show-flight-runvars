@@ -39,12 +39,13 @@ for (;;) {
     }
 }
 
-die unless @ARGV==1 && $ARGV[0] =~ m/^\d+/;
+die unless @ARGV==1 && $ARGV[0] =~ m/^\w+$/;
 
 our ($flight) = @ARGV;
 
 our @cols = qw(job name val);
 
+$flight =~ m/^\d+/ or $flight = "'$flight'";
 my $qfrom = "FROM runvars WHERE flight=$flight AND $synthcond";
 
 my @colws = $dbh_tests->selectrow_array

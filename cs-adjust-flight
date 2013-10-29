@@ -297,10 +297,13 @@ sub change__branch {
 sub changes () {
     debug("CHANGES...\n");
 
-    my $steps_q = $dbh_tests->prepare("SELECT * FROM steps WHERE flight = ?");
-    $steps_q->execute($dstflight);
-    my $step = $steps_q->fetchrow_hashref();
-    die "$dstflight already has steps\n".Dumper($step) if $step;
+    if ($dstflight =~ m/^\d+$/) {
+	my $steps_q =
+	    $dbh_tests->prepare("SELECT * FROM steps WHERE flight = ?");
+	$steps_q->execute($dstflight);
+	my $step = $steps_q->fetchrow_hashref();
+	die "$dstflight already has steps\n".Dumper($step) if $step;
+    }
 
     while (@changes) {
         my $change = shift @changes;
@@ -310,7 +313,7 @@ sub changes () {
 }
 
 sub main () {
-    if ($dstflightspec =~ m/^\d+$/) {
+    if ($dstflightspec =~ m/^\w+$/) {
         $dstflight = $dstflightspec;
         db_retry($dstflight,'constructing',
                  $dbh_tests, [qw(flights)], sub {
