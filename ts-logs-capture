@@ -61,10 +61,7 @@ END
                 target_getfile_root($lho,60, $logfile,"$stash/$llogfile");
 		if ($logfile !~ m/\.gz$/) {
 		    stat("$stash/$llogfile") or die "$stash/$llogfile $!";
-		    if ((stat _)[7] > 100000) {
-			my $r= system 'gzip','-9vf','--',"$stash/$llogfile";
-			die "$r $!" if $r;
-		    }
+		    compress_stashed($llogfile) if(stat _)[7] > 100000;
 		}
                 1;
             }) {

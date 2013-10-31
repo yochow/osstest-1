@@ -66,7 +66,7 @@ BEGIN {
                       serial_fetch_logs
                       propname_massage
          
-                      get_stashed open_unique_stashfile
+                      get_stashed open_unique_stashfile compress_stashed
                       dir_identify_vcs build_clone built_stash 
                       hg_dir_revision git_dir_revision vcs_dir_revision
                       store_revision store_vcs_revision
@@ -841,6 +841,12 @@ sub get_stashed ($$) {
         $path =~ m,[^-+._0-9a-zA-Z/], or
         $path =~ m/\.\./;
     return "$c{Stash}/$oflight/$ojob/$path";
+}
+
+sub compress_stashed($) {
+    my ($path) = @_;
+    my $r= system 'gzip','-9vf','--',"$stash/$path";
+    die "$r $!" if $r;
 }
 
 #---------- other stuff ----------
