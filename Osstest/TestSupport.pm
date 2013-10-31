@@ -67,7 +67,8 @@ BEGIN {
                       propname_massage
          
                       get_stashed open_unique_stashfile compress_stashed
-                      dir_identify_vcs build_clone built_stash 
+                      dir_identify_vcs build_clone built_stash built_stash_file
+                      built_compress_stashed
                       hg_dir_revision git_dir_revision vcs_dir_revision
                       store_revision store_vcs_revision
 
@@ -1048,6 +1049,21 @@ END
                    "$builddir/$item.tar.gz",
                    "$stash/$stashleaf");
     store_runvar("path_$item", $stashleaf);
+}
+
+sub built_stash_file ($$$$) {
+    my ($ho, $builddir, $item, $fname) = @_;
+    my $build= "build";
+    my $stashleaf= "$build/$item";
+    ensuredir("$stash/$build");
+    target_getfile($ho, 300,
+                   "$builddir/$fname",
+                   "$stash/$stashleaf");
+}
+
+sub built_compress_stashed($) {
+    my ($path) = @_;
+    compress_stashed("build/$path");
 }
 
 sub vcs_dir_revision ($$$) {

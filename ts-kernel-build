@@ -322,3 +322,5 @@ if ($r{tree_linuxfirmware}) {
     fwinstall();
 }
 built_stash($ho, $builddir, 'dist', 'kerndist');
+built_stash_file($ho, $builddir, 'vmlinux', 'linux/vmlinux');
+built_compress_stashed('vmlinux');
