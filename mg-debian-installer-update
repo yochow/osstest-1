@@ -32,12 +32,16 @@ fail () { echo >&2 "$0: $1"; exit 1; }
 site=http://ftp.debian.org/debian/
 sbase=$site/dists/$suite
 
-case $arch in
-    i386|amd64)
+case ${suite}_${arch} in
+    *_i386|*_amd64)
         src=$sbase/main/installer-$arch/current/images/netboot/debian-installer/$arch
         files='initrd.gz linux'
         ;;
-    armhf)
+    lenny_armhf|squeeze_armhf)
+        # No such thing.
+        exit 0
+        ;;
+    *_armhf)
         # Use the vexpress image, we are going to bash in our own
         # kernel+modules anyway.
         src=$sbase/main/installer-$arch/current/images/vexpress/netboot
