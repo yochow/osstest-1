@@ -136,6 +136,8 @@ sub setupboot_uboot ($$$) {
 	logm("Xen options: $xenhopt");
 	logm("Linux options: $xenkopt");
 
+	my $early_commands = get_host_property($ho, 'UBootScriptEarlyCommands', '');
+
 	target_cmd_root($ho, <<END);
 if test ! -f /boot/$kern ; then
     exit 1
@@ -153,6 +155,8 @@ scsi scan
 
 fdt addr \\\${fdt_addr}
 fdt resize
+
+${early_commands}
 
 fdt set /chosen \\\#address-cells <1>
 fdt set /chosen \\\#size-cells <1>
