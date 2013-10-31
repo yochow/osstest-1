@@ -100,8 +100,8 @@ else
 			echo "** need to generate d-i with firmware for $arch"
 			div=`./mg-debian-installer-update \
 					$suite $arch $firmware`
-			rm -f "$tftp/$dibase/$arch/current"
-			ln -s $div "$tftp/$dibase/$arch/current"
+			rm -f "$tftp/$dibase/$arch/current-$suite"
+			ln -s $div "$tftp/$dibase/$arch/current-$suite"
 		done
 	fi
 fi
