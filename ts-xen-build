@@ -198,7 +198,7 @@ sub stash () {
                     "xen-unstable/dist/${part}install",
                     "${part}dist");
     }
-    built_stash_file($ho, $builddir, "xen-syms", "xen-unstable/xen/xen-syms");
+    built_stash_file($ho, $builddir, "xen-syms", "xen-unstable/xen/xen-syms", 1);
     built_compress_stashed("xen-syms");
 }
 

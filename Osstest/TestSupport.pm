@@ -846,6 +846,7 @@ sub get_stashed ($$) {
 
 sub compress_stashed($) {
     my ($path) = @_;
+    return unless -e "$stash/$path";
     my $r= system 'gzip','-9vf','--',"$stash/$path";
     die "$r $!" if $r;
 }
@@ -1051,10 +1052,13 @@ END
     store_runvar("path_$item", $stashleaf);
 }
 
-sub built_stash_file ($$$$) {
-    my ($ho, $builddir, $item, $fname) = @_;
+sub built_stash_file ($$$$;$) {
+    my ($ho, $builddir, $item, $fname, $optional) = @_;
     my $build= "build";
     my $stashleaf= "$build/$item";
+
+    return if $optional && !target_file_exists($ho, "$builddir/$fname");
+
     ensuredir("$stash/$build");
     target_getfile($ho, 300,
                    "$builddir/$fname",
