@@ -35,7 +35,7 @@ WebspaceUrl="http://woking.$c{DnsDomain}/~osstest/"
 OverlayLocal /export/home/osstest/overlay-local
 
 LogsMinSpaceMby= 10*1e3
-LogsMinExpireAge= 86400*7
+LogsMinExpireAge= 86400*4
 
 TestHostKeypairPath /export/home/osstest/.ssh/id_rsa_osstest
 
