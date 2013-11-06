@@ -120,6 +120,12 @@ HostProp_<testbox>_DIFrontend
    is a very basic "text" interface but for standalone configurations,
    especially on VGA, "newt" might be preferred.
 
+HostProp_<testbox>_RebootTimeExtra
+   Increase the timeout for rebooting the testbox by the given value
+   (e.g., 400). This could be useful for machines with loads of RAM,
+   where Xen takes really long time to boot (typically because of
+   the "Scrubbing free RAM" phase).
+
 DebianPreseed
    Text to add to the debian-installer preseed file.  Optional
    but you will need to set some NTP servers here if your firewall
