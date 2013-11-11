@@ -187,74 +187,6 @@ END
     }
 }
 
-sub cacheing_git_mount () {
-    my $cache= $c{GitCache};
-    return unless $cache;
-
-    if ($cache =~ m,/$,) {
-        my $cachelocal= $c{GitCacheLocal};
-        my $subdir= $ho->{Name};
-        if (defined $cachelocal) {
-            my $umask= umask 0; # yes really
-            mkdir "$cachelocal/$subdir", 02777
-                or $!==&EEXIST or die "$cachelocal/$subdir $!";
-            umask $umask;
-
-            my $cachelock_dir= "/var/run/git-cache";
-            my $cachelock_real= "$cachelock_dir/lock";
-            target_cmd_root($ho, <<END);
-                set -e
-                umask 0
-                mkdir -p $cachelock_dir
-                true >>$cachelock_real
-END
-            my $cachelock_link= "$cachelocal/$subdir/lock";
-            if (lstat $cachelock_link) {
-                die "$cachelock_link is not a symlink" unless -l _;
-            } else {
-                symlink $cachelock_real, $cachelock_link
-                    or die "$cachelock_link $!";
-            }
-        }
-        $cache.= $subdir;
-    }
-
-    my $mountpoint= '/volatile/git-cache';
-
-    my $mounts= target_cmd_output_root($ho, "mount");
-    return if $mounts =~ m/^\S+ on \Q$mountpoint\E /om;
-
-    target_cmd_root($ho, "mkdir -vp $mountpoint");
-    target_editfile_root($ho, '/etc/fstab', sub {
-        while (<EI>) {
-            next if m/^\S+\s+\Q$mountpoint\E\s/o;
-            print EO or die $!;
-        }
-        printf EO "%s %s nfs rw,fg,retry=1440\n", $cache, $mountpoint or die $!;
-    });
-
-    my $mount_retries=10;
-    # mount can randomly fail due to upstream kernel bug (Debian #636306)
-    # this is a shonky workaround
-    for (;;) {
-        last if eval {
-            target_cmd_root($ho, "mount $mountpoint");
-            1;
-        };
-        logm("warning: failed to mount $mountpoint, trying again: $@");
-        die unless --$mount_retries > 0;
-        target_cmd_root($ho, "sync");
-        sleep(2);
-    }
-}
-
-sub cacheing_git_install () {
-    my $cache = $c{GitCache};
-    return unless $cache;
-    target_install_packages($ho, qw(chiark-utils-bin));
-    target_putfile_root($ho,10, "cacheing-git","/usr/local/bin/git", "-p");
-}
-
 sub ccache_setup () {
     my $opts= get_host_property($ho, 'build ccache opts', '');
     if (length $opts) {
@@ -265,8 +197,6 @@ sub ccache_setup () {
 if (!$ho->{Flags}{'no-reinstall'}) {
     lvextend_stage1();
     prep();
-    cacheing_git_mount();
-    cacheing_git_install();
     ccache_setup();
     lvextend_stage2();
 }

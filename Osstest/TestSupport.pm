@@ -71,6 +71,7 @@ BEGIN {
                       built_compress_stashed
                       hg_dir_revision git_dir_revision vcs_dir_revision
                       store_revision store_vcs_revision
+                      git_massage_url
 
                       sshopts authorized_keys
                       remote_perl_script_open remote_perl_script_done
@@ -499,12 +500,10 @@ sub target_editfile_root ($$$;$$) {
 
 sub target_cmd_build ($$$$) {
     my ($ho,$timeout,$builddir,$script) = @_;
-    my $cacheing_git = "";
-    $cacheing_git = ":\$HOME/bin" if $ho->{Flags}{'no-reinstall'};
     target_cmd($ho, <<END.$script, $timeout);
 	set -xe
         LC_ALL=C; export LC_ALL
-        PATH=/usr/lib/ccache$cacheing_git:\$PATH:/usr/lib/git-core
+        PATH=/usr/lib/ccache:\$PATH:/usr/lib/git-core
         exec </dev/null
         cd $builddir
 END
@@ -965,6 +964,13 @@ sub file_simple_write_contents ($$) {
 
 #---------- building, vcs's, etc. ----------
 
+sub git_massage_url ($) {
+    my ($url) = @_;
+
+    if ($c{GitCacheProxy}) { $url = $c{GitCacheProxy}.$url; }
+    return $url;
+}
+
 sub build_clone ($$$$) {
     my ($ho, $which, $builddir, $subdir) = @_;
 
@@ -994,8 +1000,10 @@ END
 END
     } elsif ($vcs eq 'git') {
 
+	my $eff_tree = git_massage_url($tree);
+
         target_cmd_build($ho, $timeout, $builddir, <<END.
-            git clone '$tree' $subdir
+            git clone '$eff_tree' $subdir
             cd $subdir
 END
                          (length($r{"revision_$which"}) ? <<END : ''));

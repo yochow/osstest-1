@@ -39,8 +39,7 @@ LogsMinExpireAge= 86400*4
 
 TestHostKeypairPath /export/home/osstest/.ssh/id_rsa_osstest
 
-GitCache teravault-1.cam.xci-test.com:/export/home/xc_osstest/git-cache/
-GitCacheLocal /home/xc_osstest/git-cache/
+GitCacheProxy git://drall.uk.xensource.com:9419/
 
 PubBaseUrl http://www.chiark.greenend.org.uk/~xensrcts
 ReportHtmlPubBaseUrl="$c{PubBaseUrl}/logs"

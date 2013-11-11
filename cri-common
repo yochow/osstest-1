@@ -26,12 +26,12 @@ repo_tree_rev_fetch_git () {
 	local remoteurl=$2
 	local remotetag=$3
 	local localtag=$4
+	local realurl="`getconfig GitCacheProxy`$remoteurl"
 	if ! test -d $repos/$treename; then
-	        CACHEING_GIT_CACHE=$repos/git-cache ./cacheing-git \
-			clone --bare $remoteurl $repos/$treename
+	        git clone --bare $realurl $repos/$treename
 	fi
 	cd $repos/$treename
-	git fetch -f $remoteurl $remotetag:$localtag
+	git fetch -f $realurl $remotetag:$localtag
 	git-rev-parse $localtag^0
 }
 

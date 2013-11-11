@@ -24,6 +24,7 @@ no warnings qw(recursion);
 use Data::Dumper;
 use POSIX;
 use Osstest;
+use Osstest::TestSupport;
 use Osstest::Executive;
 
 our $num= 1000;
@@ -96,11 +97,11 @@ sub git_generator ($) {
     my ($tree) = @_;
     print DEBUG "GIT-GEN ".pmap($tree).".\n";
     my $treename= $tree->{Treename};
+    my $eff_url = git_massage_url($tree->{Url});
     my $upcmd= <<END;
         set -e; exec >&2
         rm -rf $c{Repos}/$treename
-        CACHEING_GIT_CACHE=$c{Repos}/git-cache ./cacheing-git \\
-            clone --bare $tree->{Url} $c{Repos}/$treename
+        git clone --bare $eff_url $c{Repos}/$treename
 END
     print DEBUG "GIT-GEN UPCMD\n$upcmd\n";
     shellcmd($upcmd) if $doupdate;
