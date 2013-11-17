@@ -1,0 +1,138 @@
+#!/bin/bash
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+set -e
+
+branch=$1
+xenbranch=$2
+blessing=$3
+buildflight=$4
+
+flight=`./cs-flight-create $blessing $branch`
+
+. ap-common
+. cri-common
+. mfi-common
+
+defsuite=`getconfig DebianSuite`
+defguestsuite=`getconfig GuestDebianSuite`
+
+if [ x$buildflight = x ]; then
+
+  if [ "x$BUILD_LVEXTEND_MAX" != x ]; then
+     BUILD_RUNVARS+=" build_lvextend_max=$BUILD_LVEXTEND_MAX "
+  fi
+
+  WANT_XEND=false REVISION_LINUX_OLD=disable
+
+  create_build_jobs
+
+else
+
+  bfi=$buildflight.
+
+fi
+
+job_create_test_filter_callback () {
+  if [ "$xenarch" = "i386" ]; then return 1; fi
+  return 0
+}
+
+test_matrix_branch_filter_callback () {
+    :
+}
+
+test_do_one_netboot () {
+  stripy bootloader pygrub pvgrub \
+    "$xenarch" "i386" \
+    "$dom0arch" "amd64" \
+    "$domU" "amd64" \
+    "$dist" "sid"
+
+  case ${domU}_${dist} in
+    armhf_*) bootloader="pygrub";; # no pvgrub for arm
+
+    # Needs a menu.lst, not present in Squeeze+ due to switch to grub,
+    # workedaround in Jessie+ with pv-grub-menu package.
+    *_squeeze) bootloader="pygrub";;
+    *_wheezy) bootloader="pygrub";;
+  esac
+
+  job_create_test test-$xenarch$kern-$dom0arch-$domU-$dist-netboot \
+    test-debian-di xl $xenarch $dom0arch                        \
+      kernbuildjob=${bfi}build-$dom0arch-$kernbuild             \
+      debian_arch=$domU                                         \
+      debian_dist=$dist                                         \
+      debian_method=netboot                                     \
+      debian_bootloader=$bootloader                             \
+      all_hostflags=$most_hostflags
+}
+
+test_do_one_netinst () {
+  # Always pygrub since no pv-grub-menu on CD
+  job_create_test test-$xenarch$kern-$dom0arch-$domU-$cd-netinst \
+    test-debian-di xl $xenarch $dom0arch                        \
+      kernbuildjob=${bfi}build-$dom0arch-$kernbuild             \
+      debian_arch=$domU                                         \
+      debian_cd=$cd                                             \
+      debian_method=netinst                                     \
+      debian_bootloader=pygrub                                  \
+      all_hostflags=$most_hostflags
+
+}
+
+test_matrix_do_one () {
+  case ${xenarch} in
+  amd64) domUarches="amd64 i386";;
+  armhf) domUarches="armhf";;
+  esac
+
+  for domU in $domUarches ; do
+    for dist in squeeze wheezy jessie sid daily ; do
+      case ${domU}_${dist} in
+      armhf_squeeze) continue;; # No armhf in Squeeze
+      armhf_wheezy) continue;; # No armhf guest support in Wheezy
+      *) ;;
+      esac
+
+      test_do_one_netboot
+
+    done
+
+    for cd in current weekly ; do
+      case ${domU}_${dist} in
+      armhf_*) continue;; # No iso targets for armhf
+      *) ;;
+      esac
+
+      test_do_one_netinst
+
+    done
+  done
+}
+
+test_matrix_iterate
+
+echo $flight
+
+# Local variables:
+# mode: sh
+# sh-basic-offset: 2
+# indent-tabs-mode: nil
+# End:

@@ -159,6 +159,9 @@ export BUILD_LVEXTEND_MAX
 OSSTEST_FLIGHT=$flight \
 ./make-flight "$branch" "$xenbranch" play $buildflight >/dev/null
 
+OSSTEST_FLIGHT=${distros:-distros} \
+./make-distro-flight distros "$xenbranch" play $buildflight >/dev/null
+
 #---------- done ----------
 
 echo ok.

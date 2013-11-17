@@ -35,6 +35,7 @@ BEGIN {
                       %preseed_cmds
                       preseed_base
                       preseed_create
+                      preseed_create_guest
                       preseed_hook_command preseed_hook_installscript
                       di_installcmdline_core
                       );
@@ -429,9 +430,7 @@ sub di_installcmdline_core ($$;@) {
 sub preseed_base ($$;@) {
     my ($suite,$extra_packages,%xopts) = @_;
 
-    return (<<END);
-d-i mirror/suite string $suite
-
+    my $preseed= (<<END);
 d-i debian-installer/locale string en_GB
 d-i console-keymaps-at/keymap select gb
 d-i keyboard-configuration/xkb-keymap string en_GB
@@ -500,7 +499,73 @@ $xopts{ExtraPreseed}
 ### END OF DEBIAN PRESEED BASE
 
 END
-}          
+
+    # For CDROM the suite is part of the image
+    $preseed .= <<END unless $xopts{CDROM};
+d-i mirror/suite string $suite
+END
+    return $preseed;
+}
+
+sub preseed_create_guest ($$;@) {
+    my ($ho, $sfx, %xopts) = @_;
+
+    my $suite= $xopts{Suite} || $c{DebianSuite};
+
+    my $extra_packages = "pv-grub-menu" if $xopts{PvMenuLst};
+
+    my $preseed_file= preseed_base($suite, $extra_packages, %xopts);
+    $preseed_file.= (<<END);
+d-i     partman-auto/method             string regular
+d-i     partman-auto/choose_recipe \\
+                select All files in one partition (recommended for new users)
+
+d-i     grub-installer/bootdev          string /dev/xvda
+
+END
+#$xopts{ExtraPreseed}
+
+    my $authkeys= authorized_keys();
+
+    my $hostkeyfile= "$c{OverlayLocal}/etc/ssh/ssh_host_rsa_key";
+    my $host_rsa_key= get_filecontents($hostkeyfile);
+    chomp($host_rsa_key); $host_rsa_key.="\n";
+
+    preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+r=/target/root
+cd \$r
+
+umask 022
+mkdir .ssh
+cat <<'ENDKEYS' >.ssh/authorized_keys
+$authkeys
+ENDKEYS
+
+u=osstest
+h=/home/\$u
+mkdir /target\$h/.ssh
+cp .ssh/authorized_keys /target\$h/.ssh
+chroot /target chown -R \$u.\$u \$h/.ssh
+
+rm -f /target/etc/ssh/ssh_host_*_key
+rm -f /target/etc/ssh/ssh_host_*_key.pub
+
+cat <<'ENDKEYS' > /target/etc/ssh/ssh_host_rsa_key
+$host_rsa_key
+ENDKEYS
+chmod 0600 /target/etc/ssh/ssh_host_rsa_key
+END
+
+    foreach my $di_key (keys %preseed_cmds) {
+        $preseed_file .= "d-i preseed/$di_key string ".
+            (join ' && ', @{ $preseed_cmds{$di_key} }). "\n";
+    }
+
+    return create_webfile($ho, "preseed$sfx", $preseed_file);
+}
 
 sub preseed_create ($$;@) {
     my ($ho, $sfx, %xopts) = @_;
