@@ -246,6 +246,17 @@ proc run-job/test-debian {} {
     test-guest debian
 }
 
+proc install-guest-debian-di {} {
+    run-ts . = ts-debian-di-install
+    run-ts . = ts-guest-start + debian
+}
+
+proc need-hosts/test-debian-di {} { return host }
+proc run-job/test-debian-di {} {
+    install-guest-debian-di
+    test-guest debian
+}
+
 proc need-hosts/test-freebsd {} { return host }
 proc run-job/test-freebsd {} {
     run-ts . = ts-freebsd-install
