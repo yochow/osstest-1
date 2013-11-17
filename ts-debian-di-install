@@ -1,0 +1,170 @@
+#!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict qw(vars);
+use DBI;
+use Osstest;
+use Osstest::Debian;
+use Osstest::TestSupport;
+
+tsreadconfig();
+
+our ($whhost,$gn) = @ARGV;
+$whhost ||= 'host';
+$gn ||= 'debian';
+
+our $ho= selecthost($whhost);
+
+our $ram_mb=    512;
+our $disk_mb= 10000;
+
+our $guesthost= "$gn.guest.osstest";
+our $gho;
+
+sub prep () {
+    target_install_packages_norec($ho, qw(lvm2));
+
+    $gho= prepareguest($ho, $gn, $guesthost, 22,
+                       $disk_mb, 40);
+
+    prepareguest_part_lvmdisk($ho, $gho, $disk_mb);
+
+    target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
+}
+
+sub setup_netboot($$$)
+{
+    my ($didir, $arch, $suite) = @_;
+
+    my $di_ver= $r{"$gho->{Guest}_diver"} || "osstest";
+
+    my ($kernel,$initrd);
+
+    if ( $di_ver eq "osstest" ) {
+	my $di_path = $c{TftpPath}.'/'.$ho->{Tftp}{DiBase}.'/'.$r{arch}.'/'.$c{TftpDiVersion}.'-'.$ho->{Suite};
+
+	$kernel = "$di_path/vmlinuz-xen";
+	$initrd = "$di_path/initrd.gz-xen";
+
+	target_putfile_root($ho, 60, $kernel, "$didir/kernel_${suite}_${arch}");
+	target_putfile_root($ho, 60, $initrd, "$didir/initrd_${suite}_${arch}");
+
+    } else {
+	my $mirror = "http://$c{DebianMirrorHost}/$c{DebianMirrorSubpath}";
+
+	my $di_url = $suite eq "daily" ?
+	    "http://d-i.debian.org/daily-images/$arch/daily/netboot" :
+	    "$mirror/dists/$suite/main/installer-$arch/$di_ver/images/netboot";
+
+	$di_url .= "/xen" if $arch =~ m/amd64|i386/;
+	$di_url .= "/debian-installer/arm64" if $arch =~ /arm64/;
+
+	$kernel = "$di_url/vmlinuz";
+	$initrd = "$di_url/initrd.gz";
+
+	target_fetchurl($ho, $kernel, "$didir/kernel_${suite}_${arch}");
+	target_fetchurl($ho, $initrd, "$didir/initrd_${suite}_${arch}");
+    }
+
+    store_runvar("$gho->{Guest}_netboot_kernel", $kernel);
+    store_runvar("$gho->{Guest}_netboot_initrd", $initrd);
+
+    return <<END;
+kernel      = "$didir/kernel_${suite}_${arch}"
+ramdisk     = "$didir/initrd_${suite}_${arch}"
+END
+}
+sub ginstall () {
+    my $arch= $r{"$gho->{Guest}_arch"};
+    my $method= $r{"$gho->{Guest}_method"};
+
+    my $tmpdir= "/root/$flight-$job-di";
+    target_cmd_root($ho, <<END);
+rm -rf $tmpdir
+mkdir $tmpdir
+END
+
+    my ($method_cfg, $ps_url, $extra_disk);
+
+    if ( $method eq "netboot" )
+    {
+	my $suite= $r{"$gho->{Guest}_dist"};
+	logm("$method $suite/$arch");
+
+	$method_cfg = setup_netboot($tmpdir, $arch, $suite);
+
+	$suite = "sid" if $suite eq "daily";
+
+	$ps_url = preseed_create_guest($gho, '', Suite=>$suite);
+
+	$extra_disk = "";
+    }
+    else
+    {
+	die "$method";
+    }
+
+    my @cmdline = ();
+    push @cmdline, "debian-installer/exit/always_halt=true";
+    push @cmdline, "domain=$c{TestHostDomain}";
+    push @cmdline, "console=hvc0";
+    push @cmdline, di_installcmdline_core($gho, $ps_url);
+    push @cmdline, "--";
+    # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=762007 for
+    # why this is repeated.
+    push @cmdline, "console=hvc0";
+
+    my $cmdline = join(" ", @cmdline);
+
+    my %install_xopts = (
+	OnPowerOff => "preserve"
+    );
+
+    prepareguest_part_xencfg($ho, $gho, $ram_mb, \%install_xopts, <<END);
+$method_cfg
+extra       = "$cmdline"
+#
+disk        = [
+            $extra_disk 'phy:$gho->{Lvdev},xvda,w'
+            ]
+END
+
+    my $cmd= toolstack()->{Command}." create ".
+        $r{ $gho->{Guest}.'_'. toolstack()->{CfgPathVar} };
+    target_cmd_root($ho, $cmd, 300);
+
+    guest_checkrunning($ho, $gho) or die "$gho->{Name} not running";
+
+    guest_await_shutdown($ho,$gho,3600);
+    guest_destroy($ho,$gho);
+
+    my $blcfg = <<END;
+bootloader = "pygrub"
+END
+
+    prepareguest_part_xencfg($ho, $gho, $ram_mb, {}, <<END);
+$blcfg
+#
+disk        = [
+            'phy:$gho->{Lvdev},xvda,w'
+            ]
+END
+    return;
+}
+
+prep();
+ginstall();
