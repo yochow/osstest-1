@@ -59,7 +59,7 @@ our %c = qw(
     Logs logs
     Results results
 
-    DebianSuite squeeze
+    DebianSuite wheezy
     DebianMirrorSubpath debian
 
     TestHostKeypairPath id_rsa_osstest
