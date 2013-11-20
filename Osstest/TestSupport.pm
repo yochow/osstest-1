@@ -1368,24 +1368,30 @@ sub more_prepareguest_hvm ($$$$;@) {
     my $passwd= 'xenvnc';
 
     prepareguest_part_lvmdisk($ho, $gho, $disk_mb);
-    
-    my $specimage= $r{"$gho->{Guest}_image"};
-    die "$gho->{Guest} ?" unless $specimage;
-    my $limage= $specimage =~ m,^/, ? $specimage : "$c{Images}/$specimage";
-    $gho->{Rimage}= "/root/$flight.$job.".basename($specimage);
-    target_putfile_root($ho, 1000, $limage,$gho->{Rimage}, '-p');
 
-    my $postimage_hook= $xopts{PostImageHook};
-    $postimage_hook->() if $postimage_hook;
+    my @disks = "phy:$gho->{Lvdev},hda,w";
+
+    if (!$xopts{NoCdromImage}) {
+	my $specimage= $r{"$gho->{Guest}_image"};
+	die "$gho->{Guest} ?" unless $specimage;
+	my $limage= $specimage =~ m,^/, ? $specimage : "$c{Images}/$specimage";
+	$gho->{Rimage}= "/root/$flight.$job.".basename($specimage);
+	target_putfile_root($ho, 1000, $limage,$gho->{Rimage}, '-p');
+
+	my $postimage_hook= $xopts{PostImageHook};
+	$postimage_hook->() if $postimage_hook;
+
+	push @disks, "file:$gho->{Rimage},hdc:cdrom,r";
+    }
+    my $disks = join ",\t\t\n", map { "'$_'" } @disks;
 
     my $cfg = <<END;
 kernel      = 'hvmloader'
 builder     = 'hvm'
 #
 disk        = [
-            'phy:$gho->{Lvdev},hda,w',
-            'file:$gho->{Rimage},hdc:cdrom,r'
-            ]
+		$disks
+	      ]
 #
 usb=1
 usbdevice='tablet'
