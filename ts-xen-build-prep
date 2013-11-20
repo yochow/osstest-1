@@ -182,6 +182,9 @@ mq=
 END
     }
 
+    if ($ho->{Suite} !~ m/lenny|squeeze/) {
+        target_install_packages($ho, 'libfdt-dev');
+    }
     if ($r{arch} eq 'amd64' && $ho->{Suite} =~ m/wheezy/) {
         target_install_packages($ho, 'libc6-dev-i386');
     }

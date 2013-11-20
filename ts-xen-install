@@ -52,6 +52,9 @@ sub packages () {
                                libsdl1.2debian libglib2.0-0));
     target_install_packages($ho,
 			    $ho->{Suite} =~ /squeeze/ ? "libyajl1" : "libyajl2");
+    if ($ho->{Suite} !~ m/lenny|squeeze/) {
+        target_install_packages($ho, 'libfdt1');
+    }
     if ($r{arch} eq 'i386') {
 	target_install_packages($ho, 'libc6-xen');
     }
