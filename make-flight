@@ -347,6 +347,19 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 		debian_arch=$dom0arch   				  \
 		all_hostflags=$most_hostflags
 
+      if [ $xenarch = amd64 -a $dom0arch = i386 -a "$kern" = "" ]; then
+
+        for freebsdarch in amd64 i386; do
+
+ job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-freebsd10-$freebsdarch \
+			test-freebsd xl \
+			freebsd_arch=$freebsdarch \
+ freebsd_image=${FREEBSD_IMAGE_PREFIX-FreeBSD-10.0-BETA3-}$freebsdarch${FREEBSD_IMAGE_SUFFIX--20131103-r257580.qcow2.xz}
+
+        done
+
+      fi
+
         for qemuu_suffix in '' -qemut -qemuu; do
           case "$qemuu_suffix" in
           '')
