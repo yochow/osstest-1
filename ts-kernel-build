@@ -171,6 +171,8 @@ setopt CONFIG_IGB m
 setopt CONFIG_PCI_IOV y
 
 setopt CONFIG_EXT4_FS m
+setopt CONFIG_UFS_FS m
+setopt CONFIG_UFS_FS_WRITE y
 
 END
 
