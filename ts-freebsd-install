@@ -39,7 +39,7 @@ our $xl= toolstack()->{Command};
 our $freebsd_qcow2= '/root/freebsd.qcow2';
 our $freebsd_raw= '/root/freebsd.raw';
 
-our $freebsd_mount= '/root/freebsd_root';
+our $mnt= '/root/freebsd_root';
 
 our $freebsd_version= "10.0-BETA3";
 
@@ -53,7 +53,8 @@ our $freebsd_vm_repo= '/var/images';
 sub prep () {
     my $authkeys= authorized_keys();
 
-    target_install_packages_norec($ho, qw(lvm2 wget qemu-utils xz-utils kpartx));
+    target_install_packages_norec($ho, qw(lvm2 wget qemu-utils
+                                          xz-utils kpartx));
 
     $gho= prepareguest($ho, $gn, $guesthost, 22,
                        $disk_mb + 1,
@@ -61,10 +62,13 @@ sub prep () {
 
     more_prepareguest_hvm($ho, $gho, $ram_mb, $disk_mb, NoCdromImage => 1);
 
-    my $freebsd_img = $freebsd_vm_repo . "/" . "FreeBSD-" . $freebsd_version . "-";
+    my $freebsd_img = "$freebsd_vm_repo/FreeBSD-$freebsd_version-";
     # Use amd64 as default arch
-    $freebsd_img .= defined($r{"$gho->{Guest}_arch"}) ? $r{"$gho->{Guest}_arch"} : 'amd64';
+    $freebsd_img .= defined($r{"$gho->{Guest}_arch"})
+	? $r{"$gho->{Guest}_arch"} : 'amd64';
     $freebsd_img .= ".qcow2.xz";
+
+    my $rootpartition_dev = "/dev/mapper/$gho->{Vg}-$gho->{Name}--disk3";
 
     target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
 
@@ -76,31 +80,31 @@ sub prep () {
             rm -rf $freebsd_raw
 
             kpartx -a $gho->{Lvdev}
-            mkdir -p $freebsd_mount
-            mount -t ufs -o ufstype=ufs2,rw /dev/mapper/$gho->{Vg}-$gho->{Name}--disk3 $freebsd_mount
+            mkdir -p $mnt
+            mount -t ufs -o ufstype=ufs2,rw $rootpartition_dev $mnt
 
-            mkdir -p $freebsd_mount/root/.ssh
-            cat <<'ENDKEYS' >$freebsd_mount/root/.ssh/authorized_keys
+            mkdir -p $mnt/root/.ssh
+            cat <<'ENDKEYS' >$mnt/root/.ssh/authorized_keys
 $authkeys
 ENDKEYS
 
-            echo 'sshd_enable="YES"' >> $freebsd_mount/etc/rc.conf
-            echo 'ifconfig_xn0="DHCP"' >> $freebsd_mount/etc/rc.conf
-            echo 'PermitRootLogin yes' >> $freebsd_mount/etc/ssh/sshd_config
+            echo 'sshd_enable="YES"' >> $mnt/etc/rc.conf
+            echo 'ifconfig_xn0="DHCP"' >> $mnt/etc/rc.conf
+            echo 'PermitRootLogin yes' >> $mnt/etc/ssh/sshd_config
 
-            sed -i '/^ttyu0/s/off/on/' $freebsd_mount/etc/ttys
+            sed -i '/^ttyu0/s/off/on/' $mnt/etc/ttys
 
-            cp $freebsd_mount/usr/share/zoneinfo/Europe/London $freebsd_mount/etc/localtime
+            cp $mnt/usr/share/zoneinfo/Europe/London $mnt/etc/localtime
 
-            cat <<'ENDKEYS' >$freebsd_mount/boot/loader.conf
+            cat <<'ENDKEYS' >$mnt/boot/loader.conf
 boot_multicons="YES"
 boot_serial="YES"
 comconsole_speed="115200"
 console="comconsole,vidconsole"
 ENDKEYS
 
-            umount $freebsd_mount
-            rm -rf $freebsd_mount
+            umount $mnt
+            rm -rf $mnt
             kpartx -d $gho->{Lvdev}
 END
 
