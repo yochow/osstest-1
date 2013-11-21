@@ -79,6 +79,7 @@ sub prep () {
     target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
 
     target_cmd_root($ho, <<END, 900);
+            set -ex
             xz -dkc $freebsd_img > $freebsd_qcow2
             qemu-img convert -f qcow2 $freebsd_qcow2 -O raw $freebsd_raw
             rm -rf $freebsd_qcow2
