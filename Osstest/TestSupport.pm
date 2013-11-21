@@ -54,6 +54,7 @@ BEGIN {
                       target_putfile target_putfile_root
                       target_putfilecontents_stash
 		      target_putfilecontents_root_stash
+                      target_put_guest_image
                       target_editfile_root target_file_exists
                       target_install_packages target_install_packages_norec
                       target_extract_jobdistpath
@@ -1362,6 +1363,16 @@ END
     return $cfgpath;
 }
 
+sub target_put_guest_image ($$$) {
+    my ($ho, $gho, $default) = @_;
+    my $specimage = $r{"$gho->{Guest}_image"};
+    $specimage = $default if !defined $specimage;
+    die "$gho->{Guest} ?" unless $specimage;
+    my $limage= $specimage =~ m,^/, ? $specimage : "$c{Images}/$specimage";
+    $gho->{Rimage}= "/root/$flight.$job.".basename($specimage);
+    target_putfile_root($ho, 1000, $limage,$gho->{Rimage}, '-p');
+}
+
 sub more_prepareguest_hvm ($$$$;@) {
     my ($ho, $gho, $ram_mb, $disk_mb, %xopts) = @_;
     
@@ -1372,11 +1383,7 @@ sub more_prepareguest_hvm ($$$$;@) {
     my @disks = "phy:$gho->{Lvdev},hda,w";
 
     if (!$xopts{NoCdromImage}) {
-	my $specimage= $r{"$gho->{Guest}_image"};
-	die "$gho->{Guest} ?" unless $specimage;
-	my $limage= $specimage =~ m,^/, ? $specimage : "$c{Images}/$specimage";
-	$gho->{Rimage}= "/root/$flight.$job.".basename($specimage);
-	target_putfile_root($ho, 1000, $limage,$gho->{Rimage}, '-p');
+	target_transfer_guest_image($ho, $gho, undef);
 
 	my $postimage_hook= $xopts{PostImageHook};
 	$postimage_hook->() if $postimage_hook;
