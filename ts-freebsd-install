@@ -34,8 +34,6 @@ our $disk_mb= 20480;
 our $guesthost= "$gn.guest.osstest";
 our $gho;
 
-our $xl= toolstack()->{Command};
-
 our $mnt= '/root/freebsd_root';
 
 our $freebsd_version= "10.0-BETA3";
