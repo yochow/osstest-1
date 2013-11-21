@@ -2,7 +2,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=ian.jackson@citrix.com,ian.campbell@eu.citrix.com
 # m		h	dom mon dow	command
 49		1	* * *		cd testing.git && BRANCHES_ALWAYS=xen-unstable	./cr-for-branches branches -w "./cr-daily-branch --real"
-49	  11,14,17,19	* * *		cd testing.git &&				./cr-for-branches branches -w "./cr-daily-branch --real"
+4/30		*	* * *		cd testing.git &&				./cr-for-branches branches -q "./cr-daily-branch --real"
 18		10	* * *		cd testing.git && BRANCHES=linux-linus		./cr-for-branches branches -w "./cr-daily-branch --real"
 18		11	* * *		cd testing.git && BRANCHES=linux-mingo-tip-master ./cr-for-branches branches -w "./cr-daily-branch --real"
 18		12	* * *		cd testing.git && BRANCHES=linux-3.0		./cr-for-branches branches -w "./cr-daily-branch --real"
