@@ -131,6 +131,7 @@ sub prep () {
                         -boot-info-table);
 
     target_cmd_root($ho, <<END, 60);
+            set -e
             mkdir -p $emptydir
             genisoimage -o $emptyiso @isogen_base $emptydir/.
 END
@@ -139,7 +140,7 @@ END
                           OnReboot => 'preserve',
                           PostImageHook => sub {
         target_cmd_root($ho, <<END, $isotimeout);
-            set -x
+            set -ex
             umount /mnt ||:
             rm -rf $newiso
             mount -o loop -r $gho->{Rimage} /mnt

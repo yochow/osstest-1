@@ -256,6 +256,7 @@ END
 
 sub forbidden () {
     target_cmd_root($ho, <<'END');
+        set +e
 	outcome=true
 	for f in /usr/local/etc/* /usr/local/var/*; do
 	    if test -e "$f"; then
