@@ -34,7 +34,12 @@ export LOGFILE
 : ${BRANCHES:=osstest xen-4.0-testing xen-4.1-testing xen-4.2-testing xen-4.3-testing xen-unstable qemu-upstream-unstable qemu-upstream-4.2-testing qemu-upstream-4.3-testing linux-3.10 linux-3.4 linux-arm-xen ${EXTRA_BRANCHES}}
 export BRANCHES
 
-with-lock-ex -w data-tree-lock bash -ec '
+fetchwlem=$wlem
+if [ "x$fetchwlem" = x-q ]; then
+	fetchwlem=-f
+fi
+
+with-lock-ex $fetchwlem data-tree-lock bash -ec '
 	exec >>$LOGFILE
 	date
         printf "%s\n" "$FOR_LOGFILE"
