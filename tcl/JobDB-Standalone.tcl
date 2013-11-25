@@ -76,7 +76,11 @@ proc step-set-status {flight job stepno st} {
 proc become-task {argv} { }
 
 proc step-log-filename {flight job stepno ts} {
-    return {}
+    global c
+    set logdir $c(Logs)/$flight/$job
+    file mkdir $c(Logs)/$flight
+    file mkdir $logdir
+    return $logdir/$stepno.$ts.log
 }
 
 }; # namespace eval jobdb
