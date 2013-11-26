@@ -1383,7 +1383,7 @@ sub more_prepareguest_hvm ($$$$;@) {
     my @disks = "phy:$gho->{Lvdev},hda,w";
 
     if (!$xopts{NoCdromImage}) {
-	target_transfer_guest_image($ho, $gho, undef);
+	target_put_guest_image($ho, $gho, undef);
 
 	my $postimage_hook= $xopts{PostImageHook};
 	$postimage_hook->() if $postimage_hook;
