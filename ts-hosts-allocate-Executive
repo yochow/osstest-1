@@ -204,6 +204,7 @@ sub compute_hids () {
             print DEBUG "HID $ident OVERRIDE $hid->{OverrideUse}\n";
         }
         my @flags= get_hostflags($ident);
+	die "no hostflags?!" unless @flags;
         print DEBUG "HID $ident FLAGS @flags\n";
         $hid->{Ident}= $ident;
         my %flags;
