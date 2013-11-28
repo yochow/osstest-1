@@ -501,10 +501,19 @@ sub target_editfile_root ($$$;$$) {
 
 sub target_cmd_build ($$$$) {
     my ($ho,$timeout,$builddir,$script) = @_;
-    target_cmd($ho, <<END.$script, $timeout);
+
+    my $distcc_hosts = get_host_property($ho,'DistccHosts',undef);
+    my $distcc = defined($distcc_hosts) ? <<END : "";
+        CCACHE_PREFIX=distcc
+        DISTCC_HOSTS="$distcc_hosts"
+        export CCACHE_PREFIX DISTCC_HOSTS
+END
+
+    target_cmd($ho, <<END.$distcc.<<END.$script, $timeout);
 	set -xe
         LC_ALL=C; export LC_ALL
         PATH=/usr/lib/ccache:\$PATH:/usr/lib/git-core
+END
         exec </dev/null
         cd $builddir
 END
