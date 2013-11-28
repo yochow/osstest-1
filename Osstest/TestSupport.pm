@@ -457,7 +457,7 @@ sub target_putfilecontents_root_stash ($$$$;$) {
 
 sub target_file_exists ($$) {
     my ($ho,$rfile) = @_;
-    my $out= target_cmd_output_root($ho, "if test -e $rfile; then echo y; fi");
+    my $out= target_cmd_output($ho, "if test -e $rfile; then echo y; fi");
     return 1 if $out =~ m/^y$/;
     return 0 if $out !~ m/\S/;
     die "$rfile $out ?";
