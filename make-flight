@@ -354,7 +354,8 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
  job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-freebsd10-$freebsdarch \
 			test-freebsd xl \
 			freebsd_arch=$freebsdarch \
- freebsd_image=${FREEBSD_IMAGE_PREFIX-FreeBSD-10.0-BETA3-}$freebsdarch${FREEBSD_IMAGE_SUFFIX--20131103-r257580.qcow2.xz}
+ freebsd_image=${FREEBSD_IMAGE_PREFIX-FreeBSD-10.0-BETA3-}$freebsdarch${FREEBSD_IMAGE_SUFFIX--20131103-r257580.qcow2.xz} \
+			all_hostflags=$most_hostflags
 
         done
 
