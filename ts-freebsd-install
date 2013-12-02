@@ -67,7 +67,7 @@ sub prep () {
 			    ? $r{"$gho->{Guest}_arch"} : 'amd64').
 			   ".qcow2.xz");
 				
-    my $rootpartition_dev = "/dev/mapper/$gho->{Vg}-$gho->{Name}--disk3";
+    my $rootpartition_dev = target_guest_lv_name($ho, $gho->{Name}) . "--disk3";
 
     target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
 

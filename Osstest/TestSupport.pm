@@ -57,7 +57,7 @@ BEGIN {
                       target_put_guest_image
                       target_editfile_root target_file_exists
                       target_install_packages target_install_packages_norec
-                      target_extract_jobdistpath
+                      target_extract_jobdistpath target_guest_lv_name
 
                       poll_loop tcpconnect await_tcp
                       contents_make_cpio file_simple_write_contents
@@ -614,6 +614,15 @@ sub poll_loop ($$$&) {
         fail("$what: wait timed out: $bad.");
     }
     logm("$what: ok. (${waited}s)");
+}
+
+sub target_guest_lv_name($$) {
+    my ($ho, $lv) = @_;
+
+    my $vg = "$ho->{Name}";
+    # Dashes are escaped in the VG name
+    $vg =~ s/-/--/g;
+    return "/dev/mapper/$vg-$lv";
 }
 
 #---------- dhcp watching ----------

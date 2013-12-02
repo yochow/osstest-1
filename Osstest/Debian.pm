@@ -111,15 +111,6 @@ sub bl_getmenu_open ($$$) {
     return $f;
 }
 
-sub lvm_lv_name($$) {
-    my ($ho, $lv) = @_;
-
-    my $vg = "$ho->{Name}";
-    # Dashes are escaped in the VG name
-    $vg =~ s/-/--/g;
-    return "/dev/mapper/$vg-$lv";
-}
-
 sub setupboot_uboot ($$$) {
     my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
@@ -131,7 +122,7 @@ sub setupboot_uboot ($$$) {
 	my $kern = "vmlinuz-$want_kernver";
 	my $initrd = "initrd.img-$want_kernver";
 
-	my $root= lvm_lv_name($ho,"root");
+	my $root= target_guest_lv_name($ho,"root");
 
 	logm("Xen options: $xenhopt");
 	logm("Linux options: $xenkopt");
@@ -590,7 +581,7 @@ END
     }
 
     if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
-	my $root=lvm_lv_name($ho,"root");
+	my $root=target_guest_lv_name($ho,"root");
 
 	preseed_hook_command($ho, 'late_command', $sfx, <<END);
 #!/bin/sh
