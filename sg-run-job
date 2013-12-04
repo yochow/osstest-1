@@ -249,6 +249,7 @@ proc run-job/test-debian {} {
 proc need-hosts/test-freebsd {} { return host }
 proc run-job/test-freebsd {} {
     run-ts . = ts-freebsd-install
+    run-ts . = ts-guest-start + freebsd
     test-guest freebsd
 }
 
