@@ -1,0 +1,183 @@
+#!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict qw(vars);
+use DBI;
+use Osstest;
+use Osstest::Debian;
+use Osstest::TestSupport;
+
+tsreadconfig();
+
+our $stage=0;
+if (@ARGV && $ARGV[0] =~ m/^--stage(\d+)$/) { $stage=$1; shift @ARGV; }
+
+our ($whhost,$gn) = @ARGV;
+$whhost ||= 'host';
+$gn ||= 'ovmf';
+
+our $ho= selecthost($whhost);
+
+our $ram_mb=   6000;
+our $disk_mb= 10000;
+
+our $guesthost= "$gn.guest.osstest";
+our $gho;
+
+our $toolstack= toolstack()->{Command};
+
+
+sub preseed () {
+
+    my $preseed_file = preseed_base('wheezy','',());
+    my $authkeys = join('\\n', split(/\n/, authorized_keys()));
+
+    $preseed_file .= (<<END);
+d-i netcfg/get_hostname string $gn
+
+d-i partman-auto/disk string /dev/xvda
+d-i partman-auto/method string  regular
+
+d-i partman-auto/expert_recipe string \\
+        boot-root :: \\
+                512 50 512 vfat \\
+                        \$primary{ } \$bootable{ } \\
+                        method{ efi } format{ } \\
+                        use_filesystem{ } filesystem{ vfat } \\
+                        mountpoint{ /boot/efi } \\
+                . \\
+                5000 50 5000 ext4 \\
+                        method{ format } format{ } \\
+                        use_filesystem{ } filesystem{ ext4 } \\
+                        mountpoint{ / } \\
+                . \\
+                512 30 100% linux-swap \\
+                        method{ swap } format{ } \\
+                .
+
+d-i apt-setup/cdrom/set-first boolean false
+
+d-i preseed/late_command string \\
+        in-target mkdir -p /boot/efi/EFI/boot; \\
+        in-target cp /boot/efi/EFI/debian/grubx64.efi /boot/efi/EFI/boot/bootx64.efi ;\\
+        in-target mkdir -p /root/.ssh; \\
+        in-target sh -c "echo -e '$authkeys'> /root/.ssh/authorized_keys";
+END
+    return $preseed_file;
+}
+
+sub grub_cfg () {
+
+    return <<"END";
+set default="0"
+set timeout=5
+
+menuentry 'debian guest auto Install' {
+    linux /install.amd/vmlinuz console=vga console=ttyS0,115200n8 preseed/file=/preseed.cfg
+    initrd /install.amd/initrd.gz
+}
+END
+}
+
+sub isolinux_cfg () {
+    return <<"END";
+    default autoinstall
+    prompt 0
+    timeout 0
+
+    label autoinstall
+        kernel /install.amd/vmlinuz
+        append video=vesa:ywrap,mtrr vga=788 console=ttyS0,115200n8 preseed/file=/preseed.cfg initrd=/install.amd/initrd.gz
+END
+}
+
+sub prepare_initrd ($$$) {
+    my ($initrddir,$newiso,$preseed_file_path) = @_;
+    return <<"END";
+      rm -rf $initrddir
+      mkdir $initrddir
+      cd $initrddir
+      gzip -d < $newiso/install.amd/initrd.gz | cpio --extract --make-directories --no-absolute-filename
+      cp $preseed_file_path preseed.cfg
+      find . | cpio -H newc --create | gzip -9 > $newiso/install.amd/initrd.gz
+      cd -
+      rm -rf $initrddir
+      cd $newiso
+      md5sum `find -L -type f -print0 | xargs -0` > md5sum.txt
+      cd -
+END
+}
+
+our $emptyiso= "/root/$flight.$job.$gn-empty.iso";
+
+sub prep () {
+    target_install_packages_norec($ho, qw(lvm2 rsync xorriso));
+
+    my $isotimeout= 600;
+
+    $gho= prepareguest($ho, $gn, $guesthost, 22,
+                       $disk_mb + 1,
+                       100);
+    my $base = "/root/$flight.$job.$gn-";
+    my $newiso= $base . "newiso";
+    my $emptydir= $base . "empty-dir";
+    my $initrddir= $base . "initrd-dir";
+    my $preseed_file_path = $base . "preseed";
+
+    my @xorriso_extra = qw(-eltorito-alt-boot
+                           -e boot/grub/efi.img
+                           -no-emul-boot
+                           -r);
+    my @xorriso_opts = (iso_gen_flags_basic(), @xorriso_extra);
+
+    iso_create_empty($ho, $emptyiso, $emptydir);
+
+    target_putfilecontents_root_stash($ho, 10, preseed(),
+                                      $preseed_file_path);
+
+    more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb,
+                          OnReboot => 'preserve',
+                          Bios => 'ovmf',
+                          PostImageHook => sub {
+        my $cmds = iso_copy_content_from_image($gho, $newiso);
+        $cmds .= prepare_initrd($initrddir,$newiso,$preseed_file_path);
+        target_cmd_root($ho, $cmds, $isotimeout);
+        target_putfilecontents_root_stash($ho, 10, grub_cfg(),
+                                          "$newiso/debian/boot/grub/grub.cfg");
+
+        target_putfilecontents_root_stash($ho, 10, isolinux_cfg(),
+                                          "$newiso/isolinux/isolinux.cfg");
+
+        iso_create_xorriso($ho, $gho->{Rimage}, $newiso, $isotimeout, @xorriso_opts);
+    });
+}
+
+if (!$stage) {
+    prep();
+    guest_create($gho,$toolstack);
+} else {
+    $gho= selectguest($gn,$gho);
+}
+if ($stage<2) {
+    guest_await_reboot($ho,$gho,2000);
+    guest_destroy($ho,$gho);
+}
+
+guest_editconfig_nocd($gho,$emptyiso);
+guest_create($gho,$toolstack);
+guest_await_dhcp_tcp($gho,300);
+guest_check_up($gho);
