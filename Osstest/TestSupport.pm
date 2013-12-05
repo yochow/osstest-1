@@ -1471,6 +1471,11 @@ END
         $cfg .= "device_model_version='$devmodel'\n";
     }
 
+    my $bios = $xopts{'Bios'};
+    if (defined $bios) {
+        $cfg .= "bios='$bios'\n";
+    }
+
     my $cfgpath= prepareguest_part_xencfg($ho, $gho, $ram_mb, \%xopts, $cfg);
     target_cmd_root($ho, <<END);
         (echo $passwd; echo $passwd) | vncpasswd $gho->{Guest}.vncpw
