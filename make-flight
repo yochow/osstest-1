@@ -420,7 +420,13 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
                 test-win xl $qemuu_runvar \
 		win_image=win7-x64.iso \
 		all_hostflags=$most_hostflags,hvm
+      fi
 
+      if [ $xenarch = amd64 -a "x$qemuu_suffix" = "x-qemuu" ]; then
+      job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-ovmf-amd64 \
+                test-debianhvm xl $qemuu_runvar \
+		ovmf_image=debian-7.2.0-amd64-CD-1.iso \
+		all_hostflags=$most_hostflags,hvm
       fi
 
       if [ $xenarch = amd64 -a $dom0arch = i386 -a "$kern" = "" ]; then
