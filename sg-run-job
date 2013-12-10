@@ -265,6 +265,12 @@ proc run-job/test-rhelhvm {} {
     test-guest-nomigr redhat
 }
 
+proc need-hosts/test-debianhvm {} { return host }
+proc run-job/test-debianhvm {} {
+    run-ts . = ts-debian-hvm-install
+    test-guest ovmf
+}
+
 proc need-hosts/test-pair {} { return {src_host dst_host} }
 proc run-job/test-pair {} {
     run-ts . =              ts-debian-install      dst_host
