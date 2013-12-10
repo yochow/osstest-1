@@ -88,6 +88,14 @@ if [ x$buildflight = x ]; then
     *) enable_xend=false;;
     esac
 
+    case "$xenbranch" in
+    xen-3.*-testing) enable_ovmf=false;;
+    xen-4.0-testing) enable_ovmf=false;;
+    xen-4.1-testing) enable_ovmf=false;;
+    xen-4.2-testing) enable_ovmf=false;;
+    *) enable_ovmf=true;
+    esac
+
     eval "
 	arch_runvars=\"\$ARCH_RUNVARS_$arch\"
     "
@@ -95,7 +103,7 @@ if [ x$buildflight = x ]; then
     build_hostflags=share-build-$suite-$arch,arch-$arch,suite-$suite,purpose-build
 
     ./cs-job-create $flight build-$arch build				     \
-		arch=$arch enable_xend=$enable_xend						     \
+		arch=$arch enable_xend=$enable_xend enable_ovmf=$enable_ovmf	     \
 	tree_qemu=$TREE_QEMU	     \
 	tree_qemuu=$TREE_QEMU_UPSTREAM	     \
 	tree_xen=$TREE_XEN		     \
