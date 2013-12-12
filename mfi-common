@@ -79,7 +79,6 @@ create_build_jobs () {
     esac
 
     case "$arch" in
-    armhf) suite="wheezy";;
     *)     suite=$defsuite;;
     esac
 
@@ -267,7 +266,6 @@ test_matrix_iterate () {
     esac
 
     case "$xenarch" in
-    armhf) suite="wheezy";  guestsuite="wheezy";;
     *)     suite=$defsuite; guestsuite=$defguestsuite;;
     esac
 
