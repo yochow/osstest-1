@@ -97,6 +97,9 @@ BEGIN {
                       await_webspace_fetch_byleaf create_webfile
                       file_link_contents get_timeout
                       setup_pxeboot setup_pxeboot_local host_pxefile
+
+                      create_iso_genisoimage
+                      create_iso_xorriso
                       );
     %EXPORT_TAGS = ( );
 
@@ -1857,6 +1860,31 @@ label local
 	LOCALBOOT 0
 default local
 END
+}
+
+#---------- ISO images ----------
+sub create_iso_genisoimage ($$$$;@) {
+    my ($ho,$iso,$dir,$isotimeout,@xopts) = @_;
+
+    target_install_packages_norec($ho, qw(genisoimage));
+
+    target_cmd_root($ho, <<END, 60);
+        mkdir -p $dir
+        genisoimage @xopts -o $iso $dir/.
+END
+
+}
+
+sub create_iso_xorriso ($$$$;@) {
+    my ($ho,$iso,$dir,$isotimeout,@xopts) = @_;
+
+    target_install_packages_norec($ho, qw(xorriso));
+
+    target_cmd_root($ho, <<END, 60);
+        mkdir -p $dir
+        xorriso @xopts -o $iso $dir/.
+END
+
 }
 
 1;
