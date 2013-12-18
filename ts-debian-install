@@ -62,7 +62,20 @@ sub ginstall () {
 	$initrd =~ s,/vmlinuz-,/initrd.img-, or die "$initrd ?";
     }
     my $initrd_opt = $initrd eq 'none' ? '' : "--initrd $initrd";
-    
+
+    if ($ho->{Suite} =~ m/lenny|squeeze|wheezy/) {
+        target_cmd_root($ho, <<END, 10);
+            set -e
+            # xen-create-image requires this to exists (see Debian bug #732456)
+            # even though it is otherwise quite happy on a pure xl system.
+            if [ ! -f /etc/xen/xend-config.sxp ] ; then
+                # xen-create-image checks for these and warns if they don't
+                # exist or are set to "dummy"
+                echo "(vif-script osstest)" >>/etc/xen/xend-config.sxp
+                echo "(network-script osstest)" >>/etc/xen/xend-config.sxp
+            fi
+END
+    }
     target_cmd_root($ho, <<END, 2000);
         xen-create-image \\
             --dhcp --mac $gho->{Ether} \\
