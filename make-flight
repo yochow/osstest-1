@@ -83,9 +83,22 @@ if [ x$buildflight = x ]; then
         suite_runvars=
     fi
 
+    # In 4.4 onwards xend is off by default. If necessary we build a
+    # separate set of binaries with xend enabled in order to run those
+    # tests which use xend.
     case "$arch" in
-    i386|amd64) enable_xend=true;;
-    *) enable_xend=false;;
+    i386|amd64) want_xend=true;;
+    *) want_xend=false;;
+    esac
+
+    case "$xenbranch" in
+    xen-3.*-testing) build_defxend=$want_xend; build_extraxend=false;;
+    xen-4.0-testing) build_defxend=$want_xend; build_extraxend=false;;
+    xen-4.1-testing) build_defxend=$want_xend; build_extraxend=false;;
+    xen-4.2-testing) build_defxend=$want_xend; build_extraxend=false;;
+    xen-4.3-testing) build_defxend=$want_xend; build_extraxend=false;;
+    *) build_defxend=false;
+       build_extraxend=$want_xend
     esac
 
     case "$xenbranch" in
@@ -104,7 +117,7 @@ if [ x$buildflight = x ]; then
     build_hostflags=share-build-$suite-$arch,arch-$arch,suite-$suite,purpose-build
 
     ./cs-job-create $flight build-$arch build				     \
-		arch=$arch enable_xend=$enable_xend enable_ovmf=$enable_ovmf	     \
+		arch=$arch enable_xend=$build_defxend enable_ovmf=$enable_ovmf	     \
 	tree_qemu=$TREE_QEMU	     \
 	tree_qemuu=$TREE_QEMU_UPSTREAM	     \
 	tree_xen=$TREE_XEN		     \
@@ -114,6 +127,20 @@ if [ x$buildflight = x ]; then
 		revision_xen=$REVISION_XEN				     \
 		revision_qemu=$REVISION_QEMU				     \
 		revision_qemuu=$REVISION_QEMU_UPSTREAM
+
+    if [ $build_extraxend = "true" ] ; then
+    ./cs-job-create $flight build-$arch-xend build			     \
+		arch=$arch enable_xend=true enable_ovmf=$enable_ovmf	     \
+	tree_qemu=$TREE_QEMU	     \
+	tree_qemuu=$TREE_QEMU_UPSTREAM	     \
+	tree_xen=$TREE_XEN		     \
+		$RUNVARS $BUILD_RUNVARS $BUILD_XEN_RUNVARS $arch_runvars     \
+		$suite_runvars                                               \
+		host_hostflags=$build_hostflags    \
+		revision_xen=$REVISION_XEN				     \
+		revision_qemu=$REVISION_QEMU				     \
+		revision_qemuu=$REVISION_QEMU_UPSTREAM
+    fi
 
     ./cs-job-create $flight build-$arch-pvops build-kern		     \
 		arch=$arch kconfighow=xen-enable-xen-config		     \
@@ -198,9 +225,21 @@ job_create_test () {
 	local job=$1; shift
 	local recipe=$1; shift
 	local toolstack=$1; shift
+	local xenarch=$1; shift
 
         local job_md5=`echo "$job" | md5sum`
         job_md5="${job_md5%  -}"
+
+	xenbuildjob="${bfi}build-$xenarch"
+
+        case "$xenbranch:$toolstack" in
+        xen-3.*-testing:*) ;;
+        xen-4.0-testing:*) ;;
+        xen-4.1-testing:*) ;;
+        xen-4.2-testing:*) ;;
+        xen-4.3-testing:*) ;;
+        *:xend) xenbuildjob="$xenbuildjob-xend";;
+        esac
 
         if [ "x$JOB_MD5_PATTERN" != x ]; then
                 case "$job_md5" in
@@ -237,7 +276,7 @@ job_create_test () {
         esac
 
 	./cs-job-create $flight $job $recipe toolstack=$toolstack \
-		$RUNVARS $TEST_RUNVARS $most_runvars "$@"
+		$RUNVARS $TEST_RUNVARS $most_runvars xenbuildjob=$xenbuildjob "$@"
 }
 
 for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
@@ -332,7 +371,6 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
       most_runvars="
 		arch=$dom0arch			        	\
-		xenbuildjob=${bfi}build-$xenarch        	\
 		kernbuildjob=${bfi}build-$dom0arch-$kernbuild 	\
 		buildjob=${bfi}build-$dom0arch	        	\
 		kernkind=$kernkind		        	\
@@ -340,6 +378,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 		"
       if [ $dom0arch = armhf ]; then
 	  job_create_test test-$xenarch$kern-$dom0arch-xl test-debian xl \
+		$xenarch						  \
 		debian_kernkind=$kernkind				  \
 		debian_arch=$dom0arch   				  \
 		all_hostflags=$most_hostflags
@@ -347,11 +386,13 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
       fi
 
       job_create_test test-$xenarch$kern-$dom0arch-pv test-debian xend \
+		$xenarch						  \
 		debian_kernkind=$kernkind				  \
 		debian_arch=$dom0arch   				  \
 		all_hostflags=$most_hostflags
 
       job_create_test test-$xenarch$kern-$dom0arch-xl test-debian xl \
+		$xenarch						  \
 		debian_kernkind=$kernkind				  \
 		debian_arch=$dom0arch   				  \
 		all_hostflags=$most_hostflags
@@ -361,7 +402,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
         for freebsdarch in amd64 i386; do
 
  job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-freebsd10-$freebsdarch \
-			test-freebsd xl \
+			test-freebsd xl $xenarch  \
 			freebsd_arch=$freebsdarch \
  freebsd_image=${FREEBSD_IMAGE_PREFIX-FreeBSD-10.0-BETA3-}$freebsdarch${FREEBSD_IMAGE_SUFFIX--20131103-r257580.qcow2.xz} \
 			all_hostflags=$most_hostflags
@@ -407,7 +448,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
       job_create_test \
                 test-$xenarch$kern-$dom0arch-$toolstack$qemuu_suffix-winxpsp3$vcpus_suffix \
-                test-win $toolstack $qemuu_runvar \
+                test-win $toolstack $xenarch $qemuu_runvar \
 		win_image=winxpsp3.iso $vcpus_runvars	\
 		all_hostflags=$most_hostflags,hvm
 
@@ -417,7 +458,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
       if [ $xenarch = amd64 ]; then
 
       job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-win7-amd64 \
-                test-win xl $qemuu_runvar \
+                test-win xl $xenarch $qemuu_runvar \
 		win_image=win7-x64.iso \
 		all_hostflags=$most_hostflags,hvm
 
@@ -428,7 +469,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 	for cpuvendor in amd intel; do
 
     job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-rhel6hvm-$cpuvendor \
-						test-rhelhvm xl \
+						test-rhelhvm xl $xenarch \
 		redhat_image=rhel-server-6.1-i386-dvd.iso		\
 		all_hostflags=$most_hostflags,hvm-$cpuvendor \
                 $qemuu_runvar
@@ -440,7 +481,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
       done # qemuu_suffix
 
       job_create_test test-$xenarch$kern-$dom0arch-pair test-pair \
-		$onetoolstack \
+		$onetoolstack $xenarch \
                 !host !host_hostflags \
 		debian_kernkind=$kernkind				  \
 		debian_arch=$dom0arch   				  \
@@ -451,7 +492,8 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
        for pin in '' -pin; do
 
       job_create_test test-$xenarch$kern-$dom0arch-xl-sedf$pin  \
-           test-debian xl guests_vcpus=4 xen_boot_append="sched=sedf loglvl=all ${pin:+dom0_vcpus_pin}" linux_boot_append='loglevel=9 debug' \
+           test-debian xl $xenarch \
+		guests_vcpus=4 xen_boot_append="sched=sedf loglvl=all ${pin:+dom0_vcpus_pin}" linux_boot_append='loglevel=9 debug' \
 		debian_kernkind=$kernkind				  \
 		debian_arch=$dom0arch   				  \
 		all_hostflags=$most_hostflags
@@ -463,13 +505,14 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
       if [ $xenarch = amd64 -a $dom0arch = i386 ]; then
 
       job_create_test test-$xenarch$kern-$dom0arch-xl-multivcpu \
-                        test-debian xl guests_vcpus=4 \
+                        test-debian xl $xenarch guests_vcpus=4 \
 		debian_kernkind=$kernkind				  \
 		debian_arch=$dom0arch   				  \
 		all_hostflags=$most_hostflags
 
       job_create_test test-$xenarch$kern-$dom0arch-xl-credit2  \
-           test-debian xl guests_vcpus=4 xen_boot_append='sched=credit2'      \
+           test-debian xl $xenarch					  \
+		guests_vcpus=4 xen_boot_append='sched=credit2'		  \
 		debian_kernkind=$kernkind				  \
 		debian_arch=$dom0arch   				  \
 		all_hostflags=$most_hostflags
@@ -481,7 +524,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
         for cpuvendor in intel; do
 
       job_create_test test-$xenarch$kern-$dom0arch-xl-pcipt-intel \
-                        test-debian-nomigr xl guests_vcpus=4 \
+                        test-debian-nomigr xl $xenarch guests_vcpus=4	  \
 		debian_kernkind=$kernkind				  \
 		debian_arch=$dom0arch   				  \
 		debian_pcipassthrough_nic=host				  \
