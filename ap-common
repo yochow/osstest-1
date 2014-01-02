@@ -74,7 +74,9 @@ info_linux_tree () {
 		;;
 	linux-arm-xen)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/sstabellini/xen.git}
+		: ${TREE_LINUX_ARM_THIS:=${KERNEL_SCM}/sstabellini/xen.git}
 		: ${TAG_LINUX_THIS:=linux-arm-xen}
+		: ${TAG_LINUX_ARM_THIS:=linux-arm-xen}
 		;;
 	linux-3.*)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
