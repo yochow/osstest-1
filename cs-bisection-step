@@ -439,7 +439,7 @@ sub digraph_whole () {
         if (defined $basispass_rmap->{$tree}) {
             push @treeinfos, {
                 Name => $tree,
-                Url => $basispass_rmap->{$tree}{Url}
+                Url => $latest_rmap->{$tree}{Url}
             };
         } else {
             print STDERR "(tree in latest but not in basispass: $tree)\n";
