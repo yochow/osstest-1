@@ -30,6 +30,7 @@ flight=`./cs-flight-create $blessing $branch`
 . cri-common
 
 defsuite=`getconfig DebianSuite`
+defguestsuite=`getconfig GuestDebianSuite`
 
 xenrt_images=/usr/groups/images/autoinstall
 
@@ -324,8 +325,8 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
   esac
 
   case "$xenarch" in
-  armhf) suite="wheezy";;
-  *)     suite=$defsuite;;
+  armhf) suite="wheezy";  guestsuite="wheezy";;
+  *)     suite=$defsuite; guestsuite=$defguestsuite;;
   esac
 
   if [ $suite != $defsuite ] ; then
@@ -372,6 +373,11 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
       if [ x$kern = x-xcpkern -a $dom0arch != i386 ]; then continue; fi
 
+      debian_runvars="debian_kernkind=$kernkind debian_arch=$dom0arch"
+      if [ $guestsuite != $defguestsuite ] ; then
+          debian_runvars="$debian_runvars debian_suite=$guestsuite"
+      fi
+
       most_hostflags="arch-$dom0arch,arch-xen-$xenarch,suite-$suite,purpose-test"
 
       most_runvars="
@@ -383,23 +389,17 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
       if [ $dom0arch = armhf ]; then
 	  job_create_test test-$xenarch$kern-$dom0arch-xl test-debian xl \
 		$xenarch $dom0arch					  \
-		debian_kernkind=$kernkind				  \
-		debian_arch=$dom0arch   				  \
-		all_hostflags=$most_hostflags
+		$debian_runvars all_hostflags=$most_hostflags
 	  continue
       fi
 
       job_create_test test-$xenarch$kern-$dom0arch-pv test-debian xend \
 		$xenarch $dom0arch					  \
-		debian_kernkind=$kernkind				  \
-		debian_arch=$dom0arch   				  \
-		all_hostflags=$most_hostflags
+		$debian_runvars all_hostflags=$most_hostflags
 
       job_create_test test-$xenarch$kern-$dom0arch-xl test-debian xl \
 		$xenarch $dom0arch					  \
-		debian_kernkind=$kernkind				  \
-		debian_arch=$dom0arch   				  \
-		all_hostflags=$most_hostflags
+		$debian_runvars all_hostflags=$most_hostflags
 
       if [ $xenarch = amd64 -a $dom0arch = i386 -a "$kern" = "" ]; then
 
@@ -487,8 +487,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
       job_create_test test-$xenarch$kern-$dom0arch-pair test-pair \
 		$onetoolstack $xenarch $dom0arch \
                 !host !host_hostflags \
-		debian_kernkind=$kernkind				  \
-		debian_arch=$dom0arch   				  \
+		$debian_runvars \
 		all_hostflags=$most_hostflags,equiv-1
 
       if [ $xenarch = amd64 -a $dom0arch = amd64 ]; then
@@ -498,9 +497,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
       job_create_test test-$xenarch$kern-$dom0arch-xl-sedf$pin  \
            test-debian xl $xenarch $dom0arch \
 		guests_vcpus=4 xen_boot_append="sched=sedf loglvl=all ${pin:+dom0_vcpus_pin}" linux_boot_append='loglevel=9 debug' \
-		debian_kernkind=$kernkind				  \
-		debian_arch=$dom0arch   				  \
-		all_hostflags=$most_hostflags
+		$debian_runvars all_hostflags=$most_hostflags
 
        done
 
@@ -510,16 +507,12 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
       job_create_test test-$xenarch$kern-$dom0arch-xl-multivcpu \
                         test-debian xl $xenarch $dom0arch guests_vcpus=4  \
-		debian_kernkind=$kernkind				  \
-		debian_arch=$dom0arch   				  \
-		all_hostflags=$most_hostflags
+		        $debian_runvars all_hostflags=$most_hostflags
 
       job_create_test test-$xenarch$kern-$dom0arch-xl-credit2  \
            test-debian xl $xenarch $dom0arch				  \
 		guests_vcpus=4 xen_boot_append='sched=credit2'		  \
-		debian_kernkind=$kernkind				  \
-		debian_arch=$dom0arch   				  \
-		all_hostflags=$most_hostflags
+		$debian_runvars all_hostflags=$most_hostflags
 
       fi
 
@@ -530,9 +523,7 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
       job_create_test test-$xenarch$kern-$dom0arch-xl-pcipt-intel \
                         test-debian-nomigr xl $xenarch $dom0arch	  \
 		guests_vcpus=4						  \
-		debian_kernkind=$kernkind				  \
-		debian_arch=$dom0arch   				  \
-		debian_pcipassthrough_nic=host				  \
+		$debian_runvars debian_pcipassthrough_nic=host		  \
 		all_hostflags=$most_hostflags,hvm-$cpuvendor,pcipassthrough-nic
 
         done
