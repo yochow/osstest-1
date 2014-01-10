@@ -203,7 +203,21 @@ END
     return $edscript;
 }
 
+sub kconfig_overrides ($) {
+    my ($to) = @_;
+    return '' unless $r{"kconfig_override_$to"};
+    my $overrides = '';
+    foreach my $override (split /,/, $r{"kconfig_override_$to"}) {
+        $overrides .= "setopt $override $to\n";
+    }
+    return $overrides;
+}
+
 sub config_xen_enable_xen_config () {
+    my $config_runvars = kconfig_overrides('y');
+    $config_runvars .= kconfig_overrides('m');
+    $config_runvars .= kconfig_overrides('n');
+
     my $edscript= stash_config_edscript(<<END);
 
 setopt CONFIG_HIGHMEM64G y
@@ -228,6 +242,7 @@ setopt CONFIG_HYPERVISOR_GUEST y
 
 $config_hardware
 $config_features
+$config_runvars
 END
 
     target_cmd_build($ho, 1000, $builddir, <<END);

@@ -61,6 +61,9 @@ if [ x$buildflight = x ]; then
 	tree_linux=$TREE_LINUX_ARM
 	revision_linux=${REVISION_LINUX_ARM:-${DEFAULT_REVISION_LINUX_ARM}}
       "
+      pvops_kconfig_overrides="
+        kconfig_override_y=CONFIG_EXT4_FS
+      "
       ;;
     *)
       case "$branch" in
@@ -151,7 +154,7 @@ if [ x$buildflight = x ]; then
 		host_hostflags=$build_hostflags    \
 		xen_kernels=linux-2.6-pvops				     \
 		revision_xen=$REVISION_XEN				     \
-		$pvops_kernel						\
+		$pvops_kernel $pvops_kconfig_overrides			     \
 		${TREEVCS_LINUX:+treevcs_linux=}${TREEVCS_LINUX}	\
 		tree_linuxfirmware=$TREE_LINUXFIRMWARE			     \
 		revision_linuxfirmware=$REVISION_LINUXFIRMWARE
