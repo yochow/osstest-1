@@ -76,9 +76,30 @@ job_create_test_filter_callback () {
   return 0;
 }
 
+test_matrix_branch_filter_callback () {
+  case "$xenarch" in
+  armhf)
+        case "$branch" in
+        linux-arm-xen) ;;
+        linux-*) return 1;;
+        qemu-*) return 1;;
+        esac
+        ;;
+  i386|amd64)
+        case "$branch" in
+        linux-arm-xen) return 1;;
+        esac
+        ;;
+  esac
+
+  return 0
+}
+
 for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
   if [ "x$xenarch" = xdisable ]; then continue; fi
+
+  test_matrix_branch_filter_callback || continue
 
   case "$xenarch" in
   armhf)
@@ -90,11 +111,6 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
         xen-4.2-testing) continue;;
         *) ;;
         esac
-        case "$branch" in
-        linux-arm-xen) ;;
-        linux-*) continue;;
-        qemu-*) continue;;
-        esac
         ;;
   i386)
         # 32-bit Xen is dropped from 4.3 onwards
@@ -105,14 +121,9 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
         xen-4.2-testing) ;;
         *) continue ;;
         esac
-        case "$branch" in
-        linux-arm-xen) continue;;
-        esac
         ;;
   amd64)
-        case "$branch" in
-        linux-arm-xen) continue;;
-        esac
+        ;;
   esac
 
   case "$xenarch" in
