@@ -1,0 +1,38 @@
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2014 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+stripy () {
+  local out_vn="$1"; shift
+  local out_0="$1"; shift
+  local out_1="$1"; shift
+  local out_val=0
+  local this_val
+  local this_cmp
+  while [ $# != 0 ]; do
+    this_val="$1"; shift
+    this_cmp="$1"; shift
+    if [ "x$this_val" = "x$this_cmp" ]; then
+      out_val=$(( $out_val ^ 1 ))
+    fi
+  done
+  eval "$out_vn=\"\$out_$out_val\""
+}
+
+# Local variables:
+# mode: sh
+# sh-basic-offset: 2
+# indent-tabs-mode: nil
+# End:
