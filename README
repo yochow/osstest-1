@@ -1,3 +1,197 @@
+Introduction
+============
+
+OSStest is the Xen Project automated test infrastructure.
+
+Terminology
+===========
+
+"flight":
+
+    Each run of osstest is referred to as a "flight". Each flight is
+    given a unique ID (a number or name).
+
+"job":
+
+    Each flight consists of one or more "jobs". These are a sequence
+    of test steps run in order and correspond to a column in the test
+    report grid. They have names like "build-amd64" or
+    "test-amd64-amd64-pv". A job can depend on the output of another
+    job in the flight -- e.g. most test-* jobs depend on one or more
+    build-* jobs.
+
+"step":
+
+    Each job consists of multiple "steps" which is an individual test
+    operation, such as "build the hypervisor", "install a guest",
+    "start a guest", "migrate a guest", etc. A step corresponds to a
+    cell in the results grid. A given step can be reused in multiple
+    different jobs, e.g. the "xen build" step is used in several
+    different build-* jobs. This reuse can be seen in the rows of the
+    results grid.
+
+"runvar":
+
+    A runvar is a named textual variable associated with each job in a
+    given flight. They serve as both the inputs and outputs to the
+    job.
+
+    For example a Xen build job may have input runvars "tree_xen" (the
+    tree to clone) and "revision_xen" (the version to test). As output
+    it sets "path_xendist" which is the path to the tarball of the
+    resulting binary.
+
+    As a further example a test job may have an input runvar
+    "xenbuildjob" which specifies which build job produced the binary
+    to be tested. The "xen install" step can then read this runvar in
+    order to find the binary to install.
+
+    Other runvars also exist covering things such as:
+
+        * constraints on which machines in the test pool a job can be
+          run on (e.g. the architecure, the need for a particular
+          processor class, the presence of SR-IOV etc).
+
+        * the parameters of the guest to test (e.g. distro, PV vs HVM
+          etc).
+
+Operation
+=========
+
+A flight is constructed by the "make-flight" script.
+
+"make-flight" will allocate a new flight number, create a set of jobs
+with input runvars depending on the configuration (e.g. branch/version
+to test).
+
+A flight is run by the "mg-execute-flight" script, which in turn calls
+"sg-execute-flight". "sg-execute-flight" then spawns an instance of
+"sg-run-job" for each job in the flight.
+
+"sg-run-job" encodes various recipes (sequences of steps) which are
+referenced by each job's configuration. It then runs each of these in
+turn, taking into account the prerequisites etc, by calling the
+relevant "ts-*" scripts.
+
+When running in standalone mode it is possible to run any of these
+steps by hand, ("mg-execute-flight", "sg-run-job", "ts-*") although
+you will need to find the correct inputs (some of which are documented
+below) and perhaps take care of prerequisites yourself (e.g. running
+"./sg-run-job test-armhf-armhf-xl" means you must have done
+"./sg-runjob build-armhf" and "build-armhf-pvops" first.
+
+Results
+=======
+
+For flights run automatically by the infrastructure an email report is
+produced. For most normal flights this is mailed to the xen-devel
+mailing list. The report for flight 24438 can be seen at
+
+    http://lists.xen.org/archives/html/xen-devel/2014-01/msg01614.html
+
+The report will link to a set of complete logs. Since these are
+regularly expired due to space constraints the logs for flight 24438
+have been archived to
+
+    http://xenbits.xen.org/docs/osstest-output-example/24438/
+
+NB: to save space any files larger than 100K have been replaced with a
+placeholder.
+
+The results grid contains an overview of the flight's execution.
+
+The results for each job are reached by clicking the header of the
+column in the results grid which will lead to reports such as:
+
+    http://xenbits.xen.org/docs/osstest-output-example/24438/test-amd64-amd64-xl/info.html
+    http://xenbits.xen.org/docs/osstest-output-example/24438/build-amd64/info.html
+
+The job report contains all of the logs and build outputs associated
+with this job.
+
+The logs for a step are reached by clicking the individual cells of
+the results grid, or by clicking the list of steps on the job
+report. In either case this will lead to a report such as
+
+    http://xenbits.xen.org/docs/osstest-output-example/24438/test-amd64-amd64-xl/4.ts-xen-install.log
+
+Additional details (e.g. serial logs, guest cfg files, etc) will be
+available in the complete logs associated with the containing job.
+
+The runvars are listed in the results page for the job as "Test
+control variables". e.g. See the end of:
+
+    http://xenbits.xen.org/docs/osstest-output-example/24438/test-amd64-amd64-xl/info.html
+
+In order to find the binaries which went into a test job you should
+consult the results page for that job and find the relevant build
+job. e.g.
+
+    http://www.chiark.greenend.org.uk/~xensrcts/logs/24438/test-amd64-amd64-xl/info.html
+
+lists "xenbuildjob" as "build-amd64". Therefore the input binaries are
+found at
+
+    http://www.chiark.greenend.org.uk/~xensrcts/logs/24438/build-amd64/info.html
+
+which is linked from the top of the relevant column in the overview
+grid.
+
+Script Naming Conventions
+=========================
+
+Most of the scripts follow a naming convention:
+
+ap-*:   Adhoc push scripts
+
+cr-*:   Cron scripts
+
+cri-*:  Cron scripts (internal)
+
+cs-*:   Control Scripts
+
+mg-*:   Management scripts
+
+ms-*:   Management Services
+
+sg-*:   ?
+
+ts-*:   Test Step scripts.
+
+Jobs
+====
+
+The names of jobs follow some common patterns:
+
+    build-$ARCH
+
+        Build Xen for $ARCH
+
+    build-$ARCH-xend
+
+        Build Xen for $ARCH, with xend enabled
+
+    build-$ARCH-pvops
+
+        Build an upstream ("pvops") kernel for $ARCH
+
+build-$ARCH-oldkern
+
+        Build the old "linux-2.6.18-xen" tree for $ARCH
+
+test-$XENARCH-$DOM0ARCH-<CASE>
+
+        A test <CASE> running a $XENARCH hypervisor with a $DOM0ARCH
+        dom0.
+
+        Some tests also have a -$DOMUARCH suffix indicating the
+        obvious thing.
+
+NB: $ARCH (and $XENARCH etc) are Debian arch names, i386, amd64, armhf.
+
+Standalone Mode
+===============
+
 To run osstest in standalone mode:
 
  - You need to install
@@ -18,13 +212,19 @@ To run osstest in standalone mode:
    gives you the "branch" consisting of tests run for the xen-unstable
    push gate.  You need to select a job.  The list of available jobs
    is that shown in the publicly emailed test reports on xen-devel, eg
-     http://lists.xen.org/archives/html/xen-devel/2013-08/msg02529.html
+     http://lists.xen.org/archives/html/xen-devel/2014-01/msg01614.html
 
    If you don't want to repro one of those and don't know how to
    choose a job, choose one of
       test-amd64-{i386,amd64}-xl       32/64-bit dom0,domU; Debian guest
 
  - Run ./standalone-reset
+
+   This will call "make-flight" for you to create a flight targetting
+   xen-unstable (this can be adjusted by passing parameters to
+   standalone-reset). By default the flight identifier is
+   "standalone". standalone-reset will also make sure that certain
+   bits of static data are available (e.g. Debian installer images)
 
  - Then you can run
       ./sg-run-job <job>
