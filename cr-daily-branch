@@ -137,7 +137,6 @@ xen)
 linux)
         realtree=linux
 	NEW_REVISION=$REVISION_LINUX
-	export REVISION_LINUX_XCP=disable
 	export REVISION_LINUX_OLD=disable
 	: ${GITFORCEFLAG:=$GITFORCEFLAG_TREE_LINUX_THIS}
 	;;

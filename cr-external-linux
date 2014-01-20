@@ -40,7 +40,6 @@ select_branch
 check_stop external-linux.
 
 export REVISION_LINUX_OLD=disable
-export REVISION_LINUX_XCP=disable
 export REVISION_XEN="`./ap-fetch-version-baseline $xenbranch`"
 export TREE_LINUX="$url"
 

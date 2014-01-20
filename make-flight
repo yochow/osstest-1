@@ -174,11 +174,6 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
                 kernbuild=pvops
                 kernkind=pvops
                 ;;
-    -xcpkern)
-                kernbuild=xcpkern
-                kernkind=2627
-                if [ "x$REVISION_LINUX_XCP" = xdisable ]; then continue; fi
-                ;;
     *)          echo >&2 "kernkind ?  $kern"; exit 1 ;;
     esac
 
@@ -195,8 +190,6 @@ for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
       eval "
           arch_runvars=\"\$ARCH_RUNVARS_$dom0arch\"
       "
-
-      if [ x$kern = x-xcpkern -a $dom0arch != i386 ]; then continue; fi
 
       debian_runvars="debian_kernkind=$kernkind debian_arch=$dom0arch"
       if [ $guestsuite != $defguestsuite ] ; then
