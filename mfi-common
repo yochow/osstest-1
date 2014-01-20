@@ -175,24 +175,6 @@ create_build_jobs () {
 
     fi
 
-    if false && [ $arch = i386 -a "x$REVISION_LINUX_XCP" != xdisable ]; then
-      # XCP dom0 kernel is 32-bit only
-
-      ./cs-job-create $flight build-$arch-xcpkern build-kern            \
-                $RUNVARS $BUILD_RUNVARS $BUILD_LINUX_XCP_RUNVARS        \
-                $arch_runvars $suite_runvars                            \
-                arch=$arch                                              \
-        kconfighow=intree-buildconfigs kimagefile=arch/x86/boot/vmlinuz \
-                host_hostflags=$build_hostflags                         \
-                tree_xen=$TREE_XEN                                      \
-                revision_xen=$REVISION_XEN                              \
-        tree_linux=$TREEBASE_LINUX_XCP.hg                               \
-     tree_pq_linux=$TREEBASE_LINUX_XCP.pq.hg                            \
-        revision_linux=$REVISION_LINUX_XCP                              \
-        revision_pq_linux=$REVISION_PQ_LINUX_XCP
-
-    fi
-
   done
 }
 
