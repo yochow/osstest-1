@@ -189,6 +189,34 @@ create_build_jobs () {
   done
 }
 
+job_create_test () {
+  job_create_test_filter_callback "$@" || return 0
+
+  local job=$1; shift
+  local recipe=$1; shift
+  local toolstack=$1; shift
+  local xenarch=$1; shift
+  local dom0arch=$1; shift
+
+  xenbuildjob="${bfi}build-$xenarch"
+  buildjob="${bfi}build-$dom0arch"
+
+  case "$xenbranch:$toolstack" in
+    xen-3.*-testing:*) ;;
+    xen-4.0-testing:*) ;;
+    xen-4.1-testing:*) ;;
+    xen-4.2-testing:*) ;;
+    xen-4.3-testing:*) ;;
+    *:xend) xenbuildjob="$xenbuildjob-xend"
+            buildjob="${bfi}build-$dom0arch-xend"
+            ;;
+  esac
+
+  ./cs-job-create $flight $job $recipe toolstack=$toolstack       \
+    $RUNVARS $TEST_RUNVARS $most_runvars                          \
+    xenbuildjob=$xenbuildjob buildjob=$buildjob "$@"
+}
+
 # Local variables:
 # mode: sh
 # sh-basic-offset: 2
