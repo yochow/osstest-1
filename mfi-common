@@ -225,6 +225,14 @@ job_create_test () {
 # Provides various convenience variables for the callback.
 #
 test_matrix_iterate () {
+
+  case "$xenbranch" in
+  xen-3.*-testing)      onetoolstack=xend ;;
+  xen-4.0-testing)      onetoolstack=xend ;;
+  xen-4.1-testing)      onetoolstack=xend ;;
+  *)                    onetoolstack=xl ;;
+  esac
+
   for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
     if [ "x$xenarch" = xdisable ]; then continue; fi
@@ -266,13 +274,6 @@ test_matrix_iterate () {
     else
         suite_runvars=
     fi
-
-    case "$xenbranch" in
-    xen-3.*-testing)      onetoolstack=xend ;;
-    xen-4.0-testing)      onetoolstack=xend ;;
-    xen-4.1-testing)      onetoolstack=xend ;;
-    *)                    onetoolstack=xl ;;
-    esac
 
     for kern in ''; do
 
