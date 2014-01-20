@@ -217,6 +217,107 @@ job_create_test () {
     xenbuildjob=$xenbuildjob buildjob=$buildjob "$@"
 }
 
+# Iterate over xenarch, dom0arch and kernel calling test_matrix_do_one
+# for each combination.
+#
+# Filters non-sensical combinations.
+#
+# Provides various convenience variables for the callback.
+#
+test_matrix_iterate () {
+  for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
+
+    if [ "x$xenarch" = xdisable ]; then continue; fi
+
+    test_matrix_branch_filter_callback || continue
+
+    case "$xenarch" in
+    armhf)
+          # Arm from 4.3 onwards only
+          case "$xenbranch" in
+          xen-3.*-testing) continue;;
+          xen-4.0-testing) continue;;
+          xen-4.1-testing) continue;;
+          xen-4.2-testing) continue;;
+          *) ;;
+          esac
+          ;;
+    i386)
+          # 32-bit Xen is dropped from 4.3 onwards
+          case "$xenbranch" in
+          xen-3.*-testing) ;;
+          xen-4.0-testing) ;;
+          xen-4.1-testing) ;;
+          xen-4.2-testing) ;;
+          *) continue ;;
+          esac
+          ;;
+    amd64)
+          ;;
+    esac
+
+    case "$xenarch" in
+    armhf) suite="wheezy";  guestsuite="wheezy";;
+    *)     suite=$defsuite; guestsuite=$defguestsuite;;
+    esac
+
+    if [ $suite != $defsuite ] ; then
+        suite_runvars="host_suite=$suite"
+    else
+        suite_runvars=
+    fi
+
+    case "$xenbranch" in
+    xen-3.*-testing)      onetoolstack=xend ;;
+    xen-4.0-testing)      onetoolstack=xend ;;
+    xen-4.1-testing)      onetoolstack=xend ;;
+    *)                    onetoolstack=xl ;;
+    esac
+
+    for kern in ''; do
+
+      case $kern in
+      '')
+                  kernbuild=pvops
+                  kernkind=pvops
+                  ;;
+      *)          echo >&2 "kernkind ?  $kern"; exit 1 ;;
+      esac
+
+      for dom0arch in i386 amd64 armhf; do
+
+        case ${xenarch}_${dom0arch} in
+            amd64_amd64) ;;
+            amd64_i386) ;;
+            i386_i386) ;;
+            armhf_armhf) ;;
+            *) continue ;;
+        esac
+
+        eval "
+            arch_runvars=\"\$ARCH_RUNVARS_$dom0arch\"
+        "
+
+        debian_runvars="debian_kernkind=$kernkind debian_arch=$dom0arch"
+        if [ $guestsuite != $defguestsuite ] ; then
+            debian_runvars="$debian_runvars debian_suite=$guestsuite"
+        fi
+
+        most_hostflags="arch-$dom0arch,arch-xen-$xenarch,suite-$suite,purpose-test"
+
+        most_runvars="
+                  arch=$dom0arch                                  \
+                  kernbuildjob=${bfi}build-$dom0arch-$kernbuild   \
+                  kernkind=$kernkind                              \
+                  $arch_runvars $suite_runvars
+                  "
+
+        test_matrix_do_one
+      done
+    done
+  done
+}
+
 # Local variables:
 # mode: sh
 # sh-basic-offset: 2
