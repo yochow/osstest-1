@@ -47,7 +47,38 @@ else
 
 fi
 
+job_create_test_filter_callback () {
+  local job=$1; shift
+  local recipe=$1; shift
+  local toolstack=$1; shift
+  local xenarch=$1; shift
+  local dom0arch=$1; shift
+
+  case "$branch" in
+    qemu-upstream-*)
+      case " $* " in
+        *" device_model_version=qemu-xen "*)
+          ;;
+        *)
+          : "suppressed $job"
+          return 1;;
+      esac
+      ;;
+    *)
+      case "$job" in
+        *-qemuu-*)
+          if [ "x$toolstack" != xxl ]; then return 1; fi
+          ;;
+      esac
+      ;;
+  esac
+
+  return 0;
+}
+
 job_create_test () {
+        job_create_test_filter_callback "$@" || return 0
+
         local job=$1; shift
         local recipe=$1; shift
         local toolstack=$1; shift
@@ -65,25 +96,6 @@ job_create_test () {
         xen-4.3-testing:*) ;;
         *:xend) xenbuildjob="$xenbuildjob-xend"
                 buildjob="${bfi}build-$dom0arch-xend"
-                ;;
-        esac
-
-        case "$branch" in
-        qemu-upstream-*)
-                case " $* " in
-                *" device_model_version=qemu-xen "*)
-                        ;;
-                *)
-                        : "suppressed $job"
-                        return;;
-                esac
-                ;;
-        *)
-                case "$job" in
-                *-qemuu-*)
-                   if [ "x$toolstack" != xxl ]; then return; fi
-                   ;;
-                esac
                 ;;
         esac
 
