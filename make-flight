@@ -33,8 +33,6 @@ flight=`./cs-flight-create $blessing $branch`
 defsuite=`getconfig DebianSuite`
 defguestsuite=`getconfig GuestDebianSuite`
 
-xenrt_images=/usr/groups/images/autoinstall
-
 if [ x$buildflight = x ]; then
 
   if [ "x$BUILD_LVEXTEND_MAX" != x ]; then
