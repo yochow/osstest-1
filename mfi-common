@@ -33,6 +33,13 @@ stripy () {
 
 create_build_jobs () {
 
+  local arch
+  local pvops_kernel pvops_kconfig_overrides
+  local suite suite_runvars
+  local want_xend build_defxend build_extraxend
+  local enable_ovmf
+  local build_hostflags
+
   for arch in ${BUILD_ARCHES- i386 amd64 armhf }; do
 
     if [ "x$arch" = xdisable ]; then continue; fi
