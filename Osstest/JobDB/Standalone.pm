@@ -56,7 +56,7 @@ sub open ($) {
 }
 
 sub flight_create ($$$) {
-    my ($obj, $branch, $intended) = @_;
+    my ($obj, $intended, $branch) = @_;
     my $fl = $ENV{'OSSTEST_FLIGHT'};
     $fl = 'standalone' unless defined $fl && length $fl;
     die "flight names may not contain ." if $fl =~ m/\./;
