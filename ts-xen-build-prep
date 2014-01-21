@@ -133,7 +133,9 @@ sub lvextend1 ($$$) {
 
     my $stripes_free = $stripe_count * $stripe_minfree;
     $do_limit_pe->(\$stripes_free, 'striped');
-    if ($stripe_minfree && $stripe_count>1) {
+    if ($stripe_minfree && $stripe_count>1
+	&& $ho->{Suite} !~ m/wheezy/ # bugs.debian.org/736173
+	) {
         overall_limit_pe(\$stripes_free);
         $more_pe += $stripes_free;
         target_cmd_root($ho, "lvextend -i$stripe_count -l +$stripes_free $lv");
