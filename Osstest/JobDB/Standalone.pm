@@ -67,8 +67,8 @@ END
     }
     $dbh_tests->do(<<END, {}, $fl, $branch, $intended);
              INSERT INTO flights
-                         (flight, branch, intended)
-                  VALUES (?, ?, ?)
+                         (flight, blessing, branch, intended)
+                  VALUES (?, 'constructing', ?, ?)
 END
     return $fl
 }

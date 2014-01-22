@@ -131,6 +131,7 @@ else
 	sqlite3 standalone.db <<END
 		CREATE TABLE flights (
 			flight TEXT PRIMARY KEY,
+			blessing TEXT,
 			intended TEXT,
 			branch TEXT
 			);
