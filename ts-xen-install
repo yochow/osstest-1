@@ -206,33 +206,37 @@ END
 }
 
 sub nodhcp () {
-    my ($iface,$bridgex);
-    my $physif= get_host_property($ho,'interface force','eth0');
-    if ($initscripts_nobridge) {
-        $iface= 'xenbr0';
-        $bridgex= <<END;
+    target_editfile_root($ho, "/etc/network/interfaces",
+                         "etc-network-interfaces", sub {
+        my $physif= get_host_property($ho,'interface force',undef);
+
+	my ($iface,$bridgex);
+
+	if ($initscripts_nobridge) {
+	    $iface= 'xenbr0';
+	    $bridgex= <<END;
     bridge_ports $physif
     bridge_fd 0
     bridge_stp off
 END
-    } else {
-        $iface= $physif;
-        $bridgex= '';
-    }
+	} else {
+	    $iface= $physif;
+	    $bridgex= '';
+        }
 
-    my $routes= target_cmd_output_root($ho, "route -n");
+	my $routes= target_cmd_output_root($ho, "route -n");
 
-    $routes =~ m/^ [0-9.]+ \s+ 0\.0\.0\.0 \s+ ([0-9.]+) \s+ \S*U\S* \s /mxi
-        or die "no own local network in route ?  $routes ";
-    my $netmask= $1;
+	$routes =~ m/^ [0-9.]+ \s+ 0\.0\.0\.0 \s+ ([0-9.]+) \s+ \S*U\S* \s /mxi
+	    or die "no own local network in route ?  $routes ";
+	my $netmask= $1;
 
-    $routes =~ m/^ 0\.0\.0\.0 \s+ ([0-9.]+) \s+ 0\.0\.0\.0 \s+ \S*UG\S* \s /mxi
-        or die "no default gateway ?  $routes ";
-    my $gateway= $1;
+	$routes =~
+	    m/^ 0\.0\.0\.0 \s+ ([0-9.]+) \s+ 0\.0\.0\.0 \s+ \S*UG\S* \s /mxi
+	    or die "no default gateway ?  $routes ";
+	my $gateway= $1;
 
-    logm("iface $iface mask=$netmask gw=$gateway");
-    target_editfile_root($ho, "/etc/network/interfaces",
-                         "etc-network-interfaces", sub {
+	logm("iface $iface mask=$netmask gw=$gateway");
+
         my $suppress= 0;
         while (<EI>) {
             $suppress= 0 unless m/^\s+/;
