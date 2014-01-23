@@ -22,6 +22,7 @@ use File::Path;
 use POSIX;
 use Osstest::Debian;
 use Osstest::TestSupport;
+use Data::Dumper;
 
 my $checkmode= 0;
 
@@ -210,6 +211,23 @@ sub nodhcp () {
                          "etc-network-interfaces", sub {
         my $physif= get_host_property($ho,'interface force',undef);
 
+	if (!defined $physif) {
+	    # preread /etc/network/interfaces to figure out the interface
+	    my %candidates;
+	    while (<EI>) {
+		next unless
+		    m{^ \s* (  auto \s+ (\S+)               ) \s* $}x ||
+		    m{^ \s* (  allow-hotplug \s+ (\S+)      ) \s* $}x ||
+		    m{^ \s* (  iface \s+ (\S+) \s+ inet \s+ ) \s* $}x ;
+		push @{ $candidates{$2} }, $1;
+	    }
+	    EI->error and die $!;
+	    delete $candidates{'lo'};
+	    die Dumper(\%candidates)." -- cannot determine default interface"
+		unless (scalar keys %candidates) == 1;
+	    ($physif,) = keys %candidates;
+	    seek EI,0,0 or die $!;
+	}
 	my ($iface,$bridgex);
 
 	if ($initscripts_nobridge) {
