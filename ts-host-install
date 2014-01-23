@@ -174,8 +174,10 @@ sub setup_pxeboot_firstboot($) {
     system qw(rm -rf --),"$initrd_overlay.d";
     mkdir "$initrd_overlay.d" or die "$initrd_overlay.d: $!";
 
+    my $ipappend = 2;
     my $wantphysif= get_host_property($ho,'interface force','auto');
     if ($wantphysif ne 'auto') {
+	$ipappend = 0;
 	die "need Ether for $ho->{Name} ($wantphysif)"
 	    unless defined $ho->{Ether};
         system_checked(qw(mkdir -p --), "$initrd_overlay.d/etc/udev/rules.d");
@@ -219,6 +221,7 @@ label overwrite
 	menu default
 	kernel $kernel
 	append $installcmdline
+	ipappend $ipappend
 default overwrite
 END
 }
