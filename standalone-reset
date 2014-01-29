@@ -27,6 +27,15 @@ options:
 END
 }
 
+flight="standalone"
+while getopts "f:" opt; do
+    case "$opt" in
+        f) flight=${OPTARG};;
+        *) usage; exit 1;;
+    esac
+done
+shift $((OPTIND-1))
+
 if [ -f standalone.config ] ; then
     . standalone.config
 fi
