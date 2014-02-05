@@ -80,8 +80,10 @@ test_matrix_branch_filter_callback () {
   case "$xenarch" in
   armhf)
         case "$branch" in
-        linux-arm-xen) ;;
-        linux-*) return 1;;
+        linux-3.0) return 1;;
+        linux-3.4) return 1;;
+        linux-mingo-tip-master) return 1;;
+        linux-*) ;;
         qemu-*) return 1;;
         esac
         ;;

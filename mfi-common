@@ -47,8 +47,10 @@ create_build_jobs () {
     case "$arch" in
     armhf)
       case "$branch" in
-      linux-arm-xen) ;;
-      linux-*) continue;;
+      linux-3.0) continue;;
+      linux-3.4) continue;;
+      linux-mingo-tip-master) continue;;
+      linux-*) ;;
       qemu-*) continue;;
       esac
       case "$xenbranch" in
