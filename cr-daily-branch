@@ -229,6 +229,13 @@ People who touched revisions under test:
 END
                 ./adhoc-people-touched-filter <$revlog \
                         >>tmp/$flight.people-touched
+		touched_lines=`wc -l <tmp/$flight.people-touched`
+		if [ $touched_lines -gt 300 ]; then
+	                cat <<END >tmp/$flight.people-touched
+$(( $touched_lines - 1 )) people touched revisions under test,
+not listing them all
+END
+		fi
                 sgr_args+=" --include=tmp/$flight.people-touched"
         fi
         ;;
