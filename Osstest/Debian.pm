@@ -33,6 +33,7 @@ BEGIN {
     @ISA         = qw(Exporter);
     @EXPORT      = qw(debian_boot_setup
                       %preseed_cmds
+                      preseed_base
                       preseed_create
                       preseed_hook_command preseed_hook_installscript
                       di_installcmdline_core
@@ -423,7 +424,83 @@ sub di_installcmdline_core ($$;@) {
         if defined $debconf_priority;
 
     return @cl;
-}             
+}
+
+sub preseed_base ($$;@) {
+    my ($suite,$extra_packages,%xopts) = @_;
+
+    return (<<END);
+d-i mirror/suite string $suite
+
+d-i debian-installer/locale string en_GB
+d-i console-keymaps-at/keymap select gb
+d-i keyboard-configuration/xkb-keymap string en_GB
+
+#d-i debconf/frontend string readline
+
+d-i mirror/country string manual
+d-i mirror/http/proxy string
+
+d-i clock-setup/utc boolean true
+d-i time/zone string Europe/London
+d-i clock-setup/ntp boolean true
+
+d-i partman-md/device_remove_md boolean true
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/choose_partition select finish
+d-i partman/confirm boolean true
+d-i partman-lvm/confirm boolean true
+
+d-i partman/confirm_nooverwrite true
+d-i partman-lvm/confirm_nooverwrite true
+d-i partman-md/confirm_nooverwrite true
+d-i partman-crypto/confirm_nooverwrite true
+
+#d-i netcfg/disable_dhcp boolean true
+d-i netcfg/get_nameservers string $c{NetNameservers}
+#d-i netcfg/get_netmask string \$c{NetNetmask}
+#d-i netcfg/get_gateway string \$c{NetGateway}
+d-i netcfg/confirm_static boolean true
+d-i netcfg/get_domain string $c{TestHostDomain}
+d-i netcfg/wireless_wep string
+
+d-i passwd/root-password password xenroot
+d-i passwd/root-password-again password xenroot
+d-i passwd/user-fullname string FLOSS Xen Test
+d-i passwd/username string osstest
+d-i passwd/user-password password osstest
+d-i passwd/user-password-again password osstest
+
+console-common  console-data/keymap/policy      select  Don't touch keymap
+console-data    console-data/keymap/policy      select  Don't touch keymap
+console-data    console-data/keymap/family      select  qwerty
+console-data console-data/keymap/template/layout select British
+
+popularity-contest popularity-contest/participate boolean false
+tasksel tasksel/first multiselect standard, web-server
+
+d-i grub-installer/only_debian boolean true
+
+d-i finish-install/keep-consoles boolean true
+d-i finish-install/reboot_in_progress note
+d-i cdrom-detect/eject boolean false
+
+d-i mirror/http/hostname string $c{DebianMirrorHost}
+d-i mirror/http/directory string /$c{DebianMirrorSubpath}
+d-i apt-setup/use_mirror boolean yes
+d-i apt-setup/another boolean false
+d-i apt-setup/non-free boolean false
+d-i apt-setup/contrib boolean false
+
+d-i pkgsel/include string openssh-server, ntp, ntpdate, $extra_packages
+
+$xopts{ExtraPreseed}
+
+### END OF DEBIAN PRESEED BASE
+
+END
+}          
 
 sub preseed_create ($$;@) {
     my ($ho, $sfx, %xopts) = @_;
@@ -610,44 +687,11 @@ END
 
     my $extra_packages = join(",",@extra_packages);
 
-    my $preseed_file= (<<END);
-d-i mirror/suite string $suite
+    my $preseed_file= preseed_base($suite,$extra_packages,%xopts);
 
-d-i debian-installer/locale string en_GB
-d-i console-keymaps-at/keymap select gb
-d-i keyboard-configuration/xkb-keymap string en_GB
-
-#d-i debconf/frontend string readline
-
-d-i mirror/country string manual
-d-i mirror/http/proxy string
-
-d-i clock-setup/utc boolean true
-d-i time/zone string Europe/London
-d-i clock-setup/ntp boolean true
-
+    $preseed_file .= (<<END);
 d-i partman-auto/method string lvm
 #d-i partman-auto/method string regular
-
-d-i partman-md/device_remove_md boolean true
-d-i partman-lvm/device_remove_lvm boolean true
-d-i partman-partitioning/confirm_write_new_label boolean true
-d-i partman/choose_partition select finish
-d-i partman/confirm boolean true
-d-i partman-lvm/confirm boolean true
-
-d-i partman/confirm_nooverwrite true
-d-i partman-lvm/confirm_nooverwrite true
-d-i partman-md/confirm_nooverwrite true
-d-i partman-crypto/confirm_nooverwrite true
-
-#d-i netcfg/disable_dhcp boolean true
-d-i netcfg/get_nameservers string $c{NetNameservers}
-#d-i netcfg/get_netmask string \$c{NetNetmask}
-#d-i netcfg/get_gateway string \$c{NetGateway}
-d-i netcfg/confirm_static boolean true
-d-i netcfg/get_domain string $c{TestHostDomain}
-d-i netcfg/wireless_wep string
 
 #d-i partman-auto/init_automatically_partition select regular
 d-i partman-auto/disk string $disk
@@ -676,33 +720,6 @@ d-i partman-auto/expert_recipe string					\\
 			lv_name{ dummy }				\\
 		.
 
-d-i passwd/root-password password xenroot
-d-i passwd/root-password-again password xenroot
-d-i passwd/user-fullname string FLOSS Xen Test
-d-i passwd/username string osstest
-d-i passwd/user-password password osstest
-d-i passwd/user-password-again password osstest
-
-console-common  console-data/keymap/policy      select  Don't touch keymap
-console-data    console-data/keymap/policy      select  Don't touch keymap
-console-data    console-data/keymap/family      select  qwerty
-console-data console-data/keymap/template/layout select British
-
-popularity-contest popularity-contest/participate boolean false
-tasksel tasksel/first multiselect standard, web-server
-
-d-i pkgsel/include string openssh-server, ntp, ntpdate, $extra_packages
-
-d-i grub-installer/only_debian boolean true
-
-d-i finish-install/keep-consoles boolean true
-d-i finish-install/reboot_in_progress note
-d-i cdrom-detect/eject boolean false
-
-d-i mirror/http/hostname string $c{DebianMirrorHost}
-d-i mirror/http/directory string /$c{DebianMirrorSubpath}
-
-$xopts{ExtraPreseed}
 END
 
     foreach my $di_key (keys %preseed_cmds) {

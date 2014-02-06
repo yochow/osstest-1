@@ -159,6 +159,7 @@ do_hvm_rhel6_tests () {
     return
   fi
 
+<<<<<<< HEAD
   for cpuvendor in amd intel; do
 
     job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-rhel6hvm-$cpuvendor \
@@ -166,6 +167,20 @@ do_hvm_rhel6_tests () {
             redhat_image=rhel-server-6.1-i386-dvd.iso \
             all_hostflags=$most_hostflags,hvm-$cpuvendor \
             $qemuu_runvar
+=======
+      job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-win7-amd64 \
+                test-win xl $qemuu_runvar \
+		win_image=win7-x64.iso \
+		all_hostflags=$most_hostflags,hvm
+      fi
+
+      if [ $xenarch = amd64 -a "x$qemuu_suffix" = "x-qemuu" ]; then
+      job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-ovmf-amd64 \
+                test-debianhvm xl $qemuu_runvar \
+		ovmf_image=debian-7.2.0-amd64-CD-1.iso \
+		all_hostflags=$most_hostflags,hvm
+      fi
+>>>>>>> b9e0d4990f5ddc228da0a6503e7c88e24a325eca
 
   done
 }

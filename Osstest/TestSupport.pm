@@ -100,6 +100,9 @@ BEGIN {
                       setup_pxeboot setup_pxeboot_local host_pxefile
 
                       ether_prefix
+
+                      create_iso_genisoimage
+                      create_iso_xorriso
                       );
     %EXPORT_TAGS = ( );
 
@@ -1455,6 +1458,11 @@ END
         $cfg .= "device_model_version='$devmodel'\n";
     }
 
+    my $bios = $xopts{'Bios'};
+    if (defined $bios) {
+        $cfg .= "bios='$bios'\n";
+    }
+
     my $cfgpath= prepareguest_part_xencfg($ho, $gho, $ram_mb, \%xopts, $cfg);
     target_cmd_root($ho, <<END);
         (echo $passwd; echo $passwd) | vncpasswd $gho->{Guest}.vncpw
@@ -1865,6 +1873,31 @@ label local
 	LOCALBOOT 0
 default local
 END
+}
+
+#---------- ISO images ----------
+sub create_iso_genisoimage ($$$$;@) {
+    my ($ho,$iso,$dir,$isotimeout,@xopts) = @_;
+
+    target_install_packages_norec($ho, qw(genisoimage));
+
+    target_cmd_root($ho, <<END, 60);
+        mkdir -p $dir
+        genisoimage @xopts -o $iso $dir/.
+END
+
+}
+
+sub create_iso_xorriso ($$$$;@) {
+    my ($ho,$iso,$dir,$isotimeout,@xopts) = @_;
+
+    target_install_packages_norec($ho, qw(xorriso));
+
+    target_cmd_root($ho, <<END, 60);
+        mkdir -p $dir
+        xorriso @xopts -o $iso $dir/.
+END
+
 }
 
 1;
