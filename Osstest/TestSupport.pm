@@ -90,7 +90,8 @@ BEGIN {
                       guest_umount_lv guest_await guest_await_dhcp_tcp
                       guest_checkrunning guest_check_ip guest_find_ether
                       guest_find_domid guest_check_up guest_check_up_quick
-                      guest_get_state guest_await_reboot guest_destroy
+                      guest_get_state guest_await_reboot
+                      guest_await_shutdown guest_destroy
                       guest_vncsnapshot_begin guest_vncsnapshot_stash
 		      guest_check_remus_ok guest_editconfig
                       host_involves_pcipassthrough host_get_pcipassthrough_devs
@@ -1219,6 +1220,17 @@ sub guest_await_reboot ($$$) {
     poll_loop($timeout, 30, "await reboot request from $gho->{Guest}", sub {
         my $st= guest_get_state($ho,$gho);
         return undef if $st eq 'sr';
+        fail("guest unexpectedly shutdown; state is '$st'")
+            if $st =~ m/^s/ || $st eq '';
+        return "guest state is \"$st\"";
+    });
+}
+
+sub guest_await_shutdown ($$$) {
+    my ($ho,$gho, $timeout) = @_;
+    poll_loop($timeout, 30, "await shutdown request from $gho->{Guest}", sub {
+        my $st= guest_get_state($ho,$gho);
+        return undef if $st eq 's';
         fail("guest unexpectedly shutdown; state is '$st'")
             if $st =~ m/^s/ || $st eq '';
         return "guest state is $st";
