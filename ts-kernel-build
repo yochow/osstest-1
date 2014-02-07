@@ -185,6 +185,7 @@ setopt CONFIG_SYSVIPC y
 
 setopt CONFIG_BLK_DEV_LOOP y
 
+setopt CONFIG_PACKET y
 END
 sub stash_config_edscript ($) {
     my ($settings) = @_;
@@ -347,3 +348,4 @@ if ($r{tree_linuxfirmware}) {
 built_stash($ho, $builddir, 'dist', 'kerndist');
 built_stash_file($ho, $builddir, 'vmlinux', 'linux/vmlinux');
 built_compress_stashed('vmlinux');
+built_stash_file($ho, $builddir, 'config', 'linux/.config');
