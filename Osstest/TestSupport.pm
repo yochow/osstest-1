@@ -55,6 +55,7 @@ BEGIN {
                       target_putfilecontents_stash
 		      target_putfilecontents_root_stash
                       target_put_guest_image target_editfile
+                      target_fetchurl
                       target_editfile_root target_file_exists
                       target_run_apt
                       target_install_packages target_install_packages_norec
@@ -1471,6 +1472,13 @@ END
 
     return $cfgpath;
 }
+
+sub target_fetchurl($$$;$) {
+    my ($ho, $url, $path, $timeo) = @_;
+    $timeo ||= 2000;
+    target_cmd_root($ho, "wget --progress=dot:mega -O $path $url", $timeo);
+}
+
 
 sub target_put_guest_image ($$$) {
     my ($ho, $gho, $default) = @_;
