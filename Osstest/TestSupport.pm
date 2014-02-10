@@ -420,7 +420,7 @@ sub target_putfile_root ($$$$;$) {
 sub target_run_apt {
     my ($ho, $timeout, @aptopts) = @_;
     target_cmd_root($ho,
-                    "apt-get @aptopts",
+   "DEBIAN_PRIORITY=critical UCF_FORCE_CONFFOLD=y apt-get @aptopts",
                     $timeout);
 }
 sub target_install_packages {
