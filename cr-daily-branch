@@ -85,18 +85,20 @@ check_tested () {
 	  "$@"
 }
 
-testedflight=`check_tested --revision-$tree="$OLD_REVISION"`
+if [ "x$OSSTEST_NO_BASELINE" != xy ] ; then
+	testedflight=`check_tested --revision-$tree="$OLD_REVISION"`
 
-if [ "x$testedflight" = x ]; then
-        wantpush=false
-        skipidentical=false
-        force_baseline=true
-	if [ "x$treeurl" != xnone: ]; then
-		treearg=--tree-$tree=$treeurl
-	fi
-	tested_revision=`check_tested $treearg --print-revision=$tree`
-	if [ "x$tested_revision" != x ]; then
-		OLD_REVISION="$tested_revision"
+	if [ "x$testedflight" = x ]; then
+		wantpush=false
+		skipidentical=false
+		force_baseline=true
+		if [ "x$treeurl" != xnone: ]; then
+			treearg=--tree-$tree=$treeurl
+		fi
+		tested_revision=`check_tested $treearg --print-revision=$tree`
+		if [ "x$tested_revision" != x ]; then
+			OLD_REVISION="$tested_revision"
+		fi
 	fi
 fi
 
