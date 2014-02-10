@@ -59,6 +59,9 @@ sub configserver () {
 [generic]
     user = root
 END
+    $scfg .= <<END unless $sho->{Suite} =~ m/sarge|lenny|squeeze/;
+    oldstyle = true
+END
     foreach my $v (@vols) {
 	$v->{Port}= unique_incrementing_runvar("${srvhost}_nextport",4000);
 	$v->{Path}= "/dev/$v->{Gho}{Vg}/$v->{Lv}";
