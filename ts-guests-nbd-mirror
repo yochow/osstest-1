@@ -116,7 +116,18 @@ sub shuffleconfigs () {
     }
 }
 
+sub checkaccessible () {
+    foreach my $v (@vols) {
+	my $finfo = target_cmd_output_root($cho, "file -Ls $v->{Path}");
+	chomp $finfo;
+	logm("file(1) on $v->{Path}: $finfo");
+	die "unexpected contents for $v->{Path}, nbd failed?"
+	    unless $finfo =~ m/filesystem|swap/i;
+    }
+}
+
 findvols();
 configserver();
 configclient();
 shuffleconfigs();
+checkaccessible();
