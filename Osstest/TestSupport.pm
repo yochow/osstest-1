@@ -56,6 +56,7 @@ BEGIN {
 		      target_putfilecontents_root_stash
                       target_put_guest_image
                       target_editfile_root target_file_exists
+                      target_run_apt
                       target_install_packages target_install_packages_norec
                       target_extract_jobdistpath target_guest_lv_name
 
@@ -416,16 +417,21 @@ sub target_putfile ($$$$;$) {
 sub target_putfile_root ($$$$;$) {
     tputfileex('root', @_);
 }
+sub target_run_apt {
+    my ($ho, $timeout, @aptopts) = @_;
+    target_cmd_root($ho,
+                    "apt-get @aptopts",
+                    $timeout);
+}
 sub target_install_packages {
     my ($ho, @packages) = @_;
-    target_cmd_root($ho, "apt-get -y install @packages",
-                    300 + 100 * @packages);
+    target_run_apt($ho, 300 + 100 * @packages,
+		   qw(-y install), @packages);
 }
 sub target_install_packages_norec {
     my ($ho, @packages) = @_;
-    target_cmd_root($ho,
-                    "apt-get --no-install-recommends -y install @packages",
-                    300 + 100 * @packages);
+    target_run_apt($ho, 300 + 100 * @packages,
+		   qw(--no-install-recommends -y install), @packages);
 }
 
 sub target_somefile_getleaf ($$$) {
