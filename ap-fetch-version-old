@@ -74,8 +74,12 @@ linuxfirmware)
 		$TREE_LINUXFIRMWARE master daily-cron-old.$branch
 	;;
 osstest)
-	git fetch -f $HOME/testing.git incoming:ap-fetch
-        git rev-parse ap-fetch^0
+	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
+	    git fetch -f $HOME/testing.git incoming:ap-fetch
+            git rev-parse ap-fetch^0
+	else
+	    git rev-parse HEAD^0
+	fi
         ;;
 *)
 	echo >&2 "branch $branch ?"

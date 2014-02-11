@@ -153,7 +153,9 @@ osstest)
 	determine_version REVISION_OSSTEST osstest
         realtree=
 	NEW_REVISION=$REVISION_OSSTEST
-	git reset --hard $REVISION_OSSTEST
+	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
+	    git reset --hard $REVISION_OSSTEST
+	fi
 	;;
 qemuu)
 	realtree=qemu-upstream-${xenbranch#xen-}
