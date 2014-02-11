@@ -120,9 +120,16 @@ if [ "x$REVISION_LINUX" = x ]; then
         export REVISION_LINUX
 fi
 if [ "x$REVISION_LINUX_ARM" = x ]; then
+    if [ "x$tree" = "xlinux" ] ; then
+	TREE_LINUX_ARM=$TREE_LINUX
+	export TREE_LINUX_ARM
+	REVISION_LINUX_ARM=$REVISION_LINUX
+        export REVISION_LINUX_ARM
+    else
 	determine_version REVISION_LINUX_ARM ${linuxbranch:-linux-arm-xen} \
 		LINUX_ARM
         export REVISION_LINUX_ARM
+    fi
 fi
 if [ "x$REVISION_LINUXFIRMWARE" = x ]; then
 	determine_version REVISION_LINUXFIRMWARE linuxfirmware
