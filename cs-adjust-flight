@@ -228,7 +228,7 @@ sub change__runvar_del {
 
     for_runvars($jobs, $vars, sub {
         my ($job, $name) = @_;
-        runvar_rm_q->execute($dstflight, $job, $name);
+        $runvar_rm_q->execute($dstflight, $job, $name);
 	verbose "$dstflight.$job $name runvar deleted\n";
     }, 'IGNORE');
 }
