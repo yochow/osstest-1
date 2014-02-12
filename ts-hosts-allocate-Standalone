@@ -31,5 +31,13 @@ foreach my $ident (@ARGV) {
     $host ||= $c{"TestHost_$ident"};
     $host ||= $c{TestHost};
     $host || die "need host setting for $ident";
+
+    my $expected = $ENV{'OSSTEST_HOST_'.uc $ident}
+                   || $c{"TestHost_$ident"}
+                   || $c{TestHost};
+
+    die "$ident configuration mismatch $r{$ident} != $expected"
+	if $r{$ident} && $r{$ident} ne $expected;
+
     store_runvar($ident, $host);
 }
