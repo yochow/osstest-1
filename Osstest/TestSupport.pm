@@ -98,6 +98,8 @@ BEGIN {
                       await_webspace_fetch_byleaf create_webfile
                       file_link_contents get_timeout
                       setup_pxeboot setup_pxeboot_local host_pxefile
+
+                      ether_prefix
                       );
     %EXPORT_TAGS = ( );
 
@@ -1251,6 +1253,17 @@ sub target_choose_vg ($$) {
     return $bestvg;
 }
 
+sub ether_prefix($) {
+    my ($ho) = @_;
+    my $prefix = get_host_property($ho, 'gen-ether-prefix-base');
+    $prefix =~ m/^(\w+:\w+):(\w+):(\w+)$/ or die "$prefix ?";
+    my $lhs = $1;
+    my $pv = (hex($2)<<8) | (hex($3));
+    $pv ^= $mjobdb->gen_ether_offset($ho,$flight);
+    $prefix = sprintf "%s:%02x:%02x", $lhs, ($pv>>8)&0xff, $pv&0xff;
+    return $prefix;
+}
+
 sub select_ether ($$) {
     my ($ho,$vn) = @_;
     # must be run outside transaction
@@ -1258,13 +1271,7 @@ sub select_ether ($$) {
     return $ether if defined $ether;
 
     db_retry($flight,'running', $dbh_tests,[qw(flights)], sub {
-	my $prefix = get_host_property($ho, 'gen-ether-prefix-base');
-	$prefix =~ m/^(\w+:\w+):(\w+):(\w+)$/ or die "$prefix ?";
-	my $lhs = $1;
-	my $pv = (hex($2)<<8) | (hex($3));
-	$pv ^= $mjobdb->gen_ether_offset($ho,$flight);
-	$prefix = sprintf "%s:%02x:%02x", $lhs, ($pv>>8)&0xff, $pv&0xff;
-
+	my $prefix = ether_prefix($ho);
 	my $glob_ether = $mjobdb->jobdb_db_glob('*_ether');
 
         my $previous= $dbh_tests->selectrow_array(<<END, {}, $flight);

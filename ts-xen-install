@@ -23,6 +23,7 @@ use POSIX;
 use Osstest::Debian;
 use Osstest::TestSupport;
 use Data::Dumper;
+use Osstest::CXFabric;
 
 my $checkmode= 0;
 
@@ -123,6 +124,8 @@ sub adjustconfig () {
     });
 
     target_cmd_root($ho, 'mkdir -p /var/log/xen/console');
+
+    setup_cxfabric($ho);
 }
 
 sub setupboot () {
