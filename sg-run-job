@@ -281,12 +281,18 @@ proc run-job/test-pair {} {
 #    run-ts . remus-failover ts-remus-check         src_host dst_host + debian
 }
 
-proc test-guest {g} {
+proc test-guest-migr {g} {
+    if {[catch { run-ts . = ts-migrate-support-check + host $g }]} return
+
     foreach iteration {{} .2} {
         run-ts . =$iteration ts-guest-saverestore + host $g
         run-ts . =$iteration ts-guest-localmigrate + host $g
     }
     run-ts . = ts-guest-localmigrate x10 + host $g
+}
+
+proc test-guest {g} {
+    test-guest-migr $g
     test-guest-nomigr $g
 }
 
