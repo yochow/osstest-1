@@ -29,9 +29,6 @@ Logs /home/xc_osstest/logs
 Results /home/xc_osstest/results
 PubBaseDir /home/xc_osstest
 
-WebspaceFile /export/home/osstest/public_html/
-WebspaceUrl="http://woking.$c{DnsDomain}/~osstest/"
-
 OverlayLocal /export/home/osstest/overlay-local
 
 LogsMinSpaceMby= 10*1e3
