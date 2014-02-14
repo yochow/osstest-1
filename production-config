@@ -64,7 +64,7 @@ END
 
 PlanRogueAllocationDuration= 86400*7
 
-TftpPath /tftpboot/pxe/
+TftpPath /home/xc_tftpboot/pxe/
 TftpPlayDir osstest/
 TftpTmpDir osstest/tmp/
 TftpPxeDir /
