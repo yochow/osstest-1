@@ -74,8 +74,8 @@ linuxfirmware)
 		$TREE_LINUXFIRMWARE master daily-cron-old.$branch
 	;;
 osstest)
-	git-fetch -f $HOME/testing.git incoming:ap-fetch
-        git-rev-parse ap-fetch^0
+	git fetch -f $HOME/testing.git incoming:ap-fetch
+        git rev-parse ap-fetch^0
         ;;
 *)
 	echo >&2 "branch $branch ?"

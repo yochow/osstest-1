@@ -106,7 +106,7 @@ END
     print DEBUG "GIT-GEN UPCMD\n$upcmd\n";
     shellcmd($upcmd) if $doupdate;
     my $cmd= "cd $c{Repos}/$treename &&".
-        " git-log --pretty=raw --date-order $tree->{Latest}";
+        " git log --pretty=raw --date-order $tree->{Latest}";
     print DEBUG "GIT-GEN CMD $cmd\n";
     my $fh= new IO::File;
     open $fh, "$cmd |" or die $!;
@@ -305,7 +305,7 @@ sub xu_withtag_generator ($) {
 		die unless $targetqemu =~ m/^[^-]/;
 		$!=0; $?=0;
 		$targetqemu= `cd $c{Repos}/$qemutree &&
-                              git-rev-parse '$targetqemu^0'`;
+                              git rev-parse '$targetqemu^0'`;
 		die "$! $?" if (!defined $targetqemu) or $?;
 		chomp $targetqemu;
 	    }

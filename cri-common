@@ -32,7 +32,7 @@ repo_tree_rev_fetch_git () {
 	fi
 	cd $repos/$treename
 	git fetch -f $realurl $remotetag:$localtag >&2
-	git-rev-parse $localtag^0
+	git rev-parse $localtag^0
 }
 
 select_xenbranch () {

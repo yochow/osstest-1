@@ -43,8 +43,8 @@ with-lock-ex $fetchwlem data-tree-lock bash -ec '
 	exec >>$LOGFILE
 	date
         printf "%s\n" "$FOR_LOGFILE"
-	git-pull . incoming:master 2>&1 ||:
-	git-checkout HEAD
+	git pull . incoming:master 2>&1 ||:
+	git checkout HEAD
 '
 
 export OSSTEST_TEST_PULLFROM=`pwd`
@@ -91,10 +91,10 @@ for branch in $BRANCHES; do
 
 		log ...
 
-		git-fetch $OSSTEST_TEST_PULLFROM master:incoming 2>&1 ||:
-		git-fetch $OSSTEST_TEST_PULLFROM incoming:incoming 2>&1 ||:
-		git-pull --no-commit . incoming:master 2>&1 ||:
-		git-checkout HEAD
+		git fetch $OSSTEST_TEST_PULLFROM master:incoming 2>&1 ||:
+		git fetch $OSSTEST_TEST_PULLFROM incoming:incoming 2>&1 ||:
+		git pull --no-commit . incoming:master 2>&1 ||:
+		git checkout HEAD
 
 		set +e
 		"$@" 2>&1

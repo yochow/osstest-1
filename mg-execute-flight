@@ -53,7 +53,7 @@ if [ x"$flight" = x ]; then badusage; fi
 
 set +e
 tty=`exec 2>/dev/null; tty`
-branch=`exec 2>/dev/null; git-branch | sed -n 's/^\* //p'`
+branch=`exec 2>/dev/null; git branch | sed -n 's/^\* //p'`
 set -e
 
 export OSSTEST_RESOURCE_PRIORITY=${OSSTEST_RESOURCE_PRIORITY--8}
@@ -80,7 +80,7 @@ Subject: [adhoc test] $subject
 $OSSTEST_RESOURCE_PREINFO
 END
 
-git-log -n1 --pretty=format:'harness %h: %s' | perl -pe 's/(.{70}).+/$1.../'
+git log -n1 --pretty=format:'harness %h: %s' | perl -pe 's/(.{70}).+/$1.../'
 echo
 
 cat <tmp/$flight.report
