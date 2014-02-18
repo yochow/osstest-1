@@ -88,7 +88,7 @@ our (@all_lock_tables) = qw(flights resources);
 #  Transactional reads must take out locks as if they were modifying
 
 augmentconfigdefaults(
-    ControlDaemonHost => 'woking.cam.xci-test.com',
+    ControlDaemonHost => 'control-daemons.osstest.cam.xci-test.com',
     OwnerDaemonPort => 4031,
     QueueDaemonPort => 4032,
     QueueDaemonRetry => 120, # seconds
