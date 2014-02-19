@@ -88,7 +88,7 @@ END
                (nonempty($r{revision_linux}) ? <<END : '').
 	echo >>.config export $linux_rev_envvar='$r{revision_linux}'
 END
-               ($ho->{Suite} =~ m/squeeze/ ? <<END : '').
+               ($ho->{Suite} =~ m/squeeze|wheezy/ ? <<END : ''). #Debian #693721
 	echo >>.config PYTHON_PREFIX_ARG=
 END
                (nonempty($kerns) ? <<END : <<END)
