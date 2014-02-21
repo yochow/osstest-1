@@ -242,7 +242,7 @@ sub plan () {
             foreach my $req (@reqlist) {
                 my ($ok, $shareix) = alloc_1res($req->{Ident});
                 if (!$ok) {
-                    logm("failed to allocated $req->{Ident}!");
+                    logm("failed to allocate $req->{Ident}!");
                     $allok=0;
                 } else {
                     $req->{GotShareix}= $shareix;
