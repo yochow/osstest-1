@@ -5,6 +5,10 @@
 #                                     type=='S' means 'shared-host'
 #                                     share defaults to *
 #                                     - means deallocate
+#                                     name=option|option|... means
+#                                       any one of those options
+#                                     option={flag,flag...} means anything
+#                                       with all those flags
 
 # This is part of "osstest", an automated testing framework for Xen.
 # Copyright (C) 2009-2013 Citrix Inc.
@@ -58,15 +62,36 @@ sub parse_1res ($) {
     my $shareix= defined($4) ? $4+0 : '*';
     my $shareixcond = $shareix eq '*' ? '' : "AND shareix = $shareix";
 
-    return ($allocate, $restype, $resname, $shareix, $shareixcond);
+    my @resnames;
+    foreach my $option (split /\|/, $resname) {
+	if ($option =~ m/^\{(.*)\}$/) {
+	    my $q = "SELECT resname FROM resources r WHERE restype = ?";
+	    my @qa = ($restype);
+	    die unless $restype eq 'host';
+	    foreach my $flag (split /\,/, $1) {
+		$q .= "\n AND EXISTS (SELECT 1 FROM hostflags h".
+		    " WHERE h.hostname = r.resname AND h.hostflag = ?)";
+		push @qa, $flag;
+	    }
+	    my $hosts = $dbh_tests->selectcol_arrayref($q, {}, @qa);
+	    logm("for $option possibilities are: @$hosts");
+	    push @resnames, @$hosts;
+	} else {
+	    push @resnames, $option;
+	}
+    }
+    logm("for $resname all possibilities are: @resnames") if @resnames!=1;
+    die "nothing for $resname" unless @resnames;
+
+    return [ map {
+	        [ $allocate, $restype, $_, $shareix, $shareixcond ]
+	     } @resnames ];
 }
 
-sub alloc_1res ($) {
-    my ($res) = @_;
+sub alloc_1rescand ($$) {
+    my ($res, $rescand) = @_;
+    my ($allocate, $restype, $resname, $shareix, $shareixcond) = @$rescand;
 
-    my ($allocate, $restype, $resname, $shareix, $shareixcond) =
-        parse_1res($res);
-    
     my $resq= $dbh_tests->prepare(<<END);
                 SELECT * FROM resources r
                          JOIN tasks t
@@ -184,22 +209,46 @@ END
         $got_shareix= $candrow->{shareix};
         $ok=1; last;
     }
-    return ($ok, $got_shareix);
+    return ($ok, { Allocate => $allocate,
+		   Shareix => $got_shareix,
+		   Info => "$resname ($restype/$resname/$got_shareix)"
+	    });
+}
+
+sub alloc_1res ($) {
+    my ($res) = @_;
+
+    my $rescands = parse_1res($res);
+
+    foreach my $rescand (@$rescands) {
+	my @got = alloc_1rescand($res, $rescand);
+	return @got if $got[0];
+    }
+    return (0,undef);
+}
+
+sub loggot {
+    my @got = @_;
+    logm(($_->{Allocate} ? "ALLOCATED" : "DEALLOCATED").": ".$_->{Info})
+	foreach @got;
 }
 
 sub execute () {
+    my @got;
     db_retry($dbh_tests, \@all_lock_tables, sub {
 
         alloc_prep();
 
         my $allok=1;
+	@got = ();
         foreach my $res (@ARGV) {
-            my ($ok, $shareix) = alloc_1res($res);
+            my ($ok, $got) = alloc_1res($res);
             if (!$ok) {
                 logm("nothing available for $res, sorry");
                 $allok=0;
             } else {
-                logm("processed $res (shareix=$shareix)");
+                logm("processed $res (shareix=$got->{Shareix})");
+		push @got, $got;
             }
         }
 
@@ -207,31 +256,58 @@ sub execute () {
             die "allocation/deallocation unsuccessful\n";
         }
     });
+    loggot(@got);
     logm("done.");
 }
 
 our $duration; # seconds, undef means immediate ad-hoc
 
+sub showposs ($) {
+    my ($poss) = @_;
+    join ' + ', map { $_->{Reso} } @$poss;
+}
+
 sub plan () {
+    my @got;
     alloc_resources(sub {
         my ($plan) = @_;
 
-        my @reqlist;
+	@got = ();
+        my @possmatrix = ([]);
 
         foreach my $res (@ARGV) {
-            my ($allocate, $restype, $resname, $shareix, $shareixcond) =
-                parse_1res($res);
-            die "cannot plan deallocation" unless $allocate;
-            die "cannot plan individual shares" unless $shareix eq '*';
-
-            push @reqlist, {
-                Ident => "$res",
-                Reso => "$restype $resname",
-            };
+	    my $rescands = parse_1res($res);
+	    my @reqlist;
+	    foreach my $rescand (@$rescands) {
+		my ($allocate, $restype, $resname, $shareix, $shareixcond) =
+		    @$rescand;
+		die "cannot plan deallocation" unless $allocate;
+		die "cannot plan individual shares" unless $shareix eq '*';
+		push @reqlist, {
+		    Ident => "$res",
+		    Reso => "$restype $resname",
+		};
+	    }
+	    @possmatrix = map {
+		my $possreqs = $_;
+		map { [ @$possreqs, $_ ] } @reqlist;
+	    } @possmatrix;
         }
 
-        my $planned= plan_search
-            ($plan, sub { print " @_\n"; }, $duration, \@reqlist);
+	my $planned;
+	my @reqlist;
+	foreach my $poss (@possmatrix) {
+	    my $tplanned= plan_search
+		($plan, sub { print " @_\n"; }, $duration, $poss);
+	    printf " possibility Start=%d %s\n",
+	        $tplanned->{Start}, showposs($poss);
+	    if (!$planned || $tplanned->{Start} < $planned->{Start}) {
+		$planned = $tplanned;
+		@reqlist = @$poss;
+	    }
+	}
+	logm("best at $planned->{Start} is ".showposs(\@reqlist));
+	die unless $planned;
 
         my $allok=0;
         if (!$planned->{Start}) {
@@ -240,12 +316,13 @@ sub plan () {
             alloc_prep();
 
             foreach my $req (@reqlist) {
-                my ($ok, $shareix) = alloc_1res($req->{Ident});
+                my ($ok, $got) = alloc_1res($req->{Ident});
                 if (!$ok) {
                     logm("failed to allocate $req->{Ident}!");
                     $allok=0;
                 } else {
-                    $req->{GotShareix}= $shareix;
+                    $req->{GotShareix}= $got->{Shareix};
+		    push @got, $got;
                 }
             }
         }
@@ -275,6 +352,7 @@ sub plan () {
 
         return ($allok, { Bookings => \@bookings });
     });
+    loggot(@got);
 }
 
 while (@ARGV && $ARGV[0] =~ m/^[-0-9]/) {
