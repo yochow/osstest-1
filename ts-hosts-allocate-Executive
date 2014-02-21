@@ -29,15 +29,12 @@ tsreadconfig();
 
 open DEBUG, ">/dev/null" or die $!;
 
-unshift @ARGV, '-D';
-
 while (@ARGV and $ARGV[0] =~ m/^-/) {
     $_= shift @ARGV;
     last if m/^--$/;
     while (m/^-./) {
-        if (s/^-D/-/) {
-            open DEBUG, ">&STDERR" or die $!;
-            DEBUG->autoflush(1);
+        if (0) {
+	    # no options
         } else {
             die "$_ ?";
         }
@@ -62,6 +59,17 @@ sub setup () {
     $harness_rev = get_harness_rev();
 
     $taskid= findtask();
+
+    my $logbase = "hosts-allocate.debug.gz";
+    my $logfh = open_unique_stashfile \$logbase;
+    my $logchild = open DEBUG, "|-";  defined $logchild or die $!;
+    if (!$logchild) {
+	open STDOUT, ">&", $logfh or die $!;
+	exec "gzip" or die $!;
+    }
+    DEBUG->autoflush(1);
+    logm("host allocation debug log in $logbase");
+    $logm_handle = [ $logm_handle, \*DEBUG ];
 
     $fi= $dbh_tests->selectrow_hashref(<<END, {}, $flight);
         SELECT * FROM flights
