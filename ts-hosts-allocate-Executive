@@ -526,6 +526,7 @@ sub alloc_hosts () {
     alloc_resources(WaitStart =>
                     ($ENV{OSSTEST_RESOURCE_WAITSTART} || $fi->{started}),
                     WaitStartAdjust => $waitstartadjust,
+		    DebugFh => \*DEBUG,
                     \&attempt_allocation);
 
     foreach my $hid (@hids) {

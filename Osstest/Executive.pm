@@ -362,6 +362,11 @@ sub alloc_resources {
 
     logm("resource allocation: starting...");
 
+    my $debugfh = $xparams{DebugFh};
+    my $debugm = $debugfh
+	? sub { print $debugfh @_, "\n" or die $!; }
+        : sub { };
+
     my $set_info= sub {
         return if grep { !defined } @_;
         my @s;
@@ -449,7 +454,8 @@ sub alloc_resources {
 		read($qserv, $jplan, $jplanlen) == $jplanlen or die $!;
 		my $jplanprint= $jplan;
 		chomp $jplanprint;
-		logm("resource allocation: base plan $jplanprint");
+		logm("resource allocation: obtained base plan.");
+		$debugm->("base plan = ", $jplanprint);
 		$plan= from_json($jplan);
 	    }, sub {
 		if (!eval {
@@ -465,7 +471,8 @@ sub alloc_resources {
 	    if ($bookinglist && $ok!=-1) {
 		my $jbookings= to_json($bookinglist);
                 chomp($jbookings);
-                logm("resource allocation: booking $jbookings");
+                logm("resource allocation: booking.");
+		$debugm->("bookings = ", $jbookings);
 
 		printf $qserv "book-resources %d\n", length $jbookings
 		    or die $!;
