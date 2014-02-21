@@ -175,11 +175,14 @@ sub ts_get_host_guest { # pass this @ARGV
 sub logm ($) {
     my ($m) = @_;
     my @t = gmtime;
-    printf $logm_handle "%04d-%02d-%02d %02d:%02d:%02d Z %s\n",
-        $t[5]+1900,$t[4]+1,$t[3], $t[2],$t[1],$t[0],
-        $m
-    or die $!;
-    $logm_handle->flush or die $!;
+    my $fm = sprintf "%04d-%02d-%02d %02d:%02d:%02d Z %s\n",
+		$t[5]+1900,$t[4]+1,$t[3], $t[2],$t[1],$t[0],
+		$m;
+    foreach my $h ((ref($logm_handle) eq 'ARRAY')
+		   ? @$logm_handle : $logm_handle) {
+	print $h $fm or die $!;
+	$h->flush or die $!;
+    }
 }
 
 sub fail ($) {
