@@ -65,6 +65,7 @@ sub checkout () {
 	>.config
 	echo >>.config debug=$debug_build
 	echo >>.config GIT_HTTP=y
+	echo >>.config LIBLEAFDIR_x86_64=lib
 	echo >>.config QEMU_REMOTE='$r{tree_qemu}'
 END
                (nonempty($r{revision_qemu}) ? <<END : '').
