@@ -107,7 +107,7 @@ job_create_test_filter_callback () {
 
 test_matrix_branch_filter_callback () {
   case "$xenarch" in
-  armhf)
+  armhf|arm64)
         case "$branch" in
         linux-3.0) return 1;;
         linux-3.4) return 1;;
@@ -354,7 +354,7 @@ test_matrix_do_one () {
   do_credit2_tests
 
   # No further arm tests at the moment
-  if [ $dom0arch = armhf ]; then
+  if [ $dom0arch = armhf ] || [ $dom0arch = arm64 ]; then
       return
   fi
 

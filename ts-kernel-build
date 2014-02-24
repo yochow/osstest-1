@@ -27,6 +27,7 @@ builddirsprops();
 
 my $archparms = {
     'armhf' => { DefConfig => 'multi_v7_defconfig', KernelImage => 'arch/arm/boot/zImage' },
+    'arm64' => { DefConfig => 'defconfig',          KernelImage => 'arch/arm64/boot/Image' },
     'i386'  => { DefConfig => 'defconfig',          KernelImage => 'arch/x86/boot/bzImage' },
     'amd64' => { DefConfig => 'defconfig',          KernelImage => 'arch/x86/boot/bzImage' }
 };

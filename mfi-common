@@ -67,12 +67,12 @@ create_build_jobs () {
      BUILD_RUNVARS+=" build_lvextend_max=$BUILD_LVEXTEND_MAX "
   fi
 
-  for arch in ${BUILD_ARCHES- i386 amd64 armhf }; do
+  for arch in ${BUILD_ARCHES- i386 amd64 armhf arm64 }; do
 
     if [ "x$arch" = xdisable ]; then continue; fi
 
     case "$arch" in
-    armhf)
+    armhf|arm64)
       case "$branch" in
       linux-3.0) continue;;
       linux-3.4) continue;;
@@ -247,7 +247,7 @@ create_build_jobs () {
     fi
 
     case "$arch" in
-    armhf) continue;; # don't do any other kernel builds
+    armhf|arm64) continue;; # don't do any other kernel builds
     esac
 
     if [ "x$REVISION_LINUX_OLD" != xdisable ]; then
@@ -319,13 +319,25 @@ test_matrix_iterate () {
   *)                    onetoolstack=xl ;;
   esac
 
-  for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
+  for xenarch in ${TEST_ARCHES- i386 amd64 armhf arm64 } ; do
 
     if [ "x$xenarch" = xdisable ]; then continue; fi
 
     test_matrix_branch_filter_callback || continue
 
     case "$xenarch" in
+    arm64)
+          # Arm64 from 4.5 onwards only
+          case "$xenbranch" in
+          xen-3.*-testing) continue;;
+          xen-4.0-testing) continue;;
+          xen-4.1-testing) continue;;
+          xen-4.2-testing) continue;;
+          xen-4.3-testing) continue;;
+          xen-4.4-testing) continue;;
+          *) ;;
+          esac
+          ;;
     armhf)
           # Arm from 4.3 onwards only
           case "$xenbranch" in
@@ -370,13 +382,14 @@ test_matrix_iterate () {
       *)          echo >&2 "kernkind ?  $kern"; exit 1 ;;
       esac
 
-      for dom0arch in i386 amd64 armhf; do
+      for dom0arch in i386 amd64 armhf arm64; do
 
         case ${xenarch}_${dom0arch} in
             amd64_amd64) ;;
             amd64_i386) ;;
             i386_i386) ;;
             armhf_armhf) ;;
+            arm64_arm64) ;;
             *) continue ;;
         esac
 
