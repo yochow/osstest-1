@@ -43,7 +43,7 @@ sub setup_cxfabric($)
     # is unlikely to be anything other than exactly our marilith box.
     return unless $ho->{Flags}{'equiv-marilith'};
 
-    my $nr = 64;
+    my $nr = 8;
 
     my $prefix = ether_prefix($ho);
     logm("Registering $nr MAC addresses with CX fabric using prefix $prefix");
