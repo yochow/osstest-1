@@ -43,10 +43,7 @@ sub setup_cxfabric($)
     # is unlikely to be anything other than exactly our marilith box.
     return unless $ho->{Flags}{'equiv-marilith'};
 
-    my $nr = 8;
-
-    my $prefix = ether_prefix($ho);
-    logm("Registering $nr MAC addresses with CX fabric using prefix $prefix");
+    logm("Setting up CX fabric hook script");
 
     if ( $ho->{Suite} =~ m/wheezy/ )
     {
@@ -61,24 +58,28 @@ sub setup_cxfabric($)
         target_install_packages($ho, qw(iproute2));
     }
 
-    my $banner = '# osstest: register potential guest MACs with CX fabric';
-    my $rclocal = "$banner\n";
-    # Osstest::TestSupport::select_ether allocates sequentially from $prefix:00:01
-    my $i = 0;
-    while ( $i++ < $nr ) {
-        $rclocal .= sprintf("bridge fdb add $prefix:%02x:%02x dev eth0\n",
-                            $i >> 8, $i & 0xff);
-    }
+    target_cmd_root($ho, 'mkdir -p /etc/xen/scripts/vif-post.d');
+    target_putfilecontents_root_stash($ho,10,<<'END','/etc/xen/scripts/vif-post.d/cxfabric.hook');
+# (De)register the new device with the CX Fabric. Ignore errors from bridge fdb
+# since the MAC might already be present etc.
+cxfabric() {
+	local command=$1
+	local mac=$(xenstore_read "$XENBUS_PATH/mac")
+	case $command in
+	online|add)
+		log debug "Adding $mac to CXFabric fdb"
+		do_without_error bridge fdb add $mac dev eth0
+		;;
+	offline)
+		log debug "Removing $mac from CXFabric fdb"
+		do_without_error bridge fdb del $mac dev eth0
+		;;
+	esac
+}
+cxfabric $command
 
-    target_editfile_root($ho, '/etc/rc.local', sub {
-        my $had_banner = 0;
-        while (<::EI>) {
-            $had_banner = 1 if m/^$banner$/;
-            print ::EO $rclocal if m/^exit 0$/ && !$had_banner;
-            print ::EO;
-        }
-    });
-
+END
+    target_cmd_root($ho, 'chmod +x /etc/xen/scripts/vif-post.d/cxfabric.hook');
 }
 
 1;
