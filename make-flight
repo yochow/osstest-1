@@ -126,11 +126,24 @@ do_hvm_winxp_tests () {
       continue
     fi
 
-    stripy toolstack xend xl \
+    # No xend from 4.5 onwards
+    case "$xenbranch" in
+    xen-3.*-testing) toolstack= ;;
+    xen-4.0-testing) toolstack= ;;
+    xen-4.1-testing) toolstack= ;;
+    xen-4.2-testing) toolstack= ;;
+    xen-4.3-testing) toolstack= ;;
+    xen-4.4-testing) toolstack= ;;
+    *)               toolstack="xl" ;;
+    esac
+
+    if [ x$toolstack = x ] ; then
+      stripy toolstack xend xl \
             "$vcpus" 1 \
             "$kern" '' \
             "$xenarch" i386 \
             "$dom0arch" i386
+    fi
 
     toolstack_runvars="toolstack=$toolstack"
 

@@ -91,6 +91,7 @@ create_build_jobs () {
     # In 4.4 onwards xend is off by default. If necessary we build a
     # separate set of binaries with xend enabled in order to run those
     # tests which use xend.
+    # In 4.5 onwards we don't test xend anymore
     if [ -n "$WANT_XEND" ]; then
       want_xend=$WANT_XEND
     else
@@ -106,8 +107,8 @@ create_build_jobs () {
     xen-4.1-testing) build_defxend=$want_xend; build_extraxend=false;;
     xen-4.2-testing) build_defxend=$want_xend; build_extraxend=false;;
     xen-4.3-testing) build_defxend=$want_xend; build_extraxend=false;;
-    *) build_defxend=false;
-       build_extraxend=$want_xend
+    xen-4.4-testing) build_defxend=false;      build_extraxend=$want_xend;;
+    *)               build_defxend=false;      build_extraxend=false
     esac
 
     case "$xenbranch" in
