@@ -997,7 +997,9 @@ sub file_simple_write_contents ($$) {
 sub git_massage_url ($) {
     my ($url) = @_;
 
-    if ($c{GitCacheProxy}) { $url = $c{GitCacheProxy}.$url; }
+    if ($url =~ m,^(git|https?)://, && $c{GitCacheProxy}) {
+	$url = $c{GitCacheProxy}.$url;
+    }
     return $url;
 }
 
