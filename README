@@ -326,6 +326,10 @@ HostProp_<testbox>_RebootTimeExtra
    where Xen takes really long time to boot (typically because of
    the "Scrubbing free RAM" phase).
 
+HostProp_<testbox>_TftpScope
+   Defines the Tftp scope (i.e. subnet) where this host resides. See
+   "TftpFoo_<scope> and TftpFoo" below.
+
 DebianPreseed
    Text to add to the debian-installer preseed file.  Optional
    but you will need to set some NTP servers here if your firewall
@@ -390,6 +394,28 @@ DebianSuite
 GuestDebianSuite   defaults to DebianSuite
 
 DebianPreseed      added to existing preseed file
+
+TftpFoo_<scope> and TftpFoo
+
+    Describes various properties relating to Tftp in a given <scope>,
+    where a <scope> is a given subnet, DHCP server etc. Valid
+    properties are:
+
+        Path          The path to the root of the directory which is exposed by
+                      the tftpserver (e.g. /tftpboot).
+        TmpDir        A directory under `Path' to use for temporary files.
+
+        PxeDir        The path under `Path' to the PXE configuration directory
+                      (e.g. pxelinux.cfg)
+        PxeGroup      The Unix group which should own files under `PxeDir'.
+        PxeTemplates  See TftpPxeTemplates
+
+        DiBase        The path under `Path' to the root of the debian installer
+                      images.
+
+    For hosts in scope "default", TftpFoo_default (if set) takes
+    precedence over TftpFoo.  TftpFoo is used when the setting Foo is
+    not defined for the host's scope.
 
 TftpPxeTemplates
     List (space-separated) of template filenames for writing

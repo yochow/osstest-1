@@ -795,6 +795,16 @@ sub selecthost ($) {
     }
     $ho->{Ip}= $ho->{IpStatic};
 
+    #----- tftp -----
+
+    my $tftpscope = get_host_property($ho, 'TftpScope', $c{TftpDefaultScope});
+    logm("TftpScope is $tftpscope");
+    $ho->{Tftp} = { };
+    $ho->{Tftp}{$_} = $c{"Tftp${_}_${tftpscope}"} || $c{"Tftp${_}"}
+        foreach qw(Path TmpDir PxeDir PxeGroup PxeTemplates DiBase);
+
+    #----- finalise -----
+
     $mjobdb->host_check_allocated($ho);
 
     logm("host: selected $ho->{Name} ".
@@ -1181,6 +1191,7 @@ sub selectguest ($$) {
         Guest => $gn,
         Name => $r{"${gn}_hostname"},
         CfgPath => $r{"${gn}_cfgpath"},
+        Tftp => $ho->{Tftp},
 	Host => $ho,
     };
     foreach my $opt (guest_var_commalist($gho,'options')) {
@@ -1841,7 +1852,7 @@ sub host_pxefile ($) {
 	$v{'ipaddr'} = $ip;
 	$v{'ipaddrhex'} = sprintf "%02X%02X%02X%02X", split /\./, $ip;
     }
-    foreach my $pat (split /\s+/, $c{TftpPxeTemplates}) {
+    foreach my $pat (split /\s+/, $ho->{Tftp}{PxeTemplates}) {
 	# we skip patterns that contain any references to undefined %var%s
 	$pat =~ s{\%(\w*)\%}{
 		    $1 eq '' ? '%' :
@@ -1851,14 +1862,14 @@ sub host_pxefile ($) {
 	# and return the first pattern we managed to completely substitute
         return $pat;
     }
-    die "no pxe template matched $c{TftpPxeTemplates} ".
+    die "no pxe template matched $ho->{Tftp}{PxeTemplates} ".
         (join ",", sort keys %v)." ?";
 }
 
 sub setup_pxeboot ($$) {
     my ($ho, $bootfile) = @_;
     my $f= host_pxefile($ho);
-    file_link_contents("$c{TftpPath}$c{TftpPxeDir}$f", $bootfile);
+    file_link_contents("$ho->{Tftp}{Path}$ho->{Tftp}{PxeDir}$f", $bootfile);
 }
 
 sub setup_pxeboot_local ($) {

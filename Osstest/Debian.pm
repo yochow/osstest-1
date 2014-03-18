@@ -554,7 +554,8 @@ END
     foreach my $kp (keys %{ $ho->{Flags} }) {
 	$kp =~ s/need-kernel-deb-// or next;
 
-	my $d_i= $c{TftpPath}.'/'.$c{TftpDiBase}.'/'.$r{arch}.'/'.$c{TftpDiVersion}.'-'.$ho->{Suite};
+	my $d_i= $ho->{Tftp}{Path}.'/'.$ho->{Tftp}{DiBase}.'/'.$r{arch}.'/'.
+	    $c{TftpDiVersion}.'-'.$ho->{Suite};
 
 	my $kurl = create_webfile($ho, "kernel", sub {
 	    copy("$d_i/$kp.deb", $_[0])

@@ -161,8 +161,9 @@ sub readglobalconfig () {
     chomp($nodename) or die;
     my $myfqdn = "$nodename.$c{DnsDomain}";
 
+    $c{TftpDefaultScope} ||= "default";
+
     $c{TftpPath} ||= "/tftpboot/";
-    $c{TftpHost} ||= $myfqdn;
     $c{TftpPxeDir} ||= "pxelinux.cfg/";
     $c{TftpPxeTemplates} ||= '%ipaddrhex% 01-%etherhyph%';
     $c{TftpPlayDir} ||= "$whoami/osstest/";
