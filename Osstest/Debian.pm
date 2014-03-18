@@ -557,11 +557,13 @@ END
 	my $d_i= $c{TftpPath}.'/'.$c{TftpDiBase}.'/'.$r{arch}.'/'.$c{TftpDiVersion}.'-'.$ho->{Suite};
 
 	my $kurl = create_webfile($ho, "kernel", sub {
-	    copy("$d_i/$kp.deb", $_[0]);
+	    copy("$d_i/$kp.deb", $_[0])
+		or die "Copy kernel failed: $!";
         });
 
 	my $iurl = create_webfile($ho, "initramfs-tools", sub {
-	    copy("$d_i/initramfs-tools.deb", $_[0]);
+	    copy("$d_i/initramfs-tools.deb", $_[0])
+		or die "Copy initramfs-tools failed: $!";
         });
 
 	preseed_hook_command($ho, 'late_command', $sfx, <<END);
