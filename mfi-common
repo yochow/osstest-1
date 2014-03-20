@@ -158,7 +158,6 @@ create_build_jobs () {
                 $RUNVARS $BUILD_RUNVARS $BUILD_LINUX_RUNVARS $arch_runvars   \
                 $suite_runvars                                               \
                 host_hostflags=$build_hostflags                              \
-                xen_kernels=linux-2.6-pvops                                  \
                 revision_xen=$REVISION_XEN                                   \
                 $pvops_kernel $pvops_kconfig_overrides                       \
                 ${TREEVCS_LINUX:+treevcs_linux=}${TREEVCS_LINUX}             \
