@@ -154,11 +154,9 @@ create_build_jobs () {
 
     ./cs-job-create $flight build-$arch-pvops build-kern                     \
                 arch=$arch kconfighow=xen-enable-xen-config                  \
-        tree_xen=$TREE_XEN                                                   \
                 $RUNVARS $BUILD_RUNVARS $BUILD_LINUX_RUNVARS $arch_runvars   \
                 $suite_runvars                                               \
                 host_hostflags=$build_hostflags                              \
-                revision_xen=$REVISION_XEN                                   \
                 $pvops_kernel $pvops_kconfig_overrides                       \
                 ${TREEVCS_LINUX:+treevcs_linux=}${TREEVCS_LINUX}             \
                 tree_linuxfirmware=$TREE_LINUXFIRMWARE                       \
