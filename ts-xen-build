@@ -35,20 +35,9 @@ my $builddir= "$homedir/$leaf";
 my $makeflags= get_host_property($ho, 'build make flags', '-j4');
     
 sub checkout () {
-    my $kerns= $r{xen_kernels};
-    $kerns='' unless defined $kerns;
-    $kerns =~ s/,/ /g;
-
     target_cmd($ho, "rm -rf $builddir && mkdir $builddir", 60);
 
     build_clone($ho, 'xen', $builddir, 'xen-unstable');
-
-    my $linux_url_envvar= 'XEN_LINUX_GIT_URL';
-    my $linux_rev_envvar= 'XEN_LINUX_GITREV';
-    if (defined $r{tree_linux} && $r{tree_linux} =~ m/\.hg$/) {
-        $linux_url_envvar= 'XEN_LINUX_HGREPO';
-        $linux_rev_envvar= 'XEN_LINUX_HGREV';
-    }
 
     my $debug_build = $r{xen_build_debug} || 'y';
 
@@ -67,6 +56,7 @@ sub checkout () {
 	echo >>.config GIT_HTTP=y
 	echo >>.config LIBLEAFDIR_x86_64=lib
 	echo >>.config QEMU_REMOTE='$r{tree_qemu}'
+	echo >>.config KERNELS=''
 END
                (nonempty($r{revision_qemu}) ? <<END : '').
 	echo >>.config QEMU_TAG='$r{revision_qemu}'
@@ -83,19 +73,8 @@ END
                (nonempty($earlyprintk) ? <<END : '').
 	echo >>.config CONFIG_EARLY_PRINTK=$earlyprintk
 END
-               (nonempty($r{tree_linux}) ? <<END : '').
-	echo >>.config export $linux_url_envvar='$r{tree_linux}'
-END
-               (nonempty($r{revision_linux}) ? <<END : '').
-	echo >>.config export $linux_rev_envvar='$r{revision_linux}'
-END
-               ($ho->{Suite} =~ m/squeeze|wheezy/ ? <<END : ''). #Debian #693721
+               ($ho->{Suite} =~ m/squeeze|wheezy/ ? <<END : '') #Debian #693721
 	echo >>.config PYTHON_PREFIX_ARG=
-END
-               (nonempty($kerns) ? <<END : <<END)
-	echo >>.config KERNELS='$kerns'
-END
-	echo >>.config KERNELS=''
 END
                );
 }
@@ -155,50 +134,24 @@ sub collectversion_qemu () {
     store_revision($ho, 'seabios', "$tools/seabios-dir", 1);
 }
 
-sub collectversions_kernel () {
-    my $whichkerns= target_cmd_output($ho, <<END);
-        set -e
-        cd $builddir/xen-unstable
-        echo linux*/.{git,hg}
-END
-    my (@kerndirs,@vcss,@revisions);
-    foreach my $kerndir (sort split / /, $whichkerns) {
-        next if $kerndir =~ m/\*/;
-        die "$kerndir ?" unless $kerndir =~ m/^linux.*\.(git|hg)$/;
-        my $vcs= $1;
-        push @kerndirs, $kerndir;
-        push @vcss, $vcs;
-        push @revisions,
-            vcs_dir_revision($ho,"$builddir/xen-unstable/$kerndir", $vcs);
-    }
-    if (@revisions) {
-	store_vcs_revision('linux',"@revisions","@vcss");
-	store_runvar('built_xen_kerneldirs',"@kerndirs");
-    }
-}
-
 sub divide () {
     target_cmd_build($ho, 100, $builddir, <<END);
         cd xen-unstable/dist
-        mkdir kerninstall xeninstall
+        mkdir xeninstall
 	for f in *install; do
 	    mkdir -p \$f/lib
 	done
         if test -d install/boot; then
-            mv install/boot kerninstall/.
-            if test -d install/lib/modules; then
-                mv install/lib/modules kerninstall/lib/.
-            fi
-            if test -f kerninstall/boot/xen.gz || test -f kerninstall/boot/xen; then
+            if test -f install/boot/xen.gz || test -f install/boot/xen; then
                 mkdir xeninstall/boot
-                mv kerninstall/boot/xen* xeninstall/boot/.
+                mv install/boot/xen* xeninstall/boot/.
             fi
         fi
 END
 }
 
 sub stash () {
-    foreach my $part ('', 'kern', 'xen') {
+    foreach my $part ('', 'xen') {
         built_stash($ho, $builddir,
                     "xen-unstable/dist/${part}install",
                     "${part}dist");
@@ -243,7 +196,6 @@ checkout();
 
 trapping(\&build);
 trapping(\&collectversion_qemu);
-trapping(\&collectversions_kernel);
 
 die "*** something failed:\n\n".(join "\n\n",@probs)."\n** something failed"
     if @probs;
