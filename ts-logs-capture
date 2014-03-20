@@ -154,6 +154,8 @@ sub fetch_logs_host_guests () {
          'brctl show',
          'lvm lvs',
     'ps wwwaxf -eo pid,tty,stat,time,nice,psr,pcpu,pmem,nwchan,wchan:25,args',
+         'lspci -vvv',
+         'lspci -tv',
          ) {
             try_cmd_output_save($cmd);
         }
