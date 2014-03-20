@@ -168,18 +168,12 @@ create_build_jobs () {
 
     if [ "x$REVISION_LINUX_OLD" != xdisable ]; then
 
-      ./cs-job-create $flight build-$arch-oldkern build                 \
-                arch=$arch                                              \
-        tree_qemu=$TREE_QEMU                                            \
-        tree_qemuu=$TREE_QEMU_UPSTREAM                                  \
-        tree_xen=$TREE_XEN                                              \
+      ./cs-job-create $flight build-$arch-oldkern build-kern            \
+                arch=$arch kconfighow=create-config-sh                  \
+                kimagefile=vmlinux                                      \
                 $RUNVARS $BUILD_RUNVARS $BUILD_LINUX_OLD_RUNVARS        \
                 $arch_runvars $suite_runvars                            \
                 host_hostflags=$build_hostflags                         \
-                xen_kernels=linux-2.6-xen                               \
-                revision_xen=$REVISION_XEN                              \
-                revision_qemu=$REVISION_QEMU                            \
-                revision_qemuu=$REVISION_QEMU_UPSTREAM                  \
         tree_linux=http://xenbits.xen.org/linux-2.6.18-xen.hg           \
         revision_linux=$REVISION_LINUX_OLD
 

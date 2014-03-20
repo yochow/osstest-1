@@ -266,6 +266,22 @@ END
     # /;
 }
 
+sub config_create_config_sh () {
+    die "only x86" unless $r{arch} =~ m/^amd64|i386$/;
+
+    my $xta = $r{arch} eq "amd64" ? "x86_64" : "x86_32";
+
+    target_cmd_build($ho, 1000, $builddir, <<END);
+        cd linux
+	sh buildconfigs/create_config.sh .config "-xen" $xta
+	if [ x$xta = xx86_32 ] ; then
+            sed -i.bak -e 's!^CONFIG_HIGHMEM4G=y\$!\# CONFIG_HIGHMEM4G is not set!;s!^\# CONFIG_HIGHMEM64G is not set\$!CONFIG_HIGHMEM64G=y!' .config
+	fi
+        yes '' | make oldconfig
+END
+    # /;
+}
+
 sub config () {
     my $confighow= $r{kconfighow};
     $confighow =~ s/\W/_/g;
