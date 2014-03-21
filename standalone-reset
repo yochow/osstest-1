@@ -131,35 +131,9 @@ case $# in
 esac
 
 if test -f standalone.db; then
-	sqlite3 standalone.db <<END
-		DELETE FROM runvars WHERE flight='$flight';
-		DELETE FROM jobs    WHERE flight='$flight';
-		DELETE FROM flights WHERE flight='$flight';
-END
+	./sa-forget-flight standalone.db "$flight"
 else
-	sqlite3 standalone.db <<END
-		CREATE TABLE flights (
-			flight TEXT PRIMARY KEY,
-			blessing TEXT,
-			intended TEXT,
-			branch TEXT
-			);
-		CREATE TABLE jobs (
-			flight TEXT NOT NULL,
-			job TEXT NOT NULL,
-			recipe TEXT NOT NULL,
-			status TEXT NOT NULL,
-			PRIMARY KEY(flight,job)
-			);
-		CREATE TABLE runvars (
-			flight TEXT NOT NULL,
-			job TEXT NOT NULL,
-			name TEXT NOT NULL,
-			val TEXT NOT NULL,
-			synth BOOLEAN NOT NULL,
-			PRIMARY KEY(flight,job,name)
-			);
-END
+	./sa-db-init standalone.db
 fi
 
 : ${BUILD_LVEXTEND_MAX:=50}

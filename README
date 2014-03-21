@@ -158,6 +158,9 @@ sg-*:   ?
 
 ts-*:   Test Step scripts.
 
+sa-*:	Standalone mode.
+
+
 Jobs
 ====
 
