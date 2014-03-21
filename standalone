@@ -1,0 +1,227 @@
+#!/bin/bash
+
+set -e
+
+usage() {
+    cat >&2 <<EOF
+usage: standalone [operations] [options...]
+
+Operations:
+
+* make-flight [cf] [BRANCH]
+
+  Create a flight testing the named branch.
+
+* set-paths [cf] [JOB]
+
+  Setup dist path runvars for JOB from existing build results. Useful
+  after recreating a flight to avoid the need to rebuild.
+
+* run-job [cfhrR] [JOB]
+
+  Run the named JOB.
+
+  Required options: -h HOST
+
+* run-test [cfhrR] [JOB] [TEST]
+
+  Run the named TEST as part of JOB.
+
+  Required options: -h HOST
+
+Options:
+
+-c FILE, --config=FILE        Use FILE as configuration file
+-f FLIGHT, --flight=FLIGHT    Operate on FLIGHT
+-h HOST, --host=HOST          Test host
+-r, --reuse                   Do not wipe test host (default)
+-R, --noreuse, --noreinstall  Wipe the test host (if job or test does so)
+
+--help                        This message
+
+EOF
+}
+
+if [ $# -lt 1 ] ; then
+    echo "Need an operation" >&2
+    usage
+    exit 1
+fi
+
+op=$1 ; shift
+
+if [ x$op = x--help ] ; then
+    usage
+    exit 0
+fi
+
+TEMP=$(getopt -o c:f:h:rR --long config:,flight:,host:,reuse,noreuse,reinstall,help -- "$@")
+
+eval set -- "$TEMP"
+
+config=
+flight="standalone"
+host=
+reuse=1 # Don't blow away machines by default
+
+while true ; do
+    case "$1" in
+	-c|--config) config=$2; shift 2;;
+	-f|--flight) flight=$2; shift 2;;
+	-h|--host)   host=$2;   shift 2;;
+	-r|--reuse)  reuse=1;   shift 1;;
+	-R|--noreuse|--reinstall)reuse=0;shift 1;;
+	--help)      usage; exit 0;;
+        --) shift ; break ;;
+        *) echo "Internal error!" ; exit 1 ;;
+
+    esac
+done
+
+if [ ! -r /var/log/apache2/access.log ] ; then
+    echo "WARNING: Cannot read apache logs. Some tests may fail" >&2
+fi
+
+if ! ssh-add -l >/dev/null ] ; then
+    echo "WARNING: Unable to access ssh-agent. Some tests may fail" >&2
+fi
+
+if [ $reuse -eq 0 ]; then
+    echo "WARNING: Will blow away machine..."
+    echo "Press ENTER to confirm."
+    read
+fi
+
+if [ ! -f standalone.db ] ; then
+    echo "No standalone.db? Run standalone-reset." >&2
+    exit 1
+fi
+
+need_flight() {
+    if [ -z "$flight" ] ; then
+	echo "run-job: Need a flight" >&2
+	exit 1
+    fi
+}
+need_host() {
+    if [ -z "$host" ] ; then
+	echo "run-job: Need a host" >&2
+	exit 1
+    fi
+}
+
+ensure_logs() {
+    if [ ! -d "logs" ] ; then
+	mkdir "logs"
+    fi
+    if [ ! -d "logs/$flight" ] ; then
+	mkdir "logs/$flight"
+    fi
+}
+
+with_logging() {
+    local log=$1; shift
+    $@ 2>&1 | tee "$log"
+    rc=${PIPESTATUS[0]}
+    if [ $rc -ne 0 ] ; then
+	echo "FAILED rc=${rc}" >&2
+    fi
+}
+
+# other potential ops:
+# - run standalone reset
+
+case $op in
+    help)
+        usage
+	exit 0
+	;;
+
+    make-flight)
+        need_flight
+
+        if [ $# -lt 1 ] ; then
+            echo "make-flight: Need branch" >&2
+            exit 1
+        fi
+
+        branch=$1; shift
+
+        DAILY_BRANCH_PREEXEC_HOOK=exit\ 0 \
+        OSSTEST_USE_HEAD=y \
+        BRANCHES_ALWAYS="$branch" \
+        OSSTEST_FLIGHT=$flight \
+        OSSTEST_CONFIG=$config \
+        OSSTEST_NO_BASELINE=y \
+            with_logging logs/$flight/make-flight.log ./cr-daily-branch $@ $branch
+        ;;
+
+    set-paths)
+	need_flight
+
+	if [ $# -lt 1 ] ; then
+	    echo "set-paths: Need job" >&2
+	    exit 1
+	fi
+
+	job=$1; shift
+
+	for d in '' xen kern ; do
+	    runvar="path_${d}dist"
+ 	    path="build/${d}dist.tar.gz"
+	    if [ -f "logs/$flight/$job/$path" ] ; then
+		./cs-adjust-flight -v $flight runvar-set $job $runvar $path
+	    fi
+	done
+
+	if [ -f "logs/$flight/$job/build/kerndist.tar.gz" ] ; then
+	    KERNEL_VER=$(tar tzf logs/$flight/$job/build/kerndist.tar.gz |\
+		sed -n -e 's,^lib/modules/\(.*\)/modules.dep$,\1,p')
+	    if [ -n "$KERNEL_VER" ]; then
+		./cs-adjust-flight -v $flight \
+		    runvar-set $job kernel_ver $KERNEL_VER
+	    fi
+	fi
+	;;
+
+    run-job)
+	need_flight; need_host
+
+	if [ $# -lt 1 ] ; then
+	    echo "run-job: Need job" >&2
+	    exit 1
+	fi
+
+	job=$1; shift
+
+	ensure_logs
+
+        OSSTEST_CONFIG=$config \
+	OSSTEST_FLIGHT=$flight \
+	OSSTEST_HOST_HOST=$host \
+	OSSTEST_HOST_REUSE=$reuse \
+	    with_logging logs/$flight/$job.log ./sg-run-job $job
+	;;
+    run-test)
+	need_flight; need_host
+
+	if [ $# -lt 2 ] ; then
+	    echo "run-test: Need job + test" >&2
+	    exit 1
+	fi
+
+	job=$1; shift
+	ts=$1; shift
+
+	ensure_logs
+
+	OSSTEST_CONFIG=$config \
+	OSSTEST_FLIGHT=$flight \
+	OSSTEST_CONFIG=$config \
+	OSSTEST_HOST_REUSE=$reuse \
+	OSSTEST_JOB=$job \
+	    with_logging logs/$flight/$job.$ts.log ./$ts host=$host $@
+	;;
+    *)
+	echo "Unknown op $op" ; exit 1 ;;
+esac
