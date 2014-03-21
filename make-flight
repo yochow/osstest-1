@@ -162,6 +162,17 @@ do_hvm_win7_x64_tests () {
             all_hostflags=$most_hostflags,hvm
 }
 
+do_hvm_debian_ovmf_tests() {
+  if [ $xenarch != amd64 -o "x$qemuu_suffix" != "x-qemuu" ]; then
+    return
+  fi
+
+  job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-ovmf-amd64 \
+    test-debianhvm xl $xenarch $dom0arch $qemuu_runvar \
+    ovmf_image=debian-7.2.0-amd64-CD-1.iso \
+    all_hostflags=$most_hostflags,hvm
+}
+
 do_hvm_rhel6_tests () {
   if [ $xenarch != amd64 -o $dom0arch != i386 -o "$kern" != "" ]; then
     return
@@ -273,6 +284,8 @@ test_matrix_do_one () {
     do_hvm_winxp_tests
     do_hvm_win7_x64_tests
     do_hvm_rhel6_tests
+
+    do_hvm_debian_ovmf_tests
 
   done # qemuu_suffix
 
