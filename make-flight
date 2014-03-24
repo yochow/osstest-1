@@ -126,16 +126,11 @@ do_hvm_winxp_tests () {
       continue
     fi
 
-    # No xend from 4.5 onwards
-    case "$xenbranch" in
-    xen-3.*-testing) toolstack= ;;
-    xen-4.0-testing) toolstack= ;;
-    xen-4.1-testing) toolstack= ;;
-    xen-4.2-testing) toolstack= ;;
-    xen-4.3-testing) toolstack= ;;
-    xen-4.4-testing) toolstack= ;;
-    *)               toolstack="xl" ;;
-    esac
+    if [ x$test_xend != xy ] ; then
+      toolstack="xl"
+    else
+      toolstack=
+    fi
 
     if [ x$toolstack = x ] ; then
       stripy toolstack xend xl \
@@ -237,8 +232,19 @@ test_matrix_do_one () {
       return
   fi
 
+  # xend tests for versions <= 4.4 only
+  case "$xenbranch" in
+  xen-3.*-testing) test_xend=y ;;
+  xen-4.0-testing) test_xend=y ;;
+  xen-4.1-testing) test_xend=y ;;
+  xen-4.2-testing) test_xend=y ;;
+  xen-4.3-testing) test_xend=y ;;
+  xen-4.4-testing) test_xend=y ;;
+  *)               test_xend=n ;;
+  esac
+
   # xend PV guest test on x86 only
-  if [ $dom0arch = "i386" -o $dom0arch = "amd64" ]; then
+  if [ x$test_xend = xy -a $dom0arch = "i386" -o $dom0arch = "amd64" ]; then
     job_create_test test-$xenarch$kern-$dom0arch-pv test-debian xend \
             $xenarch $dom0arch                                       \
             $debian_runvars all_hostflags=$most_hostflags
