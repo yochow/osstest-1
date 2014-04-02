@@ -112,7 +112,7 @@ END
 our $emptyiso= '/root/empty.iso';
 
 sub prep () {
-    target_install_packages_norec($ho, qw(lvm2 rsync genisoimage));
+    target_install_packages_norec($ho, qw(lvm2 rsync xorriso));
 
     my $isotimeout= 600;
 
@@ -123,18 +123,15 @@ sub prep () {
     my $newiso= '/root/newiso';
     my $emptydir= '/root/empty-dir';
 
-    my @isogen_base= qw(-R -J -T);
+    my @isogen_base= qw(-as mkisofs -R -J);
     my @isogen_boot= qw(-b isolinux/isolinux.bin
                         -c isolinux/boot.cat
                         -no-emul-boot
                         -boot-load-size 4
                         -boot-info-table);
+    my @isogen= (@isogen_base, @isogen_boot);
 
-    target_cmd_root($ho, <<END, 60);
-            set -e
-            mkdir -p $emptydir
-            genisoimage -o $emptyiso @isogen_base $emptydir/.
-END
+    iso_create_xorriso($ho, $emptyiso, $emptydir, 60, @isogen_base);
 
     more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb,
                           OnReboot => 'preserve',
@@ -163,9 +160,7 @@ END
         target_putfilecontents_root_stash($ho, 10, kickstart(),
                                           "$newiso/ks.cfg");
 
-        target_cmd_root($ho, <<END, $isotimeout);
-            genisoimage -o $gho->{Rimage} @isogen_base @isogen_boot $newiso/.
-END
+        iso_create_xorriso($ho, $gho->{Rimage}, $newiso, $isotimeout, @isogen);
     });
 }
 

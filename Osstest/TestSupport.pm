@@ -100,6 +100,8 @@ BEGIN {
                       setup_pxeboot setup_pxeboot_local host_pxefile
 
                       ether_prefix
+
+                      iso_create_xorriso
                       );
     %EXPORT_TAGS = ( );
 
@@ -1885,6 +1887,20 @@ timeout 5
 label local
 	LOCALBOOT 0
 default local
+END
+}
+
+#---------- ISO images ----------
+sub iso_create_xorriso ($$$$;@) {
+    my ($ho,$iso,$dir,$isotimeout,@xopts) = @_;
+
+    # These options forces ISO creation even if input directory is
+    # empty. They have to go last.
+    my @force_iso_creation = qw(-- -changes_pending yes);
+
+    target_cmd_root($ho, <<END, 60);
+        mkdir -p $dir
+        xorriso @xopts -o $iso $dir/. @force_iso_creation
 END
 }
 
