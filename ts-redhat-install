@@ -125,12 +125,7 @@ sub prep () {
 
     iso_create_empty($ho, $emptyiso, $emptydir);
 
-    my @isogen= qw(-as mkisofs -R -J
-                   -b isolinux/isolinux.bin
-                   -c isolinux/boot.cat
-                   -no-emul-boot
-                   -boot-load-size 4
-                   -boot-info-table);
+    my @isogen= iso_gen_flags_basic();
 
     more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb,
                           OnReboot => 'preserve',

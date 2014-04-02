@@ -103,6 +103,7 @@ BEGIN {
 
                       iso_create_xorriso
                       iso_create_empty
+                      iso_gen_flags_basic
                       guest_editconfig_nocd
                       );
     %EXPORT_TAGS = ( );
@@ -1917,6 +1918,15 @@ sub iso_create_empty($$$) {
     my @isogen_opts= qw(-as mkisofs -R -J);
 
     iso_create_xorriso($ho, $emptyiso, $emptydir, 60, @isogen_opts);
+}
+
+sub iso_gen_flags_basic() {
+    return qw(-as mkisofs -R -J
+              -b isolinux/isolinux.bin
+              -c isolinux/boot.cat
+              -no-emul-boot
+              -boot-load-size 4
+              -boot-info-table);
 }
 
 sub guest_editconfig_nocd ($$) {
