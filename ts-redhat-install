@@ -168,15 +168,6 @@ sub start () {
     target_cmd_root($ho, "$xl create $gho->{CfgPath}", 100);
 }
 
-sub rewrite_config_nocd () {
-    guest_editconfig($ho, $gho, sub {
-        if (m/^\s*disk\s*\=/ .. /\]/) {
-            s/\Q$gho->{Rimage}\E/$emptyiso/;
-        }
-        s/^on_reboot.*/on_reboot='restart'/;
-    });
-}
-
 if (!$stage) {
     prep();
     start();
@@ -188,7 +179,7 @@ if ($stage<2) {
     guest_destroy($ho,$gho);
 }
 
-rewrite_config_nocd();
+guest_editconfig_nocd($gho,$emptyiso);
 start();
 guest_await_dhcp_tcp($gho,300);
 guest_check_up($gho);

@@ -102,6 +102,7 @@ BEGIN {
                       ether_prefix
 
                       iso_create_xorriso
+                      guest_editconfig_nocd
                       );
     %EXPORT_TAGS = ( );
 
@@ -1902,6 +1903,16 @@ sub iso_create_xorriso ($$$$;@) {
         mkdir -p $dir
         xorriso @xopts -o $iso $dir/. @force_iso_creation
 END
+}
+
+sub guest_editconfig_nocd ($$) {
+    my ($gho,$emptyiso) = @_;
+    guest_editconfig($gho->{Host}, $gho, sub {
+        if (m/^\s*disk\s*\=/ .. /\]/) {
+            s/\Q$gho->{Rimage}\E/$emptyiso/;
+        }
+        s/^on_reboot.*/on_reboot='restart'/;
+    });
 }
 
 1;
