@@ -104,6 +104,7 @@ BEGIN {
                       iso_create_xorriso
                       iso_create_empty
                       iso_gen_flags_basic
+                      iso_copy_content_from_image
                       guest_editconfig_nocd
                       );
     %EXPORT_TAGS = ( );
@@ -1927,6 +1928,19 @@ sub iso_gen_flags_basic() {
               -no-emul-boot
               -boot-load-size 4
               -boot-info-table);
+}
+
+sub iso_copy_content_from_image($$) {
+    my ($gho,$newiso) = @_;
+    return <<"END";
+            set -ex
+            umount /mnt ||:
+            rm -rf $newiso
+            mount -o loop -r $gho->{Rimage} /mnt
+            mkdir $newiso
+            cp -a /mnt/. $newiso/.
+            umount /mnt
+END
 }
 
 sub guest_editconfig_nocd ($$) {
