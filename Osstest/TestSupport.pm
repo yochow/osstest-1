@@ -102,6 +102,7 @@ BEGIN {
                       ether_prefix
 
                       iso_create_xorriso
+                      iso_create_empty
                       guest_editconfig_nocd
                       );
     %EXPORT_TAGS = ( );
@@ -1909,6 +1910,13 @@ sub iso_create_xorriso ($$$$;@) {
         mkdir -p $dir
         xorriso @xopts -o $iso $dir/. @force_iso_creation
 END
+}
+
+sub iso_create_empty($$$) {
+    my ($ho,$emptyiso,$emptydir) = @_;
+    my @isogen_opts= qw(-as mkisofs -R -J);
+
+    iso_create_xorriso($ho, $emptyiso, $emptydir, 60, @isogen_opts);
 }
 
 sub guest_editconfig_nocd ($$) {

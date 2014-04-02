@@ -123,15 +123,14 @@ sub prep () {
     my $newiso= '/root/$flight.$job.$gn-newiso';
     my $emptydir= '/root/$flight.$job.$gn-empty-dir';
 
-    my @isogen_base= qw(-as mkisofs -R -J);
-    my @isogen_boot= qw(-b isolinux/isolinux.bin
-                        -c isolinux/boot.cat
-                        -no-emul-boot
-                        -boot-load-size 4
-                        -boot-info-table);
-    my @isogen= (@isogen_base, @isogen_boot);
+    iso_create_empty($ho, $emptyiso, $emptydir);
 
-    iso_create_xorriso($ho, $emptyiso, $emptydir, 60, @isogen_base);
+    my @isogen= qw(-as mkisofs -R -J
+                   -b isolinux/isolinux.bin
+                   -c isolinux/boot.cat
+                   -no-emul-boot
+                   -boot-load-size 4
+                   -boot-info-table);
 
     more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb,
                           OnReboot => 'preserve',
