@@ -164,13 +164,9 @@ END
     });
 }
 
-sub start () {
-    target_cmd_root($ho, "$xl create $gho->{CfgPath}", 100);
-}
-
 if (!$stage) {
     prep();
-    start();
+    guest_create($gho,$xl);
 } else {
     $gho= selectguest($gn,$gho);
 }
@@ -180,6 +176,6 @@ if ($stage<2) {
 }
 
 guest_editconfig_nocd($gho,$emptyiso);
-start();
+guest_create($gho,$xl);
 guest_await_dhcp_tcp($gho,300);
 guest_check_up($gho);

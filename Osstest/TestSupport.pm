@@ -93,7 +93,7 @@ BEGIN {
                       guest_vncsnapshot_begin guest_vncsnapshot_stash
 		      guest_check_remus_ok guest_editconfig
                       host_involves_pcipassthrough host_get_pcipassthrough_devs
-                      toolstack
+                      toolstack guest_create
 
                       await_webspace_fetch_byleaf create_webfile
                       file_link_contents get_timeout
@@ -1243,7 +1243,13 @@ sub guest_await_reboot ($$$) {
 sub guest_destroy ($$) {
     my ($ho,$gho) = @_;
     target_cmd_root($ho, toolstack()->{Command}." destroy $gho->{Name}", 40);
-}    
+}
+
+sub guest_create ($$) {
+    my ($gho,$toolstack) = @_;
+    target_cmd_root($gho->{Host}, "$toolstack create $gho->{CfgPath}", 100);
+}
+
 
 sub target_choose_vg ($$) {
     my ($ho, $mbneeded) = @_;
