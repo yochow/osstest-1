@@ -133,7 +133,7 @@ esac
 if test -f standalone.db; then
 	./sa-forget-flight standalone.db "$flight"
 else
-	./sa-db-init standalone.db
+	./sa-init-db standalone.db
 fi
 
 : ${BUILD_LVEXTEND_MAX:=50}
