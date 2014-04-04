@@ -244,7 +244,7 @@ test_matrix_do_one () {
   esac
 
   # xend PV guest test on x86 only
-  if [ x$test_xend = xy -a $dom0arch = "i386" -o $dom0arch = "amd64" ]; then
+  if [ x$test_xend = xy -a \( $dom0arch = "i386" -o $dom0arch = "amd64" \) ]; then
     job_create_test test-$xenarch$kern-$dom0arch-pv test-debian xend \
             $xenarch $dom0arch                                       \
             $debian_runvars all_hostflags=$most_hostflags
