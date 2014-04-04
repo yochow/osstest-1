@@ -130,7 +130,7 @@ sub prep () {
     more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb,
                           OnReboot => 'preserve',
                           PostImageHook => sub {
-        target_cmd_root($ho, copy_iso_content_to_dir($gho,$newiso), $isotimeout);
+        target_cmd_root($ho, iso_copy_content_from_image($gho,$newiso), $isotimeout);
         target_editfile_root($ho, "$newiso/isolinux/isolinux.cfg", sub {
             while (<EI>) {
                 if (m/^\s+append/) {
