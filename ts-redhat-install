@@ -109,7 +109,7 @@ ENDKEYS
 END
 }
 
-our $emptyiso= '/root/$flight.$job.$gn-empty.iso';
+our $emptyiso= "/root/$flight.$job.$gn-empty.iso";
 
 sub prep () {
     target_install_packages_norec($ho, qw(lvm2 rsync xorriso));
@@ -120,8 +120,8 @@ sub prep () {
                        $disk_mb + 1,
                        100);
 
-    my $newiso= '/root/$flight.$job.$gn-newiso';
-    my $emptydir= '/root/$flight.$job.$gn-empty-dir';
+    my $newiso= "/root/$flight.$job.$gn-newiso";
+    my $emptydir= "/root/$flight.$job.$gn-empty-dir";
 
     iso_create_empty($ho, $emptyiso, $emptydir);
 
