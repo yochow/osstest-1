@@ -994,7 +994,7 @@ END
     }
     my @vercols= sort keys %vercols;
     if (@vercols) {
-        print H "<h2>targeted versions</h2>\n";
+        print H "<h2>Targeted versions</h2>\n";
         print H "<table rules=all>";
         print H "<tr><td></td>";
         print H "<th>".encode_entities($_)."</th>" foreach @vercols;
@@ -1012,6 +1012,31 @@ END
         }
         print H "</table>";
     }
+    my $started_str = show_abs_time $fi->{FlightInfo}{started};
+
+    print H <<END;
+<h2>Flight information</h2>
+<table>
+<tr>
+<td>"Branch":</td><td>$fi->{FlightInfo}{branch}</td></tr>
+<td>Intended blessing:</td><td>$fi->{FlightInfo}{intended}</td></tr>
+<td>Blessing:</td><td>$fi->{FlightInfo}{blessing}</td></tr>
+<td>Started:</td><td>$started_str</td></tr>
+<td>Test harness revision(s):</td><td>
+END
+
+    our $htmlout_touchedq ||= $dbh_tests->prepare(<<END);
+        SELECT harness FROM flights_harness_touched WHERE flight=?
+END
+    $htmlout_touchedq->execute($fi->{Flight});
+    while (my ($touched) = $htmlout_touchedq->fetchrow_array()) {
+	print H $touched, "\n";
+    }
+
+    print H <<END;
+</td></tr>
+</table>
+END
     print H "</body></html>";
     H->error and die $!;
     close H or die $!;
