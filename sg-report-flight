@@ -1014,6 +1014,18 @@ END
     }
     my $started_str = show_abs_time $fi->{FlightInfo}{started};
 
+    our $htmlout_finishedq ||= $dbh_tests->prepare(<<END);
+        SELECT
+ (SELECT max(finished) FROM steps WHERE flight=?)                 max,
+ (SELECT count(*) FROM steps WHERE finished IS NULL AND flight=?) unfinished
+END
+    $htmlout_finishedq->execute($fi->{Flight}, $fi->{Flight});
+    my $frow = $htmlout_finishedq->fetchrow_hashref();
+    my $finished_str =
+	$frow->{unfinished} ? "($frow->{unfinished} unfinished steps)" :
+	!$frow->{max} ? "(no steps)" :
+	show_abs_time($frow->{max});
+
     print H <<END;
 <h2>Flight information</h2>
 <table>
@@ -1022,6 +1034,7 @@ END
 <td>Intended blessing:</td><td>$fi->{FlightInfo}{intended}</td></tr>
 <td>Blessing:</td><td>$fi->{FlightInfo}{blessing}</td></tr>
 <td>Started:</td><td>$started_str</td></tr>
+<td>Finished:</td><td>$finished_str</td></tr>
 <td>Test harness revision(s):</td><td>
 END
 
