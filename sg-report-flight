@@ -808,9 +808,7 @@ END
             encode_entities($st);
         $issteplog{$logfilename}= 1;
 
-        printf H "<td>%s</td>",
-            encode_entities(strftime "%Y-%m-%d %H:%M:%S Z",
-                            gmtime $step->{started});
+        printf H "<td>%s</td>", show_abs_time $step->{started};
 
 	if (defined $step->{finished} && defined $step->{started}) {
 	    printf H "<td align=right>%d</td>\n",

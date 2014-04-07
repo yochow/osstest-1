@@ -35,7 +35,7 @@ BEGIN {
                       $dbh_tests db_retry db_retry_retry db_retry_abort
                       db_begin_work
                       ensuredir get_filecontents_core_quiet system_checked
-                      nonempty visible_undef
+                      nonempty visible_undef show_abs_time
                       );
     %EXPORT_TAGS = ( );
 
@@ -284,6 +284,11 @@ sub nonempty ($) {
 sub visible_undef ($) {
     my ($v) = @_;
     return defined $v ? $v : '<undef>';
+}
+
+sub show_abs_time ($) {
+    my ($timet) = @_;
+    return strftime "%Y-%m-%d %H:%M:%S Z", gmtime $timet;
 }
 
 1;
