@@ -27,6 +27,7 @@ use URI::Escape;
 use POSIX;
 use IPC::Open2;
 use Data::Dumper;
+use File::Path;
 
 use Osstest;
 use Osstest::Executive;
@@ -757,11 +758,12 @@ sub htmloutjob ($$) {
     my ($fi,$job) = @_;
     return unless defined $htmldir;
 
-    my $htmlfile= "$htmldir/$job/$htmlleaf";
-    if (!open H, "> $htmlfile.new") {
-        return if $!==&ENOENT;
-        die "$htmlfile.new $!";
-    }
+    my $jobhtmldir = "$htmldir/$job";
+    mkpath $jobhtmldir;
+
+    my $htmlfile= "$jobhtmldir/$htmlleaf";
+    open H, "> $htmlfile.new" or die "$htmlfile.new $!";
+
     my $title= "Info on flight $fi->{Flight} job $job";
     my $branch= $fi->{FlightInfo}{branch};
 
