@@ -125,7 +125,7 @@ END
 our $emptyiso= "/root/$flight.$job.$gn-empty.iso";
 
 sub prep () {
-    target_install_packages_norec($ho, qw(lvm2 rsync xorriso));
+    target_install_packages_norec($ho, qw(lvm2 rsync genisoimage));
 
     my $isotimeout= 600;
 
@@ -138,11 +138,11 @@ sub prep () {
     my $initrddir= $base . "initrd-dir";
     my $preseed_file_path = $base . "preseed";
 
-    my @xorriso_extra = qw(-eltorito-alt-boot
-                           -e boot/grub/efi.img
-                           -no-emul-boot
-                           -r);
-    my @xorriso_opts = (iso_gen_flags_basic(), @xorriso_extra);
+    my @isogen_extra = qw(-eltorito-alt-boot
+                          -b boot/grub/efi.img
+                          -no-emul-boot
+                          -r);
+    my @isogen_opts = (iso_gen_flags_basic(), @isogen_extra);
 
     iso_create_empty($ho, $emptyiso, $emptydir);
 
@@ -162,7 +162,7 @@ sub prep () {
         target_putfilecontents_root_stash($ho, 10, isolinux_cfg(),
                                           "$newiso/isolinux/isolinux.cfg");
 
-        iso_create_xorriso($ho, $gho->{Rimage}, $newiso, $isotimeout, @xorriso_opts);
+        iso_create_genisoimage($ho, $gho->{Rimage}, $newiso, $isotimeout, @isogen_opts);
     });
 }
 

@@ -101,7 +101,7 @@ BEGIN {
 
                       ether_prefix
 
-                      iso_create_xorriso
+                      iso_create_genisoimage
                       iso_create_empty
                       iso_gen_flags_basic
                       iso_copy_content_from_image
@@ -1901,28 +1901,24 @@ END
 }
 
 #---------- ISO images ----------
-sub iso_create_xorriso ($$$$;@) {
+sub iso_create_genisoimage ($$$$;@) {
     my ($ho,$iso,$dir,$isotimeout,@xopts) = @_;
-
-    # These options forces ISO creation even if input directory is
-    # empty. They have to go last.
-    my @force_iso_creation = qw(-- -changes_pending yes);
 
     target_cmd_root($ho, <<END, 60);
         mkdir -p $dir
-        xorriso @xopts -o $iso $dir/. @force_iso_creation
+        genisoimage @xopts -o $iso $dir/.
 END
 }
 
 sub iso_create_empty($$$) {
     my ($ho,$emptyiso,$emptydir) = @_;
-    my @isogen_opts= qw(-as mkisofs -R -J);
+    my @isogen_opts= qw(-R -J -T);
 
-    iso_create_xorriso($ho, $emptyiso, $emptydir, 60, @isogen_opts);
+    iso_create_genisoimage($ho, $emptyiso, $emptydir, 60, @isogen_opts);
 }
 
 sub iso_gen_flags_basic() {
-    return qw(-as mkisofs -R -J
+    return qw(-R -J -T
               -b isolinux/isolinux.bin
               -c isolinux/boot.cat
               -no-emul-boot

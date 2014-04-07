@@ -112,7 +112,7 @@ END
 our $emptyiso= "/root/$flight.$job.$gn-empty.iso";
 
 sub prep () {
-    target_install_packages_norec($ho, qw(lvm2 rsync xorriso));
+    target_install_packages_norec($ho, qw(lvm2 rsync genisoimage));
 
     my $isotimeout= 600;
 
@@ -146,7 +146,7 @@ sub prep () {
         target_putfilecontents_root_stash($ho, 10, kickstart(),
                                           "$newiso/ks.cfg");
 
-        iso_create_xorriso($ho, $gho->{Rimage}, $newiso, $isotimeout, @isogen);
+        iso_create_genisoimage($ho, $gho->{Rimage}, $newiso, $isotimeout, @isogen);
     });
 }
 
