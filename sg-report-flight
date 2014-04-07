@@ -767,6 +767,13 @@ sub htmloutjob ($$) {
     my $title= "Info on flight $fi->{Flight} job $job";
     my $branch= $fi->{FlightInfo}{branch};
 
+    our $htmlout_jobq ||= $dbh_tests->prepare(<<END);
+        SELECT * FROM jobs WHERE flight = ? AND job = ?
+END
+    $htmlout_jobq->execute($fi->{Flight}, $job);
+    my $ji = $htmlout_jobq->fetchrow_hashref();
+    die unless $ji;
+
     print H <<END;
 <html><head><title>$title</title><head>
 <body>
@@ -822,6 +829,12 @@ END
 
     print H <<END;
 </table>
+<h2>Job</h2>
+<table>
+<tr><td>Recipe:</td><td>$ji->{recipe}</td></tr>
+<tr><td>Status:</td><td>$ji->{status}</td></tr>
+</table>
+<p>
 <h2>Logfiles etc.</h2>
 For main test script logfiles, see entries in steps table.
 <ul>
