@@ -1904,7 +1904,7 @@ END
 sub iso_create_genisoimage ($$$$;@) {
     my ($ho,$iso,$dir,$isotimeout,@xopts) = @_;
 
-    target_cmd_root($ho, <<END, 60);
+    target_cmd_root($ho, <<END, $isotimeout);
         mkdir -p $dir
         genisoimage @xopts -o $iso $dir/.
 END
