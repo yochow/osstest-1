@@ -107,7 +107,7 @@ END
     my $xend_opt= $r{enable_xend} =~ m/true/ ? "--enable-xend" : "--disable-xend";
     my $ovmf_opt= $r{enable_ovmf} =~ m/true/ ? "--enable-ovmf" : "--disable-ovmf";
 
-    buildcmd_stamped_logged(300, 'configure', <<END,<<END,<<END);
+    buildcmd_stamped_logged(600, 'configure', <<END,<<END,<<END);
             if test -f configure; then
                 if grep -q -- $xend_opt tools/configure ; then
 		    xend=$xend_opt
