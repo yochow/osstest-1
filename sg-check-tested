@@ -20,10 +20,13 @@ use strict;
 
 use DBI;
 use Osstest;
+use IO::Handle;
 
 our @conds;
 our @conds_vars;
 our $prrev;
+our $ancestorof;
+our %ancestors;
 
 open DEBUG, ">/dev/null" or die $!;
 
@@ -84,6 +87,16 @@ END
     } elsif (m/^--print-revision=(.*)$/) {
         die if $prrev;
         $prrev= $1;
+    } elsif (m/^--git-ancestor-of=(.*)$/) {
+	# set GIT_DIR appropriately when using this
+	$ancestorof=$1;
+	open GA, "git rev-list $ancestorof |" or die $!;
+	while (<GA>) {
+	    chomp or die;
+	    $ancestors{$_} = 1;
+	}
+	GA->error and die $!;
+	$!=$?=0; close GA or die "$? $!";
     } elsif (m/^--debug$/) {
         open DEBUG, ">&2" or die $!;
     } else {
@@ -93,6 +106,7 @@ END
 
 die if @ARGV;
 die unless @conds;
+die if defined($ancestorof) && !$prrev;
 
 csreadconfig();
 
@@ -161,6 +175,12 @@ END
 	    next if $val2 eq $val1;
 	    print DEBUG "also $val2\n";
 	    next FLIGHT;
+	}
+	if (defined $ancestorof) {
+	    if (!$ancestors{$val1}) {
+		print DEBUG "not an ancestor of $ancestorof\n";
+		next FLIGHT;
+	    }
 	}
         print "$val1\n";
         exit 0;
