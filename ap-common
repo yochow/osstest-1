@@ -87,6 +87,11 @@ info_linux_tree () {
 		: ${GITFORCEFLAG_TREE_LINUX_THIS:=-f}
 		;;
 
+	linux-next)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/next/linux-next.git}
+		: ${GITFORCEFLAG_TREE_LINUX_THIS:=-f}
+		;;
+
 	*)
 		return 1
 		;;

@@ -171,6 +171,10 @@ linuxfirmware)
 	;;
 esac
 
+if [ "x$OLD_REVISION" = xdetermine-late ]; then
+	OLD_REVISION="`./ap-fetch-version-baseline-late $branch $NEW_REVISION`"
+fi
+
 if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
         wantpush=false
 	for checkbranch in x $BRANCHES_ALWAYS; do
