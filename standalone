@@ -59,7 +59,7 @@ TEMP=$(getopt -o c:f:h:rR --long config:,flight:,host:,reuse,noreuse,reinstall,h
 
 eval set -- "$TEMP"
 
-config=
+config=$HOME/.xen-osstest/config
 flight="standalone"
 host=
 reuse=1 # Don't blow away machines by default
@@ -94,6 +94,11 @@ fi
 
 if [ ! -f standalone.db ] ; then
     echo "No standalone.db? Run standalone-reset." >&2
+    exit 1
+fi
+
+if [ -z "$config" -o ! -r "$config" ] ; then
+    echo "Cannot read config." >&2
     exit 1
 fi
 
