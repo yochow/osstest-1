@@ -94,16 +94,6 @@ END
 }
 
 sub build () {
-    target_cmd_build($ho, 1000, $builddir, <<END);
-        cd xen-unstable
-        perl -i.bak -pe '
-		next unless m/^exit 0/;
-                print "setopt CONFIG_HIGHPTE n\\n" or die \$!;
-                print "setopt CONFIG_TUN y\\n" or die \$!;
-                print "setopt CONFIG_BLK_DEV_NBD m\\n" or die \$!;
-                print "setopt CONFIG_DEBUG_INFO y\\n" or die \$!;
-        ' buildconfigs/enable-xen-config
-END
     my $xend_opt= $r{enable_xend} =~ m/true/ ? "--enable-xend" : "--disable-xend";
     my $ovmf_opt= $r{enable_ovmf} =~ m/true/ ? "--enable-ovmf" : "--disable-ovmf";
 
