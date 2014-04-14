@@ -79,6 +79,7 @@ BEGIN {
                       remote_perl_script_open remote_perl_script_done
                       host_reboot target_reboot target_reboot_hard            
                       target_choose_vg target_umount_lv target_await_down
+                      host_get_free_memory
 
                       target_ping_check_down target_ping_check_up
                       target_kernkind_check target_kernkind_console_inittab
@@ -911,6 +912,16 @@ sub host_reboot ($) {
         }
         return length($output) ? $output : undef;
     });
+}
+
+sub host_get_free_memory($$) {
+    my ($ho,$toolstack) = @_;
+    # The line is as followed:
+    # free_memory       :   XXXX
+    my $info = target_cmd_output_root($ho, "$toolstack info", 10);
+    my @matched = $info =~ /^free_memory\s*:\s*(\d+)\s*$/m;
+    @matched or die "fail to get host free memory: $info ?";
+    return $matched[0];
 }
 
 sub target_reboot ($) {
