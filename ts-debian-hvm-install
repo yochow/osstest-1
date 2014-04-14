@@ -32,7 +32,8 @@ $gn ||= 'ovmf';
 
 our $ho= selecthost($whhost);
 
-our $ram_mb=   6000;
+# guest memory size will be set based on host free memory, see below
+our $ram_mb;
 our $disk_mb= 10000;
 
 our $guesthost= "$gn.guest.osstest";
@@ -165,6 +166,18 @@ sub prep () {
         iso_create_genisoimage($ho, $gho->{Rimage}, $newiso, $isotimeout, @isogen_opts);
     });
 }
+
+# If host has >5G free memory, create a guest with 5G memory to catch
+# any error that triggers cross 4G boundary
+my $host_freemem_mb = host_get_free_memory($ho, $toolstack);
+my $ram_minslop = 100;
+my $ram_lots = 5000;
+if ($host_freemem_mb > $ram_lots + $ram_minslop) {
+    $ram_mb = $ram_lots;
+} else {
+    $ram_mb = 768;
+}
+logm("Host has $host_freemem_mb MB free memory, setting guest memory size to $ram_mb MB");
 
 if (!$stage) {
     prep();
