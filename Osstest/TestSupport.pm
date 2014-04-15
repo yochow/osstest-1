@@ -434,20 +434,18 @@ sub target_putfile_root ($$$$;$) {
     tputfileex('root', @_);
 }
 sub target_run_apt {
-    my ($ho, $timeout, @aptopts) = @_;
+    my ($ho, @aptopts) = @_;
     target_cmd_root($ho,
-   "DEBIAN_PRIORITY=critical UCF_FORCE_CONFFOLD=y apt-get @aptopts",
-                    $timeout);
+        "DEBIAN_PRIORITY=critical UCF_FORCE_CONFFOLD=y \
+            with-lock-ex -w /var/lock/osstest-apt apt-get @aptopts", 3000);
 }
 sub target_install_packages {
     my ($ho, @packages) = @_;
-    target_run_apt($ho, 300 + 100 * @packages,
-		   qw(-y install), @packages);
+    target_run_apt($ho, qw(-y install), @packages);
 }
 sub target_install_packages_norec {
     my ($ho, @packages) = @_;
-    target_run_apt($ho, 300 + 100 * @packages,
-		   qw(--no-install-recommends -y install), @packages);
+    target_run_apt($ho, qw(--no-install-recommends -y install), @packages);
 }
 
 sub target_somefile_getleaf ($$$) {
