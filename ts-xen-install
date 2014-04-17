@@ -221,7 +221,7 @@ sub nodhcp () {
 		next unless
 		    m{^ \s* (  auto \s+ (\S+)               ) \s* $}x ||
 		    m{^ \s* (  allow-hotplug \s+ (\S+)      ) \s* $}x ||
-		    m{^ \s* (  iface \s+ (\S+) \s+ inet \s+ ) \s* $}x ;
+		    m{^ \s* (  iface \s+ (\S+) \s+ inet \s+ ) }x ;
 		push @{ $candidates{$2} }, $1;
 	    }
 	    EI->error and die $!;
