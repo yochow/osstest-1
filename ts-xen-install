@@ -217,6 +217,7 @@ sub nodhcp () {
 	if (!defined $physif) {
 	    # preread /etc/network/interfaces to figure out the interface
 	    my %candidates;
+	    my @bridges;
 	    while (<EI>) {
 		if (
 		    m{^ \s* (  auto \s+ (\S+)               ) \s* $}x ||
@@ -225,10 +226,24 @@ sub nodhcp () {
 		    ) {
 		    push @{ $candidates{$2} }, $1;
 		}
+		if (
+			(
+			 (m{^ \s* iface \s+ (xenbr\w*) \s+ inet \s+ }x
+			      ? ((push @bridges, $1), 1) : 0)
+			 ...
+			 !m{^ [ \t] }x
+			)
+		    &&
+			m{^ \s+ bridge_ports \s+ (\S+) \s }x
+		    ) {
+		    push @{ $candidates{$1} }, "$bridges[$#bridges] $_";
+		}
 	    }
 	    EI->error and die $!;
 	    delete $candidates{'lo'};
-	    die Dumper(\%candidates)." -- cannot determine default interface"
+	    delete $candidates{$_} foreach @bridges;
+	    die Dumper(\%candidates, \@bridges).
+		" -- cannot determine default interface"
 		unless (scalar keys %candidates) == 1;
 	    ($physif,) = keys %candidates;
 	    seek EI,0,0 or die $!;
