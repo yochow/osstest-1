@@ -277,7 +277,11 @@ fi
 
 if ! $wantpush; then
         echo
-        echo "Published tested tree is already up to date."
+	if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
+	        echo "Published tested tree is already up to date."
+	else
+		echo "Push not applicable."
+	fi
         echo
 elif $push; then
         echo
