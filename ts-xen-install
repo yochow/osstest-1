@@ -218,11 +218,13 @@ sub nodhcp () {
 	    # preread /etc/network/interfaces to figure out the interface
 	    my %candidates;
 	    while (<EI>) {
-		next unless
+		if (
 		    m{^ \s* (  auto \s+ (\S+)               ) \s* $}x ||
 		    m{^ \s* (  allow-hotplug \s+ (\S+)      ) \s* $}x ||
-		    m{^ \s* (  iface \s+ (\S+) \s+ inet \s+ ) }x ;
-		push @{ $candidates{$2} }, $1;
+		    m{^ \s* (  iface \s+ (\S+) \s+ inet \s+ ) }x
+		    ) {
+		    push @{ $candidates{$2} }, $1;
+		}
 	    }
 	    EI->error and die $!;
 	    delete $candidates{'lo'};
