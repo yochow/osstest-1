@@ -103,7 +103,7 @@ END
     $resq->execute($restype, $resname);
 
     my $ok= 0;
-    my $got_shareix;
+    my $got_shareix = 'x';
     while (my $candrow= $resq->fetchrow_hashref()) {
         my $desc= "$candrow->{restype}/$candrow->{resname}".
             "/$candrow->{shareix}";
