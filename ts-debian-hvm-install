@@ -167,12 +167,12 @@ sub prep () {
     });
 }
 
-# If host has >5G free memory, create a guest with 5G memory to catch
+# If host has >8G free memory, create a guest with 4G memory to catch
 # any error that triggers cross 4G boundary
 my $host_freemem_mb = host_get_free_memory($ho, $toolstack);
 my $ram_minslop = 100;
 my $ram_lots = 5000;
-if ($host_freemem_mb > $ram_lots + $ram_minslop) {
+if ($host_freemem_mb > $ram_lots * 2 + $ram_minslop) {
     $ram_mb = $ram_lots;
 } else {
     $ram_mb = 768;
