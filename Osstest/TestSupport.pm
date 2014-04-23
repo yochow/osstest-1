@@ -1773,7 +1773,13 @@ our %toolstacks=
         Command => 'xl',
         CfgPathVar => 'cfgpath',
 	RestoreNeedsConfig => 1,
-        }
+        },
+     'libvirt' => {
+        NewDaemons => [qw(libvirtd)],
+        Dom0MemFixed => 1,
+        Command => 'virsh',
+        ExtraPackages => [qw(libnl1 libavahi-client3)],
+        },
      );
 
 sub toolstack () {

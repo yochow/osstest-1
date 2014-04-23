@@ -46,6 +46,12 @@ linux-2.6.39)
 linuxfirmware)
 	echo $UPSTREAM_TREE_LINUXFIRMWARE
 	;;
+libvirt)
+	echo $TREE_LIBVIRT
+	;;
+gnulib-libvirt)
+	echo $TREE_GNULIB_LIBVIRT
+	;;
 osstest)
 	echo none:;
 	;;

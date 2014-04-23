@@ -60,10 +60,15 @@ sub packages () {
     if ($r{arch} eq 'i386') {
 	target_install_packages($ho, 'libc6-xen');
     }
+    target_install_packages($ho, @{toolstack()->{ExtraPackages}})
+        if toolstack()->{ExtraPackages};
 }
 
 sub extract () {
-    foreach my $part ('', 'kern', 'xen') {
+    my @parts = ('', 'kern', 'xen');
+    push @parts, 'libvirt' if $r{toolstack} eq "libvirt";
+
+    foreach my $part (@parts) {
         target_extract_jobdistpath($ho, $part, "path_${part}dist",
 				   $r{"${part}buildjob"}, \%distpath);
     }

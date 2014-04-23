@@ -1,0 +1,162 @@
+#!/usr/bin/perl
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2014 Citrix Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict qw(vars);
+use DBI;
+use Osstest;
+use Osstest::TestSupport;
+
+tsreadconfig();
+
+our ($whhost) = @ARGV;
+$whhost ||= 'host';
+our $ho= selecthost($whhost);
+
+my $leaf= "build.$flight.$job";
+my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
+my $builddir= "$homedir/$leaf";
+my $xendist= "$builddir/xendist";
+
+sub libvirtd_init ();
+
+my $makeflags= get_host_property($ho, 'build make flags', '-j4');
+
+sub checkout () {
+    target_cmd($ho, "rm -rf $builddir && mkdir $builddir && mkdir $xendist", 600);
+
+    my $path = get_stashed("path_dist", $r{"buildjob"});
+    my $distcopy= "$builddir/dist.tar.gz";
+    target_putfile($ho, 300, $path, $distcopy);
+    target_cmd($ho, "tar -C $xendist -hzxf $distcopy", 300);
+
+    build_clone($ho, 'libvirt', $builddir, 'libvirt');
+    build_clone($ho, 'gnulib_libvirt', $builddir, 'gnulib-libvirt');
+}
+
+sub config() {
+    # Uses $GNULIB_SRCDIR because ./autogen.sh doesn't propagate
+    # --gnulib-srcdir to ./bootstap.
+    target_cmd_build($ho, 3600, $builddir, <<END);
+        cd libvirt
+        CFLAGS="-I$xendist/usr/local/include/" \\
+        LDFLAGS="-L$xendist/usr/local/lib/ -Wl,-rpath-link=$xendist/usr/local/lib/" \\
+	GNULIB_SRCDIR=$builddir/gnulib-libvirt \\
+            ./autogen.sh --no-git \\
+                         --with-libxl --without-xen --without-xenapi --without-selinux \\
+                         --without-lxc --without-vbox --without-uml \\
+                         --sysconfdir=/etc --localstatedir=/var #/
+END
+}
+
+sub build() {
+    target_cmd_build($ho, 3600, $builddir, <<END);
+        cd libvirt
+        (make $makeflags 2>&1 && touch ../build-ok-stamp) |tee ../log
+        test -f ../build-ok-stamp #/
+        echo ok.
+END
+}
+
+sub install() {
+    target_cmd_build($ho, 300, $builddir, <<END);
+        mkdir -p dist
+        cd libvirt
+        make $makeflags install DESTDIR=$builddir/dist
+        mkdir -p $builddir/dist/etc/init.d
+END
+    target_putfilecontents_stash($ho, 60,
+                                 libvirtd_init(),
+                                 $builddir.'/dist/etc/init.d/libvirtd');
+    target_cmd_build($ho, 60, $builddir, <<END);
+        chmod +x $builddir/dist/etc/init.d/libvirtd
+END
+}
+
+sub collectversion_gnulib () {
+    store_revision($ho, 'gnulib_libvirt', "$builddir/gnulib-libvirt", 1);
+}
+
+checkout();
+config();
+build();
+install();
+collectversion_gnulib();
+built_stash($ho, $builddir, 'dist', 'libvirtdist');
+
+sub libvirtd_init () {
+    return <<'END';
+#! /bin/sh
+#
+# Init script for libvirtd
+#
+# Loosely based on Debian libvirt-bin initscript:
+# (c) 2007 Guido Guenther <agx@sigxcpu.org>
+# based on the skeletons that comes with dh_make
+#
+### BEGIN INIT INFO
+# Provides:          libvirt-bin libvirtd
+# Required-Start:    $network $local_fs $remote_fs $syslog
+# Required-Stop:     $local_fs $remote_fs $syslog
+# Should-Start:      avahi-daemon cgconfig
+# Should-Stop:       avahi-daemon cgconfig
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: libvirt management daemon
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+export PATH
+DAEMON=/usr/local/sbin/libvirtd
+NAME=libvirtd
+DESC="libvirt management daemon"
+
+test -x $DAEMON || exit 0
+. /lib/lsb/init-functions
+
+PIDFILE=/var/run/$NAME.pid
+
+case "$1" in
+  start)
+	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+	start-stop-daemon --start --pidfile $PIDFILE \
+	    --exec $DAEMON -- -d $libvirtd_opts
+	[ "$VERBOSE" != no ] && log_end_msg $?
+	;;
+  stop)
+	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+	start-stop-daemon --stop --pidfile $PIDFILE \
+	    --exec $DAEMON
+	[ "$VERBOSE" != no ] && log_end_msg $?
+	;;
+  restart)
+	stop
+	start
+	;;
+  reload|force-reload)
+	start-stop-daemon --stop --signal 1 --quiet --pidfile \
+            /var/run/$NAME.pid --exec $DAEMON
+	;;
+  *)
+	N=/etc/init.d/libvirtd
+	echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
+END
+}

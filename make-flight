@@ -64,6 +64,9 @@ job_create_test_filter_callback () {
           return 1;;
       esac
       ;;
+    libvirt)
+      if [ x$toolstack != xlibvirt ] ; then return 1; fi
+      ;;
     *)
       case "$job" in
         *-qemuu-*)
@@ -236,6 +239,10 @@ test_matrix_do_one () {
 
   job_create_test test-$xenarch$kern-$dom0arch-xl test-debian xl \
             $xenarch $dom0arch                                   \
+            $debian_runvars all_hostflags=$most_hostflags
+
+  job_create_test test-$xenarch$kern-$dom0arch-libvirt test-debian libvirt \
+            $xenarch $dom0arch                                       \
             $debian_runvars all_hostflags=$most_hostflags
 
   # No further arm tests at the moment

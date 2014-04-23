@@ -171,7 +171,7 @@ case $op in
 
 	job=$1; shift
 
-	for d in '' xen kern ; do
+	for d in '' xen kern libvirt ; do
 	    runvar="path_${d}dist"
  	    path="build/${d}dist.tar.gz"
 	    if [ -f "logs/$flight/$job/$path" ] ; then
