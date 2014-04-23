@@ -165,15 +165,31 @@ do_hvm_win7_x64_tests () {
             all_hostflags=$most_hostflags,hvm
 }
 
-do_hvm_debian_ovmf_tests() {
-  if [ $xenarch != amd64 -o "x$qemuu_suffix" != "x-qemuu" ]; then
+do_hvm_debian_test_one () {
+  testname=$1
+  bios=$2
+  job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-$testname-amd64\
+    test-debianhvm xl $xenarch $dom0arch $qemuu_runvar \
+    debianhvm_image=debian-7.2.0-amd64-CD-1.iso \
+    bios=$bios \
+    all_hostflags=$most_hostflags,hvm
+}
+
+do_hvm_debian_tests() {
+  if [ $xenarch != amd64 ]; then
     return
   fi
 
-  job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-ovmf-amd64 \
-    test-debianhvm xl $xenarch $dom0arch $qemuu_runvar \
-    ovmf_image=debian-7.2.0-amd64-CD-1.iso \
-    all_hostflags=$most_hostflags,hvm
+  # QEMU upstream supports ovmf and seabios
+  if [ "x$qemuu_suffix" == "x-qemuu" ]; then
+    do_hvm_debian_test_one ovmf ovmf
+    do_hvm_debian_test_one debianhvm seabios
+  fi
+
+  # QEMU traditional supports rombios
+  if [ "x$qemuu_suffix" == "x-qemut" ]; then
+    do_hvm_debian_test_one debianhvm rombios
+  fi
 }
 
 do_hvm_rhel6_tests () {
@@ -292,7 +308,7 @@ test_matrix_do_one () {
     do_hvm_win7_x64_tests
     do_hvm_rhel6_tests
 
-    do_hvm_debian_ovmf_tests
+    do_hvm_debian_tests
 
   done # qemuu_suffix
 

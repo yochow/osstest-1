@@ -26,9 +26,11 @@ tsreadconfig();
 our $stage=0;
 if (@ARGV && $ARGV[0] =~ m/^--stage(\d+)$/) { $stage=$1; shift @ARGV; }
 
+defined($r{bios}) or die "Need to define which bios to use";
+
 our ($whhost,$gn) = @ARGV;
 $whhost ||= 'host';
-$gn ||= 'ovmf';
+$gn ||= 'debianhvm';
 
 our $ho= selecthost($whhost);
 
@@ -152,7 +154,7 @@ sub prep () {
 
     more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb,
                           OnReboot => 'preserve',
-                          Bios => 'ovmf',
+                          Bios => $r{bios},
                           PostImageHook => sub {
         my $cmds = iso_copy_content_from_image($gho, $newiso);
         $cmds .= prepare_initrd($initrddir,$newiso,$preseed_file_path);

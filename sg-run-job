@@ -268,7 +268,7 @@ proc run-job/test-rhelhvm {} {
 proc need-hosts/test-debianhvm {} { return host }
 proc run-job/test-debianhvm {} {
     run-ts . = ts-debian-hvm-install
-    test-guest ovmf
+    test-guest debianhvm
 }
 
 proc need-hosts/test-pair {} { return {src_host dst_host} }
