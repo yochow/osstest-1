@@ -644,7 +644,8 @@ sub actual_allocation ($) {
 
     my $allocatable= $cand->{owntaskid} == $magictaskid{allocatable};
     my $dbg= "$hid->{Ident} $sel->{Reso}";
-    printf DEBUG "%s ALLOC PLAIN %d\n", $dbg, $allocatable;
+    printf DEBUG "%s ALLOC PLAIN %d (%d, %d)\n", $dbg, $allocatable,
+        $cand->{owntaskid}, $magictaskid{allocatable};
 
     my $shared;
     my $shrestype= 'share-'.$sel->{restype};
