@@ -172,6 +172,9 @@ sub prep () {
                                libx11-dev git-core uuid-dev gettext gawk
                                libsdl-dev libyajl-dev libaio-dev libpixman-1-dev
                                libglib2.0-dev pkg-config
+                               autoconf automake libtool xsltproc
+                               libxml2-utils libxml2-dev libnl-dev
+                               libdevmapper-dev w3c-dtd-xhtml
 			       ccache));
 
     target_cmd_root($ho, "chmod -R a+r /usr/share/git-core/templates");

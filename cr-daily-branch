@@ -133,6 +133,14 @@ if [ "x$REVISION_LINUX_ARM" = x ]; then
         export REVISION_LINUX_ARM
     fi
 fi
+if [ "x$REVISION_LIBVIRT" = x ]; then
+	determine_version REVISION_LIBVIRT libvirt
+	export REVISION_LIBVIRT
+fi
+if [ "x$REVISION_GNULIB_LIBVIRT" = x ]; then
+	determine_version REVISION_GNULIB_LIBVIRT gnulib-libvirt
+	export REVISION_GNULIB_LIBVIRT
+fi
 if [ "x$REVISION_LINUXFIRMWARE" = x ]; then
 	determine_version REVISION_LINUXFIRMWARE linuxfirmware
         export REVISION_LINUXFIRMWARE
@@ -165,6 +173,10 @@ linuxfirmware)
 	realtree=linuxfirmware
 	NEW_REVISION=$REVISION_LINUXFIRMWARE
         ;;
+libvirt)
+	realtree=libvirt
+	NEW_REVISION=$REVISION_LIBVIRT
+	;;
 *)
 	NEW_REVISION=''
 	wantpush=false

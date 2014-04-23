@@ -162,6 +162,18 @@ create_build_jobs () {
                 tree_linuxfirmware=$TREE_LINUXFIRMWARE                       \
                 revision_linuxfirmware=$REVISION_LINUXFIRMWARE
 
+    ./cs-job-create $flight build-$arch-libvirt build-libvirt                \
+                arch=$arch                                                   \
+        tree_xen=$TREE_XEN                                                   \
+                $RUNVARS $BUILD_RUNVARS $BUILD_LIBVIRT_RUNVARS $arch_runvars \
+                $suite_runvars                                               \
+                host_hostflags=$build_hostflags                              \
+                buildjob=${bfi}build-$arch                                   \
+                tree_libvirt=$TREE_LIBVIRT revision_libvirt=$REVISION_LIBVIRT\
+                ${TREEVCS_LIBVIRT:+treevcs_libvirt=}${TREEVCS_LIBVIRT}       \
+                tree_gnulib_libvirt=$TREE_GNULIB_LIBVIRT revision_gnulib_libvirt=$REVISION_GNULIB_LIBVIRT\
+                ${TREEVCS_GNULIB_LIBVIRT:+treevcs_gnulib_libvirt=}${TREEVCS_GNULIB_LIBVIRT}
+
     case "$arch" in
     armhf) continue;; # don't do any other kernel builds
     esac
@@ -193,6 +205,7 @@ job_create_test () {
 
   xenbuildjob="${bfi}build-$xenarch"
   buildjob="${bfi}build-$dom0arch"
+  tsbuildjob=
 
   case "$xenbranch:$toolstack" in
     xen-3.*-testing:*) ;;
@@ -203,11 +216,13 @@ job_create_test () {
     *:xend) xenbuildjob="$xenbuildjob-xend"
             buildjob="${bfi}build-$dom0arch-xend"
             ;;
+    *:libvirt) tsbuildjob="libvirtbuildjob=$buildjob-libvirt"
+            ;;
   esac
 
   ./cs-job-create $flight $job $recipe toolstack=$toolstack       \
     $RUNVARS $TEST_RUNVARS $most_runvars                          \
-    xenbuildjob=$xenbuildjob buildjob=$buildjob "$@"
+    xenbuildjob=$xenbuildjob buildjob=$buildjob $tsbuildjob "$@"
 }
 
 # Iterate over xenarch, dom0arch and kernel calling test_matrix_do_one

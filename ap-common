@@ -33,6 +33,14 @@
 
 : ${TREEVCS_LINUX:=git}
 
+: ${TREE_LIBVIRT:=git://libvirt.org/libvirt.git}
+: ${PUSH_TREE_LIBVIRT:=$XENBITS:/home/xen/git/libvirt.git}
+: ${BASE_TREE_LIBVIRT:=git://xenbits.xen.org/libvirt.git}
+: ${TREEVCS_LIBVIRT:=git}
+
+: ${TREE_GNULIB_LIBVIRT:=git://git.sv.gnu.org/gnulib.git}
+: ${TREEVCS_GNULIB_LIBVIRT:=git}
+
 : ${TREE_LINUXFIRMWARE:=git://xenbits.xen.org/osstest/linux-firmware.git}
 : ${PUSH_TREE_LINUXFIRMWARE:=$XENBITS:/home/osstest/ext/linux-firmware.git}
 : ${UPSTREAM_TREE_LINUXFIRMWARE:=$GIT_KERNEL_ORG/pub/scm/linux/kernel/git/firmware/linux-firmware.git}
@@ -56,6 +64,8 @@ fi
 
 : ${LOCALREV_XEN:=daily-cron.$branch}
 : ${LOCALREV_LINUX:=daily-cron.$branch}
+: ${LOCALREV_LIBVIRT:=daily-cron.$branch}
+: ${LOCALREV_GNULIB_LIBVIRT:=daily-cron.$branch}
 
 : ${TREEBASE_LINUX_XCP:=http://hg.uk.xensource.com/carbon/trunk/linux-2.6.27}
 
