@@ -55,14 +55,33 @@ test_matrix_branch_filter_callback () {
 }
 
 test_do_one_netboot () {
+  stripy bootloader pvgrub pygrub \
+    "$xenarch" "amd64" \
+    "$dom0arch" "i386" \
+    "$domU" "amd64" \
+    "$dist" "sid"
+
+  case ${dom0arch}_${domU}_${dist} in
+    arm*_arm*_*) bootloader="pygrub";; # no pvgrub for arm
+
+    # Needs a menu.lst, not present in Squeeze+ due to switch to grub2,
+    # workedaround in Jessie+ with pv-grub-menu package.
+    *_squeeze) bootloader="pygrub";;
+    *_wheezy) bootloader="pygrub";;
+
+    # pv-grub-x86_64.gz is not built by 32-bit dom0 userspace build.
+    i386_amd64_*) bootloader="pygrub";;
+  esac
+
   job_create_test                                               \
-   test-$xenarch$kern-$dom0arch-$domU-$dist-netboot-pygrub      \
+   test-$xenarch$kern-$dom0arch-$domU-$dist-netboot-$bootloader \
     test-debian-di xl $xenarch $dom0arch                        \
       kernbuildjob=${bfi}build-$dom0arch-$kernbuild             \
       debian_arch=$domU                                         \
       debian_dist=$dist                                         \
       debian_method=netboot                                     \
       debian_diver=current                                      \
+      debian_bootloader=$bootloader                             \
       all_hostflags=$most_hostflags
 }
 
