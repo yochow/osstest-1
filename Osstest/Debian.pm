@@ -35,6 +35,7 @@ BEGIN {
                       %preseed_cmds
                       preseed_base
                       preseed_create
+                      preseed_create_guest
                       preseed_ssh
                       preseed_hook_command preseed_hook_installscript
                       preseed_hook_overlay
@@ -487,6 +488,9 @@ END
 sub preseed_base ($$;@) {
     my ($suite,$extra_packages,%xopts) = @_;
 
+    $extra_packages ||= '';
+    $xopts{ExtraPreseed} ||= '';
+
     return <<"END";
 d-i mirror/suite string $suite
 
@@ -559,6 +563,31 @@ END
 END
 
     return $preseed;
+}
+
+sub preseed_create_guest ($$;@) {
+    my ($ho, $sfx, %xopts) = @_;
+
+    my $suite= $xopts{Suite} || $c{DebianSuite};
+
+    my $extra_packages;
+
+    my $preseed_file= preseed_base($suite, $extra_packages, %xopts);
+    $preseed_file.= (<<END);
+d-i     partman-auto/method             string regular
+d-i     partman-auto/choose_recipe \\
+                select All files in one partition (recommended for new users)
+
+d-i     grub-installer/bootdev          string /dev/xvda
+
+END
+
+    preseed_ssh($ho, $sfx);
+    preseed_hook_overlay($ho, $sfx, $c{OverlayLocal}, 'overlay-local.tar');
+
+    $preseed_file .= preseed_hook_cmds();
+
+    return create_webfile($ho, "preseed$sfx", $preseed_file);
 }
 
 sub preseed_create ($$;@) {
