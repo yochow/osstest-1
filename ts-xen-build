@@ -116,12 +116,13 @@ END
 END
 }
 
-sub collectversion_qemu () {
+sub collectversions () {
     my $tools="$builddir/xen-unstable/tools";
     store_revision($ho, 'qemu', "$tools/ioemu-dir", 1);
     store_revision($ho, 'qemu', "$tools/qemu-xen-traditional-dir", 1);
     store_revision($ho, 'qemuu', "$tools/qemu-xen-dir", 1);
-    store_revision($ho, 'seabios', "$tools/seabios-dir", 1);
+    store_revision($ho, 'seabios', "$tools/firmware/seabios-dir", 1);
+    store_revision($ho, 'ovmf', "$tools/firmware/ovmf-dir", 1);
 }
 
 sub divide () {
@@ -185,7 +186,7 @@ sub trapping ($) {
 checkout();
 
 trapping(\&build);
-trapping(\&collectversion_qemu);
+trapping(\&collectversions);
 
 die "*** something failed:\n\n".(join "\n\n",@probs)."\n** something failed"
     if @probs;
