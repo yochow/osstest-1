@@ -187,6 +187,11 @@ if [ "x$OLD_REVISION" = xdetermine-late ]; then
 	OLD_REVISION="`./ap-fetch-version-baseline-late $branch $NEW_REVISION`"
 fi
 
+case $branch in
+distros) makeflight=./make-distros-flight ;;
+*)       makeflight=./make-flight ;;
+esac
+
 if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
         wantpush=false
 	for checkbranch in x $BRANCHES_ALWAYS; do
@@ -201,7 +206,7 @@ if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
 fi
 
 $DAILY_BRANCH_PREMAKE_HOOK
-flight=`./make-flight $branch $xenbranch $OSSTEST_BLESSING "$@"`
+flight=`$makeflight $branch $xenbranch $OSSTEST_BLESSING "$@"`
 $DAILY_BRANCH_POSTMAKE_HOOK
 
 heading=tmp/$flight.heading-info
@@ -221,6 +226,10 @@ fi
 revlog=tmp/$flight.revision-log
 
 case "$NEW_REVISION/$OLD_REVISION" in
+/lastflight)
+        sgr_args+=" --machine-readable-output=$mrof"
+	sgr_args+=" --that-flight=`check_tested`"
+	;;
 */*[^0-9a-f]* | *[^0-9a-f]*/*)
         echo >&2 "NO SGR COMPARISON badchar $NEW_REVISION/$OLD_REVISION"
         ;;

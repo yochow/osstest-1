@@ -82,6 +82,9 @@ gnulib-libvirt)
 	# No push gate, same as ap-fetch-version
 	./ap-fetch-version $branch
 	;;
+distros)
+	echo "lastflight" # compare with previous flight
+	;;
 osstest)
 	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
 	    git fetch -f $HOME/testing.git incoming:ap-fetch

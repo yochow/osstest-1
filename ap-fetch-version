@@ -77,6 +77,10 @@ gnulib-libvirt)
 	repo_tree_rev_fetch_git gnulib-libvirt \
 		$TREE_GNULIB_LIBVIRT master $LOCALREV_GNULIB_LIBVIRT
 	;;
+distros)
+	# None, this is just a regular test.
+	echo latest
+	;;
 osstest)
 	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
 	    git fetch $HOME/testing.git pretest:ap-fetch >&2

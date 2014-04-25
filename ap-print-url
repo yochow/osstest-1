@@ -52,6 +52,9 @@ libvirt)
 gnulib-libvirt)
 	echo $TREE_GNULIB_LIBVIRT
 	;;
+distros)
+	echo none:;
+	;;
 osstest)
 	echo none:;
 	;;
