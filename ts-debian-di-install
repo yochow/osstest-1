@@ -89,6 +89,8 @@ sub ginstall () {
     my $arch= $r{"$gho->{Guest}_arch"};
     my $method= $r{"$gho->{Guest}_method"};
 
+    my $bl= $r{"$gho->{Guest}_bootloader"};
+
     target_cmd_root($ho, <<END);
 rm -rf /root/di
 mkdir /root/di
@@ -105,7 +107,7 @@ END
 
 	$suite = "sid" if $suite eq "daily";
 
-	$ps_url = preseed_create_guest($gho, '', Suite=>$suite);
+	$ps_url = preseed_create_guest($gho, '', Suite=>$suite, PvMenuLst=>($bl eq "pvgrub"));
 
 	$extra_disk = "";
     }
@@ -149,7 +151,14 @@ END
     guest_await_shutdown($ho,$gho,2000);
     guest_destroy($ho,$gho);
 
-    my $blcfg = <<END;
+    my $pvgrub = {
+	i386 => "/usr/local/lib/xen/boot/pv-grub-x86_32.gz",
+	amd64 => "/usr/local/lib/xen/boot/pv-grub-x86_64.gz"
+    };
+    my $blcfg = $bl eq "pvgrub" ? <<END : <<END;
+kernel = "$pvgrub->{$arch}"
+extra = "(hd0,0)/boot/grub/menu.lst"
+END
 bootloader = "pygrub"
 END
 
