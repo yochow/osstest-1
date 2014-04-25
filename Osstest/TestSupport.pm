@@ -1416,6 +1416,8 @@ sub prepareguest_part_lvmdisk ($$$) {
 sub prepareguest_part_xencfg ($$$$$) {
     my ($ho, $gho, $ram_mb, $xopts, $cfgrest) = @_;
     my $onreboot= $xopts->{OnReboot} || 'restart';
+    my $onpoweroff= $xopts->{OnPowerOff} || 'destroy';
+    my $oncrash= $xopts->{OnCrash} || 'preserve';
     my $vcpus= guest_var($gho, 'vcpus', $xopts->{DefVcpus} || 2);
     my $xoptcfg= $xopts->{ExtraConfig};
     $xoptcfg='' unless defined $xoptcfg;
@@ -1424,9 +1426,9 @@ name        = '$gho->{Name}'
 memory = ${ram_mb}
 vif         = [ 'type=ioemu,mac=$gho->{Ether}' ]
 #
-on_poweroff = 'destroy'
+on_poweroff = '$onpoweroff'
 on_reboot   = '$onreboot'
-on_crash    = 'preserve'
+on_crash    = '$oncrash'
 #
 vcpus = $vcpus
 #
