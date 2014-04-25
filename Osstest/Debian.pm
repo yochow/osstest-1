@@ -697,6 +697,17 @@ END
 d-i clock-setup/ntp-server string $ntpserver
 END
 
+    # deb http://ftp.debian.org/debian/ wheezy-backports main
+    $preseed .= <<END if $extra_packages =~ m#\b/$suite-backports\b#;
+d-i apt-setup/local0/repository string \\
+    http://$c{DebianMirrorHost}/$c{DebianMirrorSubpath} $suite-backports main
+d-i apt-setup/local0/comment string $suite backports
+END
+# Jessie onwards...
+#    $preseed .= <<END if $extra_packages =~ m#\b/$suite-backports\b#;
+#d-i apt-setup/services-select multiselect security, updates, backports
+#END
+
     $preseed .= <<"END";
 
 ### END OF DEBIAN PRESEED BASE
@@ -710,7 +721,38 @@ sub preseed_create_guest ($$;@) {
 
     my $suite= $xopts{Suite} || $c{DebianSuite};
 
-    my $extra_packages = "pv-grub-menu" if $xopts{PvMenuLst};
+    my $extra_packages = "";
+    if ($xopts{PvMenuLst}) {
+        if ($suite =~ m/wheezy/) {
+            # pv-grub-menu/wheezy-backports + using apt-setup to add
+            # backports results in iproute, ifupdown and
+            # isc-dhcp-client getting removed because tasksel's
+            # invocation of apt-get install somehow decides the
+            # iproute2 from wheezy-backports is a thing it wants to
+            # install. So instead lets fake it with a late command...
+            #
+            # This also has the bonus of working round an issue with
+            # 1.2.1~bpo70+1 which created an invalid menu.lst using
+            # "root(/dev/xvda,0)" which pvgrub cannot parse because
+            # the Grub device.map isn't present at pkgsel/include time
+            # but it is by late_command time. This was fixed by
+            # version 1.3 which is in Jessie onwards.
+            preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+(
+    echo
+    echo \\\# $suite backports
+    echo deb http://$c{DebianMirrorHost}/$c{DebianMirrorSubpath} $suite-backports main
+) >> /target/etc/apt/sources.list
+in-target apt-get update
+in-target apt-get install -y -t wheezy-backports pv-grub-menu
+END
+        } else {
+            $extra_packages = "pv-grub-menu";
+        }
+    }
 
     my $preseed_file= preseed_base($ho, $suite, $sfx, $extra_packages, %xopts);
     $preseed_file.= (<<END);
