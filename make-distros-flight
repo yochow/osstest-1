@@ -69,9 +69,10 @@ test_do_one_netboot () {
     armhf_*) bootloader="pygrub";; # no pvgrub for arm
 
     # Needs a menu.lst, not present in Squeeze+ due to switch to grub2,
-    # workedaround in Jessie+ with pv-grub-menu package.
+    # workedaround in Wheezy+ with pv-grub-menu package (backports in Wheezy,
+    # in Jessie+ main).
     *_squeeze) bootloader="pygrub";;
-    *_wheezy) bootloader="pygrub";;
+    #*_wheezy) bootloader="pygrub";;
   esac
 
   job_create_test test-$xenarch$kern-$dom0arch-$domU-$dist-netboot \

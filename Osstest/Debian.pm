@@ -432,7 +432,7 @@ sub preseed_base ($$;@) {
 
     $extra_packages ||= '';
 
-    return <<"END";
+    my $preseed= (<<END);
 d-i mirror/suite string $suite
 
 d-i debian-installer/locale string en_GB
@@ -501,6 +501,14 @@ $xopts{ExtraPreseed}
 ### END OF DEBIAN PRESEED BASE
 
 END
+
+    # deb http://ftp.debian.org/debian/ wheezy-backports main
+    $preseed .= <<END if $xopts{EnableBackports};
+d-i apt-setup/local0/repository string http://$c{DebianMirrorHost}/$c{DebianMirrorSubpath} $suite-backports main
+d-i apt-setup/local0/comment string $suite backports
+END
+
+    return $preseed;
 }
 
 sub preseed_create_guest ($$;@) {
@@ -508,7 +516,11 @@ sub preseed_create_guest ($$;@) {
 
     my $suite= $xopts{Suite} || $c{DebianSuite};
 
-    my $extra_packages = "pv-grub-menu" if $xopts{PvMenuLst};
+    $xopts{EnableBackports} = 1
+	if $xopts{PvMenuLst} and $suite eq "wheezy";
+    my $extra_packages = "pv-grub-menu".
+	($xopts{EnableBackports} ? "/$suite-backports" : "")
+	    if $xopts{PvMenuLst};
 
     my $preseed_file= preseed_base($suite, $extra_packages, %xopts);
     $preseed_file.= (<<END);
