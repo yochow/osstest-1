@@ -1533,12 +1533,13 @@ sub prepareguest_part_xencfg ($$$$$) {
     my $onpoweroff= $xopts->{OnPowerOff} || 'destroy';
     my $oncrash= $xopts->{OnCrash} || 'preserve';
     my $vcpus= guest_var($gho, 'vcpus', $xopts->{DefVcpus} || 2);
+    my $viftype= $xopts->{VifType} ? "type=$xopts->{VifType}," : "";
     my $xoptcfg= $xopts->{ExtraConfig};
     $xoptcfg='' unless defined $xoptcfg;
     my $xencfg= <<END;
 name        = '$gho->{Name}'
 memory = ${ram_mb}
-vif         = [ 'type=ioemu,mac=$gho->{Ether}' ]
+vif         = [ '${viftype}mac=$gho->{Ether}' ]
 #
 on_poweroff = '$onpoweroff'
 on_reboot   = '$onreboot'
@@ -1634,6 +1635,7 @@ END
         $cfg .= "bios='$bios'\n";
     }
 
+    $xopts{VifType} ||= "ioemu";
     my $cfgpath= prepareguest_part_xencfg($ho, $gho, $ram_mb, \%xopts, $cfg);
     target_cmd_root($ho, <<END);
         (echo $passwd; echo $passwd) | vncpasswd $gho->{Guest}.vncpw
