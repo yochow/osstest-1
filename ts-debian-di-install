@@ -46,6 +46,63 @@ sub prep () {
     target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
 }
 
+sub setup_netinst($$$)
+{
+    my ($didir, $arch, $cd) = @_;
+    my %arch_props = (
+	amd64 => { PathArch => "multi-arch", FileArch => "amd64-i386", IsoPath => "/install.amd/xen" },
+	i386  => { PathArch => "multi-arch", FileArch => "amd64-i386", IsoPath => "/install.386/xen" },
+	armhf => { PathArch => "armhf",      FileArch => "armhf",      IsoPath => "/install.armhf" }
+    );
+    my $props = $arch_props{$arch} or die "Unknown arch $arch";
+
+    target_install_packages($ho, qw(jigdo-file));
+
+    my $baseurl = $cd eq "current" ?
+      "http://cdimage.debian.org/debian-cd/current/$props->{PathArch}/jigdo-cd" :
+      "http://cdimage.debian.org/cdimage/weekly-builds/$props->{PathArch}/jigdo-cd";
+
+    my $filebase;
+
+    # Use the MD5SUMs file as an index
+    logm("Fetch index from $baseurl/MD5SUMS");
+    my $idx = target_cmd_output_root($ho, "wget --quiet -O - $baseurl/MD5SUMS");
+    foreach (split /\n/, $idx) {
+	m/^[0-9a-f]{32}  (debian-.*-$props->{FileArch}-netinst)\.iso$/ or next;
+	$filebase = $1;
+	last;
+    }
+
+    die unless $filebase;
+
+    logm("Downloading $baseurl/$filebase.jigdo");
+    my $netinst_jigdo = "$baseurl/$filebase.jigdo";
+    # Jigdo uses wget internally, and so obeys $http_proxy. This seems
+    # simpler than the advice at
+    # https://www.debian.org/CD/jigdo-cd/#faq which is to edit
+    # ~/.jigdo-lite and change the wgetOpts setting.
+    my $useproxy = $c{DebianMirrorProxy} // $c{HttpProxy};
+    my $cmd = '';
+    $cmd .= <<END if $useproxy;
+        export http_proxy=$useproxy
+END
+    $cmd .= <<END;
+        cd $didir && jigdo-lite --noask $netinst_jigdo
+END
+    # Jigdo seems to use /etc/apt/sources.list or something, so this
+    # just works using the already configured mirror without
+    # additional configuration, which is good because there doesn't
+    # seem to be any support for such things, at least in Squeeze.
+    target_cmd_root($ho, $cmd, 3600);
+    store_runvar("$gho->{Guest}_netinst_jigdo", $netinst_jigdo);
+
+    return (<<END, "\"file:$didir/$filebase.iso,xvdd:cdrom,r\",");
+bootloader = "pygrub"
+bootloader_args = ["--kernel=$props->{IsoPath}/vmlinuz",
+                   "--ramdisk=$props->{IsoPath}/initrd.gz"]
+END
+}
+
 sub setup_netboot($$$)
 {
     my ($didir, $arch, $suite) = @_;
@@ -116,6 +173,16 @@ END
 	$ps_url = preseed_create_guest($gho, '', Suite=>$suite, PvMenuLst=>($bl eq "pvgrub"));
 
 	$extra_disk = "";
+    }
+    elsif ($method eq "netinst" )
+    {
+	my $cd = $r{"$gho->{Guest}_cd"};
+
+	logm("$method $cd/$arch");
+
+	($method_cfg,$extra_disk) = setup_netinst($tmpdir, $arch, $cd);
+
+	$ps_url = preseed_create_guest($gho, '', CDROM=>1);
     }
     else
     {

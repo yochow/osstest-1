@@ -624,8 +624,6 @@ sub preseed_base ($$$$;@) {
     preseed_hook_overlay($ho, $sfx, $c{OverlayLocal}, 'overlay-local.tar');
 
     my $preseed = <<"END";
-d-i mirror/suite string $suite
-
 d-i debian-installer/locale string en_GB
 d-i console-keymaps-at/keymap select gb
 d-i keyboard-configuration/xkb-keymap string en_GB
@@ -695,6 +693,11 @@ END
     my $ntpserver = get_target_property($ho,'NtpServer');
     $preseed .= <<"END" if $ntpserver;
 d-i clock-setup/ntp-server string $ntpserver
+END
+
+    # For CDROM the suite is part of the image
+    $preseed .= <<END unless $xopts{CDROM};
+d-i mirror/suite string $suite
 END
 
     # deb http://ftp.debian.org/debian/ wheezy-backports main
