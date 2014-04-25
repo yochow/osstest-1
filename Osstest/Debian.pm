@@ -710,7 +710,7 @@ sub preseed_create_guest ($$;@) {
 
     my $suite= $xopts{Suite} || $c{DebianSuite};
 
-    my $extra_packages;
+    my $extra_packages = "pv-grub-menu" if $xopts{PvMenuLst};
 
     my $preseed_file= preseed_base($ho, $suite, $sfx, $extra_packages, %xopts);
     $preseed_file.= (<<END);
