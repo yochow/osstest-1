@@ -85,6 +85,20 @@ test_do_one_netboot () {
       all_hostflags=$most_hostflags
 }
 
+test_do_one_netinst () {
+  # Always pygrub since no pv-grub-menu on CD
+  job_create_test                                               \
+   test-$xenarch$kern-$dom0arch-$domU-$cd-netinst-pygrub        \
+    test-debian-di xl $xenarch $dom0arch                        \
+      kernbuildjob=${bfi}build-$dom0arch-$kernbuild             \
+      debian_arch=$domU                                         \
+      debian_cd=$cd                                             \
+      debian_method=netinst                                     \
+      debian_bootloader=pygrub                                  \
+      all_hostflags=$most_hostflags
+
+}
+
 test_matrix_do_one () {
   case ${xenarch} in
   amd64) domUarches="amd64 i386";;
@@ -103,6 +117,15 @@ test_matrix_do_one () {
 
     done
 
+    for cd in current weekly ; do
+      case ${domU}_${dist} in
+      armhf_*) continue;; # No iso targets for armhf
+      *) ;;
+      esac
+
+      test_do_one_netinst
+
+    done
   done
 }
 

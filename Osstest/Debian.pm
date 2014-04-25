@@ -492,8 +492,6 @@ sub preseed_base ($$;@) {
     $xopts{ExtraPreseed} ||= '';
 
     my $preseed= <<END;
-d-i mirror/suite string $suite
-
 d-i debian-installer/locale string en_GB
 d-i console-keymaps-at/keymap select gb
 d-i keyboard-configuration/xkb-keymap string en_GB
@@ -556,6 +554,11 @@ d-i apt-setup/contrib boolean false
 d-i pkgsel/include string openssh-server, ntp, ntpdate, ethtool, wget, $extra_packages
 
 $xopts{ExtraPreseed}
+END
+
+    # For CDROM the suite is part of the image
+    $preseed .= <<END unless $xopts{CDROM};
+d-i mirror/suite string $suite
 END
 
     # deb http://ftp.debian.org/debian/ wheezy-backports main
