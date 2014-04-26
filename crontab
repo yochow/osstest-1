@@ -6,5 +6,6 @@ MAILTO=ian.jackson@citrix.com,ian.campbell@eu.citrix.com
 18		9	* * 1,3,5	cd testing.git && BRANCHES=linux-next		./cr-for-branches branches -w "./cr-daily-branch --real"
 18		4	* * *		cd testing.git && BRANCHES='linux-linus linux-mingo-tip-master linux-3.0 libvirt rumpuserxen' ./cr-for-branches branches -w "./cr-daily-branch --real"
 6-59/15   	*	* * *		cd testing.git && EXTRA_BRANCHES='linux-linus linux-3.0 rumpuserxen libvirt' ./cr-for-branches bisects -w "./cr-try-bisect --real"
+46		7	* * 6		cd testing.git && BRANCHES=distros		./cr-for-branches branches -w "./cr-daily-branch --real"
 #8-59/5		*	* * *		cd bisects/adhoc.git &&	with-lock-ex -q data-tree-lock bash -c "./cr-try-bisect-adhoc; exit $?"
 3		4	* * *		savelog -c28 testing.git/tmp/cr-for-branches.log >/dev/null
