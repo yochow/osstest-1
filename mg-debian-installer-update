@@ -93,7 +93,7 @@ if [ $arch = armhf ]; then
 
     # Newer kernel often needs a newer initramfs-tools. Make that available
     echo >&2 "collecting backports initramfs-tools"
-    pkgfile=`bzcat Packages.bz2 | grep-dctrl -PX initramfs-tools -nsFilename | sort -n | head -n1`
+    pkgfile=`bzcat Packages.bz2 | grep-dctrl -PX initramfs-tools -nsFilename | sort -n -r | head -n1`
     rc=$?
     set -e
     if [ $rc != 0 ]; then fail "initramfs-tools package not found"; fi
@@ -103,7 +103,7 @@ if [ $arch = armhf ]; then
     echo >&2 "collecting armmp kernel"
     # Be careful to pickup the actual kernel package from the 'linux'
     # source and not a meta package from 'linux-latest'
-    pkgfile=`bzcat Packages.bz2 | grep-dctrl -S linux | grep-dctrl -Pe linux-image-.*-armmp -nsFilename | sort -n | head -n1`
+    pkgfile=`bzcat Packages.bz2 | grep-dctrl -S linux | grep-dctrl -Pe ^linux-image-.*-armmp$ -nsFilename | sort -n -r | head -n1`
     rc=$?
     set -e
     if [ $rc != 0 ]; then fail "armmp kernel package not found"; fi
@@ -117,6 +117,7 @@ if [ $arch = armhf ]; then
                    -o -type f -name modules.\* \
                    -o -type f -name \*.ko \
                       \( -path \*/kernel/lib/\* -o \
+                         -path \*/kernel/crypto/\* -o \
                          -path \*/kernel/fs/mbcache.ko -o \
                          -path \*/kernel/fs/ext\* -o \
                          -path \*/kernel/fs/jbd\* -o \
