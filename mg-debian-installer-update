@@ -34,8 +34,8 @@ sbase=$site/dists/$suite
 
 case ${suite}_${arch} in
     *_i386|*_amd64)
-        src=$sbase/main/installer-$arch/current/images/netboot/debian-installer/$arch
-        files='initrd.gz linux'
+        src=$sbase/main/installer-$arch/current/images/netboot/
+        files="debian-installer/$arch/initrd.gz:initrd.gz debian-installer/$arch/linux:linux xen/vmlinuz:vmlinuz-xen xen/initrd.gz:initrd.gz-xen"
         ;;
     lenny_armhf|squeeze_armhf)
         # No such thing.
@@ -61,7 +61,9 @@ cd $dst
 
 for f in $files; do
         echo >&2 "fetching $f"
-        curl -s $src/$f >$f.new
+        s=${f/:*} ; d=${f/*:}
+        echo "$src/$s => $d.new"
+        curl -s $src/$s >$d.new
 done
 
 curl -s $pfile >Packages.bz2
@@ -132,7 +134,8 @@ if [ $arch = armhf ]; then
 fi
 
 for f in $files; do
-        mv -f $f.new $f
+        s=${f/:*} ; d=${f/*:}
+        mv -f $d.new $d
 done
 
 rm Packages.bz2
