@@ -132,7 +132,7 @@ sub prep () {
 
     $gho= prepareguest($ho, $gn, $guesthost, 22,
                        $disk_mb + 1,
-                       100);
+                       200);
     my $base = "/root/$flight.$job.$gn-";
     my $newiso= $base . "newiso";
     my $emptydir= $base . "empty-dir";
