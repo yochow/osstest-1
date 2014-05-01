@@ -78,8 +78,11 @@ while true ; do
     esac
 done
 
-if [ ! -r /var/log/apache2/access.log ] ; then
-    echo "WARNING: Cannot read apache logs. Some tests may fail" >&2
+. cri-getconfig
+
+WebspaceLog=`OSSTEST_CONFIG=$config getconfig WebspaceLog`
+if [ ! -r "$WebspaceLog" ] ; then
+    echo "WARNING: Cannot read apache logs at $WebspaceLog. Some tests may fail" >&2
 fi
 
 if ! ssh-add -l >/dev/null ] ; then
@@ -222,7 +225,6 @@ case $op in
 
 	OSSTEST_CONFIG=$config \
 	OSSTEST_FLIGHT=$flight \
-	OSSTEST_CONFIG=$config \
 	OSSTEST_HOST_REUSE=$reuse \
 	OSSTEST_JOB=$job \
 	    with_logging logs/$flight/$job.$ts.log ./$ts host=$host $@
