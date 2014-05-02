@@ -209,12 +209,12 @@ job_create_test () {
     xen-3.*-testing:*) ;;
     xen-4.0-testing:*) ;;
     xen-4.1-testing:*) ;;
+    *:libvirt) tsbuildjob="libvirtbuildjob=$buildjob-libvirt"
+            ;;
     xen-4.2-testing:*) ;;
     xen-4.3-testing:*) ;;
     *:xend) xenbuildjob="$xenbuildjob-xend"
             buildjob="${bfi}build-$dom0arch-xend"
-            ;;
-    *:libvirt) tsbuildjob="libvirtbuildjob=$buildjob-libvirt"
             ;;
   esac
 

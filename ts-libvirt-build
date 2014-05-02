@@ -48,12 +48,21 @@ sub checkout () {
 }
 
 sub config() {
+    my $xenprefix;
+    foreach (qw(/usr/local /usr)) {
+	if (target_file_exists($ho, "$xendist$_/lib/libxenctrl.so")) {
+	    $xenprefix="$xendist$_";
+	    last;
+	}
+    }
+    die "no xen prefix" unless $xenprefix;
+
     # Uses $GNULIB_SRCDIR because ./autogen.sh doesn't propagate
     # --gnulib-srcdir to ./bootstap.
     target_cmd_build($ho, 3600, $builddir, <<END);
         cd libvirt
-        CFLAGS="-I$xendist/usr/local/include/" \\
-        LDFLAGS="-L$xendist/usr/local/lib/ -Wl,-rpath-link=$xendist/usr/local/lib/" \\
+        CFLAGS="-I$xenprefix/include/" \\
+        LDFLAGS="-L$xenprefix/lib/ -Wl,-rpath-link=$xenprefix/lib/" \\
 	GNULIB_SRCDIR=$builddir/gnulib-libvirt \\
             ./autogen.sh --no-git \\
                          --with-libxl --without-xen --without-xenapi --without-selinux \\
