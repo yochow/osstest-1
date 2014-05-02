@@ -63,6 +63,7 @@ config=$HOME/.xen-osstest/config
 flight="standalone"
 host=
 reuse=1 # Don't blow away machines by default
+lvextendmax=50 # Leave some LVM space free for running tests
 
 while true ; do
     case "$1" in
@@ -71,6 +72,7 @@ while true ; do
 	-h|--host)   host=$2;   shift 2;;
 	-r|--reuse)  reuse=1;   shift 1;;
 	-R|--noreuse|--reinstall)reuse=0;shift 1;;
+	--lvextendmax)lvextendmax=$2; shift 2;;
 	--help)      usage; exit 0;;
         --) shift ; break ;;
         *) echo "Internal error!" ; exit 1 ;;
@@ -158,6 +160,7 @@ case $op in
         DAILY_BRANCH_PREEXEC_HOOK=exit\ 0 \
         OSSTEST_USE_HEAD=y \
         BRANCHES_ALWAYS="$branch" \
+        BUILD_LVEXTEND_MAX="$lvextendmax" \
         OSSTEST_FLIGHT=$flight \
         OSSTEST_CONFIG=$config \
         OSSTEST_NO_BASELINE=y \
