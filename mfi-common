@@ -170,9 +170,7 @@ create_build_jobs () {
                 host_hostflags=$build_hostflags                              \
                 buildjob=${bfi}build-$arch                                   \
                 tree_libvirt=$TREE_LIBVIRT revision_libvirt=$REVISION_LIBVIRT\
-                ${TREEVCS_LIBVIRT:+treevcs_libvirt=}${TREEVCS_LIBVIRT}       \
                 tree_gnulib_libvirt=$TREE_GNULIB_LIBVIRT revision_gnulib_libvirt=$REVISION_GNULIB_LIBVIRT\
-                ${TREEVCS_GNULIB_LIBVIRT:+treevcs_gnulib_libvirt=}${TREEVCS_GNULIB_LIBVIRT}
 
     case "$arch" in
     armhf) continue;; # don't do any other kernel builds

@@ -36,10 +36,8 @@
 : ${TREE_LIBVIRT:=git://libvirt.org/libvirt.git}
 : ${PUSH_TREE_LIBVIRT:=$XENBITS:/home/xen/git/libvirt.git}
 : ${BASE_TREE_LIBVIRT:=git://xenbits.xen.org/libvirt.git}
-: ${TREEVCS_LIBVIRT:=git}
 
 : ${TREE_GNULIB_LIBVIRT:=git://git.sv.gnu.org/gnulib.git}
-: ${TREEVCS_GNULIB_LIBVIRT:=git}
 
 : ${TREE_LINUXFIRMWARE:=git://xenbits.xen.org/osstest/linux-firmware.git}
 : ${PUSH_TREE_LINUXFIRMWARE:=$XENBITS:/home/osstest/ext/linux-firmware.git}
