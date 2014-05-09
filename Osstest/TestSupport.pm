@@ -1833,23 +1833,32 @@ sub await_webspace_fetch_byleaf ($$$$$) {
 
 sub create_webfile ($$$) {
     my ($ho, $tail, $contents) = @_; # $contents as for file_link_contents
-    my $wf_common= $c{WebspaceCommon}.$ho->{Name}."_".$tail;
+    my $wf_rhs= $ho->{Name}."_".$tail;
+    my $wf_common= $c{WebspaceCommon}.$wf_rhs;
     my $wf_url= $c{WebspaceUrl}.$wf_common;
     my $wf_file= $c{WebspaceFile}.$wf_common;
-    file_link_contents($wf_file, $contents);
+    file_link_contents($wf_file, $contents, "webspace-$wf_rhs");
     return $wf_url;
 }
 
 #---------- pxe handling ----------
 
-sub file_link_contents ($$) {
-    my ($fn, $contents) = @_;
+sub file_link_contents ($$$) {
+    my ($fn, $contents, $stash) = @_;
     # $contents as for file_write_contents
     my ($dir, $base, $ext) =
         $fn =~ m,^( (?: .*/ )? )( [^/]+? )( (?: \.[^./]+ )? )$,x
         or die "$fn ?";
     my $real= "$dir$base--osstest$ext";
     my $linktarg= "$base--osstest$ext";
+
+    if (ref $contents) { $stash = undef; }
+
+    if (defined $stash) {
+	my $stashh= open_unique_stashfile(\$stash);
+	print $stashh $contents or die "$stash: $!";
+	close $stashh or die "$stash: $!";
+    }
 
     file_simple_write_contents($real, $contents);
 
@@ -1863,7 +1872,7 @@ sub file_link_contents ($$) {
     }
     symlink $linktarg, $newlink or die "$newlink $!";
     rename $newlink, $fn or die "$newlink $fn $!";
-    logm("wrote $fn");
+    logm("wrote $fn". (defined $stash ? " (stashed as $stash)" : ""));
 }
 
 sub host_pxefile ($) {
@@ -1901,7 +1910,8 @@ sub host_pxefile ($) {
 sub setup_pxeboot ($$) {
     my ($ho, $bootfile) = @_;
     my $f= host_pxefile($ho);
-    file_link_contents("$ho->{Tftp}{Path}$ho->{Tftp}{PxeDir}$f", $bootfile);
+    file_link_contents("$ho->{Tftp}{Path}$ho->{Tftp}{PxeDir}$f", $bootfile,
+	"$ho->{Name}-pxelinux.cfg");
 }
 
 sub setup_pxeboot_local ($) {
