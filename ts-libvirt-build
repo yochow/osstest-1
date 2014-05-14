@@ -19,29 +19,17 @@ use strict qw(vars);
 use DBI;
 use Osstest;
 use Osstest::TestSupport;
+use Osstest::BuildSupport;
 
 tsreadconfig();
-
-our ($whhost) = @ARGV;
-$whhost ||= 'host';
-our $ho= selecthost($whhost);
-
-my $leaf= "build.$flight.$job";
-my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
-my $builddir= "$homedir/$leaf";
-my $xendist= "$builddir/xendist";
+selectbuildhost(@ARGV);
+builddirsprops();
 
 sub libvirtd_init ();
 
-my $makeflags= get_host_property($ho, 'build make flags', '-j4');
-
 sub checkout () {
-    target_cmd($ho, "rm -rf $builddir && mkdir $builddir && mkdir $xendist", 600);
-
-    my $path = get_stashed("path_dist", $r{"buildjob"});
-    my $distcopy= "$builddir/dist.tar.gz";
-    target_putfile($ho, 300, $path, $distcopy);
-    target_cmd($ho, "tar -C $xendist -hzxf $distcopy", 300);
+    prepbuilddirs();
+    xendist();
 
     build_clone($ho, 'libvirt', $builddir, 'libvirt');
     build_clone($ho, 'gnulib_libvirt', $builddir, 'gnulib-libvirt');

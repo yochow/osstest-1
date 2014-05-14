@@ -21,21 +21,14 @@ use Osstest;
 use File::Path;
 use POSIX;
 use Osstest::TestSupport;
+use Osstest::BuildSupport;
 
 tsreadconfig();
-
-our ($whhost) = @ARGV;
-$whhost ||= 'host';
-our $ho= selecthost($whhost);
-
-my $leaf= "build.$flight.$job";
-my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
-my $builddir= "$homedir/$leaf";
-
-my $makeflags= get_host_property($ho, 'build make flags', '-j4');
+selectbuildhost(@ARGV);
+builddirsprops();
     
 sub checkout () {
-    target_cmd($ho, "rm -rf $builddir && mkdir $builddir", 60);
+    prepbuilddirs();
 
     build_clone($ho, 'xen', $builddir, 'xen-unstable');
 
