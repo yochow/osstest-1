@@ -1087,7 +1087,7 @@ sub dir_identify_vcs ($$) {
         set -e
         if ! test -e $dir; then echo none; exit 0; fi
         cd $dir
-        (test -d .git && echo git) ||
+        (test -e .git && echo git) ||
         (test -d .hg && echo hg) ||
         (echo >&2 'unable to determine vcs'; fail)
 END

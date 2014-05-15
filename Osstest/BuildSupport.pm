@@ -43,6 +43,8 @@ BEGIN {
                       xendist
                       $xendist
 
+                      submodulefixup
+
                       );
     %EXPORT_TAGS = ( );
 
@@ -88,6 +90,64 @@ sub xendist () {
     my $distcopy= "$builddir/dist.tar.gz";
     target_putfile($ho, 300, $path, $distcopy);
     target_cmd($ho, "tar -C $xendist -hzxf $distcopy", 300);
+}
+
+#----- submodules -----
+
+sub submodulefixup ($$$$) {
+    my ($ho, $subdir, $basewhich, $submodmap) = @_;
+
+    my @submodules;
+    target_editfile($ho, "$builddir/$subdir/.gitmodules",
+		    "$subdir-gitmodules", sub {
+        my $submod;
+	my $log1 = sub { logm("submodule $submod->{OurName} @_"); };
+        while (<::EI>) {
+	    if (m/^\[submodule \"(.*)\"\]$/) {
+		$submod = { TheirName => $1 },
+		push @submodules, $submod;
+		my $mapped = $submodmap->{$1};
+		die "unknown submodule $1" unless defined $mapped;
+		$submod->{OurName} = $mapped;
+		$log1->("($submod->{TheirName}):");
+	    } elsif (m/^\s*path\s*=\s*(\S+)/) {
+		die unless $submod;
+		$submod->{Path} = $1;
+		$log1->("  subpath=$submod->{Path}");
+	    } elsif (m/^(\s*url\s*\=\s*)(\S+)/) {
+		die unless $submod;
+		my $l = $1;
+		my $u = $submod->{OrgUrl} = $2;
+		my $urv = "tree_${basewhich}_$submod->{OurName}";
+		if (length $r{$urv}) {
+		    $log1->("  overriding url=$u with runvar $urv=$r{$urv}");
+		    $u = $r{$urv};
+		} else {
+		    $log1->("  recording url=$u");
+		    store_runvar($urv, $u);
+		}
+		my $nu = $submod->{Url} = git_massage_url($u);
+		$_ = "${l}${nu}\n";
+	    }
+	    print ::EO or die $!;
+	}
+    });
+
+    target_cmd_build($ho,  60,"$builddir/$subdir","git submodule init");
+    target_cmd_build($ho,3600,"$builddir/$subdir","git submodule update");
+
+    foreach my $submod (@submodules) {
+	my $wantrev = $r{"revision_${basewhich}_$submod->{OurName}"};
+	if (length $wantrev) {
+	    target_cmd_build($ho,200,"$builddir/$subdir/$submod->{Path}",
+			     "git reset --hard $wantrev");
+	} else {
+	    store_revision($ho, "${basewhich}_$submod->{OurName}",
+			   "$builddir/$subdir/$submod->{Path}");
+	}
+    }
+
+    return \@submodules;
 }
 
 1;
