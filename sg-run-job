@@ -87,7 +87,7 @@ proc catching-otherwise {failst script} {
 }
 
 proc check-not-blocked {} {
-    run-ts blocked * ts-xen-build-check
+    run-ts blocked * ts-build-check
 }
 
 proc setstatus {st} {
@@ -340,7 +340,9 @@ proc run-job/build-rumpuserxen {} {
 }
 
 proc prepare-build-host {} {
-    global jobinfo
+    global jobinfo ok
+    catching-otherwise blocked check-not-blocked
+    if {!$ok} return
     run-ts broken = ts-hosts-allocate + host
     run-ts broken host-install(*) ts-host-install-twice
     run-ts . host-build-prep ts-xen-build-prep
