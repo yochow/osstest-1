@@ -53,6 +53,7 @@ create_build_jobs () {
       linux-*) ;;
       qemu-*) continue;;
       rumpuserxen) continue;;
+      seabios) continue;;
       esac
       case "$xenbranch" in
       xen-3.*-testing) continue;;
@@ -132,12 +133,14 @@ create_build_jobs () {
         tree_qemu=$TREE_QEMU                                                 \
         tree_qemuu=$TREE_QEMU_UPSTREAM                                       \
         tree_xen=$TREE_XEN                                                   \
+        tree_seabios=$TREE_SEABIOS                                           \
                 $RUNVARS $BUILD_RUNVARS $BUILD_XEN_RUNVARS $arch_runvars     \
                 $suite_runvars                                               \
                 host_hostflags=$build_hostflags                              \
                 revision_xen=$REVISION_XEN                                   \
                 revision_qemu=$REVISION_QEMU                                 \
-                revision_qemuu=$REVISION_QEMU_UPSTREAM
+                revision_qemuu=$REVISION_QEMU_UPSTREAM                       \
+                revision_seabios=$REVISION_SEABIOS
 
     if [ $build_extraxend = "true" ] ; then
     ./cs-job-create $flight build-$arch-xend build                           \

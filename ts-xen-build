@@ -60,6 +60,9 @@ END
                (nonempty($r{revision_qemuu}) ? <<END : '').
 	echo >>.config QEMU_UPSTREAM_REVISION='$r{revision_qemuu}'
 END
+               (nonempty($r{tree_seabios}) ? <<END : '').
+	echo >>.config SEABIOS_UPSTREAM_URL='$r{tree_seabios}'
+END
                (nonempty($r{revision_seabios}) ? <<END : '').
 	echo >>.config SEABIOS_UPSTREAM_TAG='$r{revision_seabios}'
 END

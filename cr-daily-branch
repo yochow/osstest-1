@@ -136,6 +136,14 @@ if [ "x$REVISION_LINUX_ARM" = x ]; then
         export REVISION_LINUX_ARM
     fi
 fi
+if [ "x$REVISION_SEABIOS" = x ]; then
+    if [ "x$tree" = "xseabios" ]; then
+	determine_version REVISION_SEABIOS seabios
+	export REVISION_SEABIOS
+    else
+	: REVISION_SEABIOS from Config.mk
+    fi
+fi
 if [ "x$REVISION_LIBVIRT" = x ]; then
 	determine_version REVISION_LIBVIRT libvirt
 	export REVISION_LIBVIRT
@@ -192,6 +200,10 @@ rumpuserxen)
 	NEW_REVISION=$REVISION_RUMPUSERXEN
 	export REVISION_LINUX_OLD=disable
 	export REVISION_LIBVIRT=disable
+	;;
+seabios)
+	realtree=seabios
+	NEW_REVISION=$REVISION_SEABIOS
 	;;
 *)
 	NEW_REVISION=''

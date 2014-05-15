@@ -29,6 +29,7 @@ select_xenbranch
 : ${BASE_LOCALREV_LINUX:=daily-cron.$branch.old}
 : ${BASE_LOCALREV_LIBVIRT:=daily-cron.$branch.old}
 : ${BASE_LOCALREV_RUMPUSERXEN:=daily-cron.$branch.old}
+: ${BASE_LOCALREV_SEABIOS:=daily-cron.$branch.old}
 
 : ${BASE_TREE_QEMU_UPSTREAM:=${TREE_QEMU_UPSTREAM/\/staging\//\/}}
 
@@ -90,6 +91,10 @@ rumpuserxen)
 gnulib-libvirt)
 	# No push gate, same as ap-fetch-version
 	./ap-fetch-version $branch
+	;;
+seabios)
+	repo_tree_rev_fetch_git seabios \
+		$BASE_TREE_SEABIOS xen-tested-master $BASE_LOCALREV_SEABIOS
 	;;
 osstest)
 	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then

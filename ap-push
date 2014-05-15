@@ -35,6 +35,7 @@ TREE_QEMU_UPSTREAM=$XENBITS:/home/xen/git/qemu-upstream-${xenbranch#xen-}.git
 TREE_XEN=$PUSH_TREE_XEN
 TREE_LIBVIRT=$PUSH_TREE_LIBVIRT
 TREE_RUMPUSERXEN=$PUSH_TREE_RUMPUSERXEN
+TREE_SEABIOS=$PUSH_TREE_SEABIOS
 
 if info_linux_tree "$branch"; then
 	cd $repos/linux
@@ -91,6 +92,10 @@ gnulib-libvirt)
 	# No gate
 	echo "gnulib-libvirt has not push gate, refusing to push" >&2
 	exit 1
+	;;
+seabios)
+	cd $repos/seabios
+	git push $TREE_SEABIOS $revision:refs/heads/xen-tested-master
 	;;
 osstest)
 	git push $HOME/testing.git $revision:incoming

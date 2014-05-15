@@ -76,6 +76,12 @@ job_create_test_filter_callback () {
           return 1;;
       esac
       ;;
+    seabios)
+      case $xenarch in
+          amd64|i386) ;;
+          *) return 1;;
+      esac
+      ;;
     *)
       case "$job" in
         *-qemuu-*)

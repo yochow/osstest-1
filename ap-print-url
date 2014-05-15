@@ -58,6 +58,9 @@ gnulib-libvirt)
 rumpuserxen)
 	echo $TREE_RUMPUSERXEN
 	;;
+seabios)
+	echo $TREE_SEABIOS
+	;;
 osstest)
 	echo none:;
 	;;

@@ -85,6 +85,10 @@ rumpuserxen)
 	repo_tree_rev_fetch_git rumpuserxen \
 		$TREE_RUMPUSERXEN master $LOCALREV_RUMPUSERXEN
 	;;
+seabios)
+	repo_tree_rev_fetch_git seabios \
+		$TREE_SEABIOS master $LOCALREV_SEABIOS
+	;;
 osstest)
 	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
 	    git fetch $HOME/testing.git pretest:ap-fetch >&2

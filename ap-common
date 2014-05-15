@@ -47,6 +47,10 @@
 : ${TREE_RUMPUSERXEN_RUMPSRC:=https://github.com/rumpkernel/rumpkernel-netbsd-src}
 : ${TREEVCS_RUMPUSERXEN_RUMPSRC:=git}
 
+: ${TREE_SEABIOS:=git://git.seabios.org/seabios.git}
+: ${PUSH_TREE_SEABIOS:=$XENBITS:/home/xen/git/osstest/seabios.git}
+: ${BASE_TREE_SEABIOS:=git://xenbits.xen.org/osstest/seabios.git}
+
 : ${TREE_LINUXFIRMWARE:=git://xenbits.xen.org/osstest/linux-firmware.git}
 : ${PUSH_TREE_LINUXFIRMWARE:=$XENBITS:/home/osstest/ext/linux-firmware.git}
 : ${UPSTREAM_TREE_LINUXFIRMWARE:=$GIT_KERNEL_ORG/pub/scm/linux/kernel/git/firmware/linux-firmware.git}
@@ -73,6 +77,7 @@ fi
 : ${LOCALREV_LIBVIRT:=daily-cron.$branch}
 : ${LOCALREV_GNULIB_LIBVIRT:=daily-cron.$branch}
 : ${LOCALREV_RUMPUSERXEN:=daily-cron.$branch}
+: ${LOCALREV_SEABIOS:=daily-cron.$branch}
 
 : ${TREEBASE_LINUX_XCP:=http://hg.uk.xensource.com/carbon/trunk/linux-2.6.27}
 
