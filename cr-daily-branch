@@ -150,6 +150,10 @@ if [ "x$REVISION_LINUXFIRMWARE" = x ]; then
         export REVISION_LINUXFIRMWARE
 fi
 
+if [ "x$branch" != "xxen-unstable" ]; then
+        export REVISION_LINUX_OLD=disable
+fi
+
 case "$tree" in
 xen)
         realtree=$xenbranch
@@ -158,7 +162,6 @@ xen)
 linux)
         realtree=linux
 	NEW_REVISION=$REVISION_LINUX
-	export REVISION_LINUX_OLD=disable
 	: ${GITFORCEFLAG:=$GITFORCEFLAG_TREE_LINUX_THIS}
 	;;
 osstest)
