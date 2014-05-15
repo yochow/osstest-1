@@ -39,6 +39,12 @@
 
 : ${TREE_GNULIB_LIBVIRT:=git://git.sv.gnu.org/gnulib.git}
 
+: ${TREE_RUMPUSERXEN:=https://github.com/rumpkernel/rumpuser-xen}
+: ${TREEVCS_RUMPUSERXEN:=git}
+
+: ${TREE_RUMPUSERXEN_RUMPSRC:=https://github.com/rumpkernel/rumpkernel-netbsd-src}
+: ${TREEVCS_RUMPUSERXEN_RUMPSRC:=git}
+
 : ${TREE_LINUXFIRMWARE:=git://xenbits.xen.org/osstest/linux-firmware.git}
 : ${PUSH_TREE_LINUXFIRMWARE:=$XENBITS:/home/osstest/ext/linux-firmware.git}
 : ${UPSTREAM_TREE_LINUXFIRMWARE:=$GIT_KERNEL_ORG/pub/scm/linux/kernel/git/firmware/linux-firmware.git}

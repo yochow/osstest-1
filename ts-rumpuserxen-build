@@ -1,0 +1,104 @@
+#!/usr/bin/perl
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2014 Citrix Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict qw(vars);
+use DBI;
+use Osstest;
+use Osstest::TestSupport;
+use Osstest::BuildSupport;
+
+tsreadconfig();
+selectbuildhost(@ARGV);
+builddirsprops();
+
+our %submodmap = qw(nblibs nblibs
+                    buildrump.sh buildrumpsh);
+
+our ($rux);
+
+sub checkout () {
+    prepbuilddirs();
+    xendist();
+
+    build_clone($ho, 'rumpuserxen', $builddir, 'rumpuserxen');
+    submodulefixup($ho, 'rumpuserxen', 'rumpuserxen', \%submodmap);
+    $rux = "$builddir/rumpuserxen";
+
+    my $rumpsrcgitrevr = "$rux/buildrump.sh/.srcgitrev";
+    my $rumpsrcgitrevl = "buildrump-srcgitrev";
+    my $rev = $r{revision_rumpuserxen_rumpsrc};
+    if (length $rev) {
+	target_putfilecontents_stash($ho,30,
+				     "$r{revision_rumpuserxen_rumpsrc}\n",
+				     $rumpsrcgitrevr, $rumpsrcgitrevl);
+    } else {
+	target_getfile($ho,30,$rumpsrcgitrevr,"$stash/$rumpsrcgitrevl");
+	$rev = get_filecontents("$stash/$rumpsrcgitrevl");
+	chomp $rev or die;
+	$rev =~ m/^[0-9a-f]+$/ or die;
+	store_runvar('revision_rumpuserxen_rumpsrc', $rev);
+    }
+
+    build_clone($ho, "rumpuserxen_rumpsrc", $builddir, "rumpuserxen/rumpsrc");
+    store_vcs_revision('rumpuserxen_rumpsrc', $rev, 'git');
+}
+
+sub massage() {
+    # Very poor
+    target_editfile($ho, "$rux/buildxen.sh", undef,
+		    "$rux/grievous-bodge-nblibs", sub {
+        while (<EI>) {
+	    next unless m/^\Qif [ ! -d rumpsrc ]; then\E/..m/^fi/;
+	    next unless m/cp -Rp nblibs/;
+	    print EO or die $!;
+	}
+    });
+    target_cmd_build($ho, 200, $rux, "bash -x grievous-bodge-nblibs");
+
+    # Rather poor
+    target_editfile($ho, "$rux/Config.mk", sub {
+        while (<EI>) {
+	    s/^XEN_HEADERS=/XEN_HEADERS?=/;
+	    print EO or die $!;
+	}
+    });
+}
+
+sub build() {
+    target_cmd_build($ho, 3600, $rux, <<END);
+        export XEN_HEADERS=$xendist/usr/local/include/xen
+        (./buildxen.sh && touch ../build-ok-stamp) |tee ../log
+        test -f ../build-ok-stamp #/
+        echo ok.
+END
+}
+
+sub install() {
+    my $destdir="dist/usr/local/lib/xen/rump-kernel";
+    target_cmd_build($ho, 300, $builddir, <<END);
+        mkdir -p $destdir
+        cp rumpuserxen/rump-kernel* $destdir
+        cp -r rumpuserxen/img $destdir/
+        cp rumpuserxen/domain_config $destdir
+END
+}
+
+checkout();
+massage();
+build();
+install();
+built_stash($ho, $builddir, 'dist', 'rumpuserxendist');

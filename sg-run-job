@@ -313,6 +313,7 @@ proc test-guest-nomigr {g} {
 proc need-hosts/build {} { return BUILD }
 proc need-hosts/build-kern {} { return BUILD }
 proc need-hosts/build-libvirt {} { return BUILD }
+proc need-hosts/build-rumpuserxen {} { return BUILD }
 
 proc run-job/build {} {
     run-ts . = ts-xen-build
@@ -324,6 +325,10 @@ proc run-job/build-kern {} {
 
 proc run-job/build-libvirt {} {
     run-ts . = ts-libvirt-build
+}
+
+proc run-job/build-rumpuserxen {} {
+    run-ts . = ts-rumpuserxen-build
 }
 
 proc prepare-build-host {} {

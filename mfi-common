@@ -176,6 +176,23 @@ create_build_jobs () {
 
     fi
 
+    case $arch in
+    i386)
+    ./cs-job-create $flight build-$arch-rumpuserxen build-rumpuserxen        \
+                arch=$arch                                                   \
+        tree_xen=$TREE_XEN                                                   \
+                $RUNVARS $BUILD_RUNVARS $BUILD_RUMPUSERXEN_RUNVARS $arch_runvars \
+                $suite_runvars                                               \
+                host_hostflags=$build_hostflags                              \
+                buildjob=${bfi}build-$arch                                   \
+                tree_rumpuserxen=$TREE_RUMPUSERXEN			\
+          ${TREEVCS_RUMPUSERXEN:+treevcs_rumpuserxen=}${TREEVCS_RUMPUSERXEN} \
+                revision_rumpuserxen=$REVISION_RUMPUSERXEN		\
+                tree_rumpuserxen_rumpsrc=$TREE_RUMPUSERXEN_RUMPSRC	\
+                ${TREEVCS_RUMPUSERXEN_RUMPSRC:+treevcs_rumpuserxen_rumpsrc=}${TREEVCS_RUMPUSERXEN_RUMPSRC}
+		;;
+    esac
+
     case "$arch" in
     armhf) continue;; # don't do any other kernel builds
     esac
