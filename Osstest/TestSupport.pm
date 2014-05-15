@@ -54,7 +54,7 @@ BEGIN {
                       target_putfile target_putfile_root
                       target_putfilecontents_stash
 		      target_putfilecontents_root_stash
-                      target_put_guest_image
+                      target_put_guest_image target_editfile
                       target_editfile_root target_file_exists
                       target_run_apt
                       target_install_packages target_install_packages_norec
@@ -479,7 +479,8 @@ sub target_file_exists ($$) {
     die "$rfile $out ?";
 }
 
-sub target_editfile_root ($$$;$$) {
+sub teditfileex {
+    my $user= shift @_;
     my $code= pop @_;
     my ($ho,$rfile,$lleaf,$rdest) = @_;
 
@@ -512,8 +513,13 @@ sub target_editfile_root ($$$;$$) {
     '::EI'->error and die $!;
     close '::EI' or die $!;
     close '::EO' or die $!;
-    target_putfile_root($ho, 60, "$lfile.new", $rdest);
+    tputfileex($user, $ho, 60, "$lfile.new", $rdest);
 }
+
+sub target_editfile_root ($$$;$$) { teditfileex('root',@_); }
+sub target_editfile      ($$$;$$) { teditfileex('osstest',@_); }
+    # my $code= pop @_;
+    # my ($ho,$rfile,$lleaf,$rdest) = @_;
 
 sub target_cmd_build ($$$$) {
     my ($ho,$timeout,$builddir,$script) = @_;
