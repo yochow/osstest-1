@@ -8,7 +8,7 @@ usage: standalone [operations] [options...]
 
 Operations:
 
-* make-flight [cf] [BRANCH]
+* make-flight [cf,lvextendmax,baseline] [BRANCH]
 
   Create a flight testing the named branch.
 
@@ -36,6 +36,8 @@ Options:
 -h HOST, --host=HOST          Test host
 -r, --reuse                   Do not wipe test host (default)
 -R, --noreuse, --noreinstall  Wipe the test host (if job or test does so)
+--lvextendmax=GB              Limit the size of the build logical volume
+--baseline                    Create a baseline flight instead of a tip flight
 
 --help                        This message
 
@@ -55,7 +57,7 @@ if [ x$op = x--help ] ; then
     exit 0
 fi
 
-TEMP=$(getopt -o c:f:h:rR --long config:,flight:,host:,reuse,noreuse,reinstall,help -- "$@")
+TEMP=$(getopt -o c:f:h:rR --long config:,flight:,host:,reuse,noreuse,reinstall,lvextendmax:,baseline,help -- "$@")
 
 eval set -- "$TEMP"
 
@@ -64,6 +66,7 @@ flight="standalone"
 host=
 reuse=1 # Don't blow away machines by default
 lvextendmax=50 # Leave some LVM space free for running tests
+nobaseline=y
 
 while true ; do
     case "$1" in
@@ -73,6 +76,7 @@ while true ; do
 	-r|--reuse)  reuse=1;   shift 1;;
 	-R|--noreuse|--reinstall)reuse=0;shift 1;;
 	--lvextendmax)lvextendmax=$2; shift 2;;
+	--baseline)nobaseline=n; shift 1;;
 	--help)      usage; exit 0;;
         --) shift ; break ;;
         *) echo "Internal error!" ; exit 1 ;;
@@ -163,7 +167,7 @@ case $op in
         BUILD_LVEXTEND_MAX="$lvextendmax" \
         OSSTEST_FLIGHT=$flight \
         OSSTEST_CONFIG=$config \
-        OSSTEST_NO_BASELINE=y \
+        OSSTEST_NO_BASELINE=$nobaseline \
             with_logging logs/$flight/make-flight.log ./cr-daily-branch $@ $branch
         ;;
 
