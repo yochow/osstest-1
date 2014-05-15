@@ -144,6 +144,9 @@ sub stash () {
                     "${part}dist");
     }
     built_stash_file($ho, $builddir, "xen-syms", "xen-unstable/xen/xen-syms", 1);
+    built_stash_file($ho, $builddir, "xen-config", "xen-unstable/.config", 1);
+    built_stash_file($ho, $builddir, "seabios-config",
+		     "xen-unstable/tools/firmware/seabios-dir-remote/.config", 1);
     built_compress_stashed("xen-syms");
 }
 
