@@ -30,7 +30,7 @@ builddirsprops();
 sub checkout () {
     prepbuilddirs();
 
-    build_clone($ho, 'xen', $builddir, 'xen-unstable');
+    build_clone($ho, 'xen', $builddir, 'xen');
 
     my $debug_build = $r{xen_build_debug} || 'y';
 
@@ -43,7 +43,7 @@ sub checkout () {
     my $earlyprintk = get_host_property($ho, 'EarlyPrintk', undef);
 
     target_cmd_build($ho, 100, $builddir, <<END.
-        cd $builddir/xen-unstable
+        cd $builddir/xen
 	>.config
 	echo >>.config debug=$debug_build
 	echo >>.config GIT_HTTP=y
@@ -78,7 +78,7 @@ END
 sub buildcmd_stamped_logged ($$$$$) {
     my ($timeout, $stampname, $prefix, $cmd, $suffix) = @_;
     target_cmd_build($ho, $timeout, $builddir, <<END);
-        cd xen-unstable
+        cd xen
         $prefix
         ( $cmd 2>&1 &&             touch ../$stampname-ok-stamp
         ) |tee ../$stampname-log
@@ -113,7 +113,7 @@ END
 }
 
 sub collectversions () {
-    my $tools="$builddir/xen-unstable/tools";
+    my $tools="$builddir/xen/tools";
     store_revision($ho, 'qemu', "$tools/ioemu-dir", 1);
     store_revision($ho, 'qemu', "$tools/qemu-xen-traditional-dir", 1);
     store_revision($ho, 'qemuu', "$tools/qemu-xen-dir", 1);
@@ -123,7 +123,7 @@ sub collectversions () {
 
 sub divide () {
     target_cmd_build($ho, 100, $builddir, <<END);
-        cd xen-unstable/dist
+        cd xen/dist
         mkdir xeninstall
 	for f in *install; do
 	    mkdir -p \$f/lib
@@ -140,13 +140,13 @@ END
 sub stash () {
     foreach my $part ('', 'xen') {
         built_stash($ho, $builddir,
-                    "xen-unstable/dist/${part}install",
+                    "xen/dist/${part}install",
                     "${part}dist");
     }
-    built_stash_file($ho, $builddir, "xen-syms", "xen-unstable/xen/xen-syms", 1);
-    built_stash_file($ho, $builddir, "xen-config", "xen-unstable/.config", 1);
+    built_stash_file($ho, $builddir, "xen-syms", "xen/xen/xen-syms", 1);
+    built_stash_file($ho, $builddir, "xen-config", "xen/.config", 1);
     built_stash_file($ho, $builddir, "seabios-config",
-		     "xen-unstable/tools/firmware/seabios-dir-remote/.config", 1);
+		     "xen/tools/firmware/seabios-dir-remote/.config", 1);
     built_compress_stashed("xen-syms");
 }
 
