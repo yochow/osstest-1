@@ -49,6 +49,10 @@ xen-4.*-testing)
 	repo_tree_rev_fetch_git xen \
 		$TREE_XEN staging-$branchcore $LOCALREV_XEN
 	;;
+qemu-mainline)
+	repo_tree_rev_fetch_git $branch \
+		$TREE_QEMU_MAINLINE master $LOCALREV_QEMU_UPSTREAM
+	;;
 qemu-upstream-*)
         repo_tree_rev_fetch_git $branch \
 		$TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM

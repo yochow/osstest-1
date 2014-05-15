@@ -79,6 +79,11 @@ fi
 : ${TREE_QEMU_UPSTREAM:=git://xenbits.xen.org/staging/qemu-upstream-${xenbranch#xen-}.git}
 : ${LOCALREV_QEMU_UPSTREAM:=daily-cron.$branch}
 
+: ${TREE_QEMU_MAINLINE:=git://git.qemu.org/qemu.git}
+: ${BASE_TREE_QEMU_MAINLINE:=git://xenbits.xen.org/osstest/qemu.git}
+: ${PUSH_TREE_QEMU_MAINLINE:=$XENBITS:/home/xen/git/osstest/qemu.git}
+: ${LOCALREV_QEMU_MAINLINE:=daily-cron.$branch}
+
 info_linux_tree () {
 	case $1 in
 

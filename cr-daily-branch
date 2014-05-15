@@ -111,8 +111,11 @@ if [ "x$REVISION_QEMU_UPSTREAM" = x ]; then
         xen-3.*|xen-4.[01]-*)
         	;;
 	*)
-		REVISION_QEMU_UPSTREAM="`fetch_version \
-				qemu-upstream-${xenbranch#xen-}`"
+		if [ "x$qemuubranch" = "xqemu-mainline" ] ; then
+		    TREE_QEMU_UPSTREAM=$TREE_QEMU_MAINLINE
+		    export TREE_QEMU_UPSTREAM
+		fi
+		REVISION_QEMU_UPSTREAM="`fetch_version $qemuubranch`"
 		;;
         esac
         export REVISION_QEMU_UPSTREAM
@@ -173,7 +176,7 @@ osstest)
 	fi
 	;;
 qemuu)
-	realtree=qemu-upstream-${xenbranch#xen-}
+	realtree=$qemuubranch
 	NEW_REVISION=$REVISION_QEMU_UPSTREAM
         ;;
 linuxfirmware)

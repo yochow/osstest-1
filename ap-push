@@ -30,6 +30,7 @@ select_xenbranch
 . ap-common
 
 TREE_LINUX=$PUSH_TREE_LINUX
+TREE_QEMU_MAINLINE=$PUSH_TREE_QEMU_MAINLINE
 TREE_QEMU_UPSTREAM=$XENBITS:/home/xen/git/qemu-upstream-${xenbranch#xen-}.git
 TREE_XEN=$PUSH_TREE_XEN
 TREE_LIBVIRT=$PUSH_TREE_LIBVIRT
@@ -57,6 +58,10 @@ xen-*-testing)
 	xenversion=${branch%-testing}
 	xenversion=${xenversion#xen-}
 	git push $TREE_XEN $revision:stable-$xenversion
+	;;
+qemu-mainline)
+	cd $repos/qemu-mainline
+	git push $TREE_QEMU_MAINLINE $revision:refs/heads/mainline/xen-tested-master
 	;;
 qemu-upstream-*)
 	cd $repos/$branch

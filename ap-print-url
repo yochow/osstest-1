@@ -34,6 +34,9 @@ case "$branch" in
 xen*)
         echo $TREE_XEN
 	;;
+qemu-mainline)
+        echo $TREE_QEMU_MAINLINE
+        ;;
 qemu-upstream-*)
         echo $TREE_QEMU_UPSTREAM
         ;;
