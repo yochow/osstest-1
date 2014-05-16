@@ -79,13 +79,8 @@ sub prepbuilddirs {
 }
 
 sub xendist () {
-    $xendist= "$builddir/xendist";
-    target_cmd($ho,"rm -rf $xendist && mkdir $xendist",60);
-
-    my $path = get_stashed("path_dist", $r{"buildjob"});
-    my $distcopy= "$builddir/dist.tar.gz";
-    target_putfile($ho, 300, $path, $distcopy);
-    target_cmd($ho, "tar -C $xendist -hzxf $distcopy", 300);
+    $xendist = target_extract_jobdistpath_subdir
+	($ho, 'xendist', '', $r{"buildjob"});
 }
 
 #----- submodules -----

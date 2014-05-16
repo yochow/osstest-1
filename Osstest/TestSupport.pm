@@ -58,7 +58,7 @@ BEGIN {
                       target_editfile_root target_file_exists
                       target_run_apt
                       target_install_packages target_install_packages_norec
-                      target_jobdir
+                      target_jobdir target_extract_jobdistpath_subdir
                       target_extract_jobdistpath target_guest_lv_name
 
                       poll_loop tcpconnect await_tcp
@@ -1712,6 +1712,24 @@ sub target_jobdir ($) {
     my $leaf= "build.$flight.$job";
     my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
     return "$homedir/$leaf";
+}
+
+sub target_extract_jobdistpath_subdir ($$$$) {
+    my ($ho, $subdir, $distpart, $buildjob) = @_;
+    # Extracts dist part $distpart from job $buildjob into an
+    # job-specific directory with leafname $subdir on $ho, and returns
+    # the directory's pathname.  Does not need root.
+
+    my $jobdir = target_jobdir($ho);
+    my $distdir = "$jobdir/$subdir";
+    target_cmd($ho,"rm -rf $distdir && mkdir $distdir",60);
+
+    my $path = get_stashed("path_${distpart}dist", $buildjob);
+    my $distcopy= "$jobdir/${subdir}.tar.gz";
+    target_putfile($ho, 300, $path, $distcopy);
+    target_cmd($ho, "tar -C $distdir -hzxf $distcopy", 300);
+
+    return $distdir;
 }
 
 sub target_extract_jobdistpath ($$$$$) {
