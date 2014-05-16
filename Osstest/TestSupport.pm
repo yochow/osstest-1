@@ -1634,7 +1634,9 @@ sub target_umount_lv ($$$) {
 
 sub guest_umount_lv ($$) {
     my ($ho,$gho) = @_;
-    target_umount_lv($ho, $gho->{Vg}, $gho->{Lv});
+    if (defined $gho->{Vg}) {
+	target_umount_lv($ho, $gho->{Vg}, $gho->{Lv});
+    }
 }
 
 sub target_tcp_check ($$) {
