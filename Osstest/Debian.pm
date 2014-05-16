@@ -550,11 +550,14 @@ d-i apt-setup/contrib boolean false
 d-i pkgsel/include string openssh-server, ntp, ntpdate, ethtool, wget, $extra_packages
 
 $xopts{ExtraPreseed}
-
-### END OF DEBIAN PRESEED BASE
-
 END
-}          
+
+    $preseed .= <<END;
+### END OF DEBIAN PRESEED BASE
+END
+
+    return $preseed;
+}
 
 sub preseed_create ($$;@) {
     my ($ho, $sfx, %xopts) = @_;
