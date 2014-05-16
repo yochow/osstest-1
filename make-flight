@@ -36,10 +36,6 @@ defguestsuite=`getconfig GuestDebianSuite`
 
 if [ x$buildflight = x ]; then
 
-  if [ "x$BUILD_LVEXTEND_MAX" != x ]; then
-     BUILD_RUNVARS+=" build_lvextend_max=$BUILD_LVEXTEND_MAX "
-  fi
-
   create_build_jobs
 
 else
