@@ -1383,16 +1383,21 @@ sub prepareguest ($$$$$$) {
     }
 
     store_runvar("${gn}_hostname", $hostname);
-    store_runvar("${gn}_disk_lv", $r{"${gn}_hostname"}.'-disk');
     store_runvar("${gn}_tcpcheckport", $tcpcheckport);
     store_runvar("${gn}_boot_timeout", $boot_timeout);
+
+    if (defined $mb) {
+	store_runvar("${gn}_disk_lv", $r{"${gn}_hostname"}.'-disk');
+    }
 
     my $gho= selectguest($gn, $ho);
     store_runvar("${gn}_domname", $gho->{Name});
 
-    store_runvar("${gn}_vg", '');
-    if (!length $r{"${gn}_vg"}) {
-        store_runvar("${gn}_vg", target_choose_vg($ho, $mb));
+    if (defined $mb) {
+	store_runvar("${gn}_vg", '');
+	if (!length $r{"${gn}_vg"}) {
+	    store_runvar("${gn}_vg", target_choose_vg($ho, $mb));
+	}
     }
 
     guest_find_lv($gho);
