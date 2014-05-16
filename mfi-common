@@ -162,6 +162,8 @@ create_build_jobs () {
                 tree_linuxfirmware=$TREE_LINUXFIRMWARE                       \
                 revision_linuxfirmware=$REVISION_LINUXFIRMWARE
 
+    if [ "x$REVISION_LIBVIRT" != xdisable ]; then
+
     ./cs-job-create $flight build-$arch-libvirt build-libvirt                \
                 arch=$arch                                                   \
         tree_xen=$TREE_XEN                                                   \
@@ -171,6 +173,8 @@ create_build_jobs () {
                 buildjob=${bfi}build-$arch                                   \
                 tree_libvirt=$TREE_LIBVIRT revision_libvirt=$REVISION_LIBVIRT\
                 tree_gnulib_libvirt=$TREE_GNULIB_LIBVIRT revision_gnulib_libvirt=$REVISION_GNULIB_LIBVIRT\
+
+    fi
 
     case "$arch" in
     armhf) continue;; # don't do any other kernel builds
