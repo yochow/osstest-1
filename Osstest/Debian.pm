@@ -35,7 +35,7 @@ BEGIN {
                       %preseed_cmds
                       preseed_base
                       preseed_create
-                      preseed_hook_command preseed_hook_installscript
+                      preseed_hook_command preseed_hook_installscript preseed_hook_cmds
                       di_installcmdline_core
                       );
     %EXPORT_TAGS = ( );
@@ -726,10 +726,7 @@ d-i partman-auto/expert_recipe string					\\
 
 END
 
-    foreach my $di_key (keys %preseed_cmds) {
-        $preseed_file .= "d-i preseed/$di_key string ".
-            (join ' && ', @{ $preseed_cmds{$di_key} }). "\n";
-    }
+    $preseed_file .= preseed_hook_cmds();
 
     if ($ho->{Flags}{'no-di-kernel'}) {
 	$preseed_file .= <<END;
@@ -771,6 +768,15 @@ mkdir -p '$installer_dir'
 wget -O '$installer_pathname' '$url'
 chmod +x '$installer_pathname'
 END
+}
+
+sub preseed_hook_cmds () {
+    my $preseed;
+    foreach my $di_key (keys %preseed_cmds) {
+        $preseed .= "d-i preseed/$di_key string ".
+            (join ' && ', @{ $preseed_cmds{$di_key} }). "\n";
+    }
+    return $preseed;
 }
 
 1;

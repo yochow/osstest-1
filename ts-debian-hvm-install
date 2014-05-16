@@ -80,6 +80,9 @@ d-i preseed/late_command string \\
         in-target mkdir -p /root/.ssh; \\
         in-target sh -c "echo -e '$authkeys'> /root/.ssh/authorized_keys";
 END
+
+    $preseed_file .= preseed_hook_cmds();
+
     return $preseed_file;
 }
 
