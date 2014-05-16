@@ -43,8 +43,7 @@ our $gho;
 
 sub preseed () {
 
-    my $preseed_file = preseed_base($gho,'wheezy','',());
-    my $authkeys = join('\\n', split(/\n/, authorized_keys()));
+    my $preseed_file = preseed_base($gho,'wheezy','','',());
 
     $preseed_file .= (<<END);
 d-i netcfg/get_hostname string $gn
@@ -81,8 +80,6 @@ if [ -e \$b/debian/grubx64.efi ] ; then
     mkdir -p \$b/boot
     cp \$b/debian/grubx64.efi \$b/boot/bootx64.efi
 fi
-in-target mkdir -p /root/.ssh
-in-target sh -c "echo -e '$authkeys'> /root/.ssh/authorized_keys"
 END
 
     $preseed_file .= preseed_hook_cmds();
