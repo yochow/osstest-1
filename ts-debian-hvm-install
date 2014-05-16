@@ -70,13 +70,23 @@ d-i partman-auto/expert_recipe string \\
                 .
 
 d-i apt-setup/cdrom/set-first boolean false
-
-d-i preseed/late_command string \\
-        in-target mkdir -p /boot/efi/EFI/boot; \\
-        in-target cp /boot/efi/EFI/debian/grubx64.efi /boot/efi/EFI/boot/bootx64.efi ;\\
-        in-target mkdir -p /root/.ssh; \\
-        in-target sh -c "echo -e '$authkeys'> /root/.ssh/authorized_keys";
 END
+
+preseed_hook_command($gho, 'late_command', '', <<END);
+#!/bin/sh
+set -ex
+
+b=/target/boot/efi/EFI
+if [ -e \$b/debian/grubx64.efi ] ; then
+    mkdir -p \$b/boot
+    cp \$b/debian/grubx64.efi \$b/boot/bootx64.efi
+fi
+in-target mkdir -p /root/.ssh
+in-target sh -c "echo -e '$authkeys'> /root/.ssh/authorized_keys"
+END
+
+    $preseed_file .= preseed_hook_cmds();
+
     return $preseed_file;
 }
 
