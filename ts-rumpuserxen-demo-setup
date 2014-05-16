@@ -1,0 +1,79 @@
+#!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict qw(vars);
+use DBI;
+use Osstest;
+use Osstest::TestSupport;
+
+tsreadconfig();
+
+our ($whhost,$gn) = @ARGV;
+$whhost ||= 'host';
+$gn ||= 'rump';
+
+our $ho= selecthost($whhost);
+
+our $gho;
+
+our $rkdist;
+
+sub prep () {
+    $gho = prepareguest($ho, $gn, $gn, 4096, undef, 30);
+
+    my $buildjob = guest_var($gho, 'rumpuserxenbuildjob', undef);
+    $rkdist = target_extract_jobdistpath_subdir
+	($ho, 'rumpuserxen', 'rumpuserxen', $buildjob);
+    $rkdist .= '/usr/local/lib/xen/rump-kernel';
+
+    my @images;
+
+    my $jobdir = target_jobdir($ho);
+
+    my $cfgfile = "$gn.cfg";
+    my $cfgpath = "/etc/xen/$cfgfile";
+    target_editfile_root($ho, "$rkdist/domain_config", $cfgfile, $cfgpath,
+			 sub {
+	while (<EI>) {
+	    next if m/^\s*\#/;
+	    next unless m/\S/;
+
+	    my $in = $& if m/^\w\S*/;
+
+	    s# = .*              # " = '$gn'"          #xe  if $in eq 'name';
+	    s# =\s* ['"](.*)['"] # " = '$rkdist/$1'"   #xe  if $in eq 'kernel';
+	    s#\b mac=[0-9a-f:]+  # "mac=$gho->{Ether}" #xe  if $in eq 'vif';
+	    s#\b 4             \b# 3                   #xe  if $in eq 'extra';
+
+	    if ($in eq 'disk') {
+		s{\b img/(\w+.ffs) \b}{
+                    push @images, $1;
+                    "$jobdir/$1";
+                }xeg;
+	    }
+
+	    print EO or die $!;
+	}
+    });
+
+    store_runvar("$gho->{Guest}_cfgpath", $cfgpath);
+
+    target_cmd($ho, "cp $rkdist/img/$_ $jobdir/$_", 200)
+	foreach @images;
+}
+
+prep();

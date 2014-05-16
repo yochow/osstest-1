@@ -308,6 +308,14 @@ proc test-guest-nomigr {g} {
     run-ts . =   ts-guest-destroy + host $g
 }
 
+proc need-hosts/test-rumpuserxen {} { return host }
+proc run-job/test-rumpuserxen {} {
+    set g rump
+    run-ts . =   ts-rumpuserxen-demo-setup + host $g
+    run-ts . =   ts-guest-start            + host $g
+    run-ts . =   ts-guest-destroy          + host $g
+}
+
 #---------- builds ----------
 
 proc need-hosts/build {} { return BUILD }

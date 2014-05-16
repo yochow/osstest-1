@@ -277,6 +277,14 @@ test_matrix_do_one () {
   *)               test_xend=n ;;
   esac
 
+  for rumparch in i386; do
+      job_create_test test-$xenarch$kern-$dom0arch-rumpuserxen-$rumparch \
+                      test-rumpuserxen xl \
+            $xenarch $dom0arch                                       \
+            rump_rumpuserxenbuildjob=build-$rumparch-rumpuserxen     \
+            all_hostflags=$most_hostflags
+  done
+
   # xend PV guest test on x86 only
   if [ x$test_xend = xy -a \( $dom0arch = "i386" -o $dom0arch = "amd64" \) ]; then
     job_create_test test-$xenarch$kern-$dom0arch-pv test-debian xend \
