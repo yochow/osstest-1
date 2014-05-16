@@ -1932,6 +1932,8 @@ sub await_webspace_fetch_byleaf ($$$$$) {
 sub create_webfile ($$$) {
     my ($ho, $tail, $contents) = @_; # $contents as for file_link_contents
     my $wf_rhs= $ho->{Name}."_".$tail;
+    # $ho->{Host} is set if $ho is a guest.
+    $wf_rhs= $ho->{Host}->{Name}."_${wf_rhs}" if $ho->{Host};
     my $wf_common= $c{WebspaceCommon}.$wf_rhs;
     my $wf_url= $c{WebspaceUrl}.$wf_common;
     my $wf_file= $c{WebspaceFile}.$wf_common;
