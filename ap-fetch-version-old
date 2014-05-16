@@ -28,6 +28,7 @@ select_xenbranch
 : ${BASE_TAG_LINUX2639:=tested/2.6.39.x}
 : ${BASE_LOCALREV_LINUX:=daily-cron.$branch.old}
 : ${BASE_LOCALREV_LIBVIRT:=daily-cron.$branch.old}
+: ${BASE_LOCALREV_RUMPUSERXEN:=daily-cron.$branch.old}
 
 : ${BASE_TREE_QEMU_UPSTREAM:=${TREE_QEMU_UPSTREAM/\/staging\//\/}}
 
@@ -77,6 +78,10 @@ linuxfirmware)
 libvirt)
 	repo_tree_rev_fetch_git libvirt \
 		$BASE_TREE_LIBVIRT xen-tested-master $BASE_LOCALREV_LIBVIRT
+	;;
+rumpuserxen)
+	repo_tree_rev_fetch_git rumpuserxen \
+		$BASE_TREE_RUMPUSERXEN xen-tested-master $BASE_LOCALREV_RUMPUSERXEN
 	;;
 gnulib-libvirt)
 	# No push gate, same as ap-fetch-version

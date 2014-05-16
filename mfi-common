@@ -52,6 +52,7 @@ create_build_jobs () {
       linux-mingo-tip-master) continue;;
       linux-*) ;;
       qemu-*) continue;;
+      rumpuserxen) continue;;
       esac
       case "$xenbranch" in
       xen-3.*-testing) continue;;

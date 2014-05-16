@@ -52,6 +52,9 @@ libvirt)
 gnulib-libvirt)
 	echo $TREE_GNULIB_LIBVIRT
 	;;
+rumpuserxen)
+	echo $TREE_RUMPUSERXEN
+	;;
 osstest)
 	echo none:;
 	;;

@@ -67,6 +67,15 @@ job_create_test_filter_callback () {
     libvirt)
       if [ x$toolstack != xlibvirt ] ; then return 1; fi
       ;;
+    rumpuserxen)
+      case "$job" in
+      *-rumpuserxen-*)
+          ;;
+      *)
+          : "suppressed $job"
+          return 1;;
+      esac
+      ;;
     *)
       case "$job" in
         *-qemuu-*)

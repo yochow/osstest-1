@@ -48,6 +48,7 @@ select_xenbranch () {
 	linux-*)		tree=linux;	xenbranch=xen-unstable ;;
 	linuxfirmware)	    tree=linuxfirmware;	xenbranch=xen-unstable ;;
 	libvirt)		tree=libvirt;	xenbranch=xen-unstable ;;
+	rumpuserxen)	      tree=rumpuserxen; xenbranch=xen-unstable ;;
 	osstest)		tree=osstest;	xenbranch=xen-unstable ;;
 	esac
 	if [ "x$tree" = xlinux ]; then

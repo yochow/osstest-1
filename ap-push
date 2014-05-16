@@ -33,6 +33,7 @@ TREE_LINUX=$PUSH_TREE_LINUX
 TREE_QEMU_UPSTREAM=$XENBITS:/home/xen/git/qemu-upstream-${xenbranch#xen-}.git
 TREE_XEN=$PUSH_TREE_XEN
 TREE_LIBVIRT=$PUSH_TREE_LIBVIRT
+TREE_RUMPUSERXEN=$PUSH_TREE_RUMPUSERXEN
 
 if info_linux_tree "$branch"; then
 	cd $repos/linux
@@ -76,6 +77,10 @@ linux-xen-*)
 libvirt)
 	cd $repos/libvirt
 	git push $TREE_LIBVIRT $revision:xen-tested-master
+	;;
+rumpuserxen)
+	cd $repos/rumpuserxen
+	git push $TREE_RUMPUSERXEN $revision:xen-tested-master
 	;;
 gnulib-libvirt)
 	# No gate

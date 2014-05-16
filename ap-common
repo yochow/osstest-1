@@ -41,6 +41,8 @@
 
 : ${TREE_RUMPUSERXEN:=https://github.com/rumpkernel/rumpuser-xen}
 : ${TREEVCS_RUMPUSERXEN:=git}
+: ${BASE_TREE_RUMPUSERXEN:=git://xenbits.xen.org/rumpuser-xen.git}
+: ${PUSH_TREE_RUMPUSERXEN:=$XENBITS:/home/xen/git/rumpuser-xen.git}
 
 : ${TREE_RUMPUSERXEN_RUMPSRC:=https://github.com/rumpkernel/rumpkernel-netbsd-src}
 : ${TREEVCS_RUMPUSERXEN_RUMPSRC:=git}
@@ -70,6 +72,7 @@ fi
 : ${LOCALREV_LINUX:=daily-cron.$branch}
 : ${LOCALREV_LIBVIRT:=daily-cron.$branch}
 : ${LOCALREV_GNULIB_LIBVIRT:=daily-cron.$branch}
+: ${LOCALREV_RUMPUSERXEN:=daily-cron.$branch}
 
 : ${TREEBASE_LINUX_XCP:=http://hg.uk.xensource.com/carbon/trunk/linux-2.6.27}
 
