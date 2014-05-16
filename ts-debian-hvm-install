@@ -47,7 +47,6 @@ our $toolstack= toolstack()->{Command};
 sub preseed () {
 
     my $preseed_file = preseed_base('wheezy','',());
-    my $authkeys = join('\\n', split(/\n/, authorized_keys()));
 
     $preseed_file .= (<<END);
 d-i netcfg/get_hostname string $gn
@@ -77,9 +76,9 @@ d-i apt-setup/cdrom/set-first boolean false
 d-i preseed/late_command string \\
         in-target mkdir -p /boot/efi/EFI/boot; \\
         in-target cp /boot/efi/EFI/debian/grubx64.efi /boot/efi/EFI/boot/bootx64.efi ;\\
-        in-target mkdir -p /root/.ssh; \\
-        in-target sh -c "echo -e '$authkeys'> /root/.ssh/authorized_keys";
 END
+
+    preseed_ssh($ho,'');
 
     $preseed_file .= preseed_hook_cmds();
 
