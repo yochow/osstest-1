@@ -1709,9 +1709,15 @@ END
 
 sub target_jobdir ($) {
     my ($ho) = @_;
-    my $leaf= "build.$flight.$job";
-    my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
-    return "$homedir/$leaf";
+    my $jobdir = $ho->{JobDir};
+    if (!$jobdir) {
+	my $leaf= "build.$flight.$job";
+	my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
+	$jobdir = "$homedir/$leaf";
+	target_cmd($ho, "mkdir -p $jobdir", 60);
+	$ho->{JobDir} = $jobdir;
+    }
+    return $jobdir;
 }
 
 sub target_extract_jobdistpath_subdir ($$$$) {
