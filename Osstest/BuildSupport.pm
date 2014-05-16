@@ -66,11 +66,7 @@ sub builddirsprops {
     my (%xbuildopts) = @_;
 
     $xbuildopts{DefMakeFlags} ||= '-j4';
-
-    my $leaf= "build.$flight.$job";
-    my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
-    $builddir= "$homedir/$leaf";
-
+    $builddir= target_jobdir($ho);
     $makeflags= get_host_property($ho, 'build make flags',
 				  $xbuildopts{DefMakeFlags});
 }

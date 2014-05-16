@@ -58,6 +58,7 @@ BEGIN {
                       target_editfile_root target_file_exists
                       target_run_apt
                       target_install_packages target_install_packages_norec
+                      target_jobdir
                       target_extract_jobdistpath target_guest_lv_name
 
                       poll_loop tcpconnect await_tcp
@@ -1704,6 +1705,13 @@ sub target_kernkind_console_inittab ($$$) {
 END
     }
     return $console;
+}
+
+sub target_jobdir ($) {
+    my ($ho) = @_;
+    my $leaf= "build.$flight.$job";
+    my $homedir = get_host_property($ho, 'homedir', '/home/osstest');
+    return "$homedir/$leaf";
 }
 
 sub target_extract_jobdistpath ($$$$$) {
