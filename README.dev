@@ -1,0 +1,120 @@
+Database access
+===============
+$ cat ~/.xen-osstest/db-password 
+$ psql -d osstestdb -h osstestdb.db.cam.xci-test.com
+<password>
+
+Borrowing a machine
+===================
+
+You need a task, create with:
+$ ./mg-hosts manual-task-create `whoami`@`uname -n`
+e.g.
+$ ./mg-hosts manual-task-create ianc@kazak
+
+Borrow, estimating 1 day duration (for the planner):
+$ ./mg-allocate -U 1d marilith-n5 
+
+Return (not automatic, even with an estimate given):
+$ ./mg-allocate \!marilith-n5 
+
+Removing machines for servicing/outage
+======================================
+
+mg-blockage
+
+Commisioning a new machine
+==========================
+
+Base it on an existing machine:
+
+$ mg-hosts create-like marilith-n5 marilith-n4
+
+Set up the props and flags
+$ mg-hosts setprops ...
+$ mg-hosts setflags ...
+
+$ mg-hosts setprops marilith-n4 -- dhcp-watch-method 'leases dhcp3 dns-cam1.uk.xensource.com:5556'
+Handles multiple hosts:
+$ mg-hosts setprops HOSTA HOSTB -- "PROP" "VALUE"
+
+Create a flight:
+$ FLIGHT=`OSSTEST_CONFIG=production-config ./cs-flight-create commission xen-unstable`
+$ echo $FLIGHT
+20974
+
+Clone an existing flight, e.g. 20855 was previous successful flight
+$ OSSTEST_CONFIG=production-config ./cs-adjust-flight $FLIGHT copy 20855 
+
+Run it:
+OSSTEST_CONFIG=production-config ./mg-execute-flight  -Bcommission -Eian.campbell@citrix.com -f20855 $FLIGHT
+
+Shutting down
+=============
+
+crontab -r (remove)
+crontab < crontab (restore afterwards)
+
+you can create a file "stop" in ~osstest/testing.git or
+~osstest/for-blah/something.git to cause that cron job to not start
+any new things. Put a note in the stop file to say why...  (in the
+former case, disables everything; in the latter, just that "branch")
+
+Creating a new branch
+=====================
+
+As osstest@osstest:
+
+$ cd branches
+
+($branch sort of matching ap-fetch-version modulo wildcards and must
+match cron invocation)
+
+$ git clone ../testing.git for-$branch.git
+$ chmod g+w for-$branch.git
+# (chmod to workaround umask settings)
+
+If you want to bisect then:
+$ cd ../bisects
+$ git clone ../testing.git for-$branch.git
+$ chmod g+w for-$branch.git
+
+Back to branches
+$ ln -s /export/home/osstest/bisects/for-$branch.git for-$branch.git/tree-bisect
+
+$ mkdir for-$branch.git/tmp
+# For manual playing only, probably.
+
+Now can play in here. Can push random stuff and run
+"cr-daily-branch --real $branch" as osstest@osstest. e.g.
+  $ OSSTEST_EMAIL_HEADER=/home/ianc/osstest-email-ijc \
+    OSSTEST_CONFIG=production-config ./cr-daily-branch --real $branch
+
+Note: Push to incoming and git reset --hard incoming
+Note2:
+$ cat ~/osstest-email-ijc
+To: ian.campbell@citrix.com
+
+Do not run cr-for-branches -- it will try to update all sorts trees
+etc.
+
+Need to create any xenbits trees which are referenced:
+
+As xen@xenbits do mkdir and git init --bare, but this might confuse
+cr-daily-branches so you would want to push something there
+(e.g. current master, easiest to do as osstest@osstest). Or "git clone
+--bare" but might create all sorts of unwanted refs.
+
+Use ap-push to populate tree, in order to test ap-push, after using
+ap-fetch-version to populate the local repo. e.g.
+OSSTEST_CONFIG=production-config ./ap-fetch-version $branch
+OSSTEST_CONFIG=production-config ./ap-push $branch $revision
+
+NOTE: $revision must be a revision *not* a tag. If you want to start
+with a known baseline then git rev-parse FOO~0 it first.
+NOTE2: ap-push should use refs/heads/foo explicitly so that this
+initial push works
+
+When pushing the patches, be sure to make sure that the
+for-$branch.git repo can fast forward to the pushed version (perhaps
+by resetting it).
