@@ -21,14 +21,29 @@
 
 umask 002
 
+cached_repo () {
+	local repo=$1
+	local options=$2
+	local cache=`getconfig GitCacheProxy`
+
+	if [ x$cache != x ] ; then
+		echo "$cache$repo%20$options"
+	else
+		echo "$repo"
+	fi
+}
+
 repo_tree_rev_fetch_git () {
 	local treename=$1
 	local remoteurl=$2
 	local remotetag=$3
 	local localtag=$4
+	local proxy=`getconfig GitCacheProxy`
 	case $remoteurl in
+	$proxy*)
+		local realurl="$remoteurl" ;;
 	git://*|http://*|https://*)
-		local realurl="`getconfig GitCacheProxy`$remoteurl" ;;
+		local realurl="$proxy$remoteurl" ;;
 	*)
 		local realurl="$remoteurl" ;;
 	esac
