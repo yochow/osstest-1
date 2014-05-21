@@ -206,7 +206,7 @@ sub broken ($;$) {
         $affected= $dbh_tests->do(<<END, {}, $newst, $flight, $job);
             UPDATE jobs SET status=?
              WHERE flight=? AND job=?
-               AND (status='queued' OR status='running')
+               AND (status='queued' OR status='running' OR status='preparing')
 END
     });
     die "BROKEN: $m; ". ($affected>0 ? "marked $flight.$job $newst"
