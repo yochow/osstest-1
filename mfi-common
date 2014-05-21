@@ -181,7 +181,7 @@ create_build_jobs () {
     fi
 
     case $arch in
-    i386)
+    i386|amd64)
     ./cs-job-create $flight build-$arch-rumpuserxen build-rumpuserxen        \
                 arch=$arch                                                   \
         tree_xen=$TREE_XEN                                                   \
