@@ -67,7 +67,7 @@ sub massage() {
 	    print EO or die $!;
 	}
     });
-    target_cmd_build($ho, 200, $rux, "bash -x grievous-bodge-nblibs");
+    target_cmd_build($ho, 2000, $rux, "bash -x grievous-bodge-nblibs");
 
     # Rather poor
     target_editfile($ho, "$rux/Config.mk", sub {
