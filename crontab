@@ -4,11 +4,7 @@ MAILTO=ian.jackson@citrix.com,ian.campbell@eu.citrix.com
 49		1	* * *		cd testing.git && BRANCHES_ALWAYS=xen-unstable	./cr-for-branches branches -w "./cr-daily-branch --real"
 4-59/30		*	* * *		cd testing.git &&				./cr-for-branches branches -q "./cr-daily-branch --real"
 18		9	* * 1-5		cd testing.git && BRANCHES=linux-next		./cr-for-branches branches -w "./cr-daily-branch --real"
-18		10	* * *		cd testing.git && BRANCHES=linux-linus		./cr-for-branches branches -w "./cr-daily-branch --real"
-18		11	* * *		cd testing.git && BRANCHES=linux-mingo-tip-master ./cr-for-branches branches -w "./cr-daily-branch --real"
-18		12	* * *		cd testing.git && BRANCHES=linux-3.0		./cr-for-branches branches -w "./cr-daily-branch --real"
-18		13	* * *		cd testing.git && BRANCHES=libvirt		./cr-for-branches branches -w "./cr-daily-branch --real"
-18		14	* * *		cd testing.git && BRANCHES=rumpuserxen		./cr-for-branches branches -w "./cr-daily-branch --real"
+18		4	* * *		cd testing.git && BRANCHES='linux-linus linux-mingo-tip-master linux-3.0 libvirt rumpuserxen' ./cr-for-branches branches -w "./cr-daily-branch --real"
 6-59/15   	*	* * *		cd testing.git && EXTRA_BRANCHES='linux-linus linux-3.0 rumpuserxen libvirt' ./cr-for-branches bisects -w "./cr-try-bisect --real"
 #8-59/5		*	* * *		cd bisects/adhoc.git &&	with-lock-ex -q data-tree-lock bash -c "./cr-try-bisect-adhoc; exit $?"
-3		5	* * *		savelog -c28 testing.git/tmp/cr-for-branches.log >/dev/null
+3		4	* * *		savelog -c28 testing.git/tmp/cr-for-branches.log >/dev/null
