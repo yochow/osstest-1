@@ -39,9 +39,10 @@ proc run-job {job} {
         set need_build_host 0
     }
 
+    catching-otherwise blocked            check-not-blocked
+    if {!$ok} return
+
     if {[llength $need_xen_hosts]} {
-               catching-otherwise blocked   check-not-blocked
-	if {!$ok} return
         eval run-ts broken  =             ts-hosts-allocate + $need_xen_hosts
     }
 
@@ -340,9 +341,7 @@ proc run-job/build-rumpuserxen {} {
 }
 
 proc prepare-build-host {} {
-    global jobinfo ok
-    catching-otherwise blocked check-not-blocked
-    if {!$ok} return
+    global jobinfo
     run-ts broken = ts-hosts-allocate + host
     run-ts broken host-install(*) ts-host-install-twice
     run-ts . host-build-prep ts-xen-build-prep
