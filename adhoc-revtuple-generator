@@ -503,6 +503,12 @@ sub parse_trees () {
             $tree->{Gen}= \&hg_generator;
             $tree->{Show}= \&hg_revshower;
             $tree->{Treename}= $1;
+        } elsif (m,([^/]+)$,) {
+	    my $name= $1;
+	    $name =~ s,\.[^.]+$,,;
+            $tree->{Gen}= \&git_generator;
+            $tree->{Show}= \&git_revshower;
+            $tree->{Treename}= $name;
         } else {
             die "unknown tree format $_ ?";
         }

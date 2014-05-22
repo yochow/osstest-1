@@ -358,8 +358,8 @@ END
 		my $basisvcs = $basisrmap->{$tree}{Url};
 #print STDERR Dumper($failvcs, $basisvcs);
 		next unless defined $basisvcs;
-		$failvcs=~ s/.*(\.\w+)$/$1/ or warn "$tryfail->{flight} $tree ";
-		$basisvcs=~s/.*(\.\w+)$/$1/ or warn "$trybasisflight $tree ";
+		$failvcs  =~ s/.*(\.git|\.hg)$/$1/ or $failvcs= 'git';
+		$basisvcs =~ s/.*(\.git|\.hg)$/$1/ or $basisvcs='git';
 #print STDERR "COMPARE $failvcs $basisvcs\n";
 		push @bad, "$tree:<$failvcs>/<$basisvcs>"
                     if $failvcs ne $basisvcs;
