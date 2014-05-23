@@ -47,7 +47,7 @@
 : ${TREE_RUMPUSERXEN_RUMPSRC:=https://github.com/rumpkernel/rumpkernel-netbsd-src}
 : ${TREEVCS_RUMPUSERXEN_RUMPSRC:=git}
 
-: ${TREE_SEABIOS:=git://git.seabios.org/seabios.git}
+: ${TREE_SEABIOS_UPSTREAM:=git://git.seabios.org/seabios.git}
 : ${PUSH_TREE_SEABIOS:=$XENBITS:/home/xen/git/osstest/seabios.git}
 : ${BASE_TREE_SEABIOS:=git://xenbits.xen.org/osstest/seabios.git}
 

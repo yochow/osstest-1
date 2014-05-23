@@ -59,7 +59,7 @@ rumpuserxen)
 	echo $TREE_RUMPUSERXEN
 	;;
 seabios)
-	echo $TREE_SEABIOS
+	echo $TREE_SEABIOS_UPSTREAM
 	;;
 osstest)
 	echo none:;

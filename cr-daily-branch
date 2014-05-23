@@ -138,6 +138,8 @@ if [ "x$REVISION_LINUX_ARM" = x ]; then
 fi
 if [ "x$REVISION_SEABIOS" = x ]; then
     if [ "x$tree" = "xseabios" ]; then
+	TREE_SEABIOS=$TREE_SEABIOS_UPSTREAM
+	export TREE_SEABIOS
 	determine_version REVISION_SEABIOS seabios
 	export REVISION_SEABIOS
     else

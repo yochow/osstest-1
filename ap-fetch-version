@@ -87,7 +87,7 @@ rumpuserxen)
 	;;
 seabios)
 	repo_tree_rev_fetch_git seabios \
-		$TREE_SEABIOS master $LOCALREV_SEABIOS
+		$TREE_SEABIOS_UPSTREAM master $LOCALREV_SEABIOS
 	;;
 osstest)
 	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
