@@ -26,6 +26,6 @@ xenrevision=$2
 . ap-common
 
 cd "$repos/xen"
-git cat-file $xenrevision:Config.mk | perl -ne '
+git cat-file blob $xenrevision:Config.mk | perl -ne '
         print if s/^QEMU_TAG ?\??= ?([0-9a-f]+)$/$1/;
 '
