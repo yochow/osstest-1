@@ -357,7 +357,7 @@ END
 		my $failvcs = $failrmap->{$tree}{Url};
 		my $basisvcs = $basisrmap->{$tree}{Url};
 #print STDERR Dumper($failvcs, $basisvcs);
-		next unless defined $basisvcs;
+		next unless defined $basisvcs && length $basisvcs;
 		$failvcs  =~ s/.*(\.git|\.hg)$/$1/ or $failvcs= 'git';
 		$basisvcs =~ s/.*(\.git|\.hg)$/$1/ or $basisvcs='git';
 #print STDERR "COMPARE $failvcs $basisvcs\n";
@@ -437,10 +437,15 @@ sub digraph_whole () {
 
     foreach my $tree (sort keys %$latest_rmap) {
         if (defined $basispass_rmap->{$tree}) {
-            push @treeinfos, {
-                Name => $tree,
-                Url => $latest_rmap->{$tree}{Url}
-            };
+	    my $url = $latest_rmap->{$tree}{Url};
+	    if (defined $url && length $url) {
+		push @treeinfos, {
+		    Name => $tree,
+		    Url => $latest_rmap->{$tree}{Url}
+		};
+	    } else {
+		print STDERR "(tree with no url: $tree)\n";
+	    }
         } else {
             print STDERR "(tree in latest but not in basispass: $tree)\n";
         }
