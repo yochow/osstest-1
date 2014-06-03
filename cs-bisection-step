@@ -441,7 +441,7 @@ sub digraph_whole () {
 	    if (defined $url && length $url) {
 		push @treeinfos, {
 		    Name => $tree,
-		    Url => $latest_rmap->{$tree}{Url}
+		    Url => $url,
 		};
 	    } else {
 		print STDERR "(tree with no url: $tree)\n";
