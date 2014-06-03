@@ -21,7 +21,11 @@ $ ./mg-allocate \!marilith-n5
 Removing machines for servicing/outage
 ======================================
 
-mg-blockage
+mg-blockage <date-from> <date-to> <hostflag> [<extra-xinfo>]
+OSSTEST_CONFIG=production-config ./mg-blockage '2014-05-21 0955' '2014-05-21 1400' equiv-marilith
+
+
+Keeps running for the duration, so run it in a screen on the osstest VM.
 
 Commisioning a new machine
 ==========================
