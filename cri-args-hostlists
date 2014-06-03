@@ -94,7 +94,12 @@ start_email () {
         # redirects stdout
 
 	exec >tmp/$flight.email
-	cat $OSSTEST_EMAIL_HEADER
+	branchemailheader=$OSSTEST_EMAIL_HEADER--$branch
+	if test -e $branchemailheader; then
+		cat $branchemailheader
+	else
+		cat $OSSTEST_EMAIL_HEADER
+	fi
 	echo "Message-ID: <osstest-$flight-mainreport@xen.org>"
 	printf 'Subject: %s' "${subject_prefix:-[$branch test] }"
 
