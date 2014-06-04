@@ -158,6 +158,7 @@ sub fetch_logs_host_guests () {
     'ps wwwaxf -eo pid,tty,stat,time,nice,psr,pcpu,pmem,nwchan,wchan:25,args',
          'lspci -vvv',
          'lspci -tv',
+         'cat /proc/partitions',
          ) {
             try_cmd_output_save($cmd);
         }
