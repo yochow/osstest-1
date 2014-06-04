@@ -26,8 +26,8 @@ buildflight=$4
 
 flight=`./cs-flight-create $blessing $branch`
 
-. ap-common
 . cri-common
+. ap-common
 . mfi-common
 
 defsuite=`getconfig DebianSuite`
