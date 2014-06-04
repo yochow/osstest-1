@@ -124,6 +124,8 @@ sub fetch_logs_host_guests () {
 
                   /var/log/xen-tools/*
 
+                  /root/resizefs.log
+
                   /boot/config*
 
                   /etc/xen/*
