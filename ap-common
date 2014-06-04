@@ -37,7 +37,7 @@
 : ${PUSH_TREE_LIBVIRT:=$XENBITS:/home/xen/git/libvirt.git}
 : ${BASE_TREE_LIBVIRT:=git://xenbits.xen.org/libvirt.git}
 
-: ${TREE_GNULIB_LIBVIRT:=$(cached_repo git://git.sv.gnu.org/gnulib.git \[fetch=try\])}
+: ${TREE_GNULIB_LIBVIRT:=$(besteffort_repo git://git.sv.gnu.org/gnulib.git)}
 
 : ${TREE_RUMPUSERXEN:=https://github.com/rumpkernel/rumpuser-xen}
 : ${TREEVCS_RUMPUSERXEN:=git}

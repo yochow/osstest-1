@@ -33,6 +33,11 @@ cached_repo () {
 	fi
 }
 
+besteffort_repo () {
+	local repo=$1
+	cached_repo "$1" '[fetch=try]'
+}
+
 repo_tree_rev_fetch_git () {
 	local treename=$1
 	local remoteurl=$2
