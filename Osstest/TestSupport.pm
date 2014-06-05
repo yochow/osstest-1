@@ -1045,13 +1045,16 @@ sub build_clone ($$$$) {
     my $timeout= 4000;
 
     my $vcs = $r{"treevcs_$which"};
-    if (defined $vcs) {
-    } elsif ($tree =~ m/\.hg$/) {
-        $vcs= 'hg';
-    } elsif ($tree =~ m/\.git$/) {
-        $vcs= 'git';
-    } else {
-        die "unknown vcs for $which $tree ";
+    if (!defined $vcs) {
+	my $effurl = $tree;
+	$effurl =~ s#\%20[^/]*$##;
+	if ($effurl =~ m/\.hg$/) {
+	    $vcs= 'hg';
+	} elsif ($effurl =~ m/\.git$/) {
+	    $vcs= 'git';
+	} else {
+	    die "unknown vcs for $which $tree ";
+	}
     }
 
     if ($vcs eq 'hg') {
