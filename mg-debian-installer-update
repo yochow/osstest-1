@@ -62,7 +62,7 @@ cd $dst
 for f in $files; do
         echo >&2 "fetching $f"
         s=${f/:*} ; d=${f/*:}
-        echo "$src/$s => $d.new"
+        echo >&2 "$src/$s => $d.new"
         curl -s $src/$s >$d.new
 done
 
