@@ -55,7 +55,7 @@ job_create_test_filter_callback () {
   local dom0arch=$1; shift
 
   case "$branch" in
-    qemu-upstream-*)
+    qemu-upstream-4.2-testing)
       case " $* " in
         *" device_model_version=qemu-xen "*)
           ;;
