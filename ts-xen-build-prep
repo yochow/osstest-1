@@ -65,11 +65,11 @@ sub lvextend_stage1 () {
         fi
 END
 
-    lvextend1('disk extend initial',       30, 0);
+    lvextend1('disk extend initial',       300);
 }
 
 sub lvextend_stage2 () {
-    lvextend1('disk extend background', undef, 1);
+    lvextend1('disk extend subsequent',  undef);
 }
 
 sub vginfo () {
@@ -80,7 +80,7 @@ sub vginfo () {
 }
 
 sub lvextend1 ($$$) {
-    my ($what, $max_more_gb, $background)  = @_;
+    my ($what, $max_more_gb)  = @_;
 
     my $lv= "/dev/$vg/root";
 
@@ -156,11 +156,7 @@ sub lvextend1 ($$$) {
     my $timeout = 2000 + int($pe_size * 0.000003 * $more_pe);
     logm("$what: ${pe_size}k x $more_pe (timeout=$timeout)");
     my $cmd = "resize2fs $lv";
-    if (!$background) {
-	target_cmd_root($ho, $cmd, $timeout);
-    } else {
-	target_cmd_root($ho, "$cmd >>resizefs.log 2>&1 </dev/null &", 30);
-    }
+    target_cmd_root($ho, $cmd, $timeout);
 }
 
 sub prep () {
