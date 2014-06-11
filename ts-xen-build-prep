@@ -30,7 +30,7 @@ exit 0 if $ho->{SharedReady};
 
 our ($vg,$lv);
 
-our $lvleaf = 'root';
+our $lvleaf = 'osstest_home';
 our $pe_size;
 our $extended_pes = 0;
 
@@ -81,6 +81,11 @@ sub vginfo () {
     my @vginfo= split /\:/, $vginfo;
     @vginfo >= 17 or die "$vginfo ?";
     return @vginfo;
+}
+
+sub lvcreate () {
+    target_cmd_output_root($ho,
+			   "lvdisplay $lv || lvcreate -l 1 -n $lvleaf $vg");
 }
 
 sub lvextend1 ($$$) {
@@ -157,8 +162,39 @@ sub lvextend1 ($$$) {
 
     my $timeout = 2000 + int($pe_size * 0.000003 * $more_pe);
     logm("$what: ${pe_size}k x $more_pe (timeout=$timeout)");
-    my $cmd = "resize2fs $lv";
-    target_cmd_root($ho, $cmd, $timeout);
+}
+
+sub replace_home () {
+    my $dir = '/home/osstest';
+    my $mapper = lv_dev_mapper($vg,$lvleaf);
+    my ($fstype,@opts) = qw(ext3 -m 0 -O sparse_super);
+    target_cmd_root($ho, <<END, 1000);
+        set -ex
+	if mount | sed -e 's/^[^ ].* on //; s/ .*//' | grep -F '$dir'; then
+	    exit 0
+	fi
+	mkfs -t $fstype @opts $lv
+        mount $lv /mnt
+	rsync -aHx --numeric-ids $dir/. /mnt/.
+	rm -rf $dir
+	mkdir -m 2700 $dir
+	echo '$mapper $dir $fstype defaults 0 0' >>/etc/fstab
+	umount /mnt
+	mount $dir
+END
+
+        # for convenience, here is a small scriptlet to undo this:
+        <<'END';
+#!/bin/sh
+set -ex
+cd /home
+rm -rf osstest.new
+rsync -aH --numeric-ids osstest/. osstest.new
+umount /home/osstest
+rmdir osstest
+mv osstest.new osstest
+lvremove -f /dev/`uname -n`/osstest_home
+END
 }
 
 sub prep () {
@@ -202,10 +238,12 @@ sub ccache_setup () {
 
 if (!$ho->{Flags}{'no-reinstall'}) {
     determine_vg_lv();
+    lvcreate();
     lvextend_stage1();
     prep();
-    ccache_setup();
     lvextend_stage2();
+    replace_home();
+    ccache_setup();
 }
 $mjobdb->jobdb_resource_shared_mark_ready
    ($ho->{Ident}, $ho->{Name}, "build-".$ho->{Suite}."-".$r{arch});
