@@ -159,10 +159,7 @@ sub lvextend1 ($$$) {
     if (!$background) {
 	target_cmd_root($ho, $cmd, $timeout);
     } else {
-	target_cmd_root($ho,
-			"ionice -cBest-Effort -n7 ".
-			"$cmd >>resizefs.log 2>&1 </dev/null &",
-			30);
+	target_cmd_root($ho, "$cmd >>resizefs.log 2>&1 </dev/null &", 30);
     }
 }
 
