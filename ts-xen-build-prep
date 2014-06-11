@@ -28,8 +28,9 @@ $whhost ||= 'host';
 our $ho= selecthost($whhost);
 exit 0 if $ho->{SharedReady};
 
-our ($vg);
+our ($vg,$lv);
 
+our $lvleaf = 'root';
 our $pe_size;
 our $extended_pes = 0;
 
@@ -50,12 +51,15 @@ sub overall_limit_pe ($) {
     $extended_pes += $$pevar;
 }
 
-sub lvextend_stage1 () {
+sub determine_vg_lv () {
     $vg=
         $ho->{Suite} =~ m/lenny/
         ? "$ho->{Name}.$c{TestHostDomain}"
         : $ho->{Name};
+    $lv = "/dev/$vg/$lvleaf";
+}
 
+sub lvextend_stage1 () {
     target_cmd_root($ho, <<END);
         set -ex; if ! test -f /root/swap_osstest_enabled; then
             lvcreate -L 10G -n swap_osstest_build $vg ||:
@@ -81,8 +85,6 @@ sub vginfo () {
 
 sub lvextend1 ($$$) {
     my ($what, $max_more_gb)  = @_;
-
-    my $lv= "/dev/$vg/root";
 
     my @vginfo = vginfo();
     $pe_size= $vginfo[12];
@@ -199,6 +201,7 @@ sub ccache_setup () {
 }
 
 if (!$ho->{Flags}{'no-reinstall'}) {
+    determine_vg_lv();
     lvextend_stage1();
     prep();
     ccache_setup();
