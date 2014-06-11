@@ -61,7 +61,8 @@ BEGIN {
                       target_run_apt
                       target_install_packages target_install_packages_norec
                       target_jobdir target_extract_jobdistpath_subdir
-                      target_extract_jobdistpath target_guest_lv_name
+                      target_extract_jobdistpath
+                      lv_dev_mapper target_guest_lv_name
 
                       poll_loop tcpconnect await_tcp
                       contents_make_cpio file_simple_write_contents
@@ -694,13 +695,17 @@ sub poll_loop ($$$&) {
     logm("$what: ok. (${waited}s)");
 }
 
+sub lv_dev_mapper ($$) {
+    my ($vg,$lv) = @_;
+    $vg =~ s/-/--/g;
+    $lv =~ s/-/--/g;
+    # Dashes are doubled in the VG and LV names
+    return "/dev/mapper/$vg-$lv";
+}    
+
 sub target_guest_lv_name($$) {
     my ($ho, $lv) = @_;
-
-    my $vg = "$ho->{Name}";
-    # Dashes are escaped in the VG name
-    $vg =~ s/-/--/g;
-    return "/dev/mapper/$vg-$lv";
+    return lv_dev_mapper("$ho->{Name}", $lv);
 }
 
 #---------- dhcp watching ----------
