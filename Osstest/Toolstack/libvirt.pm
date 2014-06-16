@@ -57,4 +57,10 @@ sub consolecmd ($$) {
     return "virsh console $gn";
 }
 
+sub shutdown_wait ($$$) {
+    my ($self,$gho,$timeout) = @_;
+    my $gn = $gho->{Name};
+    die "libvirt shutdown wait not implemented yet."
+}
+
 1;

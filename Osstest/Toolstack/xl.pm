@@ -51,4 +51,11 @@ sub consolecmd ($$) {
     return $self->{Command}." console $gn";
 }
 
+sub shutdown_wait ($$$) {
+    my ($self,$gho,$timeout) = @_;
+    my $ho = $self->{Host};
+    my $gn = $gho->{Name};
+    target_cmd_root($ho,"$self->{Command} shutdown -w $gn", $timeout);
+}
+
 1;
