@@ -20,6 +20,8 @@ package Osstest::Toolstack::xl;
 use strict;
 use warnings;
 
+use Osstest::TestSupport;
+
 sub new {
     my ($class, $ho, $methname,$asset) = @_;
     return bless { Name => "xl",
@@ -30,6 +32,17 @@ sub new {
 		   CfgPathVar => 'cfgpath',
 		   RestoreNeedsConfig => 1,
     }, $class;
+}
+
+sub destroy ($$) {
+    my ($self,$gho) = @_;
+    my $gn = $gho->{Name};
+    target_cmd_root($self->{Host}, $self->{Command}." destroy $gn", 40);
+}
+
+sub create ($$) {
+    my ($self,$cfg) = @_;
+    target_cmd_root($self->{Host}, $self->{Command}." create $cfg", 100);
 }
 
 1;

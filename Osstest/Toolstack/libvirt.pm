@@ -20,15 +20,35 @@ package Osstest::Toolstack::libvirt;
 use strict;
 use warnings;
 
+use Osstest::TestSupport;
+
 sub new {
     my ($class, $ho, $methname,$asset) = @_;
     return bless { Name => "libvirt",
 		   Host => $ho,
 		   NewDaemons => [qw(libvirtd)],
 		   Dom0MemFixed => 1,
+		   CfgPathVar => 'cfgpath',
 		   Command => 'virsh',
 		   ExtraPackages => [qw(libnl1 libavahi-client3)],
     }, $class;
+}
+
+sub destroy ($$) {
+    my ($self,$gho) = @_;
+    my $gn = $gho->{Name};
+    target_cmd_root($self->{Host}, "virsh destroy $gn", 40);
+}
+
+sub create ($$) {
+    my ($self,$cfg) = @_;
+    my $ho = $self->{Host};
+    my $lcfg = $cfg;
+    $lcfg =~ s,/,-,g;
+    $lcfg = "$ho->{Name}--$lcfg";
+    target_cmd_root($ho, "virsh domxml-from-native xen-xl $cfg > $cfg.xml", 30);
+    target_getfile_root($ho,60,"$cfg.xml", "$stash/$lcfg");
+    target_cmd_root($ho, "virsh create --file $cfg.xml", 100);
 }
 
 1;

@@ -1330,13 +1330,13 @@ sub guest_await_shutdown ($$$) {
 sub guest_destroy ($) {
     my ($gho) = @_;
     my $ho = $gho->{Host};
-    target_cmd_root($ho, toolstack($ho)->{Command}." destroy $gho->{Name}", 40);
+    toolstack($ho)->destroy($gho);
 }
 
 sub guest_create ($) {
     my ($gho) = @_;
     my $ho = $gho->{Host};
-    target_cmd_root($ho, toolstack($ho)->{Command}." create $gho->{CfgPath}", 100);
+    toolstack($ho)->create($gho->{CfgPath});
 }
 
 

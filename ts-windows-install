@@ -49,13 +49,8 @@ END
     store_runvar("$gho->{Guest}_pingbroken", 1);
 }
 
-sub start () {
-    target_cmd_root($ho, toolstack($ho)->{Command}.
-                    " create $gho->{CfgPath}", 100);
-}
-
 prep();
-start();
+guest_create($gho);
 
 guest_await_dhcp_tcp($gho,7000);
 guest_check_up($gho);
