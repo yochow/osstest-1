@@ -145,7 +145,7 @@ sub setupboot () {
 	my $dtuart= get_host_property($ho, 'XenDTUARTPath', undef);
 	$xenhopt .= " dtuart=$dtuart" if $dtuart;
     } else {
-	mlog("No Xen console device defined for host");
+	logm("No Xen console device defined for host");
     }
     if (toolstack()->{Dom0MemFixed}) {
         $xenhopt .= " dom0_mem=512M,max:512M";
