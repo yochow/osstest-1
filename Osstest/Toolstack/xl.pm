@@ -45,4 +45,10 @@ sub create ($$) {
     target_cmd_root($self->{Host}, $self->{Command}." create $cfg", 100);
 }
 
+sub consolecmd ($$) {
+    my ($self,$gho) = @_;
+    my $gn = $gho->{Name};
+    return $self->{Command}." console $gn";
+}
+
 1;

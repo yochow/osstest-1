@@ -195,7 +195,7 @@ sub fetch_logs_guest ($) {
         logm("cannot find domid: $@");
         return;
     }
-    my $consolecmd= toolstack($ho)->{Command}." console $gho->{Name}";
+    my $consolecmd= toolstack($ho)->consolecmd($gho);
     try_cmd_output_save("sleep 1 | $consolecmd | cat",
                         "guest-$gho->{Name}-console");
 

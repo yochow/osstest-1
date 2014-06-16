@@ -51,4 +51,10 @@ sub create ($$) {
     target_cmd_root($ho, "virsh create --file $cfg.xml", 100);
 }
 
+sub consolecmd ($$) {
+    my ($self,$gho) = @_;
+    my $gn = $gho->{Name};
+    return "virsh console $gn";
+}
+
 1;
