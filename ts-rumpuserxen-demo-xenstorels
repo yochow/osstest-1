@@ -40,8 +40,8 @@ sub arrangepreserve () {
 }
 
 sub start () {
-    my $cmd= toolstack()->{Command}." create ".
-        $r{ $gho->{Guest}.'_'. toolstack()->{CfgPathVar} };
+    my $cmd= toolstack($ho)->{Command}." create ".
+        $r{ $gho->{Guest}.'_'. toolstack($ho)->{CfgPathVar} };
     target_cmd_root($ho, $cmd, 30);
 
     $domid = target_cmd_output_root($ho,"xl domid $gho->{Guest}");

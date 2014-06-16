@@ -28,17 +28,17 @@ sub save () {
     guest_checkrunning($ho,$gho) or die $gho->{Name};
     my $err= guest_check_ip($gho);  die "$err $gho->{Name}" if defined $err;
     target_cmd_root($ho,
-		    toolstack()->{Command}
+		    toolstack($ho)->{Command}
 		    ." save $gho->{Name} image",
 		    200);
     target_ping_check_down($gho);
 }
 sub restore () {
     target_cmd_root($ho,
-		    toolstack()->{Command}
+		    toolstack($ho)->{Command}
 		    ." restore "
-		    .(toolstack()->{RestoreNeedsConfig} ?
-		      $r{ $gho->{Guest}.'_'. toolstack()->{CfgPathVar} } : '')
+		    .(toolstack($ho)->{RestoreNeedsConfig} ?
+		      $r{ $gho->{Guest}.'_'. toolstack($ho)->{CfgPathVar} } : '')
 		    ." image", 200);
     target_ping_check_up($gho);
 }

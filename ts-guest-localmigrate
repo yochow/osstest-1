@@ -33,7 +33,7 @@ our ($ho,$gho) = ts_get_host_guest(@ARGV);
 sub migrate () {
     guest_checkrunning($ho,$gho) or die $gho->{Name};
     target_cmd_root($ho,
-		    toolstack()->{Command}
+		    toolstack($ho)->{Command}
 		    ." migrate $gho->{Name} localhost",
 		    $timeout{Migrate});
 }

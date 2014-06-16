@@ -25,9 +25,9 @@ tsreadconfig();
 our $ho = selecthost($ARGV[0]);
 
 # all xend/xm platforms support migration
-exit(0) if toolstack()->{Command} eq "xm";
+exit(0) if toolstack($ho)->{Command} eq "xm";
 
-my $help = target_cmd_output_root($ho, toolstack()->{Command}." help");
+my $help = target_cmd_output_root($ho, toolstack($ho)->{Command}." help");
 
 my $rc = ($help =~ m/^\s*migrate/m) ? 0 : 1;
 

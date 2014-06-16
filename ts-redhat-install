@@ -37,7 +37,7 @@ our $disk_mb= 50000;
 our $guesthost= "$gn.guest.osstest";
 our $gho;
 
-our $xl= toolstack()->{Command};
+our $xl= toolstack($ho)->{Command};
 
 
 sub kickstart () {

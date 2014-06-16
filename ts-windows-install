@@ -50,7 +50,7 @@ END
 }
 
 sub start () {
-    target_cmd_root($ho, toolstack()->{Command}.
+    target_cmd_root($ho, toolstack($ho)->{Command}.
                     " create $gho->{CfgPath}", 100);
 }
 

@@ -956,8 +956,9 @@ END
     });
 }
 
-sub host_get_free_memory($$) {
-    my ($ho,$toolstack) = @_;
+sub host_get_free_memory($) {
+    my ($ho) = @_;
+    my $toolstack = toolstack($ho)->{Command};
     # The line is as followed:
     # free_memory       :   XXXX
     my $info = target_cmd_output_root($ho, "$toolstack info", 10);
@@ -1320,7 +1321,7 @@ sub guest_await_shutdown ($$$) {
 
 sub guest_destroy ($$) {
     my ($ho,$gho) = @_;
-    target_cmd_root($ho, toolstack()->{Command}." destroy $gho->{Name}", 40);
+    target_cmd_root($ho, toolstack($ho)->{Command}." destroy $gho->{Name}", 40);
 }
 
 sub guest_create ($$) {
@@ -1613,7 +1614,7 @@ sub guest_check_up ($) {
 
 sub guest_get_state ($$) {
     my ($ho,$gho) = @_;
-    my $domains= target_cmd_output_root($ho, toolstack()->{Command}." list");
+    my $domains= target_cmd_output_root($ho, toolstack($ho)->{Command}." list");
     $domains =~ s/^Name.*\n//;
     foreach my $l (split /\n/, $domains) {
         $l =~ m/^(\S+) (?: \s+ \d+ ){3} \s+ ([-a-z]+) \s/x or die "$l ?";
@@ -1818,7 +1819,7 @@ sub guest_find_domid ($$) {
     my ($ho,$gho) = @_;
     return if defined $gho->{Domid};
     my $list= target_cmd_output_root($ho,
-                toolstack()->{Command}." list $gho->{Name}");
+                toolstack($ho)->{Command}." list $gho->{Name}");
     $list =~ m/^(?!Name\s)(\S+)\s+(\d+)\s+(\d+)+(\d+)\s.*$/m
         or die "domain list: $list";
     $1 eq $gho->{Name} or die "domain list name $1 expected $gho->{Name}";
@@ -1888,7 +1889,9 @@ our %toolstacks=
         },
      );
 
-sub toolstack () {
+sub toolstack ($) {
+    my ($ho) = @_;
+    return $ho->{Toolstack} if $ho->{Toolstack};
     my $tsname= $r{toolstack};
     $tsname= 'xend' if !defined $tsname;
     my $ts= $toolstacks{$tsname};
@@ -1897,6 +1900,7 @@ sub toolstack () {
         logm("toolstack $tsname");
         $ts->{Name}= $tsname;
     }
+    $ho->{Toolstack} = $ts;
     return $ts;
 }
 

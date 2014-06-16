@@ -60,8 +60,8 @@ sub packages () {
     if ($r{arch} eq 'i386') {
 	target_install_packages($ho, 'libc6-xen');
     }
-    target_install_packages($ho, @{toolstack()->{ExtraPackages}})
-        if toolstack()->{ExtraPackages};
+    target_install_packages($ho, @{toolstack($ho)->{ExtraPackages}})
+        if toolstack($ho)->{ExtraPackages};
 }
 
 sub extract () {
@@ -101,7 +101,7 @@ sub adjustconfig () {
 	    }
 	}
 	print EO $extra or die $!;
-    }) if toolstack()->{Name} eq "xend";
+    }) if toolstack($ho)->{Name} eq "xend";
 
     my $trace_config_file;
     foreach my $try (qw(/etc/default/xencommons
@@ -147,7 +147,7 @@ sub setupboot () {
     } else {
 	logm("No Xen console device defined for host");
     }
-    if (toolstack()->{Dom0MemFixed}) {
+    if (toolstack($ho)->{Dom0MemFixed}) {
         $xenhopt .= " dom0_mem=512M,max:512M";
     }
     my $append= $r{xen_boot_append};
@@ -179,7 +179,7 @@ sub setupboot () {
 our $initscripts_nobridge;
 
 sub setupinitd () {
-    my $ts= toolstack();
+    my $ts= toolstack($ho);
     my $xencommons= '/etc/init.d/xencommons';
     my $have_xencommons=
         !!target_cmd_output_root($ho, <<END);

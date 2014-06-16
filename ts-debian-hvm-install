@@ -41,7 +41,7 @@ our $disk_mb= 10000;
 our $guesthost= "$gn.guest.osstest";
 our $gho;
 
-our $toolstack= toolstack()->{Command};
+our $toolstack= toolstack($ho)->{Command};
 
 
 sub preseed () {
@@ -171,7 +171,7 @@ sub prep () {
 
 # If host has >8G free memory, create a guest with 4G memory to catch
 # any error that triggers cross 4G boundary
-my $host_freemem_mb = host_get_free_memory($ho, $toolstack);
+my $host_freemem_mb = host_get_free_memory($ho);
 my $ram_minslop = 100;
 my $ram_lots = 5000;
 if ($host_freemem_mb > $ram_lots * 2 + $ram_minslop) {

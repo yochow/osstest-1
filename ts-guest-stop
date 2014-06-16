@@ -27,7 +27,7 @@ our ($ho,$gho) = ts_get_host_guest(@ARGV);
 sub stop () {
     guest_checkrunning($ho, $gho) or die "$gho->{Name} not running";
     target_cmd_root($ho,
-		    toolstack()->{Command}
+		    toolstack($ho)->{Command}
 		    ." shutdown -w "
 		    .$gho->{Name}, 200);
     guest_checkrunning($ho, $gho) and die $gho->{Name};

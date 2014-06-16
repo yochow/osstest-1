@@ -32,7 +32,7 @@ sub migrate () {
     guest_checkrunning($sho,$gho) or die $gho->{Name};
     my $err= guest_check_ip($gho);  die "$err $gho->{Name}" if defined $err;
     target_cmd_root($sho,
-		    toolstack()->{Command}
+		    toolstack($sho)->{Command}
 		    ." migrate $gho->{Name} $dho->{Name}",
 		    $timeout{Migrate});
 }
