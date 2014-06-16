@@ -35,4 +35,7 @@ sub new {
     }, $class;
 }
 
+# xend always supported migration
+sub migrate_check ($) { return 0; }
+
 1;

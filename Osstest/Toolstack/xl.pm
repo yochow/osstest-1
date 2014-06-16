@@ -58,4 +58,13 @@ sub shutdown_wait ($$$) {
     target_cmd_root($ho,"$self->{Command} shutdown -w $gn", $timeout);
 }
 
+sub migrate_check ($) {
+    my ($self) = @_;
+    my $ho = $self->{Host};
+    my $help = target_cmd_output_root($ho, $self->{Command}." help");
+    my $rc = ($help =~ m/^\s*migrate/m) ? 0 : 1;
+    logm("rc=$rc");
+    return $rc;
+}
+
 1;

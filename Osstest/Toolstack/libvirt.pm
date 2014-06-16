@@ -63,4 +63,9 @@ sub shutdown_wait ($$$) {
     die "libvirt shutdown wait not implemented yet."
 }
 
+sub migrate_check ($) {
+    my ($self) = @_;
+    die "Migration check is not yet supported on libvirt.";
+}
+
 1;
