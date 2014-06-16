@@ -148,7 +148,7 @@ sub otherfixupcfg () {
     if (@pcipt) {
         logm("checking passthrough device(s) are assignable: @pcipt");
         my @assignables= split /\n/,
-            target_cmd_output_root($ho, toolstack($ho)->{Command}.
+            target_cmd_output_root($ho, common_toolstack($ho).
                                    " pci-assignable-list");
         foreach my $pcipt (@pcipt) {
             die "not assignable: $pcipt (not in: @assignables)"

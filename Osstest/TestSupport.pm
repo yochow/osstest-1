@@ -938,6 +938,14 @@ sub compress_stashed($) {
 
 #---------- other stuff ----------
 
+sub common_toolstack ($) {
+    my ($ho) =  @_;
+    my $tsname = toolstack($ho);
+    my $ts = 'xl';
+    $ts = 'xm' if $tsname eq 'xend';
+    return $ts;
+}
+
 sub host_reboot ($) {
     my ($ho) = @_;
     target_reboot($ho);
@@ -958,7 +966,7 @@ END
 
 sub host_get_free_memory($) {
     my ($ho) = @_;
-    my $toolstack = toolstack($ho)->{Command};
+    my $toolstack = common_toolstack($ho);
     # The line is as followed:
     # free_memory       :   XXXX
     my $info = target_cmd_output_root($ho, "$toolstack info", 10);
@@ -1614,7 +1622,7 @@ sub guest_check_up ($) {
 
 sub guest_get_state ($$) {
     my ($ho,$gho) = @_;
-    my $domains= target_cmd_output_root($ho, toolstack($ho)->{Command}." list");
+    my $domains= target_cmd_output_root($ho, common_toolstack($ho)." list");
     $domains =~ s/^Name.*\n//;
     foreach my $l (split /\n/, $domains) {
         $l =~ m/^(\S+) (?: \s+ \d+ ){3} \s+ ([-a-z]+) \s/x or die "$l ?";
@@ -1819,7 +1827,7 @@ sub guest_find_domid ($$) {
     my ($ho,$gho) = @_;
     return if defined $gho->{Domid};
     my $list= target_cmd_output_root($ho,
-                toolstack($ho)->{Command}." list $gho->{Name}");
+                common_toolstack($ho)." list $gho->{Name}");
     $list =~ m/^(?!Name\s)(\S+)\s+(\d+)\s+(\d+)+(\d+)\s.*$/m
         or die "domain list: $list";
     $1 eq $gho->{Name} or die "domain list name $1 expected $gho->{Name}";
