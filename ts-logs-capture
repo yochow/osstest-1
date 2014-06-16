@@ -117,6 +117,9 @@ sub fetch_logs_host_guests () {
                   /var/log/xen/osstest*
                   /var/log/xen/xenstored*
 
+                  /var/log/libvirt/libvirtd.log
+                  /var/log/libvirt/libxl/*
+
                   /var/run/xenstored*
                   /var/log/xenstored*
 
@@ -161,6 +164,7 @@ sub fetch_logs_host_guests () {
          'lspci -vvv',
          'lspci -tv',
          'cat /proc/partitions',
+         'virsh capabilities',
          ) {
             try_cmd_output_save($cmd);
         }
