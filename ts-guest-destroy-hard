@@ -24,4 +24,4 @@ tsreadconfig();
 
 our ($ho,$gho) = ts_get_host_guest(@ARGV);
 
-guest_destroy($ho, $gho);
+guest_destroy($gho);

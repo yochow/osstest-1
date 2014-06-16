@@ -1327,14 +1327,16 @@ sub guest_await_shutdown ($$$) {
     return guest_await_state($ho,$gho, "shutdown", "s", $timeout);
 }
 
-sub guest_destroy ($$) {
-    my ($ho,$gho) = @_;
+sub guest_destroy ($) {
+    my ($gho) = @_;
+    my $ho = $gho->{Host};
     target_cmd_root($ho, toolstack($ho)->{Command}." destroy $gho->{Name}", 40);
 }
 
-sub guest_create ($$) {
-    my ($gho,$toolstack) = @_;
-    target_cmd_root($gho->{Host}, "$toolstack create $gho->{CfgPath}", 100);
+sub guest_create ($) {
+    my ($gho) = @_;
+    my $ho = $gho->{Host};
+    target_cmd_root($ho, toolstack($ho)->{Command}." create $gho->{CfgPath}", 100);
 }
 
 

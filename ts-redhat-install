@@ -37,9 +37,6 @@ our $disk_mb= 50000;
 our $guesthost= "$gn.guest.osstest";
 our $gho;
 
-our $xl= toolstack($ho)->{Command};
-
-
 sub kickstart () {
     my $cryptpw= '$6$anjRJmBbJcrNJGWN$rqvGUhu8ITjvErdIA5C//w2R6b/6wAjHbaF7XF8u3lZg1XI3StthPIE6UII08scOFwASMOepCGpgtsYeCpjqb.';
     my $authkeys= authorized_keys();
@@ -152,16 +149,16 @@ sub prep () {
 
 if (!$stage) {
     prep();
-    guest_create($gho,$xl);
+    guest_create($gho);
 } else {
     $gho= selectguest($gn,$gho);
 }
 if ($stage<2) {
     guest_await_reboot($ho,$gho,2000);
-    guest_destroy($ho,$gho);
+    guest_destroy($gho);
 }
 
 guest_editconfig_nocd($gho,$emptyiso);
-guest_create($gho,$xl);
+guest_create($gho);
 guest_await_dhcp_tcp($gho,300);
 guest_check_up($gho);

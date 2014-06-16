@@ -40,7 +40,7 @@ sub arrangepreserve () {
 }
 
 sub start () {
-    guest_create($gho,toolstack($ho));
+    guest_create($gho);
 
     $domid = guest_find_domid($ho, $gho);
 }
