@@ -1866,42 +1866,13 @@ sub guest_vncsnapshot_stash ($$$$) {
     target_getfile_root($ho,100, "$rfile", "$stash/$leaf");
 }
 
-our %toolstacks=
-    ('xend' => {
-        NewDaemons => [qw(xend)],
-        OldDaemonInitd => 'xend',
-        Command => 'xm',
-        CfgPathVar => 'cfgpath',
-        Dom0MemFixed => 1,
-        },
-     'xl' => {
-        NewDaemons => [],
-        Dom0MemFixed => 1,
-        Command => 'xl',
-        CfgPathVar => 'cfgpath',
-	RestoreNeedsConfig => 1,
-        },
-     'libvirt' => {
-        NewDaemons => [qw(libvirtd)],
-        Dom0MemFixed => 1,
-        Command => 'virsh',
-        ExtraPackages => [qw(libnl1 libavahi-client3)],
-        },
-     );
-
 sub toolstack ($) {
     my ($ho) = @_;
     return $ho->{Toolstack} if $ho->{Toolstack};
-    my $tsname= $r{toolstack};
-    $tsname= 'xend' if !defined $tsname;
-    my $ts= $toolstacks{$tsname};
-    die "$tsname ?" unless defined $ts;
-    if (!exists $ts->{Name}) {
-        logm("toolstack $tsname");
-        $ts->{Name}= $tsname;
-    }
-    $ho->{Toolstack} = $ts;
-    return $ts;
+
+    my $tsname= $r{toolstack} || 'xend';
+    $ho->{Toolstack}= get_host_method_object($ho, 'Toolstack', $tsname);
+    return $ho->{Toolstack};
 }
 
 sub authorized_keys () {
