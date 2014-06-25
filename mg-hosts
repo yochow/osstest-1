@@ -321,7 +321,7 @@ END
 	my ($dst,$section) = @_;
 	die unless @$section == 2;
 	my ($dstflag, $expr) = @$section;
-	die "$expr $& ?" if $expr =~ m/[^-0-9a-z_&|()!~]/;
+	die "$expr $& ?" if $expr =~ m/[^-0-9a-z_&|()!~ \t]/;
 
 	my %inputs;
 	$expr =~ s{[-0-9a-z_]+}{
