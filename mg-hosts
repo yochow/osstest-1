@@ -17,6 +17,71 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+# Usages:
+#
+#  ./mg-hosts mkpxedir HOST...
+#               Create directories for pxeboot as expected by the rest
+#               of osstest.  Will use "sudo".
+#
+#  ./mg-hosts create-like SOURCE-HOST NEW-HOST[,NEW-HOST...]
+#               Create new host(s).  This does NOT copy the
+#               flags and properties (!)
+#
+#  ./mg-hosts manual-task-create USER@NODENAME
+#  ./mg-hosts manual-task-create REFKEY
+#               Creates a static manual (ie, permanent) task with
+#               the specified REFKEY.  The usual format of REFKEY
+#               is USER@NODENAME.
+#
+#  ./mg-hosts previoustasks [--clear]
+#               Lists all ownd (ie, transient) tasks which are from
+#               previous instances of ms-ownerdaemon (normally, this
+#               means tasks from previous boots of the osstest
+#               controller).  Also lists those tasks' resources.
+#
+#               With --clear, marks the tasks as dead, which will
+#               allow their resources to be reclaimed.  NB that this
+#               is dangerous if there might still be tasks running
+#               which started before the current ms-ownerdaemon: the
+#               old tasks might still mess about with the resources,
+#               interfering with whatever new tasks allocate them.
+#
+#  ./mg-hosts showprops [HOST...]
+#               Prints the resource properties of all or specified hosts.
+#
+#  ./mg-hosts setprops HOSTGLOB... [- PROP [OLD] NEW ...] -|-- PROP [OLD] NEW
+#               Updates resource properties of the specified hosts.
+#               If OLD is specified, the property will be set to NEW
+#               iff its value is currently OLD.  (The use of -- rather
+#               than - as the delimiter allows the last OLD or NEW
+#               to start with - without ambiguity in the command line.)
+#
+#  HOSTGLOB is a host name, or a glob pattern which may contain *.
+#  (? and [] are not supported in HOSTGLOB.)
+#
+#  ./mg-hosts showflags
+#               Print a table showing the flags of all hosts.
+#
+#  ./mg-hosts setflags HOSTGLOB... -|-- !FLAG|-FLAG|FLAG...
+#               Updates some flags of the specified hosts.  !FLAG and
+#               -FLAG both clear the flag; FLAG sets it.
+#
+#  ./mg-hosts setflagexpr HOSTGLOB... - FLAG EXPR [-|-- FLAG EXPR...]
+#               Sets or clears some flags of the specified hosts,
+#               according to a boolean expression involving other
+#               flags.  Each EXPR is evaluated for each host and
+#               the flag set or cleared accordingly.
+#
+#               In EXPR, the following constructs are allowed (in
+#               decreasing order of precedence):
+#                   FLAG         true iff FLAG is set for the host
+#                   (EXPR)       override precedence
+#                   !EXPR        boolean negation } alternative
+#                   ~EXPR        boolean negation }  equivalent syntax
+#                   EXPR&EXPR    boolean "and"
+#                   EXPR|EXPR    boolean inclusive-or
+#               Spaces and tabs are disregarded (outside FLAG names).
+
 use strict qw(vars refs);
 use DBI;
 use Osstest;
