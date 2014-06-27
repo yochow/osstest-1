@@ -129,9 +129,9 @@ END
 	    m/^(\w+)\s(.*)$/ or die "$cmd: $_ ?";
 	    push @{ $r{$1} }, $2;
 	}
-	die unless @{ $r{commit} } == 1;
-	die unless @{ $r{committer} } == 1;
-	die unless $r{committer}[0] =~ m/ (\d+)(?: [-+]\d{4})$/;
+	die "$treename -" unless @{ $r{commit} } == 1;
+	die "$treename -" unless @{ $r{committer} } == 1;
+	die "$treename -" unless $r{committer}[0] =~ m/ (\d+)(?: [-+]\d{4})$/;
 	my $date= $1;
 	return {
             Generator => "git_generator:$treename",
