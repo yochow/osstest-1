@@ -129,7 +129,6 @@ END
 	    m/^(\w+)\s(.*)$/ or die "$cmd: $_ ?";
 	    push @{ $r{$1} }, $2;
 	}
-	die unless @{ $r{parent} } >= 1;
 	die unless @{ $r{commit} } == 1;
 	die unless @{ $r{committer} } == 1;
 	die unless $r{committer}[0] =~ m/ (\d+)(?: [-+]\d{4})$/;
