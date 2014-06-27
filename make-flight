@@ -115,6 +115,15 @@ test_matrix_branch_filter_callback () {
   return 0
 }
 
+do_rumpkernel_tests () {
+  rumparch=$dom0arch
+  job_create_test test-$xenarch$kern-$dom0arch-rumpuserxen-$rumparch \
+                      test-rumpuserxen xl \
+            $xenarch $dom0arch                                       \
+            rump_rumpuserxenbuildjob=build-$rumparch-rumpuserxen     \
+            all_hostflags=$most_hostflags
+}
+
 do_freebsd_tests () {
 
   if [ $xenarch != amd64 -o $dom0arch != i386 -o "$kern" != "" ]; then
@@ -292,14 +301,7 @@ test_matrix_do_one () {
   *)               test_xend=n ;;
   esac
 
-  rumparch=$dom0arch
-  if true; then
-      job_create_test test-$xenarch$kern-$dom0arch-rumpuserxen-$rumparch \
-                      test-rumpuserxen xl \
-            $xenarch $dom0arch                                       \
-            rump_rumpuserxenbuildjob=build-$rumparch-rumpuserxen     \
-            all_hostflags=$most_hostflags
-  fi
+  do_rumpkernel_tests
 
   # xend PV guest test on x86 only
   if [ x$test_xend = xy -a \( $dom0arch = "i386" -o $dom0arch = "amd64" \) ]; then
