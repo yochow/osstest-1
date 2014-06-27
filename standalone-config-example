@@ -30,3 +30,5 @@ DebianMirrorHost debian.uk.xensource.com
 DebianPreseed= <<'END'
 d-i clock-setup/ntp-server string ntp.uk.xensource.com
 END
+
+Repos= "$ENV{'HOME'}/osstest-repos"
