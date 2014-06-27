@@ -99,9 +99,17 @@ sub git_generator ($) {
     my $treename= $tree->{Treename};
     my $eff_url = git_massage_url($tree->{Url});
     my $upcmd= <<END;
-        set -e; exec >&2
-        rm -rf $c{Repos}/$treename
-        git clone --bare $eff_url $c{Repos}/$treename
+        set -xe; exec >&2
+        if ! sh -xe <<ENDIFCOND
+            # the "set -e"-disarmament done by "if" leaks into ( ) !
+	    cd $c{Repos}/$treename
+	    git remote set-url origin $eff_url
+	    git fetch -p origin
+ENDIFCOND
+	then
+            rm -rf $c{Repos}/$treename
+            git clone --bare $eff_url $c{Repos}/$treename
+	fi
 END
     print DEBUG "GIT-GEN UPCMD\n$upcmd\n";
     shellcmd($upcmd) if $doupdate;
