@@ -116,6 +116,8 @@ test_matrix_branch_filter_callback () {
 }
 
 do_rumpkernel_tests () {
+  branch_wants_rumpkernel_tests || return 0
+
   rumparch=$dom0arch
   job_create_test test-$xenarch$kern-$dom0arch-rumpuserxen-$rumparch \
                       test-rumpuserxen xl \

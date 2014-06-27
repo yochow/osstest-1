@@ -31,6 +31,16 @@ stripy () {
   eval "$out_vn=\"\$out_$out_val\""
 }
 
+branch_wants_rumpkernel_tests () {
+  case "$branch" in
+  osstest*) return 0;;
+  rump*)    return 0;;
+  xen*)     return 0;;
+  linux*)   return 0;;
+  *)        return 1;;
+  esac
+}
+
 create_build_jobs () {
 
   local arch
@@ -180,6 +190,8 @@ create_build_jobs () {
 
     fi
 
+    if branch_wants_rumpkernel_tests; then
+
     case $arch in
     i386|amd64)
     ./cs-job-create $flight build-$arch-rumpuserxen build-rumpuserxen        \
@@ -196,6 +208,8 @@ create_build_jobs () {
                 ${TREEVCS_RUMPUSERXEN_RUMPSRC:+treevcs_rumpuserxen_rumpsrc=}${TREEVCS_RUMPUSERXEN_RUMPSRC}
 		;;
     esac
+
+    fi
 
     case "$arch" in
     armhf) continue;; # don't do any other kernel builds
