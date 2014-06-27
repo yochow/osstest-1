@@ -1,0 +1,18 @@
+#!/usr/bin/perl -w
+# prints on stdout a list of all the "branches"
+# mentioned in cr-daily-branch or crontab
+
+use strict;
+
+our %branches;
+
+foreach my $f (qw(cr-for-branches crontab)) {
+    open C, $f or die $!;
+    while (<C>) {
+        next unless m/(?:EXTRA_)?BRANCHES[:+]?='?([-.0-9a-z ]+)/;
+        $branches{$_}=1 foreach split /\s+/, $1;
+    }
+    close C or die $!;
+}
+
+print $_,"\n" or die $! foreach sort keys %branches;
