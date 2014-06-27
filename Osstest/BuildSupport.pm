@@ -117,7 +117,10 @@ sub submodulefixup ($$$$) {
 		    $log1->("  recording url=$u");
 		    store_runvar($urv, $u);
 		}
-		my $nu = $submod->{Url} = git_massage_url($u);
+		my $nu = $submod->{Url} =
+		    git_massage_url($u, GitFetchBestEffort => 1);
+		# If we don't manage to fetch a version which contains the
+		# necessary commit(s), we will fail later.
 		$_ = "${l}${nu}\n";
 	    }
 	    print ::EO or die $!;
