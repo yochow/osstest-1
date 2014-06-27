@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# Prints the results of each cr-daily-branch's make-flight
+#
+# Usage:
+#    ./standalone-generate-dump-flight-runvars [BRANCH....]
+#
+# If no BRANCHes specified, does all that are normally run by
+# cr-daily-branch or out of crontab.
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2014 Citrix Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+set -o pipefail
+
+mkdir -p tmp
+
+procs=""
+
+if [ $# = 0 ]; then
+   set `./mg-list-all-branches`
+fi
+
+perbranch () {
+    log=tmp/make-flight.$branch.log
+    flight=check_${branch//[-._]/_}
+}
+
+for branch in $@; do
+    perbranch
+    ./standalone make-flight -f $flight $branch >$log 2>&1 &
+    procs+=" $branch=$!"
+done
+
+perproc () {
+    branch=${proc%=*}
+    pid=${proc##*=}
+    perbranch
+}
+
+for proc in $procs; do
+    perproc
+    if ! wait $pid; then
+       set +e
+       cat $log >&2
+       echo >&2 "make-flight $branch failed"
+       exit 1
+    fi
+done
+
+for proc in $procs; do
+    perproc
+    ./mg-show-flight-runvars $flight | sed "s/^/`printf '%-20s' $branch`/"
+done
