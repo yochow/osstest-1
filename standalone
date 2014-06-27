@@ -61,7 +61,7 @@ TEMP=$(getopt -o c:f:h:rR --long config:,flight:,host:,reuse,noreuse,reinstall,l
 
 eval set -- "$TEMP"
 
-config=$HOME/.xen-osstest/config
+config=${OSSTEST_CONFIG-$HOME/.xen-osstest/config}
 flight="standalone"
 host=
 reuse=1 # Don't blow away machines by default
