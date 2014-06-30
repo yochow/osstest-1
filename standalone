@@ -162,7 +162,7 @@ case $op in
 
         branch=$1; shift
 
-        DAILY_BRANCH_PREEXEC_HOOK=exit\ 0 \
+        DAILY_BRANCH_POSTMAKE_HOOK=exit\ 0 \
         OSSTEST_USE_HEAD=y \
         BRANCHES_ALWAYS="$branch" \
         BUILD_LVEXTEND_MAX="$lvextendmax" \
