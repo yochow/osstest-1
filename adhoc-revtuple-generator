@@ -104,7 +104,7 @@ sub git_generator ($) {
             # the "set -e"-disarmament done by "if" leaks into ( ) !
 	    cd $c{Repos}/$treename
 	    git remote set-url origin $eff_url
-	    git fetch -p origin
+	    git fetch -p origin '+refs/heads/*:refs/remotes/origin/*'
 ENDIFCOND
 	then
             rm -rf $c{Repos}/$treename
