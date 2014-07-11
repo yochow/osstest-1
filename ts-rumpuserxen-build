@@ -22,7 +22,7 @@ use Osstest::TestSupport;
 use Osstest::BuildSupport;
 
 tsreadconfig();
-selectbuildhost(@ARGV);
+selectbuildhost(\@ARGV);
 builddirsprops();
 
 our %submodmap = qw(nblibs nblibs

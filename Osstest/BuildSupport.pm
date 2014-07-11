@@ -56,8 +56,9 @@ our ($builddir,$makeflags);
 our ($xendist);
 
 sub selectbuildhost {
-    # pass @ARGV
-    ($whhost) = @_;
+    # pass \@ARGV
+    my ($av) = @_;
+    $whhost = shift @$av;
     $whhost ||= 'host';
     $ho= selecthost($whhost);
 }
