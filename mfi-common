@@ -206,6 +206,8 @@ create_build_jobs () {
                 revision_rumpuserxen=$REVISION_RUMPUSERXEN		\
                 tree_rumpuserxen_rumpsrc=$TREE_RUMPUSERXEN_RUMPSRC	\
                 ${TREEVCS_RUMPUSERXEN_RUMPSRC:+treevcs_rumpuserxen_rumpsrc=}${TREEVCS_RUMPUSERXEN_RUMPSRC}
+                # rumpsrc-related runvars needed only for old rumpuser-xen
+                # (ie ones which need $bodges=1 in ts-rumpuserxen-build)
 		;;
     esac
 

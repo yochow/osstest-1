@@ -26,38 +26,48 @@ selectbuildhost(@ARGV);
 builddirsprops();
 
 our %submodmap = qw(nblibs nblibs
-                    buildrump.sh buildrumpsh);
+                    buildrump.sh buildrumpsh
+                    rumpsrc netbsdsrc);
 
-our ($rux);
+our ($rux, $bodges);
 
 sub checkout () {
     prepbuilddirs();
     xendist();
 
     build_clone($ho, 'rumpuserxen', $builddir, 'rumpuserxen');
-    submodulefixup($ho, 'rumpuserxen', 'rumpuserxen', \%submodmap);
+    my $submodules =
+	submodulefixup($ho, 'rumpuserxen', 'rumpuserxen', \%submodmap);
     $rux = "$builddir/rumpuserxen";
 
-    my $rumpsrcgitrevr = "$rux/buildrump.sh/.srcgitrev";
-    my $rumpsrcgitrevl = "buildrump-srcgitrev";
-    my $rev = $r{revision_rumpuserxen_rumpsrc};
-    if (length $rev) {
-	target_putfilecontents_stash($ho,30,
-				     "$r{revision_rumpuserxen_rumpsrc}\n",
-				     $rumpsrcgitrevr, $rumpsrcgitrevl);
-    } else {
-	target_getfile($ho,30,$rumpsrcgitrevr,"$stash/$rumpsrcgitrevl");
-	$rev = get_filecontents("$stash/$rumpsrcgitrevl");
-	chomp $rev or die;
-	$rev =~ m/^[0-9a-f]+$/ or die;
-	store_runvar('revision_rumpuserxen_rumpsrc', $rev);
-    }
+    $bodges = submodule_have($submodules,'nblibs')
+	  && !submodule_have($submodules,'netbsdsrc');
 
-    build_clone($ho, "rumpuserxen_rumpsrc", $builddir, "rumpuserxen/rumpsrc");
-    store_vcs_revision('rumpuserxen_rumpsrc', $rev, 'git');
+    if ($bodges) {
+	my $rumpsrcgitrevr = "$rux/buildrump.sh/.srcgitrev";
+	my $rumpsrcgitrevl = "buildrump-srcgitrev";
+	my $rev = $r{revision_rumpuserxen_rumpsrc};
+	if (length $rev) {
+	    target_putfilecontents_stash($ho,30,
+					 "$r{revision_rumpuserxen_rumpsrc}\n",
+					 $rumpsrcgitrevr, $rumpsrcgitrevl);
+	} else {
+	    target_getfile($ho,30,$rumpsrcgitrevr,"$stash/$rumpsrcgitrevl");
+	    $rev = get_filecontents("$stash/$rumpsrcgitrevl");
+	    chomp $rev or die;
+	    $rev =~ m/^[0-9a-f]+$/ or die;
+	    store_runvar('revision_rumpuserxen_rumpsrc', $rev);
+	}
+
+	build_clone($ho, "rumpuserxen_rumpsrc", $builddir,
+		    "rumpuserxen/rumpsrc");
+	store_vcs_revision('rumpuserxen_rumpsrc', $rev, 'git');
+    }
 }
 
 sub massage() {
+    return unless $bodges;
+
     # Very poor
     target_editfile($ho, "$rux/buildxen.sh", undef,
 		    "$rux/grievous-bodge-nblibs", sub {

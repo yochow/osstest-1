@@ -46,6 +46,8 @@
 
 : ${TREE_RUMPUSERXEN_RUMPSRC:=$(besteffort_repo https://github.com/rumpkernel/rumpkernel-netbsd-src)}
 : ${TREEVCS_RUMPUSERXEN_RUMPSRC:=git}
+# rumpsrc-related runvars needed only for old rumpuser-xen
+# (ie ones which need $bodges=1 in ts-rumpuserxen-build)
 
 : ${TREE_SEABIOS_UPSTREAM:=git://git.seabios.org/seabios.git}
 : ${PUSH_TREE_SEABIOS:=$XENBITS:/home/xen/git/osstest/seabios.git}
