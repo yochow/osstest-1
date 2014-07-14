@@ -122,7 +122,7 @@ do_rumpkernel_tests () {
   job_create_test test-$xenarch$kern-$dom0arch-rumpuserxen-$rumparch \
                       test-rumpuserxen xl \
             $xenarch $dom0arch                                       \
-            rump_rumpuserxenbuildjob=build-$rumparch-rumpuserxen     \
+            guests_rumpuserxenbuildjob=build-$rumparch-rumpuserxen   \
             all_hostflags=$most_hostflags
 }
 
