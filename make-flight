@@ -124,6 +124,7 @@ do_rumpkernel_tests () {
             $xenarch $dom0arch                                       \
             guests_rumpuserxenbuildjob=build-$rumparch-rumpuserxen   \
      rump_builtimage=rumpuserxen:/usr/local/lib/xen/rump-kernel/rump-kernel \
+            rump_cmdline=3                                           \
             all_hostflags=$most_hostflags
 }
 
