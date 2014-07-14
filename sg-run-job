@@ -122,7 +122,7 @@ proc spawn-ts {iffail testid ts args} {
     set host_testid_suffix {}
     foreach arg $args {
         if {![string compare + $arg]} {
-            set adding 0
+            set adding [expr {!$adding}]
             continue
         }
         lappend real_args $arg
