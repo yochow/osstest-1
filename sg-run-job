@@ -315,6 +315,10 @@ proc run-job/test-rumpuserxen {} {
     run-ts . =   ts-rumpuserxen-demo-setup + host $g
     run-ts . =   ts-guest-start            + host $g
     run-ts . =   ts-guest-destroy          + host $g
+    set g xenstorels
+    run-ts . =   ts-rumpuserxen-demo-setup      + host + $g
+    run-ts . =   ts-rumpuserxen-demo-xenstorels + host + $g
+    run-ts . =   ts-guest-destroy-hard          + host + $g
 }
 
 #---------- builds ----------

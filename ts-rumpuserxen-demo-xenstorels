@@ -1,0 +1,111 @@
+#!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2014 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict qw(vars);
+use DBI;
+use Osstest;
+use Osstest::TestSupport;
+use Data::Dumper;
+
+tsreadconfig();
+
+our ($ho,$gho) = ts_get_host_guest(@ARGV);
+
+our $domid;
+
+our $gn = $gho->{Guest};
+
+sub start () {
+    my $cmd= toolstack()->{Command}." create ".
+        $r{ $gho->{Guest}.'_'. toolstack()->{CfgPathVar} };
+    target_cmd_root($ho, $cmd, 30);
+
+    $domid = target_cmd_output_root($ho,"xl domid $gho->{Guest}");
+}
+
+sub await_end () {
+    poll_loop(30,3, "await ending of $gho->{Guest}", sub {
+        my $st= guest_get_state($ho,$gho);
+	return undef if $st =~ m/s/;
+        return "guest state is $st";
+    });
+}
+
+our (%file);
+our (%output);
+
+sub stash ($$) {
+    my ($data, $what) = @_;
+    my $leaf = "xenstore-ls-device--$gn--$what";
+    my $stashh = open_unique_stashfile(\$leaf);
+    print $stashh $data or die $!;
+    close $stashh or die $!;
+    $file{$what} = "$stash/$leaf";
+}
+
+sub some_xenstorels ($$$) {
+    my ($what, $massage, $cmd) = @_;
+    $output{$what} = target_cmd_output_root($ho,$cmd);
+    stash($output{$what}, "$what-raw");
+    $massage->();
+    $output{$what} = join "\n", sort split /\n/, $output{$what};
+    $output{$what} .= "\n";
+    stash($output{$what}, "$what-massaged");
+}
+
+sub our_xenstorels () {
+    some_xenstorels('ours', sub {
+	$output{ours} =~ s{^/local/domain/$domid/}{}gm;
+    }, <<END);
+        xenstore-ls -fp /local/domain/$domid/device
+END
+}
+
+sub their_xenstorels () {
+    some_xenstorels('theirs', sub {
+	$output{theirs} =~ s{\r\n}{\n}g;
+	while ($output{theirs} =~ m{\n=== calling main\(\) ===\n\n}) {
+	    $output{theirs} = $'; #';
+	}
+	$output{theirs} =~ m{\n=== main\(\) returned (\d+) ===\n} or die;
+	$output{theirs} = $`;
+	die "$1 ?" if $1 ne '0';
+	$output{theirs} =~ s{^STUB \`\`\w+'' called\n}{}mg;
+    }, <<END);
+        cat /var/log/xen/console/guest-$gn.log
+END
+}
+
+sub check_output () {
+    eval {
+	our_xenstorels();
+	their_xenstorels();
+	1;
+    };
+    if ($@) {
+	die Dumper(\%output)."$@";
+    }
+    if ($output{ours} ne $output{theirs}) {
+	system qw(diff -u), map { $file{"$_-massaged"} } qw(ours theirs);
+	die "$? COMPARISON FAILED";
+    }
+}
+
+start();
+await_end();
+check_output();
+logm("all good.");
