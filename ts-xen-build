@@ -25,6 +25,7 @@ use Osstest::BuildSupport;
 
 tsreadconfig();
 selectbuildhost(\@ARGV);
+# remaining arguments are passed as targets to "make"
 builddirsprops();
     
 sub checkout () {
@@ -108,7 +109,7 @@ END
 END
 #/;
     buildcmd_stamped_logged(9000, 'build', '',<<END,'');
-            make $makeflags
+            make $makeflags @ARGV
 END
 }
 
