@@ -1061,9 +1061,12 @@ sub build_clone ($$$$) {
 	}
     }
 
+    my $rm = "rm -rf $subdir";
+
     if ($vcs eq 'hg') {
         
         target_cmd_build($ho, $timeout, $builddir, <<END.
+	    $rm
 	    hg clone '$tree' $subdir
 	    cd $subdir
 END
@@ -1075,6 +1078,7 @@ END
 	my $eff_tree = git_massage_url($tree);
 
         target_cmd_build($ho, $timeout, $builddir, <<END.
+            $rm
             git clone '$eff_tree' $subdir
             cd $subdir
 END

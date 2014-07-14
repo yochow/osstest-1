@@ -74,7 +74,7 @@ sub builddirsprops {
 
 sub prepbuilddirs {
     my (@xbuilddirs) = @_;
-    my $cmd = "rm -rf $builddir && mkdir $builddir";
+    my $cmd = "mkdir -p $builddir && rm -rf $builddir/*-stamp $builddir/dist";
     $cmd .= " && mkdir $builddir/$_" foreach @xbuilddirs;
     target_cmd($ho,$cmd,600);
 }
