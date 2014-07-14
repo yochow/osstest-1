@@ -94,6 +94,9 @@ sub build () {
     my $xend_opt= $r{enable_xend} =~ m/true/ ? "--enable-xend" : "--disable-xend";
     my $ovmf_opt= $r{enable_ovmf} =~ m/true/ ? "--enable-ovmf" : "--disable-ovmf";
 
+    my $configure_prefix = $r{cmdprefix_configure} // '';
+    my $make_prefix =      $r{cmdprefix_make}      // '';
+
     buildcmd_stamped_logged(600, 'configure', <<END,<<END,<<END);
             if test -f configure; then
                 if grep -q -- $xend_opt tools/configure ; then
@@ -103,13 +106,13 @@ sub build () {
                     ovmf=$ovmf_opt
                 fi
 END
-                ./configure --sysconfdir=/etc \$xend \$ovmf
+               $configure_prefix ./configure --sysconfdir=/etc \$xend \$ovmf
 END
             fi
 END
 #/;
     buildcmd_stamped_logged(9000, 'build', '',<<END,'');
-            make $makeflags @ARGV
+            $make_prefix make $makeflags @ARGV
 END
 }
 
