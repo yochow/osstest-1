@@ -338,6 +338,7 @@ proc run-job/build-libvirt {} {
 
 proc run-job/build-rumpuserxen {} {
     run-ts . = ts-rumpuserxen-build
+    run-ts . = ts-xen-build + host tools
 }
 
 proc prepare-build-host {} {

@@ -97,6 +97,12 @@ sub build() {
 END
 }
 
+sub recordtools() {
+    my $apptool = "$rux/app-tools/rumpxen-app";
+    store_runvar('cmdprefix_configure', "$apptool-configure");
+    store_runvar('cmdprefix_make',      "$apptool-make");
+}
+
 sub install() {
     my $destdir="dist/usr/local/lib/xen/rump-kernel";
     target_cmd_build($ho, 300, $builddir, <<END);
@@ -110,5 +116,6 @@ END
 checkout();
 massage();
 build();
+recordtools();
 install();
 built_stash($ho, $builddir, 'dist', 'rumpuserxendist');

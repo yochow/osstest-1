@@ -204,6 +204,10 @@ create_build_jobs () {
                 tree_rumpuserxen=$TREE_RUMPUSERXEN			\
           ${TREEVCS_RUMPUSERXEN:+treevcs_rumpuserxen=}${TREEVCS_RUMPUSERXEN} \
                 revision_rumpuserxen=$REVISION_RUMPUSERXEN		\
+                tree_xen=$TREE_XEN                                           \
+                tree_qemuu=$TREE_QEMU_UPSTREAM                               \
+                revision_xen=$REVISION_XEN                                   \
+                revision_qemuu=$REVISION_QEMU_UPSTREAM                       \
                 tree_rumpuserxen_rumpsrc=$TREE_RUMPUSERXEN_RUMPSRC	\
                 ${TREEVCS_RUMPUSERXEN_RUMPSRC:+treevcs_rumpuserxen_rumpsrc=}${TREEVCS_RUMPUSERXEN_RUMPSRC}
                 # rumpsrc-related runvars needed only for old rumpuser-xen
