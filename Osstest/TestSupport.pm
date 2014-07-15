@@ -1227,6 +1227,7 @@ sub selectguest ($$) {
     foreach my $opt (guest_var_commalist($gho,'options')) {
         $gho->{Options}{$opt}++;
     }
+    logm("guest: using $gn on $gho->{Host}{Name}");
     guest_find_lv($gho);
     guest_find_ether($gho);
     guest_find_tcpcheckport($gho);
