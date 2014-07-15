@@ -42,7 +42,7 @@ sub prep () {
 
     my @images;
 
-    my $jobdir = target_jobdir($ho);
+    my $fsimagesdir = target_jobdir($ho)."/$gn-images";
 
     my $cfgfile = "$gn.cfg";
     my $cfgpath = "/etc/xen/$cfgfile";
@@ -62,7 +62,7 @@ sub prep () {
 	    if ($in eq 'disk') {
 		s{\b img/(\w+.ffs) \b}{
                     push @images, $1;
-                    "$jobdir/$1";
+                    "$fsimagesdir/$1";
                 }xeg;
 	    }
 
@@ -72,8 +72,11 @@ sub prep () {
 
     store_runvar("$gho->{Guest}_cfgpath", $cfgpath);
 
-    target_cmd($ho, "cp $rkdist/img/$_ $jobdir/$_", 200)
-	foreach @images;
+    target_cmd($ho, <<END.(join "\n", map { <<END; } @images), 200);
+                   mkdir -p $fsimagesdir
+END
+                   cp $cfg_rkdist/img/$_ $fsimagesdir/$_
+END
 }
 
 prep();
