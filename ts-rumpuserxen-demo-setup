@@ -35,10 +35,19 @@ our $rkdist;
 sub prep () {
     $gho = prepareguest($ho, $gn, $gn, 4096, undef, 30);
 
+    my $cfg_rkdist = target_extract_jobdistpath_subdir
+	($ho, 'rumpuserxen--base', 'rumpuserxen',
+	 $r{guests_rumpuserxenbuildjob});
+    $cfg_rkdist .= '/usr/local/lib/xen/rump-kernel';
+
     my $buildjob = guest_var($gho, 'rumpuserxenbuildjob', undef);
+    my $builtimage = guest_var($gho, 'builtimage', undef);
+    $builtimage =~ m/\:/ or die "$builtimage ?";
+    my $builtimage_part = $`;
+    my $builtimage_subpath = $'; #';
     $rkdist = target_extract_jobdistpath_subdir
-	($ho, 'rumpuserxen', 'rumpuserxen', $buildjob);
-    $rkdist .= '/usr/local/lib/xen/rump-kernel';
+	($ho, "rumpuserxen-$gn", $builtimage_part, $buildjob);
+    my $imagefile = $rkdist.$builtimage_subpath;
 
     my @images;
 
@@ -46,7 +55,7 @@ sub prep () {
 
     my $cfgfile = "$gn.cfg";
     my $cfgpath = "/etc/xen/$cfgfile";
-    target_editfile_root($ho, "$rkdist/domain_config", $cfgfile, $cfgpath,
+    target_editfile_root($ho, "$cfg_rkdist/domain_config", $cfgfile, $cfgpath,
 			 sub {
 	while (<EI>) {
 	    next if m/^\s*\#/;
@@ -55,7 +64,7 @@ sub prep () {
 	    my $in = $& if m/^\w\S*/;
 
 	    s# = .*              # " = '$gn'"          #xe  if $in eq 'name';
-	    s# =\s* ['"](.*)['"] # " = '$rkdist/$1'"   #xe  if $in eq 'kernel';
+	    s# = .*              # " = '$imagefile'"   #xe  if $in eq 'kernel';
 	    s#\b mac=[0-9a-f:]+  # "mac=$gho->{Ether}" #xe  if $in eq 'vif';
 	    s#\b 4             \b# 3                   #xe  if $in eq 'extra';
 

@@ -123,6 +123,7 @@ do_rumpkernel_tests () {
                       test-rumpuserxen xl \
             $xenarch $dom0arch                                       \
             guests_rumpuserxenbuildjob=build-$rumparch-rumpuserxen   \
+     rump_builtimage=rumpuserxen:/usr/local/lib/xen/rump-kernel/rump-kernel \
             all_hostflags=$most_hostflags
 }
 
