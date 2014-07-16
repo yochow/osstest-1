@@ -102,7 +102,9 @@ test_matrix_branch_filter_callback () {
         linux-3.4) return 1;;
         linux-mingo-tip-master) return 1;;
         linux-*) ;;
-        qemu-*) return 1;;
+        qemu-upstream-4.2-testing) return 1;;
+        qemu-upstream-4.3-testing) return 1;;
+        qemu-upstream-4.4-testing) return 1;;
         esac
         ;;
   i386|amd64)

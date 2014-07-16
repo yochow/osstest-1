@@ -61,7 +61,9 @@ create_build_jobs () {
       linux-3.4) continue;;
       linux-mingo-tip-master) continue;;
       linux-*) ;;
-      qemu-*) continue;;
+      qemu-upstream-4.2-testing) continue;;
+      qemu-upstream-4.3-testing) continue;;
+      qemu-upstream-4.4-testing) continue;;
       rumpuserxen) continue;;
       seabios) continue;;
       esac
