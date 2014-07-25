@@ -74,20 +74,19 @@ $ cd branches
 ($branch sort of matching ap-fetch-version modulo wildcards and must
 match cron invocation)
 
+$ cd ~osstest/branches
+$ umask 002
 $ git clone ../testing.git for-$branch.git
-$ chmod g+w for-$branch.git
-# (chmod to workaround umask settings)
 
 If you want to bisect then:
 $ cd ../bisects
 $ git clone ../testing.git for-$branch.git
-$ chmod g+w for-$branch.git
 
-Back to branches
+$ cd ../branches
 $ ln -s /export/home/osstest/bisects/for-$branch.git for-$branch.git/tree-bisect
 
 $ mkdir for-$branch.git/tmp
-# For manual playing only, probably.
+# For manual playing only.
 
 Now can play in here. Can push random stuff and run
 "cr-daily-branch --real $branch" as osstest@osstest. e.g.
