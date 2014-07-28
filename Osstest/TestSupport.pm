@@ -528,8 +528,9 @@ sub target_cmd_build ($$$$) {
     my $distcc_hosts = get_host_property($ho,'DistccHosts',undef);
     my $distcc = defined($distcc_hosts) ? <<END : "";
         CCACHE_PREFIX=distcc
+        DISTCC_FALLBACK=0
         DISTCC_HOSTS="$distcc_hosts"
-        export CCACHE_PREFIX DISTCC_HOSTS
+        export CCACHE_PREFIX DISTCC_FALLBACK DISTCC_HOSTS
 END
 
     target_cmd($ho, <<END.$distcc.<<END.$script, $timeout);
