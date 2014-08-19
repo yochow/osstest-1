@@ -751,8 +751,11 @@ sub selecthost ($) {
         Name => $name,
         TcpCheckPort => 22,
         Info => [],
-        Suite => get_runvar_default("${ident}_suite",$job,$c{DebianSuite}),
     };
+    if (defined $job) {
+	$ho->{Suite} = get_runvar_default("${ident}_suite",$job,
+					  $c{DebianSuite});
+    }
 
     #----- calculation of the host's properties -----
 

@@ -42,6 +42,8 @@ $ mg-hosts setprops marilith-n4 -- dhcp-watch-method 'leases dhcp3 dns-cam1.uk.x
 Handles multiple hosts:
 $ mg-hosts setprops HOSTA HOSTB -- "PROP" "VALUE"
 
+$ mg-hosts mkpxedir HOSTA HOSTB
+
 Create a flight:
 $ FLIGHT=`OSSTEST_CONFIG=production-config ./cs-flight-create commission xen-unstable`
 $ echo $FLIGHT
