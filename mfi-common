@@ -73,10 +73,6 @@ create_build_jobs () {
       xen-4.1-testing) continue;;
       xen-4.2-testing) continue;;
       esac
-      pvops_kernel="
-        tree_linux=$TREE_LINUX_ARM
-        revision_linux=${REVISION_LINUX_ARM:-${DEFAULT_REVISION_LINUX_ARM}}
-      "
       pvops_kconfig_overrides="
         kconfig_override_y=CONFIG_EXT4_FS
       "
@@ -85,12 +81,15 @@ create_build_jobs () {
       case "$branch" in
       linux-arm-xen) continue;;
       esac
+      ;;
+    esac
+
+    if [ "x$pvops_kernel" = x ] ; then
       pvops_kernel="
         tree_linux=$TREE_LINUX
         revision_linux=${REVISION_LINUX:-${DEFAULT_REVISION_LINUX}}
       "
-      ;;
-    esac
+    fi
 
     case "$arch" in
     *)     suite=$defsuite;;
