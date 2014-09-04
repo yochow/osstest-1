@@ -59,7 +59,7 @@
 
 : ${PUSH_TREE_LINUX:=$XENBITS:/home/xen/git/linux-pvops.git}
 : ${BASE_TREE_LINUX:=git://xenbits.xen.org/linux-pvops.git}
-: ${BASE_TAG_LINUX:=tested/linux-3.4}
+: ${BASE_TAG_LINUX:=tested/linux-3.14}
 : ${BASE_TAG_LINUX_ARM:=tested/linux-arm-xen}
 
 if [ "x${TREE_LINUX}" = x ]; then
