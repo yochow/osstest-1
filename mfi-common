@@ -41,6 +41,19 @@ branch_wants_rumpkernel_tests () {
   esac
 }
 
+xenbranch_xsm_variants () {
+    case "$xenbranch" in
+    xen-3.*-testing) echo "false";;
+    xen-4.0-testing) echo "false";;
+    xen-4.1-testing) echo "false";;
+    xen-4.2-testing) echo "false";;
+    xen-4.3-testing) echo "false";;
+    xen-4.4-testing) echo "false";;
+    xen-4.5-testing) echo "false";;
+    *) echo "false true";
+    esac
+}
+
 create_build_jobs () {
 
   local arch
@@ -141,8 +154,15 @@ create_build_jobs () {
 
     build_hostflags=share-build-$suite-$arch,arch-$arch,suite-$suite,purpose-build
 
-    ./cs-job-create $flight build-$arch build                                \
+    for enable_xsm in $(xenbranch_xsm_variants) ; do
+      if [ x$enable_xsm = xtrue ] ; then
+        xsm_suffix="-xsm"
+      else
+        xsm_suffix=""
+      fi
+      ./cs-job-create $flight build-$arch$xsm_suffix build                   \
                 arch=$arch enable_xend=$build_defxend enable_ovmf=$enable_ovmf\
+                enable_xsm=$enable_xsm                                       \
         tree_qemu=$TREE_QEMU                                                 \
         tree_qemuu=$TREE_QEMU_UPSTREAM                                       \
         tree_xen=$TREE_XEN                                                   \
@@ -156,6 +176,7 @@ create_build_jobs () {
                 revision_qemuu=$REVISION_QEMU_UPSTREAM                       \
                 revision_seabios=$REVISION_SEABIOS                           \
                 revision_ovmf=$REVISION_OVMF
+    done
 
     if [ $build_extraxend = "true" ] ; then
     ./cs-job-create $flight build-$arch-xend build                           \
