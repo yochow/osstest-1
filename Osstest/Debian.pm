@@ -153,6 +153,25 @@ sub setupboot_uboot ($$$$) {
 	my $kern = "vmlinuz-$want_kernver";
 	my $initrd = "initrd.img-$want_kernver";
 
+	my $flask_commands = "";
+	if ($want_xsm) {
+	    # Use the flaskpolicy from tools build job because we might
+	    # want to test cross releases policy compatibility.
+	    my $flaskpolicy = get_runvar('flaskpolicy',$r{buildjob});
+	    $xenhopt .= " flask=enforcing";
+	    $flask_commands = <<END;
+
+setenv flask_policy_addr_r 0x1200000
+flaskpolicy=`readlink /boot/$flaskpolicy`
+ext2load scsi 0 \\\${flask_policy_addr_r} \$flaskpolicy
+fdt mknod /chosen module\@2
+fdt set /chosen/module\@2 compatible "xen,xsm-policy" "xen,multiboot-module"
+fdt set /chosen/module\@2 reg <\\\${flask_policy_addr_r} \\\${filesize}>
+echo Loaded $flaskpolicy to \\\${flask_policy_addr_r} (\\\${filesize})
+
+END
+	}
+
 	logm("Xen options: $xenhopt");
 
 	# Common kernel options
@@ -240,6 +259,8 @@ fdt mknod /chosen module\@1
 fdt set /chosen/module\@1 compatible "xen,linux-initrd" "xen,multiboot-module"
 fdt set /chosen/module\@1 reg <\\\${ramdisk_addr_r} ${size_hex_prefix}\\\${filesize}>
 echo Loaded $initrd to \\\${ramdisk_addr_r} (\\\${filesize})
+
+${flask_commands}
 
 fdt chosen
 
