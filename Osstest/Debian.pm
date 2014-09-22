@@ -47,9 +47,9 @@ BEGIN {
 
 #---------- manipulation of Debian bootloader setup ----------
 
-sub debian_boot_setup ($$$$;$) {
+sub debian_boot_setup ($$$$$;$) {
     # $xenhopt==undef => is actually a guest, do not set up a hypervisor
-    my ($ho, $want_kernver, $xenhopt, $distpath, $hooks) = @_;
+    my ($ho, $want_kernver, $want_xsm, $xenhopt, $distpath, $hooks) = @_;
 
     target_kernkind_check($ho);
     target_kernkind_console_inittab($ho,$ho,"/");
@@ -74,11 +74,14 @@ sub debian_boot_setup ($$$$;$) {
 
     my $bootloader;
     if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
-	$bootloader= setupboot_uboot($ho, $want_kernver, $xenhopt, $kopt);
+        $bootloader= setupboot_uboot($ho, $want_kernver,
+                                     $want_xsm, $xenhopt, $kopt);
     } elsif ($ho->{Suite} =~ m/lenny/) {
-        $bootloader= setupboot_grub1($ho, $want_kernver, $xenhopt, $kopt);
+        $bootloader= setupboot_grub1($ho, $want_kernver,
+                                     $want_xsm, $xenhopt, $kopt);
     } else {
-        $bootloader= setupboot_grub2($ho, $want_kernver, $xenhopt, $kopt);
+        $bootloader= setupboot_grub2($ho, $want_kernver,
+                                     $want_xsm, $xenhopt, $kopt);
     }
 
     $bootloader->{UpdateConfig}($ho);
@@ -138,8 +141,9 @@ if test -z "\${fdt_addr}" && test -n "\${fdtfile}" ; then
 fi
 END
 }
-sub setupboot_uboot ($$$) {
-    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
+
+sub setupboot_uboot ($$$$) {
+    my ($ho,$want_kernver,$want_xsm,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     $bl->{UpdateConfig}= sub {
@@ -272,12 +276,16 @@ END
     return $bl;
 }
 
-sub setupboot_grub1 ($$$) {
-    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
+sub setupboot_grub1 ($$$$) {
+    my ($ho,$want_kernver,$want_xsm,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= "/boot/grub/menu.lst";
     my $lmenu= "$stash/$ho->{Name}--menu.lst.out";
+
+    if ($want_xsm) {
+	die "Enabling XSM with GRUB is not supported";
+    }
 
     target_editfile_root($ho, $rmenu, sub {
         while (<::EI>) {
@@ -357,8 +365,8 @@ sub setupboot_grub1 ($$$) {
 # Xen kernels"
 # Currently setupboot_grub2 relies on Grub menu not having submenu.
 # Check Debian bug #690538.
-sub setupboot_grub2 ($$$) {
-    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
+sub setupboot_grub2 ($$$$) {
+    my ($ho,$want_kernver,$want_xsm,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= '/boot/grub/grub.cfg';
@@ -385,6 +393,9 @@ sub setupboot_grub2 ($$$) {
 			 $entry->{KernVer} ne $want_kernver) {
 		    logm("(skipping entry at $entry->{StartLine};".
 			 " kernel $entry->{KernVer}, not $want_kernver)");
+		} elsif ($want_xsm && !defined $entry->{Xenpolicy}) {
+		    logm("(skipping entry at $entry->{StartLine};".
+			 " XSM policy file not present)");
 		} else {
 		    # yes!
 		    last;
@@ -416,6 +427,9 @@ sub setupboot_grub2 ($$$) {
             }
             if (m/^\s*module\s*\/(initrd\S+)/) {
                 $entry->{Initrd}= $1;
+            }
+	    if (m/^\s*module\s*\/(xenpolicy\S+)/) {
+                $entry->{Xenpolicy}= $1;
             }
         }
         die 'grub 2 bootloader entry not found' unless $entry;

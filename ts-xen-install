@@ -179,7 +179,7 @@ sub setupboot () {
     }
 
     my $want_kernver = get_runvar('kernel_ver',$r{'kernbuildjob'});
-    debian_boot_setup($ho, $want_kernver, $xenhopt, \%distpath, \@hooks);
+    debian_boot_setup($ho, $want_kernver, 0, $xenhopt, \%distpath, \@hooks);
 
     logm("ready to boot Xen");
 }
