@@ -34,10 +34,10 @@ use Osstest::Executive;
 
 our $specflight;
 our %specver;
-our @blessings;
+our (@blessings, @branches_also);
 our $mro;
 our $htmldir;
-our $branch;
+our ($branch, $branches_cond_q);
 our @allows;
 our (@includebeginfiles,@includefiles);
 
@@ -58,6 +58,8 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
         $htmldir= $1;
     } elsif (m/^--blessings?=(.*)$/) {
         push @blessings, split ',', $1;
+    } elsif (m/^--branches-also?=(.*)$/) {
+        push @branches_also, split ',', $1;
     } elsif (m/^--include-begin=(.*)$/) {
         push @includebeginfiles, $1;
     } elsif (m/^--include=(.*)$/) {
@@ -135,6 +137,12 @@ sub displayflightnum ($) {
     }
 }
 
+sub compute_branches_cond () {
+    $branches_cond_q = "(".(join ' OR ',
+			    map { "branch='$_'" }
+			    ($branch, @branches_also)).")";
+}
+
 sub findaflight ($$$$$) {
     my ($thisthat, $exceptflight, $job, $testid, $sub) = @_;
 
@@ -166,7 +174,7 @@ END
     my $flightsq= <<END;
       SELECT * FROM (
         SELECT flight, blessing FROM flights
-            WHERE branch=?
+            WHERE $branches_cond_q
               AND $blessingscond
             ORDER BY flight DESC
             LIMIT 1000
@@ -175,7 +183,7 @@ END
 END
     #print DEBUG "===\n$flightsq\n===\n";
     $flightsq= $dbh_tests->prepare($flightsq);
-    $flightsq->execute($branch, @blessings);
+    $flightsq->execute(@blessings);
 
     my $buildflightsq= $dbh_tests->prepare(<<END);
         SELECT val FROM runvars
@@ -263,7 +271,9 @@ sub findspecflight () {
             SELECT branch FROM flights WHERE flight=?
 END
         die "$specflight branch ?" unless defined $branch;
+	compute_branches_cond();
     } else {
+	compute_branches_cond();
         $specflight= findaflight('this', undef,undef,undef,
                                  sub { return undef; });
         die unless defined $specflight;
@@ -596,7 +606,7 @@ sub justifyfailures ($;$) {
 
     my $anypassq= <<END;
         SELECT * FROM flights JOIN steps USING (flight)
-            WHERE branch=?
+            WHERE $branches_cond_q
               AND job=? and testid=? and status='pass'
               AND $blessingscond
             LIMIT 1
@@ -645,7 +655,7 @@ END
             next;
         }
 
-        $anypassq->execute($branch, $j->{job}, $s->{testid}, @blessings);
+        $anypassq->execute($j->{job}, $s->{testid}, @blessings);
         if (!$anypassq->fetchrow_hashref()) {
             print MRO "never-passed $j->{job} $s->{testid} $st\n";
             print DEBUG " never passed\n";

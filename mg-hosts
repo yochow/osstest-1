@@ -85,6 +85,7 @@
 use strict qw(vars refs);
 use DBI;
 use Osstest;
+use Osstest::TestSupport;
 
 csreadconfig();
 
@@ -103,6 +104,7 @@ sub l ($) { return split /,/, $_[0]; }
 
 sub cmd_mkpxedir () {
     die unless @ARGV>=1;
+    my $sudo = $ENV{'OSSTEST_SUDO'} // 'sudo';
     foreach my $hn (@ARGV) {
         my $ho= selecthost("host=$hn");
         my $macdir= $ho->{Ether};
@@ -110,10 +112,10 @@ sub cmd_mkpxedir () {
         system_checked(<<END);
             set -e
 	    cd $ho->{Tftp}{Path}$ho->{Tftp}{PxeDir}
-            sudo chown root.$ho->{Tftp}{PxeGroup} $macdir
-            sudo chmod 2775 $macdir
-            sudo rm -f $hn
-            sudo ln -s $macdir $hn
+            $sudo chown root.$ho->{Tftp}{PxeGroup} $macdir
+            $sudo chmod 2775 $macdir
+            $sudo rm -f $hn
+            $sudo ln -s $macdir $hn
             ls -ald $hn $macdir
 END
     }

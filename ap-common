@@ -39,7 +39,7 @@
 
 : ${TREE_GNULIB_LIBVIRT:=$(besteffort_repo git://git.sv.gnu.org/gnulib.git)}
 
-: ${TREE_RUMPUSERXEN:=https://github.com/rumpkernel/rumpuser-xen}
+: ${TREE_RUMPUSERXEN:=https://github.com/rumpkernel/rumprun-xen}
 : ${TREEVCS_RUMPUSERXEN:=git}
 : ${BASE_TREE_RUMPUSERXEN:=git://xenbits.xen.org/rumpuser-xen.git}
 : ${PUSH_TREE_RUMPUSERXEN:=$XENBITS:/home/xen/git/rumpuser-xen.git}
