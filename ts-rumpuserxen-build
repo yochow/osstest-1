@@ -89,7 +89,7 @@ sub massage() {
 }
 
 sub build() {
-    target_cmd_build($ho, 3600, $rux, <<END);
+    target_cmd_build($ho, 7200, $rux, <<END);
         export XEN_HEADERS=$xendist/usr/local/include/xen
         (./buildxen.sh && touch ../build-ok-stamp) |tee ../log
         test -f ../build-ok-stamp #/
