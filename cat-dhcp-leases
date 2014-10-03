@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+cd /var/lib/dhcp3
+for f in dhcpd.leases dhcpd.leases~; do
+    if (exec 3>&2 2>/dev/null <$f 2>&3 3>&- cat); then exit 0; fi
+done
+echo '# CANNOT OPEN ANY LEASES FILE'
