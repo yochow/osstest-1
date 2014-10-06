@@ -73,7 +73,7 @@ for branch in $BRANCHES; do
 
 		mkdir -p tmp
 
-		savelog -c 28 -n 500 $LOGFILE >/dev/null
+		savelog -c 300 -n $LOGFILE >/dev/null
 		exec >>$LOGFILE
 
 		log () {
