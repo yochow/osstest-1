@@ -647,6 +647,11 @@ END
             $failv->{Blocker}= '';
 	    next;
 	}
+
+	if ($st eq 'broken' && !$heisen_why) {
+	    print MRO "broken-step $s->{job} $s->{testid}\n";
+	}
+
         if (!($st eq 'fail' or $st eq 'broken')) {
             print MRO "broken $j->{job} $s->{testid} $st\n";
             print DEBUG " not a fail, unjustifiable\n";

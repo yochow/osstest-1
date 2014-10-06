@@ -312,7 +312,7 @@ if test -f $branch.force; then push=$OSSTEST_PUSH; fi
 if grep -xF $NEW_REVISION $branch.force-rev; then push=$OSSTEST_PUSH; fi
 if test -f $branch.block; then push=false; fi
 
-if test -e $mrof && test -e $tree_bisect; then
+if test -e $mrof && test -e $tree_bisect && ! grep '^broken' $mrof; then
 	with-lock-ex -w $tree_bisect/$mrof.lock bash -xec "
 		rm -f $tree_bisect/$mrof.in.new
 		cp $mrof $tree_bisect/$mrof.in.new
