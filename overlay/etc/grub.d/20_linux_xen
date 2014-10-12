@@ -1,7 +1,7 @@
 #! /bin/sh
 
-# Copied from the identically named file in grub-common 1.98+20100804-14
-# i386.  This version fixes #633127 (and has the patch I proposed there).
+# Copied from the identically named file in grub-common 1.99-27+deb7u2.
+# This version fixed Debian bug #690538 and GRUB bug #43420.
 
 set -e
 
@@ -21,14 +21,14 @@ set -e
 # You should have received a copy of the GNU General Public License
 # along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
 
-prefix=/usr
-exec_prefix=${prefix}
-bindir=${exec_prefix}/bin
-libdir=${exec_prefix}/lib
-. ${libdir}/grub/grub-mkconfig_lib
+prefix="/usr"
+exec_prefix="${prefix}"
+datarootdir="${prefix}/share"
+
+. "${datarootdir}/grub/grub-mkconfig_lib"
 
 export TEXTDOMAIN=grub
-export TEXTDOMAINDIR=${prefix}/share/locale
+export TEXTDOMAINDIR="${datarootdir}/locale"
 
 CLASS="--class gnu-linux --class gnu --class os --class xen"
 
@@ -36,7 +36,7 @@ if [ "x${GRUB_DISTRIBUTOR}" = "x" ] ; then
   OS=GNU/Linux
 else
   OS="${GRUB_DISTRIBUTOR} GNU/Linux"
-  CLASS="--class $(echo ${GRUB_DISTRIBUTOR} | tr '[A-Z]' '[a-z]' | cut -d' ' -f1) ${CLASS}"
+  CLASS="--class $(echo ${GRUB_DISTRIBUTOR} | tr 'A-Z' 'a-z' | cut -d' ' -f1) ${CLASS}"
 fi
 
 # loop-AES arranges things so that /dev/loop/X can be our root device, but
@@ -44,6 +44,11 @@ fi
 case ${GRUB_DEVICE} in
   /dev/loop/*|/dev/loop[0-9])
     GRUB_DEVICE=`losetup ${GRUB_DEVICE} | sed -e "s/^[^(]*(\([^)]\+\)).*/\1/"`
+    # We can't cope with devices loop-mounted from files here.
+    case ${GRUB_DEVICE} in
+      /dev/*) ;;
+      *) exit 0 ;;
+    esac
   ;;
 esac
 
@@ -55,6 +60,23 @@ else
   LINUX_ROOT_DEVICE=UUID=${GRUB_DEVICE_UUID}
 fi
 
+# Allow overriding GRUB_CMDLINE_LINUX and GRUB_CMDLINE_LINUX_DEFAULT.
+if [ "${GRUB_CMDLINE_LINUX_XEN_REPLACE}" ]; then
+  GRUB_CMDLINE_LINUX="${GRUB_CMDLINE_LINUX_XEN_REPLACE}"
+fi
+if [ "${GRUB_CMDLINE_LINUX_XEN_REPLACE_DEFAULT}" ]; then
+  GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_XEN_REPLACE_DEFAULT}"
+fi
+
+if [ "x`${grub_probe} --device ${GRUB_DEVICE} --target=fs 2>/dev/null || true`" = xbtrfs ] \
+    || [ "x`stat -f --printf=%T /`" = xbtrfs ]; then
+  rootsubvol="`make_system_path_relative_to_its_root /`"
+  rootsubvol="${rootsubvol#/}"
+  if [ "x${rootsubvol}" != x ]; then
+    GRUB_CMDLINE_LINUX="rootflags=subvol=${rootsubvol} ${GRUB_CMDLINE_LINUX}"
+  fi
+fi
+
 linux_entry ()
 {
   os="$1"
@@ -63,22 +85,43 @@ linux_entry ()
   recovery="$4"
   args="$5"
   xen_args="$6"
-  if ${recovery} ; then
-    title="$(gettext_quoted "%s, with Linux %s and XEN %s (recovery mode)")"
+  xsm="$7"
+  # If user wants to enable XSM support, make sure there's
+  # corresponding policy file.
+  if ${xsm} ; then
+      xenpolicy=`echo xenpolicy-$xen_version`
+      if test ! -e "${xen_dirname}/${xenpolicy}" ; then
+	  return
+      fi
+      xen_args=`echo $xen_args flask=enforcing`
+      if ${recovery} ; then
+	  title="$(gettext_quoted "%s, with Xen %s (XSM enabled) and Linux %s (recovery mode)")"
+      else
+	  title="$(gettext_quoted "%s, with Xen %s (XSM enabled) and Linux %s")"
+      fi
   else
-    title="$(gettext_quoted "%s, with Linux %s and XEN %s")"
+      xenpolicy=""
+      if ${recovery} ; then
+	  title="$(gettext_quoted "%s, with Xen %s and Linux %s (recovery mode)")"
+      else
+	  title="$(gettext_quoted "%s, with Xen %s and Linux %s")"
+      fi
   fi
-  printf "menuentry '${title}' ${CLASS} {\n" "${os}" "${version}" "${xen_version}"
-  save_default_entry | sed -e "s/^/\t/"
+  printf "menuentry '${title}' ${CLASS} {\n" "${os}" "${xen_version}" "${version}"
+  if ! ${recovery} ; then
+      save_default_entry | sed -e "s/^/\t/"
+  fi
 
   if [ -z "${prepare_boot_cache}" ]; then
     prepare_boot_cache="$(prepare_grub_to_access_device ${GRUB_DEVICE_BOOT} | sed -e "s/^/\t/")"
   fi
   printf '%s\n' "${prepare_boot_cache}"
-  message="$(gettext_printf "Loading Linux %s ..." ${version})"
+  xmessage="$(gettext_printf "Loading Xen %s ..." ${xen_version})"
+  lmessage="$(gettext_printf "Loading Linux %s ..." ${version})"
   cat << EOF
-	echo	'$message'
+	echo	'$xmessage'
 	multiboot	${rel_xen_dirname}/${xen_basename} placeholder ${xen_args}
+	echo	'$lmessage'
 	module	${rel_dirname}/${basename} placeholder root=${linux_root_device_thisversion} ro ${args}
 EOF
   if test -n "${initrd}" ; then
@@ -88,17 +131,37 @@ EOF
 	module	${rel_dirname}/${initrd}
 EOF
   fi
+  if test -n "${xenpolicy}" ; then
+    message="$(gettext_printf "Loading XSM policy ...")"
+    cat << EOF
+	echo	'$message'
+	module	${rel_dirname}/${xenpolicy}
+EOF
+  fi
   cat << EOF
 }
 EOF
 }
 
-linux_list=`for i in /boot/vmlinu[xz]-* /vmlinu[xz]-* ; do
+linux_list=`for i in /boot/vmlinu[xz]-* /vmlinu[xz]-* /boot/kernel-*; do
+    if grub_file_is_not_garbage "$i"; then
     	basename=$(basename $i)
 	version=$(echo $basename | sed -e "s,^[^0-9]*-,,g")
-        if grub_file_is_not_garbage "$i" && grep -qx 'CONFIG_XEN_\(DOM0\|PRIVILEGED_GUEST\)=y' /boot/config-${version} 2> /dev/null ; then echo -n "$i " ; fi
-      done`
-xen_list=`for i in /boot/xen*; do
+	dirname=$(dirname $i)
+	config=
+	for j in "${dirname}/config-${version}" "${dirname}/config-${alt_version}" "/etc/kernels/kernel-config-${version}" ; do
+	    if test -e "${j}" ; then
+		config="${j}"
+		break
+	    fi
+	done
+        if (grep -qx "CONFIG_XEN_DOM0=y" "${config}" 2> /dev/null || grep -qx "CONFIG_XEN_PRIVILEGED_GUEST=y" "${config}" 2> /dev/null); then echo -n "$i " ; fi
+    fi
+    done`
+if [ "x${linux_list}" = "x" ] ; then
+    exit 0
+fi
+xen_list=`for i in /boot/xen[-.]*; do
         if grub_file_is_not_garbage "$i" ; then echo -n "$i " ; fi
       done`
 prepare_boot_cache=
@@ -123,7 +186,9 @@ while [ "x${xen_list}" != "x" ] ; do
 	initrd=
 	for i in "initrd.img-${version}" "initrd-${version}.img" \
 	    "initrd-${version}" "initrd.img-${alt_version}" \
-	    "initrd-${alt_version}.img" "initrd-${alt_version}"; do
+	    "initrd-${alt_version}.img" "initrd-${alt_version}" \
+	    "initramfs-genkernel-${version}" \
+	    "initramfs-genkernel-${alt_version}" ; do
 	    if test -e "${dirname}/${i}" ; then
 		initrd="$i"
 		break
@@ -137,10 +202,14 @@ while [ "x${xen_list}" != "x" ] ; do
 	fi
 
 	linux_entry "${OS}" "${version}" "${xen_version}" false \
-	    "${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}" "${GRUB_CMDLINE_XEN} ${GRUB_CMDLINE_XEN_DEFAULT}"
-	if [ "x${GRUB_DISABLE_LINUX_RECOVERY}" != "xtrue" ]; then
+	    "${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}" "${GRUB_CMDLINE_XEN} ${GRUB_CMDLINE_XEN_DEFAULT}" false
+	linux_entry "${OS}" "${version}" "${xen_version}" false \
+	    "${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}" "${GRUB_CMDLINE_XEN} ${GRUB_CMDLINE_XEN_DEFAULT}" true
+	if [ "x${GRUB_DISABLE_RECOVERY}" != "xtrue" ]; then
 	    linux_entry "${OS}" "${version}" "${xen_version}" true \
-		"single ${GRUB_CMDLINE_LINUX}" "${GRUB_CMDLINE_XEN}"
+		"single ${GRUB_CMDLINE_LINUX}" "${GRUB_CMDLINE_XEN}" false
+	    linux_entry "${OS}" "${version}" "${xen_version}" true \
+		"single ${GRUB_CMDLINE_LINUX}" "${GRUB_CMDLINE_XEN}" true
 	fi
 
 	list=`echo $list | tr ' ' '\n' | grep -vx $linux | tr '\n' ' '`

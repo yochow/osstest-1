@@ -352,6 +352,11 @@ sub setupboot_grub1 ($$$) {
     return $bl;
 }
 
+# Note on running OSSTest on Squeeze with old Xen kernel: check out
+# Debian bug #633127 "/etc/grub/20_linux does not recognise some old
+# Xen kernels"
+# Currently setupboot_grub2 relies on Grub menu not having submenu.
+# Check Debian bug #690538.
 sub setupboot_grub2 ($$$) {
     my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
