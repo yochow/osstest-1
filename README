@@ -204,6 +204,7 @@ To run osstest in standalone mode:
      pax rsync
      curl
      netcat
+     chiark-utils-bin
 
  - Optional: ipmitool
 
