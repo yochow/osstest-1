@@ -89,8 +89,8 @@ END
             $initrd_opt \\
             $archarg
 END
-    my $cfg_xend= "/etc/xen/$gho->{Name}.cfg";
-    store_runvar("$gho->{Guest}_cfgpath", $cfg_xend);
+    my $cfg= "/etc/xen/$gho->{Name}.cfg";
+    store_runvar("$gho->{Guest}_cfgpath", $cfg);
     store_runvar("$gho->{Guest}_swap_lv", "$gho->{Name}-swap");
 }
 
