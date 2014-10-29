@@ -181,6 +181,7 @@ sub setup_pxeboot_firstboot($) {
 
     my $ipappend = 2;
     my $wantphysif= get_host_property($ho,'interface force','auto');
+    logm("Forcing interface $wantphysif");
     if ($wantphysif ne 'auto') {
 	$ipappend = 0;
 	die "need Ether for $ho->{Name} ($wantphysif)"
@@ -188,7 +189,9 @@ sub setup_pxeboot_firstboot($) {
         system_checked(qw(mkdir -p --), "$initrd_overlay.d/etc/udev/rules.d");
         file_simple_write_contents
             ("$initrd_overlay.d/etc/udev/rules.d/70-persistent-net.rules",
-             <<END);
+             $ho->{Flags}{'force-mac-address'} ? <<END : <<END);
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", KERNEL=="$wantphysif", RUN += "/bin/ip link set $wantphysif address $ho->{Ether}"
+END
 SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="$ho->{Ether}", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="$wantphysif"
 END
     }
