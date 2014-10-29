@@ -208,10 +208,14 @@ END
     push @installcmdline,
         get_host_property($ho, "install-append $ho->{Suite}", '');
 
-    push @installcmdline, qw(--);
-
     my $console = get_host_native_linux_console($ho);
 
+    push @installcmdline, "console=$console" unless $console eq "NONE";
+
+    push @installcmdline, qw(--);
+
+    # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=762007 for
+    # why this is repeated.
     push @installcmdline, "console=$console" unless $console eq "NONE";
 
     my $installcmdline= join ' ', @installcmdline;
