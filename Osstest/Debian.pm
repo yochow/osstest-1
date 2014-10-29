@@ -660,6 +660,8 @@ END
 
     if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
 	my $root=target_guest_lv_name($ho,"root");
+	my $console = get_host_native_linux_console($ho);
+	my $consolecmd = "console=$console" unless $console eq "NONE";
 
 	preseed_hook_command($ho, 'late_command', $sfx, <<END);
 #!/bin/sh
@@ -671,7 +673,7 @@ kernel=`readlink \$r/vmlinuz | sed -e 's|boot/||'`
 initrd=`readlink \$r/initrd.img | sed -e 's|boot/||'`
 
 cat >\$r/boot/boot <<EOF
-setenv bootargs console=ttyAMA0 root=$root
+setenv bootargs $consolecmd root=$root
 mw.l 800000 0 10000
 scsi scan
 ext2load scsi 0 \\\${kernel_addr_r} \$kernel

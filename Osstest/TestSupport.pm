@@ -65,6 +65,7 @@ BEGIN {
                       contents_make_cpio file_simple_write_contents
 
                       selecthost get_hostflags get_host_property
+                      get_host_native_linux_console
                       power_state power_cycle power_cycle_time
                       serial_fetch_logs
                       propname_massage
@@ -861,6 +862,15 @@ sub get_host_property ($$;$) {
     my ($ho, $prop, $defval) = @_;
     my $val = $ho->{Properties}{propname_massage($prop)};
     return defined($val) ? $val : $defval;
+}
+
+sub get_host_native_linux_console ($) {
+    my ($ho) = @_;
+
+    my $console = get_host_property($ho, "LinuxSerialConsole", "ttyS0");
+    return $console if $console eq 'NONE';
+
+    return "$console,$c{Baud}n8";
 }
 
 sub get_host_method_object ($$$) {
