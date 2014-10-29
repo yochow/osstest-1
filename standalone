@@ -29,6 +29,12 @@ Operations:
 
   Required options: -h HOST
 
+* reset-host [cf] [JOB]
+
+  Allow a job which has been run before to run on a different host
+  next time. Otherwise osstest will complain if you change the host
+  which a job is running on on successive runs.
+
 Options:
 
 -c FILE, --config=FILE        Use FILE as configuration file
@@ -198,6 +204,18 @@ case $op in
 		    runvar-set $job kernel_ver $KERNEL_VER
 	    fi
 	fi
+	;;
+
+    reset-host)
+	need_flight;
+
+	if [ $# -lt 1 ] ; then
+	    echo "run-job: Need job" >&2
+	    exit 1
+	fi
+
+	job=$1; shift
+	./cs-adjust-flight -v $flight runvar-del $job host
 	;;
 
     run-job)
