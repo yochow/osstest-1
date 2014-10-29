@@ -422,6 +422,7 @@ sub di_installcmdline_core ($$;@) {
     my $debconf_priority= $xopts{DebconfPriority};
     push @cl, "debconf/priority=$debconf_priority"
         if defined $debconf_priority;
+    push @cl, "rescue/enable=true" if $xopts{RescueMode};
 
     return @cl;
 }

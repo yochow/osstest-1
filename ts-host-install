@@ -30,9 +30,14 @@ my $debconf_priority;
 
 our %xopts;
 
-if (@ARGV && $ARGV[0] =~ m/^--priority(?:=(.*))?$/) {
+while (@ARGV and $ARGV[0] =~ m/^-/) {
+    $_= shift @ARGV;
+    last if m/^--$/;
+    if (m/^--priority(?:=(.*))?$/) {
     $xopts{DebconfPriority}= defined($1) ? $1 : 'low';
-    shift @ARGV;
+    } elsif  (m/^--rescue$/) {
+	$xopts{RescueMode}= 1;
+    }
 }
 
 our ($whhost) = @ARGV;
