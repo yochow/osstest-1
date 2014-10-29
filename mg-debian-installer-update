@@ -130,6 +130,10 @@ if [ $arch = armhf ]; then
           |pax -x sv4cpio -s '%lib%/lib%' -d -w >../cpio; cd ..
     gzip -9f cpio
     mv cpio.gz armmp.cpio.gz
+    rm -rf dtbs/
+    mkdir dtbs/
+    mv x/usr/lib/linux-image-*-armmp/*.dtb dtbs/
+    tar -caf dtbs.tar.gz dtbs
     rm -rf x
 fi
 
