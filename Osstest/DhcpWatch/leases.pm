@@ -58,6 +58,7 @@ sub check_ip ($$) {
 	if (!defined $leases) { return "open $leasesfn: $!"; }
     } else {
 	$leases= new IO::Socket::INET(PeerAddr => $leasesfn);
+	if (!defined $leases) { return "connect to $leasesfn: $!"; }
     }
 
     my $lstash= "dhcpleases-$gho->{Guest}";
@@ -163,6 +164,9 @@ sub check_ip ($$) {
 
     if (!$best) {
         $saveas->("$lstash.nolease", 3);
+	if ($leases->error) {
+	    return "error reading $leasesfn";
+	}
         return "no active lease";
     }
     $gho->{Ip}= $best->{' addr'};
