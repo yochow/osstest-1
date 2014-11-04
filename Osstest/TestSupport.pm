@@ -612,7 +612,7 @@ sub poll_loop ($$$&) {
         $logmtmpfile= IO::File::new_tmpfile or die $!;
 
         if (!eval {
-            local ($Osstest::logm_handle) = ($logmtmpfile);
+            local ($Osstest::TestSupport::logm_handle) = ($logmtmpfile);
             $bad= $code->();
             1;
         }) {
