@@ -130,6 +130,8 @@ sub fetch_logs_host_guests () {
 
                   /etc/xen/*
 
+                  /home/osstest/osstest-confirm-booted.log
+
                   )];
     if (!try_fetch_logs($ho, $logs)) {
         logm("log fetching failed, trying hard host reboot...");

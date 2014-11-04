@@ -924,9 +924,10 @@ sub host_reboot ($) {
     poll_loop(40,2, 'reboot-confirm-booted', sub {
         my $output;
         if (!eval {
-            $output= target_cmd_output($ho,
-                "stat /dev/shm/osstest-confirm-booted 2>&1 >/dev/null ||:",
-                                       40);
+            $output= target_cmd_output($ho, <<END, 40);
+stat /dev/shm/osstest-confirm-booted 2>&1 >/dev/null \\
+ || ps -efH >osstest-confirm-booted.log
+END
             1;
         }) {
             return $@;
