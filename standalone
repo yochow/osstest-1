@@ -112,10 +112,19 @@ if [ ! -f standalone.db ] ; then
     exit 1
 fi
 
-if [ -z "$config" -o ! -r "$config" ] ; then
-    echo "Cannot read config." >&2
+if [ -z "$config" ] ; then
+    echo "No config specified." >&2
     exit 1
 fi
+IFS_saved=$IFS
+IFS=:
+for c in $config ; do
+    if [ -z "$c" -o ! -r "$c" ] ; then
+        echo "Cannot read config $c." >&2
+        exit 1
+    fi
+done
+IFS=$IFS_saved
 
 need_flight() {
     if [ -z "$flight" ] ; then
