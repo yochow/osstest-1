@@ -226,6 +226,9 @@ END
     # why this is repeated.
     push @installcmdline, "console=$console" unless $console eq "NONE";
 
+    push @installcmdline,
+        get_host_property($ho, "linux-boot-append $ho->{Suite}", '');
+
     my $installcmdline= join ' ', @installcmdline;
 
     setup_pxeboot($ho, <<END);
