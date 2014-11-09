@@ -49,7 +49,7 @@ case ${suite}_${arch} in
         ;;
 esac
 
-pfile=$sbase/non-free/binary-$arch/Packages.bz2
+pfile=$sbase/non-free/binary-$arch/Packages.gz
 
 dstroot=`getconfig TftpPath`/`getconfig TftpDiBase`/
 date=`date +%Y-%m-%d`-$suite
@@ -66,12 +66,12 @@ for f in $files; do
         curl -s $src/$s >$d.new
 done
 
-curl -s $pfile >Packages.bz2
+curl -s $pfile >Packages.gz
 
 for p in $packages; do
         set +e
         echo >&2 "collecting $p"
-        pkgfile=`bzcat Packages.bz2 | grep-dctrl -PX $p -nsFilename`
+        pkgfile=`zcat Packages.gz | grep-dctrl -PX $p -nsFilename`
         rc=$?
         set -e
         if [ $rc != 0 ]; then fail "package $p not found"; fi
@@ -89,13 +89,13 @@ done
 # wheezy-backports.
 if [ $arch = armhf ]; then
     bp="$sbase-backports"
-    pfile=$bp/main/binary-armhf/Packages.bz2
+    pfile=$bp/main/binary-armhf/Packages.gz
 
-    curl -s $pfile >Packages.bz2
+    curl -s $pfile >Packages.gz
 
     # Newer kernel often needs a newer initramfs-tools. Make that available
     echo >&2 "collecting backports initramfs-tools"
-    pkgfile=`bzcat Packages.bz2 | grep-dctrl -PX initramfs-tools -nsFilename | sort -n -r | head -n1`
+    pkgfile=`zcat Packages.gz | grep-dctrl -PX initramfs-tools -nsFilename | sort -n -r | head -n1`
     rc=$?
     set -e
     if [ $rc != 0 ]; then fail "initramfs-tools package not found"; fi
@@ -105,7 +105,7 @@ if [ $arch = armhf ]; then
     echo >&2 "collecting armmp kernel"
     # Be careful to pickup the actual kernel package from the 'linux'
     # source and not a meta package from 'linux-latest'
-    pkgfile=`bzcat Packages.bz2 | grep-dctrl -S linux | grep-dctrl -Pe ^linux-image-.*-armmp$ -nsFilename | sort -n -r | head -n1`
+    pkgfile=`zcat Packages.gz | grep-dctrl -S linux | grep-dctrl -Pe ^linux-image-.*-armmp$ -nsFilename | sort -n -r | head -n1`
     rc=$?
     set -e
     if [ $rc != 0 ]; then fail "armmp kernel package not found"; fi
@@ -150,7 +150,7 @@ for f in $files; do
         mv -f $d.new $d
 done
 
-rm Packages.bz2
+rm Packages.gz
 
 #cd $dstroot/$arch
 #rm -rf current.new
