@@ -196,8 +196,9 @@ SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="$ho->{Ether}", A
 END
     }
 
-    my $dtbs = "fdtdir /$d_i/dtbs"
-	if -e "$ho->{Tftp}{Path}/$d_i/dtbs";
+    my $dtbs = "";
+    $dtbs = "fdtdir /$d_i/dtbs"
+	if -e  "fdtdir /$d_i/dtbs""$ho->{Tftp}{Path}/$d_i/dtbs";
 
     file_simple_write_contents("$initrd_overlay.cpio", sub {
         contents_make_cpio($_[0], 'newc', "$initrd_overlay.d");
