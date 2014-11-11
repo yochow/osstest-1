@@ -18,7 +18,7 @@
 #   <foo-name>
 #   .                 means all jobs
 #   ^<pcre>           means $foo =~ m/^<pcre>/
-#   /<pcre>/          means $foo =~ m/<pcre>/
+#   /<pcre>           means $foo =~ m/<pcre>/
 
 # This is part of "osstest", an automated testing framework for Xen.
 # Copyright (C) 2009-2013 Citrix Inc.
