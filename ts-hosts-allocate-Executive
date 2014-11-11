@@ -496,15 +496,16 @@ sub hid_recurse ($$) {
 
     $duration_rightaway_adjust=0 if $start_time;
 
+    my $duration_for_cost = 0;
     if ($jobinfo->{recipe} =~ m/build/) {
         $variation_age= 0;
+	$duration_for_cost= $duration + $duration_rightaway_adjust;
     } elsif ($variation_age > 5*86400) {
 	$variation_age= 5*86400;
     }
 
     my $cost= $start_time
-	+ $duration
-	+ $duration_rightaway_adjust
+	+ $duration_for_cost
         - $previously_failed * 366*86400
         + ($previously_failed ? + $variation_age * 10 : - $variation_age / 30)
 	- $share_reuse * 10000;
