@@ -29,12 +29,14 @@ tsreadconfig();
 
 open DEBUG, ">/dev/null" or die $!;
 
+our $compressdebug=1;
+
 while (@ARGV and $ARGV[0] =~ m/^-/) {
     $_= shift @ARGV;
     last if m/^--$/;
     while (m/^-./) {
-        if (0) {
-	    # no options
+        if (s/^-U/-/) {
+	    $compressdebug=0;
         } else {
             die "$_ ?";
         }
@@ -60,12 +62,16 @@ sub setup () {
 
     $taskid= findtask();
 
-    my $logbase = "hosts-allocate.debug.gz";
+    my $logbase = "hosts-allocate.debug".($compressdebug?".gz":"");
     my $logfh = open_unique_stashfile \$logbase;
-    my $logchild = open DEBUG, "|-";  defined $logchild or die $!;
-    if (!$logchild) {
-	open STDOUT, ">&", $logfh or die $!;
-	exec "gzip" or die $!;
+    if ($compressdebug) {
+	my $logchild = open DEBUG, "|-";  defined $logchild or die $!;
+	if (!$logchild) {
+	    open STDOUT, ">&", $logfh or die $!;
+	    exec "gzip" or die $!;
+	}
+    } else {
+	open DEBUG, ">&", $logfh or die $!;
     }
     DEBUG->autoflush(1);
     logm("host allocation debug log in $logbase");
