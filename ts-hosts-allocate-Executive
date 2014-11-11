@@ -547,8 +547,12 @@ sub hid_recurse ($$) {
 
     my $cost= $start_time
 	+ $duration_for_cost
-        - ($previously_failed      ==@hids ? 366*86400 :
-	   $previously_failed_equiv==@hids ? 365*86400 :
+        - ($previously_failed      ==@hids ?   7*86400 :
+	   $previously_failed_equiv==@hids ? 6.5*86400 :
+	   # We wait 7d extra to try a failing test on the same
+	   # hardware, or 6.5d on `equivalent' hardware (as defined by
+	   # equiv-* flags).  Compared to `equivalent' hardware, we
+	   # wait 12h to try it on exactly the same.
 	   0)
         + ($previously_failed || $previously_failed_equiv
 	   ? (-$max_variation_bonus+$variation_bonus) : -$variation_bonus)
