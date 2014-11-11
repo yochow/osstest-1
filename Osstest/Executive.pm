@@ -733,7 +733,8 @@ END
             my ($duration) = $duration_duration_q->fetchrow_array();
             $duration_duration_q->finish();
             if ($duration) {
-                $dbg->("REF $ref->{flight} DURATION $duration");
+                $dbg->("REF $ref->{flight} DURATION $duration ".
+		       ($ref->{status} // ''));
                 $duration_max= $duration
                     if $duration > $duration_max;
             }
