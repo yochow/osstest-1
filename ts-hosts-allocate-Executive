@@ -478,12 +478,6 @@ sub hid_recurse ($$) {
 
     print DEBUG "$dbg EVAL DURATION $duration va=$variation_age\n";
 
-    if ($jobinfo->{recipe} =~ m/build/) {
-        $variation_age= 0;
-    } elsif ($variation_age > 5*86400) {
-	$variation_age= 5*86400;
-    }	
-
     my @requestlist;
     foreach my $hid (@hids) {
         my $req= {
@@ -501,6 +495,12 @@ sub hid_recurse ($$) {
     my $share_reuse= $planned->{ShareReuse};
 
     $duration_rightaway_adjust=0 if $start_time;
+
+    if ($jobinfo->{recipe} =~ m/build/) {
+        $variation_age= 0;
+    } elsif ($variation_age > 5*86400) {
+	$variation_age= 5*86400;
+    }
 
     my $cost= $start_time
 	+ $duration
