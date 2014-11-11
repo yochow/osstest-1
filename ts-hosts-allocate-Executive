@@ -284,6 +284,29 @@ END
         $findhostsq->execute("blessed-$fi->{intended}");
     }
 
+    my $equivstatusq= $dbh_tests->prepare(<<END);
+            SELECT flight, job, val, status
+	      FROM flights f
+	      JOIN jobs j USING (flight)
+	      JOIN runvars r USING (flight,job)
+             WHERE j.job=?
+               AND f.blessing=?
+	       AND f.branch=?
+               AND r.name=?
+	       AND r.val IN (
+		   SELECT hostname
+		     FROM hostflags
+		    WHERE hostflag IN (
+			  SELECT hostflag
+			    FROM hostflags
+			   WHERE hostname=?
+			     AND hostflag LIKE 'equiv-%'
+		       )
+		   )
+	  ORDER BY f.started DESC
+	     LIMIT 1;
+END
+
     my @candidates;
     my $any=0;
 
@@ -342,6 +365,17 @@ END
 
         find_recent_duration($dbg,$hid,$candrow);
 
+	if ($candrow->{restype} eq 'host') {
+	    $equivstatusq->execute($job,$fi->{intended},$fi->{branch},
+				   $hid->{Ident},$candrow->{resname});
+	    my $esrow = $equivstatusq->fetchrow_hashref();
+	    $candrow->{EquivMostRecentStatus} = $esrow->{status};
+	    print DEBUG "$dbg EQUIV-MOST-RECENT ";
+	    print DEBUG ("$esrow->{flight}.$esrow->{job}".
+			 " $esrow->{val} $esrow->{status}") if $esrow;
+	    print DEBUG ".\n";
+	}
+
         foreach my $kcomb (qw(Shared-Max-Wear Shared-Max-Tasks)) {
             my $kdb= $kcomb;  $kdb =~ y/-A-Z/ a-z/;
             my $khash= $kcomb;  $khash =~ y/-//d;
@@ -362,6 +396,7 @@ END
 	print DEBUG "$dbg CANDIDATE.\n";
     }
     $findhostsq->finish();
+    $equivstatusq->finish();
 
     if (!@candidates) {
         if (defined $use) {
@@ -455,6 +490,7 @@ sub hid_recurse ($$) {
     my $variation_age= 0;
     my $duration= undef;
     my $previously_failed = 0;
+    my $previously_failed_equiv = 0;
     foreach my $hid (@hids) {
 	my $cand= $hid->{Selected};
 	my $recentstarted= $cand->{MostRecentStarted};
@@ -465,6 +501,8 @@ sub hid_recurse ($$) {
 	    defined($cand->{Duration}) && $cand->{Duration} >= $duration;
         $previously_failed++ if
 	    ($cand->{MostRecentStatus} // '') eq 'fail';
+	$previously_failed_equiv++ if
+	    ($cand->{EquivMostRecentStatus} // '') eq 'fail';
     }
     my $duration_rightaway_adjust= 0;
     
@@ -505,12 +543,15 @@ sub hid_recurse ($$) {
 
     my $cost= $start_time
 	+ $duration_for_cost
-        - $previously_failed * 366*86400
+        - ($previously_failed      ==@hids ? 366*86400 :
+	   $previously_failed_equiv==@hids ? 365*86400 :
+	   0)
         + ($previously_failed ? + $variation_age * 10 : - $variation_age / 30)
 	- $share_reuse * 10000;
     
     print DEBUG "$dbg FINAL start=$start_time va=$variation_age".
-        " previously_failed=$previously_failed cost=$cost\n";
+        " previously_failed=$previously_failed".
+	" previously_failed_equiv=$previously_failed_equiv cost=$cost\n";
 
     if (!defined $best || $cost < $best->{Cost}) {
         print DEBUG "$dbg FINAL BEST: ".
