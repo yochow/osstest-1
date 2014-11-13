@@ -521,7 +521,8 @@ sub teditfileex {
 sub target_editfile_root ($$$;$$) { teditfileex('root',@_); }
 sub target_editfile      ($$$;$$) { teditfileex('osstest',@_); }
     # my $code= pop @_;
-    # my ($ho,$rfile,$lleaf,$rdest) = @_;
+    # my ($ho,$rfile, $lleaf,$rdest) = @_;
+    #                 ^^^^^^^^^^^^^ optional
 
 sub target_cmd_build ($$$$) {
     my ($ho,$timeout,$builddir,$script) = @_;
