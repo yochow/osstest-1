@@ -268,7 +268,8 @@ sub change__runvar_perlop {
         my ($job, $name, $varrow) = @_;
 	my $oldval = $varrow->{val};
 	my $newval = perlop_value($job, $name, $op, $oldval);
-        runvar_set($job, $name, $newval, " (modified from \`$oldval')");
+        runvar_set($job, $name, $newval, " (modified from \`$oldval')")
+	    if $newval ne $oldval;
     }, 'IGNORE');
 }
 
