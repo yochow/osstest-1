@@ -29,6 +29,16 @@ our $domid;
 
 our $gn = $gho->{Guest};
 
+sub arrangepreserve () {
+    target_editfile_root($ho,$r{"$gho->{Guest}_cfgpath"}, sub {
+	while (<EI>) {
+	    next if m/^\s*on_poweroff\s*=/;
+	    print EO or die $!;
+	}
+	print EO "\n","on_poweroff='preserve'\n" or die $!;
+    });
+}
+
 sub start () {
     my $cmd= toolstack()->{Command}." create ".
         $r{ $gho->{Guest}.'_'. toolstack()->{CfgPathVar} };
@@ -105,6 +115,7 @@ sub check_output () {
     }
 }
 
+arrangepreserve();
 start();
 await_end();
 check_output();
