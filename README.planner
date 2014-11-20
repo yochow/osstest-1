@@ -1,4 +1,183 @@
-Resource planner / scheduler
+RESOURCE PLANNER (IE SCHEDULER)
+===============================
+
+Overall architecture
+--------------------
+
+Resources (eg hosts) are owned by `tasks'.  As resources are allocated
+and deallocated, their `owntaskid' in the database is updated.
+
+When a process wishes to allocate resources, it does as follows:
+
+ - Select an appropriate task.  For command-line use, the user@host
+   static task usually used (as specified by the OSSTEST_TASK env var)
+   and things fail if it doesn't actually exist.
+
+   Automatic runs create a new ownd task for each job (in become-task
+   in JobDB-Executive.tcl, in sg-run-job.
+
+ - Connect to the queue daemon and participate in the planning
+   process.
+
+
+Planning
+--------
+
+The queue daemon sequences the planning of resource use and the
+allocation of resources.  This is done in a periodic planning cycle.
+Planning cycles are prompted by newly available resources, new
+requests for participation, and periodically.
+
+During each planning cycle we construct, from scratch, a complete plan
+for which resources are to be used, when, by which tasks.  Resources
+which are free and suitable for allocation right away are planned and
+allocated for immediate use.
+
+But, the plan extends far enough into the future to cover all
+currently-foreseeable requirements for resources.  This provides the
+planning algorithms the most complete information about available
+tradeoffs, and also provides useful output (the resource plan) for
+administrators and users.
+
+Each planning cycle starts with the existing allocated resources.  The
+planning daemon records (on disk, not in the database) what expected
+duration was declared with each of those allocations.  (A task that
+has allocated the resources it needs does not any longer participate
+in the planning process, although it will retain a liveness connection
+to the ms-ownerdaemon.)
+
+Then each interested client of ms-queuedaemon is asked - one by one,
+in turn - to fill into the plan-under-construction, what resources it
+intends to uses when.  Clients specify the expected duration of their
+use (but there is no mechanism for enforcing accuracy of these
+estimates).  ms-queuedaemon collates and records the provided
+information and passes it on to the next client.
+
+If there are resources which are available right now which a client
+wants to use, the client will allocate it there and then during its
+planning slot.
+
+The queueing order is determined by the job priority value.  Each
+client declares its own priority.  The usual basis for the priority is
+is client's starting time_t.  So by and large jobs execute in order.
+
+The main client in the planning process is
+ts-hosts-allocate-Executive.  That program contains the heuristics for
+choosing good tests hosts under various conditions.
+
+Command-line users can use mg-allocate -U to obtain resources through
+the planning process.  mg-allocate participates with a high queue
+priority so that command-line allocations will take precedence over
+automatic test runs.  (mg-allocate without -U bypasses the planner and
+can be used to `grab' resources which happen currently to be free.)
+
+The distinction between `idle' and `allocatable' resources exists so
+that newly-freed resources are properly offered first to the tasks at
+the front of the queue.  ms-ownerdaemon sets all idle resources to
+allocatable at the start of each planning cycle.
+
+
+ms-ownerdaemon and `ownd' tasks
+-------------------------------
+
+ms-ownerdaemon helps with cleanup and does nothing else.  Test runs
+connect to it and obtain ephemeral `task' ids.  All of the processes
+which are part of the the test run retain a descriptor onto the
+socket connection to ms-ownerdaemon.  When the last holder of a copy
+of the socket connection fd dies, ms-ownerdaemon sees the connection
+close.  It then sets the task to `not live' in the database.
+
+This means that there is no need for any explicit cleanup: tasks
+which just crash have their resources freed automatically.
+
+If the ms-ownerdaemon fails and is restarted, the tasks which were
+clients of the previous ms-owerdaemon cannot be automatically cleaned
+up.  The new ms-ownerdaemon will annotate them with `previous'.  The
+administrator can then clean them up manually, if she knows that all
+the corresponding actual processes are no longer running.
+
+
+Types of task
+-------------
+
+ * static tasks.  Usual for command-line use.  They are manually
+   created (with ./mg-hosts manual-task-create) and not normally ever
+   destroyed.
+
+ * `ownd' tasks.  These are used for production runs from cron and
+   some other mostly-automatic invocations of osstest (eg
+   mg-execute-flight).  They are automatically created and destroyed -
+   see above.
+
+ * magic task numbers with special meanings:
+
+     magic/allocatable
+
+        The resource is free and a process which is participating in
+        the planning process may allocate it to themselves by updating
+        the `owntaskid' in the resources table to refer to their own
+        task.
+
+     magic/idle
+
+        The resource is free but has perhaps only recently become so.
+        It can be allocated outside the planning process, but proceses
+        participating in planning should regard the resource as
+        unavailable.
+
+     magic/shared
+
+        The resource has been divided into shares.  It is unavailable
+        in its own right without being unshared first.  The individual
+        shares have their own owners.
+
+     magic/preparing
+
+        Applies only to shares of a divided resource.  The share is
+        unavailable because the process handling the division is still
+        putting the resource into the proper state implied by the
+        sharing information (see below).
+
+
+Sharing
+-------
+
+Hosts can be shared between multiple clients.  The first client to
+decide to set up a host for sharing:
+
+ - `Divides' the resource in the database
+    * allocates the host to the taskid `shared' and creates a set
+      of new rows in the resources table to represent the shares
+      (the number of shares is fixed at this point)
+    * initially, sets all but one of those shares to be owned by
+      magic/preparing
+    * sets the remaining share to be owned by itself
+ - Performs whatever actions are necessary to get the host into
+   a suitable state for it and others to use it (eg, installing
+   the OS)
+ - Sets the remaining shares to `idle' so that others can allocate
+   them
+
+(During planning - ie, for resources not yet available immediately -
+the intent to do this can be part of the plan so that other tasks can
+see and take account of it.  The time necessary for preparing the host
+is not currently modelled during planning.)
+
+Likewise a process which finds a shared resource completely idle can
+unshare it.  That is:
+    * Check that all the shares are allocatable
+    * Delete all the rows representing the shares
+    * Claim ownership of the main resource by changing the owntaskid
+      from `shared' to the process's own task.
+
+Shared resources also have a `wear' counter, which is there to arrange
+that shared systems get regrooved occasionally even if nothing decides
+to unshare them.
+
+
+
+DETAILED PROTOCOL NOTES
+=======================
 
 ms-queuedaemon commands
 
