@@ -301,6 +301,8 @@ END
         ;;
 esac
 
+sgr_args+=" $EXTRA_SGR_ARGS"
+
 : $flight $branch $OSSTEST_BLESSING $sgr_args
 $DAILY_BRANCH_PREEXEC_HOOK
 execute_flight $flight $OSSTEST_BLESSING

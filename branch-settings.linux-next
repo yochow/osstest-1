@@ -2,3 +2,4 @@ OSSTEST_NO_BASELINE=y
 OSSTEST_PUSH=false
 OLD_REVISION=determine-late
 GITFORCEFLAG=--fail
+EXTRA_SGR_ARGS=--branches-also=linux-linus
