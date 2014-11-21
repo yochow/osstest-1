@@ -663,9 +663,11 @@ END
 	my @bootargs;
 
 	my $root=target_guest_lv_name($ho,"root");
+	my $rootdelay=get_host_property($ho, "rootdelay");
 	my $console=get_host_native_linux_console($ho);
 
 	push @bootargs, "root=$root";
+	push @bootargs, "rootdelay=$rootdelay" if $rootdelay;
 	push @bootargs, "console=$console" unless $console eq "NONE";
 
 	my $bootargs = join ' ', @bootargs;
