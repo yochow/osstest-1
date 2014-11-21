@@ -360,14 +360,6 @@ DebianPreseed
    but you will need to set some NTP servers here if your firewall
    doesn't permit NTP to Debian's pool.ntp.org servers.
 
-DebianNonfreeFirmware
-  List of debs of non-free firmware to include in the massaged
-  debian-installer.  You will need this if you want to use network
-  card which requires non-free firmware.  The default is just
-  "firmware-bnx2'.  If your host operating system doesn't have
-  grep-dctrl (for example because it's not Debian) then you must set
-  this to the empty string, by writing  DebianNonfreeFirmware=''
-
 ========================================
 
 Config settings relevant only to standalone mode
@@ -419,6 +411,14 @@ DebianSuite
 GuestDebianSuite   defaults to DebianSuite
 
 DebianPreseed      added to existing preseed file
+
+DebianNonfreeFirmware
+  List of debs of non-free firmware to include in the massaged
+  debian-installer.  You will need this if you want to use network
+  card which requires non-free firmware.  The default is just
+  "firmware-bnx2'.  If your host operating system doesn't have
+  grep-dctrl (for example because it's not Debian) then you must set
+  this to the empty string, by writing  DebianNonfreeFirmware=''
 
 TftpFoo_<scope> and TftpFoo
 
