@@ -436,6 +436,9 @@ setopt CONFIG_MIGRATION n
 
 setopt CONFIG_ACPI_HOTPLUG_MEMORY n
 
+setopt CONFIG_IKCONFIG y
+setopt CONFIG_IKCONFIG_PROC y
+
 # Should all be set one way or another in defconfig but aren't
 setopt CONFIG_NUMA n
 setopt CONFIG_X86_VSMP n
