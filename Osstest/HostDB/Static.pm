@@ -58,6 +58,8 @@ sub get_flags ($$) { #method
     };
 
     $process->('HostFlags');
+    $process->("HostGroupFlags_$ho->{Properties}{HostGroup}")
+	if $ho->{Properties}{HostGroup};
     $process->("HostFlags_$ho->{Name}");
 
     return $flags;

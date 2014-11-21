@@ -333,6 +333,28 @@ HostProp_<testbox>_TftpScope
    Defines the Tftp scope (i.e. subnet) where this host resides. See
    "TftpFoo_<scope> and TftpFoo" below.
 
+HostFlags_<testbox>
+   Defines a set of flags for the host. Flags is a list separated by
+   whitespace, comma or semi-colon. A flag can be unset by prepending
+   a !. Only used in standalone mode.
+
+HostGroup_<testbox> <group>
+   Defines a group of similar hosts of which <testbox> is a
+   member. This can then be used with HostGroupProp and HostGroupFlags
+
+HostGroupProps_<group>_<prop>
+   Equivalent to writing HostProp_<testbox>_<prop> for every testbox
+   which declares HostGroup_<testbox>_<group>. Allows setting a set of
+   common properties for a group of similar machines. These settings
+   take precedence over the database provided settings, but are
+   themselves overridden by host-specific properties.
+
+HostGroupFlags_<group>
+   Equivalent to writing HostFlags_<testbox> for every testbox which
+   declares HostGroup_<testbox>_<group>. Allows setting a set of
+   common flags for a group of similar machines. These flags are
+   merged with the host specific flags. Only used in standalone mode.
+
 DebianPreseed
    Text to add to the debian-installer preseed file.  Optional
    but you will need to set some NTP servers here if your firewall

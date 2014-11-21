@@ -767,7 +767,13 @@ sub selecthost ($) {
 	$ho->{Properties}{$pn} = $val;
     };
 
-    # First, we use the config file's general properites as defaults
+    # First, set the prop group if any.
+    if ( $c{"HostGroup_${name}"} ) {
+	$setprop->("HostGroup", $c{"HostGroup_${name}"});
+	logm("Host $name is in HostGroup $ho->{Properties}{HostGroup}");
+    }
+
+    # Next, we use the config file's general properites as defaults
     foreach my $k (keys %c) {
 	next unless $k =~ m/^HostProp_([A-Z].*)$/;
 	$setprop->($1, $c{$k});
@@ -775,6 +781,15 @@ sub selecthost ($) {
 
     # Then we read in the HostDB's properties
     $mhostdb->get_properties($name, $ho->{Properties});
+
+    # Next, we set any HostGroup based properties
+    if ( $ho->{Properties}{HostGroup} ) {
+	foreach my $k (keys %c) {
+	    next unless $k =~ m/^HostGroupProp_([-a-z0-9]+)_(.*)$/;
+	    next unless $1 eq $ho->{Properties}{HostGroup};
+	    $setprop->($2, $c{$k});
+	}
+    }
 
     # Finally, we override any host-specific properties from the config
     foreach my $k (keys %c) {
