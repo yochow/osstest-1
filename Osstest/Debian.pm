@@ -692,6 +692,23 @@ in-target mkimage -A arm -T script -d /boot/boot /boot/boot.scr
 END
     }
 
+    my $modules = get_host_property($ho, "ExtraInitramfsModules", "NONE");
+    if ( $modules ne "NONE" )
+    {
+	# This is currently the best available way to add modules to
+	# the installed initramfs. See
+	# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=764805
+        preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+for i in $modules ; do
+    echo \$i >> /target/etc/initramfs-tools/modules
+done
+in-target update-initramfs -u -k all
+END
+    }
+
     my @extra_packages = ();
     push(@extra_packages, "u-boot-tools") if $ho->{Flags}{'need-uboot-bootscr'};
 
