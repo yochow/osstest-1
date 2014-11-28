@@ -67,4 +67,14 @@ sub migrate_check ($) {
     return $rc;
 }
 
+sub migrate ($$$$) {
+    my ($self,$gho,$dho,$timeout) = @_;
+    my $sho = $self->{Host};
+    my $dst = $dho->{Name};
+    my $gn = $gho->{Name};
+    target_cmd_root($sho,
+		    $self->{Command}." migrate $gn $dst",
+		    $timeout);
+}
+
 1;

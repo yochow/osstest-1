@@ -32,10 +32,9 @@ our ($ho,$gho) = ts_get_host_guest(@ARGV);
 
 sub migrate () {
     guest_checkrunning($ho,$gho) or die $gho->{Name};
-    target_cmd_root($ho,
-		    toolstack($ho)->{Command}
-		    ." migrate $gho->{Name} localhost",
-		    $timeout{Migrate});
+    # Migrate to same host, via localhost interface.
+    toolstack($ho)->migrate($gho, { %$ho, Name => "localhost" },
+			    $timeout{Migrate});
 }
 
 guest_await_dhcp_tcp($gho, 5);

@@ -31,10 +31,7 @@ our $gho = selectguest($ARGV[2],$sho);
 sub migrate () {
     guest_checkrunning($sho,$gho) or die $gho->{Name};
     my $err= guest_check_ip($gho);  die "$err $gho->{Name}" if defined $err;
-    target_cmd_root($sho,
-		    toolstack($sho)->{Command}
-		    ." migrate $gho->{Name} $dho->{Name}",
-		    $timeout{Migrate});
+    toolstack($sho)->migrate($gho, $dho, $timeout{Migrate});
 }
 
 guest_await_dhcp_tcp($gho, 5);

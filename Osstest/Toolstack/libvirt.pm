@@ -68,4 +68,9 @@ sub migrate_check ($) {
     die "Migration check is not yet supported on libvirt.";
 }
 
+sub migrate ($) {
+    my ($self,$gho,$dst,$timeout) = @_;
+    die "Migration is not yet supported on libvirt.";
+}
+
 1;
