@@ -73,4 +73,14 @@ sub migrate ($) {
     die "Migration is not yet supported on libvirt.";
 }
 
+sub save ($$$$) {
+    my ($self,$gho,$f,$timeout) = @_;
+    die "Save is not yet supported on libvirt.";
+}
+
+sub restore ($$$$) {
+    my ($self,$gho,$f,$timeout) = @_;
+    die "Restore is not yet supported on libvirt.";
+}
+
 1;

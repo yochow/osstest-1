@@ -77,4 +77,23 @@ sub migrate ($$$$) {
 		    $timeout);
 }
 
+sub save ($$$$) {
+    my ($self,$gho,$f,$timeout) = @_;
+    my $ho = $self->{Host};
+    my $gn = $gho->{Name};
+    target_cmd_root($ho,$self->{Command}." save $gn $f", $timeout);
+}
+
+sub restore ($$$$) {
+    my ($self,$gho,$f,$timeout) = @_;
+    my $ho = $self->{Host};
+    my $gn = $gho->{Name};
+    my $cfg = $self->{RestoreNeedsConfig} ? $gho->{CfgPath} : '';
+    target_cmd_root($ho,
+		    $self->{Command}
+		    ." restore "
+		    .$cfg
+		    ." $f", $timeout);
+}
+
 1;
