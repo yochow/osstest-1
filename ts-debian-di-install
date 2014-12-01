@@ -170,7 +170,9 @@ END
 
 	$suite = "sid" if $suite eq "daily";
 
-	$ps_url = preseed_create_guest($gho, '', Suite=>$suite, PvMenuLst=>($bl eq "pvgrub"));
+	$ps_url = preseed_create_guest($gho, $arch, '',
+				       Suite=>$suite,
+				       PvMenuLst=>($bl eq "pvgrub"));
 
 	$extra_disk = "";
     }
@@ -182,7 +184,7 @@ END
 
 	($method_cfg,$extra_disk) = setup_netinst($tmpdir, $arch, $cd);
 
-	$ps_url = preseed_create_guest($gho, '', CDROM=>1);
+	$ps_url = preseed_create_guest($gho, $arch, '', CDROM=>1);
     }
     else
     {
