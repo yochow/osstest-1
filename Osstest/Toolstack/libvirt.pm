@@ -29,7 +29,6 @@ sub new {
 		   NewDaemons => [qw(libvirtd)],
 		   Dom0MemFixed => 1,
 		   CfgPathVar => 'cfgpath',
-		   Command => 'virsh',
 		   ExtraPackages => [qw(libnl1 libavahi-client3)],
     }, $class;
 }

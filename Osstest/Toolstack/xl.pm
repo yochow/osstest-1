@@ -28,7 +28,7 @@ sub new {
 		   Host => $ho,
 		   NewDaemons => [],
 		   Dom0MemFixed => 1,
-		   Command => 'xl',
+		   _Command => 'xl',
 		   CfgPathVar => 'cfgpath',
 		   RestoreNeedsConfig => 1,
     }, $class;
@@ -37,31 +37,31 @@ sub new {
 sub destroy ($$) {
     my ($self,$gho) = @_;
     my $gn = $gho->{Name};
-    target_cmd_root($self->{Host}, $self->{Command}." destroy $gn", 40);
+    target_cmd_root($self->{Host}, $self->{_Command}." destroy $gn", 40);
 }
 
 sub create ($$) {
     my ($self,$cfg) = @_;
-    target_cmd_root($self->{Host}, $self->{Command}." create $cfg", 100);
+    target_cmd_root($self->{Host}, $self->{_Command}." create $cfg", 100);
 }
 
 sub consolecmd ($$) {
     my ($self,$gho) = @_;
     my $gn = $gho->{Name};
-    return $self->{Command}." console $gn";
+    return $self->{_Command}." console $gn";
 }
 
 sub shutdown_wait ($$$) {
     my ($self,$gho,$timeout) = @_;
     my $ho = $self->{Host};
     my $gn = $gho->{Name};
-    target_cmd_root($ho,"$self->{Command} shutdown -w $gn", $timeout);
+    target_cmd_root($ho,"$self->{_Command} shutdown -w $gn", $timeout);
 }
 
 sub migrate_check ($) {
     my ($self) = @_;
     my $ho = $self->{Host};
-    my $help = target_cmd_output_root($ho, $self->{Command}." help");
+    my $help = target_cmd_output_root($ho, $self->{_Command}." help");
     my $rc = ($help =~ m/^\s*migrate/m) ? 0 : 1;
     logm("rc=$rc");
     return $rc;
@@ -73,7 +73,7 @@ sub migrate ($$$$) {
     my $dst = $dho->{Name};
     my $gn = $gho->{Name};
     target_cmd_root($sho,
-		    $self->{Command}." migrate $gn $dst",
+		    $self->{_Command}." migrate $gn $dst",
 		    $timeout);
 }
 
@@ -81,7 +81,7 @@ sub save ($$$$) {
     my ($self,$gho,$f,$timeout) = @_;
     my $ho = $self->{Host};
     my $gn = $gho->{Name};
-    target_cmd_root($ho,$self->{Command}." save $gn $f", $timeout);
+    target_cmd_root($ho,$self->{_Command}." save $gn $f", $timeout);
 }
 
 sub restore ($$$$) {
@@ -90,7 +90,7 @@ sub restore ($$$$) {
     my $gn = $gho->{Name};
     my $cfg = $self->{RestoreNeedsConfig} ? $gho->{CfgPath} : '';
     target_cmd_root($ho,
-		    $self->{Command}
+		    $self->{_Command}
 		    ." restore "
 		    .$cfg
 		    ." $f", $timeout);

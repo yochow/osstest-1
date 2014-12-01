@@ -29,7 +29,7 @@ sub new {
 		   Host => $ho,
 		   NewDaemons => [qw(xend)],
 		   OldDaemonInitd => 'xend',
-		   Command => 'xm',
+		   _Command => 'xm',
 		   CfgPathVar => 'cfgpath',
 		   Dom0MemFixed => 1,
     }, $class;
