@@ -128,22 +128,32 @@ test -x $DAEMON || exit 0
 
 PIDFILE=/var/run/$NAME.pid
 
+start() {
+	start-stop-daemon --start --pidfile $PIDFILE \
+	    --exec $DAEMON $@ -- -d $libvirtd_opts
+}
+
+stop() {
+	start-stop-daemon --stop --pidfile $PIDFILE \
+	    --exec $DAEMON $@
+}
+
 case "$1" in
   start)
 	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
-	start-stop-daemon --start --pidfile $PIDFILE \
-	    --exec $DAEMON -- -d $libvirtd_opts
+	start
 	[ "$VERBOSE" != no ] && log_end_msg $?
 	;;
   stop)
 	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
-	start-stop-daemon --stop --pidfile $PIDFILE \
-	    --exec $DAEMON
+	stop
 	[ "$VERBOSE" != no ] && log_end_msg $?
 	;;
   restart)
-	stop
+	[ "$VERBOSE" != no ] && log_daemon_msg "Restarting $DESC" "$DAEMON"
+	stop --oknodo
 	start
+	[ "$VERBOSE" != no ] && log_end_msg $?
 	;;
   reload|force-reload)
 	start-stop-daemon --stop --signal 1 --quiet --pidfile \
