@@ -40,11 +40,9 @@ sub arrangepreserve () {
 }
 
 sub start () {
-    my $cmd= toolstack($ho)->{Command}." create ".
-        $r{ $gho->{Guest}.'_'. toolstack($ho)->{CfgPathVar} };
-    target_cmd_root($ho, $cmd, 30);
+    guest_create($gho,toolstack($ho));
 
-    $domid = target_cmd_output_root($ho,"xl domid $gho->{Guest}");
+    $domid = guest_find_domid($ho, $gho);
 }
 
 sub await_end () {
