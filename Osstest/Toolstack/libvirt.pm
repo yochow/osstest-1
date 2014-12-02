@@ -59,8 +59,10 @@ sub consolecmd ($$) {
 
 sub shutdown_wait ($$$) {
     my ($self,$gho,$timeout) = @_;
+    my $ho = $self->{Host};
     my $gn = $gho->{Name};
-    die "libvirt shutdown wait not implemented yet."
+    target_cmd_root($ho, "virsh shutdown $gn", 30);
+    guest_await_destroy($gho,$timeout);
 }
 
 sub migrate_check ($) {

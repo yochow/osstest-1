@@ -93,7 +93,7 @@ BEGIN {
                       guest_checkrunning guest_check_ip guest_find_ether
                       guest_find_domid guest_check_up guest_check_up_quick
                       guest_get_state guest_await_reboot
-                      guest_await_shutdown guest_destroy
+                      guest_await_shutdown guest_await_destroy guest_destroy
                       guest_vncsnapshot_begin guest_vncsnapshot_stash
 		      guest_check_remus_ok guest_editconfig
                       host_involves_pcipassthrough host_get_pcipassthrough_devs
@@ -1331,6 +1331,12 @@ sub guest_destroy ($) {
     my ($gho) = @_;
     my $ho = $gho->{Host};
     toolstack($ho)->destroy($gho);
+}
+
+sub guest_await_destroy ($$) {
+    my ($gho, $timeout) = @_;
+    my $ho = $gho->{Host};
+    return guest_await_state($ho,$gho, "destroy", "", $timeout);
 }
 
 sub guest_create ($) {
