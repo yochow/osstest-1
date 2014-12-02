@@ -29,7 +29,6 @@ sub new {
 		   NewDaemons => [],
 		   Dom0MemFixed => 1,
 		   _Command => 'xl',
-		   CfgPathVar => 'cfgpath',
 		   RestoreNeedsConfig => 1,
     }, $class;
 }
