@@ -309,6 +309,17 @@ test_matrix_do_one () {
   *)               test_xend=n ;;
   esac
 
+  # PVH tests for versions >= 4.5 only
+  case "$xenbranch" in
+  xen-3.*-testing) test_pvh=n ;;
+  xen-4.0-testing) test_pvh=n ;;
+  xen-4.1-testing) test_pvh=n ;;
+  xen-4.2-testing) test_pvh=n ;;
+  xen-4.3-testing) test_pvh=n ;;
+  xen-4.4-testing) test_pvh=n ;;
+  *)               test_pvh=y ;;
+  esac
+
   do_rumpkernel_tests
 
   # xend PV guest test on x86 only
@@ -364,6 +375,18 @@ test_matrix_do_one () {
 
   fi
 
+  if [ x$test_pvh = xy -a $xenarch = amd64 -a $dom0arch = amd64 ]; then
+
+    for cpuvendor in amd intel; do
+
+      job_create_test test-$xenarch$kern-$dom0arch-xl-pvh-$cpuvendor \
+                test-debian xl $xenarch $dom0arch \
+                debian_pvh=1 $debian_runvars \
+                all_hostflags=$most_hostflags,hvm-$cpuvendor
+
+    done
+
+  fi
   do_passthrough_tests
 }
 

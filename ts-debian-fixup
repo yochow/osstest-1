@@ -118,6 +118,12 @@ sub otherfixupcfg () {
     $cfg =~ s/^vcpus.*//mg;
     $cfg .= "\nvcpus = $vcpus\n";
 
+    my $pvh = guest_var($gho,'pvh',undef);
+    if ($pvh) {
+	$cfg =~ s/^pvh\b.*//mg;
+	$cfg .= "\npvh=$pvh\n";
+    }
+
     # PCI passthrough
     # Look for runvars   <gn>_pcipassthrough_<devtype>=<hostident>
     # and pass through all matching devices from the specified host.
