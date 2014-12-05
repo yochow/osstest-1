@@ -177,7 +177,7 @@ sub prep () {
                                libglib2.0-dev liblzma-dev pkg-config
                                autoconf automake libtool xsltproc
                                libxml2-utils libxml2-dev libnl-dev
-                               libdevmapper-dev w3c-dtd-xhtml
+                               libdevmapper-dev w3c-dtd-xhtml libxml-xpath-perl
 			       ccache));
 
     target_cmd_root($ho, "chmod -R a+r /usr/share/git-core/templates");
