@@ -388,7 +388,10 @@ sub sshopts () {
 sub tcmdex {
     my ($timeout,$stdout,$cmd,$optsref,@args) = @_;
     logm("executing $cmd ... @args");
-    my $r= cmd($timeout,$stdout, $cmd,@$optsref,@args);
+    # We use timeout(1) as a backstop, in case $cmd doesn't die.  We
+    # need $cmd to die because we won't release the resources we own
+    # until all of our children are dead.
+    my $r= cmd($timeout,$stdout, 'timeout',$timeout+30, $cmd,@$optsref,@args);
     $r and die "status $r";
 }
 
