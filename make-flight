@@ -339,6 +339,17 @@ do_pvgrub_tests () {
       all_hostflags=$most_hostflags
 }
 
+do_pv_debian_test_one () {
+  testname=$1; shift
+  recipe_sfx=$1; shift
+  toolstack=$1; shift
+
+  job_create_test test-$xenarch$kern-$dom0arch-$testname        \
+     test-debian$recipe_sfx $toolstack                          \
+            $xenarch $dom0arch                                  \
+            $debian_runvars all_hostflags=$most_hostflags $@
+}
+
 do_pv_debian_tests () {
   xsms=$(xenbranch_xsm_variants)
 
@@ -354,20 +365,13 @@ do_pv_debian_tests () {
       suffix=${platform:+-$platform}
       hostflags=${most_hostflags}${platform:+,platform-$platform}
 
-      job_create_test test-$xenarch$kern-$dom0arch-xl$suffix   \
-                      test-debian xl                           \
-                      $xenarch $dom0arch                       \
-                      enable_xsm=$xsm                          \
-                      $debian_runvars all_hostflags=$hostflags
+      do_pv_debian_test_one xl$suffix '' xl enable_xsm=$xsm
+
     done
   done
 
   for xsm in $xsms ; do
-    job_create_test test-$xenarch$kern-$dom0arch-libvirt         \
-                    test-debian libvirt                          \
-                    $xenarch $dom0arch                           \
-                    enable_xsm=$xsm                              \
-                    $debian_runvars all_hostflags=$most_hostflags
+    do_pv_debian_test_one libvirt '' libvirt enable_xsm=$xsm
   done
 }
 
