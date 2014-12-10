@@ -207,12 +207,14 @@ END
 	OnPowerOff => "preserve"
     );
 
+    my $root_disk = "'phy:$gho->{Lvdev},xvda,w'";
+
     prepareguest_part_xencfg($ho, $gho, $ram_mb, \%install_xopts, <<END);
 $method_cfg
 extra       = "$cmdline"
 #
 disk        = [
-            $extra_disk 'phy:$gho->{Lvdev},xvda,w'
+            $extra_disk $root_disk
             ]
 END
 
@@ -236,7 +238,7 @@ END
 $blcfg
 #
 disk        = [
-            'phy:$gho->{Lvdev},xvda,w'
+            $root_disk
             ]
 END
     return;
