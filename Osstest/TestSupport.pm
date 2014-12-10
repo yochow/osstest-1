@@ -89,7 +89,8 @@ BEGIN {
                       target_var target_var_prefix
                       selectguest prepareguest more_prepareguest_hvm
                       guest_var guest_var_commalist
-                      prepareguest_part_lvmdisk prepareguest_part_xencfg
+                      prepareguest_part_lvmdisk prepareguest_part_diskimg
+                      prepareguest_part_xencfg
                       guest_umount_lv guest_await guest_await_dhcp_tcp
                       guest_checkrunning guest_check_ip guest_find_ether
                       guest_find_domid guest_check_up guest_check_up_quick
@@ -97,6 +98,7 @@ BEGIN {
                       guest_await_shutdown guest_await_destroy guest_destroy
                       guest_vncsnapshot_begin guest_vncsnapshot_stash
 		      guest_check_remus_ok guest_editconfig
+                      guest_prepare_disk guest_unprepare_disk
                       host_involves_pcipassthrough host_get_pcipassthrough_devs
                       toolstack guest_create
 
@@ -1319,6 +1321,7 @@ sub selectguest ($$) {
     }
     logm("guest: using $gn on $gho->{Host}{Name}");
     guest_find_lv($gho);
+    guest_find_diskimg($gho);
     guest_find_ether($gho);
     guest_find_tcpcheckport($gho);
     dhcp_watch_setup($ho,$gho);
@@ -1332,6 +1335,22 @@ sub guest_find_lv ($) {
     $gho->{Lv}= $r{"${gn}_disk_lv"};
     $gho->{Lvdev}= (defined $gho->{Vg} && defined $gho->{Lv})
         ? '/dev/'.$gho->{Vg}.'/'.$gho->{Lv} : undef;
+}
+
+sub guest_find_diskimg($)
+{
+    my ($gho) = @_;
+    $gho->{Diskfmt} = $r{"$gho->{Guest}_diskfmt"} // "lvm";
+    $gho->{Diskspec} = "phy:$gho->{Lvdev},xvda,w";
+
+    return if $gho->{Diskfmt} eq "lvm";
+
+    my $mntroot = get_host_property($gho->{Host}, "DiskImageMount",
+			    $c{DiskImageMount} // "/var/lib/xen/images");
+
+    $gho->{Diskmnt} = "$mntroot/$gho->{Guest}";
+    $gho->{Diskimg} = "$gho->{Diskmnt}/disk.$gho->{Diskfmt}";
+    $gho->{Diskspec} = "format=$gho->{Diskfmt},vdev=xvda,target=$gho->{Diskimg}";
 }
 
 sub guest_find_ether ($) {
@@ -1373,6 +1392,7 @@ sub guest_destroy ($) {
     my ($gho) = @_;
     my $ho = $gho->{Host};
     toolstack($ho)->destroy($gho);
+    guest_unprepare_disk($gho);
 }
 
 sub guest_await_destroy ($$) {
@@ -1384,8 +1404,31 @@ sub guest_await_destroy ($$) {
 sub guest_create ($) {
     my ($gho) = @_;
     my $ho = $gho->{Host};
+    guest_prepare_disk($gho);
     toolstack($ho)->create($gho);
 }
+
+sub guest_prepare_disk ($) {
+    my ($gho) = @_;
+
+    guest_umount_lv($gho->{Host}, $gho);
+
+    return if $gho->{Diskfmt} eq "lvm";
+
+    target_cmd_root($gho->{Host}, <<END);
+mkdir -p $gho->{Diskmnt}
+mount $gho->{Lvdev} $gho->{Diskmnt};
+END
+}
+
+sub guest_unprepare_disk ($) {
+    my ($gho) = @_;
+    return if $gho->{Diskfmt} eq "lvm";
+    target_cmd_root($gho->{Host}, <<END);
+umount $gho->{Lvdev} || :
+END
+}
+
 
 
 sub target_choose_vg ($$) {
@@ -1518,6 +1561,7 @@ sub prepareguest ($$$$$$) {
     }
 
     guest_find_lv($gho);
+    guest_find_diskimg($gho);
     guest_find_ether($gho);
     guest_find_tcpcheckport($gho);
     return $gho;
@@ -1528,7 +1572,56 @@ sub prepareguest_part_lvmdisk ($$$) {
     target_cmd_root($ho, "lvremove -f $gho->{Lvdev} ||:");
     target_cmd_root($ho, "lvcreate -L ${disk_mb}M -n $gho->{Lv} $gho->{Vg}");
     target_cmd_root($ho, "dd if=/dev/zero of=$gho->{Lvdev} count=10");
-}    
+}
+
+sub make_vhd ($$$) {
+    my ($ho, $gho, $disk_mb) = @_;
+    target_cmd_root($ho, "vhd-util create -n $gho->{Rootimg} -s $disk_mb");
+}
+sub make_qcow2 ($$$) {
+    my ($ho, $gho, $disk_mb) = @_;
+    # upstream qemu's version. Seems preferable to qemu-xen-img from qemu-trad.
+    my $qemu_img = "/usr/local/lib/xen/bin/qemu-img";
+    target_cmd_root($ho, "$qemu_img create -f qcow2 $gho->{Rootimg} ${disk_mb}M");
+}
+sub make_raw ($$$) {
+    my ($ho, $gho, $disk_mb) = @_;
+    # In local tests this reported 130MB/s, so calculate a timeout assuming 100MB/s.
+    target_cmd_root($ho, "dd if=/dev/zero of=$gho->{Rootimg} bs=1MB count=${disk_mb}",
+	${disk_mb} / 100);
+}
+
+sub prepareguest_part_diskimg ($$$) {
+    my ($ho, $gho, $disk_mb) = @_;
+
+    my $diskfmt = $gho->{Diskfmt};
+    # Allow an extra 10 megabytes for image format headers
+    my $disk_overhead = $diskfmt eq "lvm" ? 0 : 10;
+
+    logm("preparing guest disks in $diskfmt format");
+
+    target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
+
+    prepareguest_part_lvmdisk($ho, $gho, $disk_mb + $disk_overhead);
+
+    if ($diskfmt ne "lvm") {
+
+	$gho->{Rootimg} = "$gho->{Diskmnt}/disk.$diskfmt";
+	$gho->{Rootcfg} = "format=$diskfmt,vdev=xvda,target=$gho->{Rootimg}";
+
+	target_cmd_root($ho, <<END);
+mkfs.ext3 $gho->{Lvdev}
+mkdir -p $gho->{Diskmnt}
+mount $gho->{Lvdev} $gho->{Diskmnt}
+END
+        no strict qw(refs);
+        &{"make_$diskfmt"}($ho, $gho, $disk_mb);
+
+	target_cmd_root($ho, <<END);
+umount $gho->{Lvdev}
+END
+    }
+}
 
 sub prepareguest_part_xencfg ($$$$$) {
     my ($ho, $gho, $ram_mb, $xopts, $cfgrest) = @_;

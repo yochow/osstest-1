@@ -373,6 +373,22 @@ do_pv_debian_tests () {
   for xsm in $xsms ; do
     do_pv_debian_test_one libvirt '' libvirt enable_xsm=$xsm
   done
+
+  for ts in xl libvirt ; do
+
+    for fmt in raw vhd qcow2 ; do
+
+      fmt_runvar="debian_diskfmt=$fmt"
+
+      do_pv_debian_test_one $ts-$fmt '-di' $ts  \
+          debian_arch=amd64                     \
+          debian_dist=$guestsuite               \
+          debian_method=netboot                 \
+          debian_bootloader=pygrub              \
+          $fmt_runvar
+
+    done
+  done
 }
 
 test_matrix_do_one () {
