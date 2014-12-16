@@ -311,7 +311,9 @@ proc run-job/test-pair {} {
 }
 
 proc test-guest-migr {g} {
-    if {[catch { run-ts . = ts-migrate-support-check + host $g }]} return
+    set to_reap [spawn-ts . = ts-migrate-support-check + host $g]
+    set can_migrate [reap-ts $to_reap]
+    if {!$can_migrate} return
 
     foreach iteration {{} .2} {
         run-ts . =$iteration ts-guest-saverestore + host $g
