@@ -43,7 +43,7 @@ BEGIN {
                       xendist
                       $xendist
 
-                      submodulefixup submodule_have
+                      submodulefixup submodule_have submodule_find
 
                       );
     %EXPORT_TAGS = ( );
@@ -145,9 +145,16 @@ sub submodulefixup ($$$$) {
     return \@submodules;
 }
 
-sub submodule_have ($$) {
+sub submodule_find ($$) {
     my ($submodules, $ourname) = @_;
-    return !!grep { $_->{OurName} eq $ourname } @$submodules;
+    my @submods = grep { $_->{OurName} eq $ourname } @$submodules;
+    return undef unless @submods;
+    die "more than one $ourname?" if @submods ne 1;
+    return $submods[0];
+}
+
+sub submodule_have ($$) {
+    return !!&submodule_find;
 }
 
 1;

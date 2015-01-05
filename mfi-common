@@ -187,7 +187,6 @@ create_build_jobs () {
                 host_hostflags=$build_hostflags                              \
                 buildjob=${bfi}build-$arch                                   \
                 tree_libvirt=$TREE_LIBVIRT revision_libvirt=$REVISION_LIBVIRT\
-                tree_gnulib_libvirt=$TREE_GNULIB_LIBVIRT revision_gnulib_libvirt=$REVISION_GNULIB_LIBVIRT\
 
     fi
 

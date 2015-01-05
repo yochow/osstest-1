@@ -25,6 +25,9 @@ tsreadconfig();
 selectbuildhost(\@ARGV);
 builddirsprops();
 
+our %submodmap = qw(gnulib gnulib);
+our $submodules;
+
 sub libvirtd_init ();
 
 sub checkout () {
@@ -32,7 +35,7 @@ sub checkout () {
     xendist();
 
     build_clone($ho, 'libvirt', $builddir, 'libvirt');
-    build_clone($ho, 'gnulib_libvirt', $builddir, 'gnulib-libvirt');
+    $submodules = submodulefixup($ho, 'libvirt', 'libvirt', \%submodmap);
 }
 
 sub config() {
@@ -45,13 +48,17 @@ sub config() {
     }
     die "no xen prefix" unless $xenprefix;
 
-    # Uses $GNULIB_SRCDIR because ./autogen.sh doesn't propagate
-    # --gnulib-srcdir to ./bootstap.
+    # Uses --no-git because otherwise autogen.sh will undo
+    # submodulefixup's attempts to honour
+    # revision_libvirt_gnulib. This in turn requires that we specify
+    # --gnulib-srcdir, but ./autogen.sh doesn't propagate
+    # --gnulib-srcdir to ./bootstap so we use GNULIB_SRCDIR directly.
+    my $gnulib = submodule_find($submodules, "gnulib");
     target_cmd_build($ho, 3600, $builddir, <<END);
         cd libvirt
         CFLAGS="-I$xenprefix/include/" \\
         LDFLAGS="-L$xenprefix/lib/ -Wl,-rpath-link=$xenprefix/lib/" \\
-	GNULIB_SRCDIR=$builddir/gnulib-libvirt \\
+        GNULIB_SRCDIR=$builddir/libvirt/$gnulib->{Path} \\
             ./autogen.sh --no-git \\
                          --with-libxl --without-xen --without-xenapi --without-selinux \\
                          --without-lxc --without-vbox --without-uml \\
@@ -83,15 +90,10 @@ END
 END
 }
 
-sub collectversion_gnulib () {
-    store_revision($ho, 'gnulib_libvirt', "$builddir/gnulib-libvirt", 1);
-}
-
 checkout();
 config();
 build();
 install();
-collectversion_gnulib();
 built_stash($ho, $builddir, 'dist', 'libvirtdist');
 
 sub libvirtd_init () {

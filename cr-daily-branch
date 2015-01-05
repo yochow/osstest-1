@@ -150,10 +150,6 @@ if [ "x$REVISION_LIBVIRT" = x ]; then
 	determine_version REVISION_LIBVIRT libvirt LIBVIRT
 	export REVISION_LIBVIRT
 fi
-if [ "x$REVISION_GNULIB_LIBVIRT" = x ]; then
-	determine_version REVISION_GNULIB_LIBVIRT gnulib-libvirt GNULIB_LIBVIRT
-	export REVISION_GNULIB_LIBVIRT
-fi
 if [ "x$REVISION_RUMPUSERXEN" = x ]; then
 	determine_version REVISION_RUMPUSERXEN rumpuserxen RUMPUSERXEN
 	export REVISION_RUMPUSERXEN

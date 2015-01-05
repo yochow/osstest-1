@@ -88,11 +88,6 @@ rumpuserxen)
 	cd $repos/rumpuserxen
 	git push $TREE_RUMPUSERXEN $revision:xen-tested-master
 	;;
-gnulib-libvirt)
-	# No gate
-	echo "gnulib-libvirt has not push gate, refusing to push" >&2
-	exit 1
-	;;
 seabios)
 	cd $repos/seabios
 	git push $TREE_SEABIOS $revision:refs/heads/xen-tested-master

@@ -88,10 +88,6 @@ rumpuserxen)
 	repo_tree_rev_fetch_git rumpuserxen \
 		$BASE_TREE_RUMPUSERXEN xen-tested-master $BASE_LOCALREV_RUMPUSERXEN
 	;;
-gnulib-libvirt)
-	# No push gate, same as ap-fetch-version
-	./ap-fetch-version $branch
-	;;
 seabios)
 	repo_tree_rev_fetch_git seabios \
 		$BASE_TREE_SEABIOS xen-tested-master $BASE_LOCALREV_SEABIOS

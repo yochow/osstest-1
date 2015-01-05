@@ -37,8 +37,6 @@
 : ${PUSH_TREE_LIBVIRT:=$XENBITS:/home/xen/git/libvirt.git}
 : ${BASE_TREE_LIBVIRT:=git://xenbits.xen.org/libvirt.git}
 
-: ${TREE_GNULIB_LIBVIRT:=$(besteffort_repo git://git.sv.gnu.org/gnulib.git)}
-
 : ${TREE_RUMPUSERXEN:=https://github.com/rumpkernel/rumprun-xen}
 : ${TREEVCS_RUMPUSERXEN:=git}
 : ${BASE_TREE_RUMPUSERXEN:=git://xenbits.xen.org/rumpuser-xen.git}
@@ -77,7 +75,6 @@ fi
 : ${LOCALREV_XEN:=daily-cron.$branch}
 : ${LOCALREV_LINUX:=daily-cron.$branch}
 : ${LOCALREV_LIBVIRT:=daily-cron.$branch}
-: ${LOCALREV_GNULIB_LIBVIRT:=daily-cron.$branch}
 : ${LOCALREV_RUMPUSERXEN:=daily-cron.$branch}
 : ${LOCALREV_SEABIOS:=daily-cron.$branch}
 
