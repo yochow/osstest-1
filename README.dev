@@ -123,3 +123,16 @@ initial push works
 When pushing the patches, be sure to make sure that the
 for-$branch.git repo can fast forward to the pushed version (perhaps
 by resetting it).
+
+Force pushing a branch
+======================
+
+As osstest user on test controller
+
+$ cd ~/branches/for-$branch.git
+OR
+$ cd ~/testing.git
+
+$ OSSTEST_CONFIG=production-config ./ap-push $branch $revision
+
+NOTE: $revision must be a revision *not* a tag.
