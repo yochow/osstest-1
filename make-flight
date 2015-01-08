@@ -242,7 +242,7 @@ do_hvm_rhel6_tests () {
 }
 
 do_sedf_tests () {
-  if [ $xenarch != amd64 -o $dom0arch != amd64 ]; then
+  if [ $xenarch != $dom0arch ]; then
     return
   fi
 
@@ -257,7 +257,7 @@ do_sedf_tests () {
 }
 
 do_credit2_tests () {
-  if [ $xenarch != amd64 -o $dom0arch != i386 ]; then
+  if [ $xenarch != $dom0arch ]; then
     return
   fi
 
@@ -265,6 +265,16 @@ do_credit2_tests () {
        test-debian xl $xenarch $dom0arch                              \
             guests_vcpus=4 xen_boot_append='sched=credit2'            \
             $debian_runvars all_hostflags=$most_hostflags
+}
+
+do_multivcpu_tests () {
+  if [ $xenarch != $dom0arch ]; then
+    return
+  fi
+
+  job_create_test test-$xenarch$kern-$dom0arch-xl-multivcpu \
+                    test-debian xl $xenarch $dom0arch guests_vcpus=4  \
+                    $debian_runvars all_hostflags=$most_hostflags
 }
 
 do_passthrough_tests () {
@@ -297,6 +307,10 @@ test_matrix_do_one () {
   job_create_test test-$xenarch$kern-$dom0arch-libvirt test-debian libvirt \
             $xenarch $dom0arch                                       \
             $debian_runvars all_hostflags=$most_hostflags
+
+  do_multivcpu_tests
+  do_sedf_tests
+  do_credit2_tests
 
   # No further arm tests at the moment
   if [ $dom0arch = armhf ]; then
@@ -368,17 +382,6 @@ test_matrix_do_one () {
             !host !host_hostflags \
             $debian_runvars \
             all_hostflags=$most_hostflags,equiv-1
-
-  do_sedf_tests
-  do_credit2_tests
-
-  if [ $xenarch = amd64 -a $dom0arch = i386 ]; then
-
-  job_create_test test-$xenarch$kern-$dom0arch-xl-multivcpu \
-                    test-debian xl $xenarch $dom0arch guests_vcpus=4  \
-                    $debian_runvars all_hostflags=$most_hostflags
-
-  fi
 
   if [ x$test_pvh = xy -a $xenarch = amd64 -a $dom0arch = amd64 ]; then
 
