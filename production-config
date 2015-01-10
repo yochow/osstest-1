@@ -68,7 +68,7 @@ TftpPxeDir /
 TftpPxeTemplates %ipaddrhex%/pxelinux.cfg
 
 TftpPxeGroup osstest
-TftpDiVersion 2014-12-14
+TftpDiVersion 2015-01-10
 
 XenUsePath /usr/groups/xencore/systems/bin/xenuse
 XenUseUser osstest
