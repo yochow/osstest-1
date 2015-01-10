@@ -32,6 +32,11 @@ fail () { echo >&2 "$0: $1"; exit 1; }
 site=http://ftp.debian.org/debian/
 sbase=$site/dists/$suite
 
+fetch () {
+	# no-cache due to transparent proxies messing things up.
+	curl -s -H 'Pragma: no-cache' $1
+}
+
 case ${suite}_${arch} in
     *_i386|*_amd64)
         src=$sbase/main/installer-$arch/current/images/netboot/
@@ -63,10 +68,10 @@ for f in $files; do
         echo >&2 "fetching $f"
         s=${f/:*} ; d=${f/*:}
         echo >&2 "$src/$s => $d.new"
-        curl -s $src/$s >$d.new
+        fetch $src/$s >$d.new
 done
 
-curl -s $pfile >Packages.gz
+fetch $pfile >Packages.gz
 
 for p in $packages; do
         set +e
@@ -75,7 +80,7 @@ for p in $packages; do
         rc=$?
         set -e
         if [ $rc != 0 ]; then fail "package $p not found"; fi
-        curl -s "$site/$pkgfile" >$p.deb
+        fetch "$site/$pkgfile" >$p.deb
         rm -rf x
         dpkg-deb -x $p.deb x
         cd x; pax -x sv4cpio -s '%lib%/lib%' -w -M norm lib >../cpio; cd ..
@@ -91,7 +96,7 @@ if [ $arch = armhf ]; then
     bp="$sbase-backports"
     pfile=$bp/main/binary-armhf/Packages.gz
 
-    curl -s $pfile >Packages.gz
+    fetch $pfile >Packages.gz
 
     # Newer kernel often needs a newer initramfs-tools. Make that available
     echo >&2 "collecting backports initramfs-tools"
@@ -99,7 +104,7 @@ if [ $arch = armhf ]; then
     rc=$?
     set -e
     if [ $rc != 0 ]; then fail "initramfs-tools package not found"; fi
-    curl -s "$site/$pkgfile" >initramfs-tools.deb
+    fetch "$site/$pkgfile" >initramfs-tools.deb
 
     set +e
     echo >&2 "collecting armmp kernel"
@@ -109,7 +114,7 @@ if [ $arch = armhf ]; then
     rc=$?
     set -e
     if [ $rc != 0 ]; then fail "armmp kernel package not found"; fi
-    curl -s "$site/$pkgfile" >armmp.deb
+    fetch "$site/$pkgfile" >armmp.deb
     dpkg-deb -x armmp.deb x
     cp x/boot/vmlinuz-* linux.armmp
     # The full set of modules is pretty large and not that
