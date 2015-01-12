@@ -146,6 +146,16 @@ if [ "x$REVISION_SEABIOS" = x ]; then
 	: REVISION_SEABIOS from Config.mk
     fi
 fi
+if [ "x$REVISION_OVMF" = x ]; then
+    if [ "x$tree" = "xovmf" ]; then
+	TREE_OVMF=$TREE_OVMF_UPSTREAM
+	export TREE_OVMF
+	determine_version REVISION_OVMF ovmf OVMF
+	export REVISION_OVMF
+    else
+	: REVISION_OVMF from Config.mk
+    fi
+fi
 if [ "x$REVISION_LIBVIRT" = x ]; then
 	determine_version REVISION_LIBVIRT libvirt LIBVIRT
 	export REVISION_LIBVIRT
@@ -202,6 +212,10 @@ rumpuserxen)
 seabios)
 	realtree=seabios
 	NEW_REVISION=$REVISION_SEABIOS
+	;;
+ovmf)
+	realtree=ovmf
+	NEW_REVISION=$REVISION_OVMF
 	;;
 *)
 	NEW_REVISION=''

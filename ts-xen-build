@@ -67,6 +67,12 @@ END
                (nonempty($r{revision_seabios}) ? <<END : '').
 	echo >>.config SEABIOS_UPSTREAM_TAG='$r{revision_seabios}'
 END
+               (nonempty($r{tree_ovmf}) ? <<END : '').
+	echo >>.config OVMF_UPSTREAM_URL='$r{tree_ovmf}'
+END
+               (nonempty($r{revision_ovmf}) ? <<END : '').
+	echo >>.config OVMF_UPSTREAM_REVISION='$r{revision_ovmf}'
+END
                (nonempty($earlyprintk) ? <<END : '').
 	echo >>.config CONFIG_EARLY_PRINTK=$earlyprintk
 END

@@ -30,6 +30,7 @@ select_xenbranch
 : ${BASE_LOCALREV_LIBVIRT:=daily-cron.$branch.old}
 : ${BASE_LOCALREV_RUMPUSERXEN:=daily-cron.$branch.old}
 : ${BASE_LOCALREV_SEABIOS:=daily-cron.$branch.old}
+: ${BASE_LOCALREV_OVMF:=daily-cron.$branch.old}
 
 : ${BASE_TREE_QEMU_UPSTREAM:=${TREE_QEMU_UPSTREAM/\/staging\//\/}}
 
@@ -91,6 +92,10 @@ rumpuserxen)
 seabios)
 	repo_tree_rev_fetch_git seabios \
 		$BASE_TREE_SEABIOS xen-tested-master $BASE_LOCALREV_SEABIOS
+	;;
+ovmf)
+	repo_tree_rev_fetch_git ovmf \
+		$BASE_TREE_OVMF xen-tested-master $BASE_LOCALREV_OVMF
 	;;
 osstest)
 	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then

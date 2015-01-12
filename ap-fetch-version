@@ -85,6 +85,10 @@ seabios)
 	repo_tree_rev_fetch_git seabios \
 		$TREE_SEABIOS_UPSTREAM master $LOCALREV_SEABIOS
 	;;
+ovmf)
+	repo_tree_rev_fetch_git ovmf \
+		$TREE_OVMF_UPSTREAM master $LOCALREV_OVMF
+	;;
 osstest)
 	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
 	    git fetch $HOME/testing.git pretest:ap-fetch >&2

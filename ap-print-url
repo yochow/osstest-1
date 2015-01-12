@@ -58,6 +58,9 @@ rumpuserxen)
 seabios)
 	echo $TREE_SEABIOS_UPSTREAM
 	;;
+ovmf)
+	echo $TREE_OVMF_UPSTREAM
+	;;
 osstest)
 	echo none:;
 	;;
