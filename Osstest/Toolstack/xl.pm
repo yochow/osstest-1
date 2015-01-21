@@ -40,7 +40,8 @@ sub destroy ($$) {
 }
 
 sub create ($$) {
-    my ($self,$cfg) = @_;
+    my ($self,$gho) = @_;
+    my $cfg = $gho->{CfgPath};
     target_cmd_root($self->{Host}, $self->{_Command}." create $cfg", 100);
 }
 

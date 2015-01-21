@@ -39,8 +39,9 @@ sub destroy ($$) {
 }
 
 sub create ($$) {
-    my ($self,$cfg) = @_;
+    my ($self,$gho) = @_;
     my $ho = $self->{Host};
+    my $cfg = $gho->{CfgPath};
     my $lcfg = $cfg;
     $lcfg =~ s,/,-,g;
     $lcfg = "$ho->{Name}--$lcfg";

@@ -1342,7 +1342,7 @@ sub guest_await_destroy ($$) {
 sub guest_create ($) {
     my ($gho) = @_;
     my $ho = $gho->{Host};
-    toolstack($ho)->create($gho->{CfgPath});
+    toolstack($ho)->create($gho);
 }
 
 
