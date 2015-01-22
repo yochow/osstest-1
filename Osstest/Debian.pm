@@ -158,8 +158,12 @@ sub setupboot_uboot ($$$) {
 	logm("Linux options: $xenkopt");
 
 	my $early_commands = get_host_property($ho, 'UBootScriptEarlyCommands', '');
+	my $xen_addr_r = get_host_property($ho, 'UBootSetXenAddrR', undef);
 
 	my $load_dtb = uboot_scr_load_dtb();
+
+	my $set_xen_addr_r =
+	    $xen_addr_r ? "setenv xen_addr_r $xen_addr_r" : "";
 
 	target_cmd_root($ho, <<END);
 if test ! -f /boot/$kern ; then
@@ -178,13 +182,10 @@ fdt addr \\\${fdt_addr}
 fdt resize
 
 ${early_commands}
+${set_xen_addr_r}
 
 fdt set /chosen \\\#address-cells <1>
 fdt set /chosen \\\#size-cells <1>
-
-setenv xen_addr_r 0x01000000
-#   kernel_addr_r=0x02000000
-#  ramdisk_addr_r=0x04000000
 
 ext2load scsi 0 \\\${xen_addr_r} \$xen
 setenv bootargs "$xenhopt"
