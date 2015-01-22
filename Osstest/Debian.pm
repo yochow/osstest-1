@@ -119,10 +119,12 @@ sub uboot_common_kernel_bootargs ($)
     my ($ho) = @_;
 
     my $root= target_guest_lv_name($ho,"root");
+    my $rootdelay= get_host_property($ho, "rootdelay");
 
     my @bootargs;
     push @bootargs, "ro";
     push @bootargs, "root=$root";
+    push @bootargs, "rootdelay=$rootdelay" if $rootdelay;
 
     return @bootargs;
 }
