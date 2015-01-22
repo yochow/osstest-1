@@ -149,16 +149,28 @@ sub setupboot_uboot ($$$) {
 	my $kern = "vmlinuz-$want_kernver";
 	my $initrd = "initrd.img-$want_kernver";
 
-	my @xenkopt = uboot_common_kernel_bootargs($ho);
+	logm("Xen options: $xenhopt");
+
+	# Common kernel options
+	my @kopt = uboot_common_kernel_bootargs($ho);
+
+	# Dom0 specific kernel options
+	my @xenkopt = @kopt;
 	push @xenkopt, $xenkopt;
 	# http://bugs.xenproject.org/xen/bug/45
 	push @xenkopt, "clk_ignore_unused"
 	    if $ho->{Suite} =~ m/wheezy|jessie/;
 
 	$xenkopt = join ' ', @xenkopt;
+	logm("Dom0 Linux options: $xenkopt");
 
-	logm("Xen options: $xenhopt");
-	logm("Linux options: $xenkopt");
+	# Native specific kernel options
+	my $natcons = get_host_native_linux_console($ho);
+	my @natkopt = @kopt;
+	push @natkopt, "console=$natcons" unless $natcons eq "NONE";
+
+	my $natkopt = join ' ', @natkopt;
+	logm("Native linux options: $natkopt");
 
 	my $early_commands = get_host_property($ho, 'UBootScriptEarlyCommands', '');
 	my $xen_addr_r = get_host_property($ho, 'UBootSetXenAddrR', undef);
@@ -216,6 +228,20 @@ bootz \\\${xen_addr_r} - \\\${fdt_addr}
 EOF
 mkimage -A arm -T script -d /boot/boot.xen /boot/boot.scr.xen
 cp /boot/boot.scr.xen /boot/boot.scr
+
+# Create boot.scr.nat for convenience too
+cat >/boot/boot.nat <<EOF
+setenv bootargs $natkopt
+${load_dtb}
+echo Loading $kern
+ext2load scsi 0 \\\${kernel_addr_r} $kern
+echo Loading $initrd
+ext2load scsi 0 \\\${ramdisk_addr_r} $initrd
+echo Booting
+bootz \\\${kernel_addr_r} \\\${ramdisk_addr_r}:\\\${filesize} \\\${fdt_addr}
+EOF
+mkimage -A arm -T script -d /boot/boot.nat /boot/boot.scr.nat
+
 END
     };
 
