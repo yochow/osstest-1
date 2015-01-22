@@ -173,12 +173,12 @@ if test ! -f /boot/$kern ; then
     exit 1
 fi
 # Save a copy of the original
-cp -n /boot/boot /boot/boot.bak
-cp -n /boot/boot.scr /boot/boot.scr.bak
+cp -n /boot/boot.xen /boot/boot.xen.bak
+cp -n /boot/boot.scr.xen /boot/boot.scr.xen.bak
 
 xen=`readlink /boot/$xen`
 
-cat >/boot/boot <<EOF
+cat >/boot/boot.xen <<EOF
 ${load_dtb}
 
 fdt addr \\\${fdt_addr}
@@ -214,7 +214,8 @@ fdt print /chosen
 echo Booting \\\${xen_addr_r} - \\\${fdt_addr}
 bootz \\\${xen_addr_r} - \\\${fdt_addr}
 EOF
-mkimage -A arm -T script -d /boot/boot /boot/boot.scr
+mkimage -A arm -T script -d /boot/boot.xen /boot/boot.scr.xen
+cp /boot/boot.scr.xen /boot/boot.scr
 END
     };
 
@@ -732,7 +733,7 @@ r=/target #/
 kernel=`readlink \$r/vmlinuz | sed -e 's|boot/||'`
 initrd=`readlink \$r/initrd.img | sed -e 's|boot/||'`
 
-cat >\$r/boot/boot <<EOF
+cat >\$r/boot/boot.deb <<EOF
 setenv bootargs $bootargs
 ${load_dtb}
 echo Loading \$kernel
@@ -743,7 +744,8 @@ echo Booting
 bootz \\\${kernel_addr_r} \\\${ramdisk_addr_r}:\\\${filesize} \\\${fdt_addr}
 EOF
 
-in-target mkimage -A arm -T script -d /boot/boot /boot/boot.scr
+in-target mkimage -A arm -T script -d /boot/boot.deb /boot/boot.scr.deb
+in-target cp /boot/boot.scr.deb /boot/boot.scr
 END
     }
 
