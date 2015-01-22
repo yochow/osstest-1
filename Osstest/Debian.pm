@@ -151,6 +151,9 @@ sub setupboot_uboot ($$$) {
 
 	my @xenkopt = uboot_common_kernel_bootargs($ho);
 	push @xenkopt, $xenkopt;
+	# http://bugs.xenproject.org/xen/bug/45
+	push @xenkopt, "clk_ignore_unused"
+	    if $ho->{Suite} =~ m/wheezy|jessie/;
 
 	$xenkopt = join ' ', @xenkopt;
 
