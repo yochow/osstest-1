@@ -114,6 +114,15 @@ sub bl_getmenu_open ($$$) {
     return $f;
 }
 
+sub uboot_scr_load_dtb () {
+    return <<'END';
+if test -z "\${fdt_addr}" && test -n "\${fdtfile}" ; then
+    echo Loading dtbs/\${fdtfile}
+    ext2load scsi 0 \${fdt_addr_r} dtbs/\${fdtfile}
+    setenv fdt_addr \${fdt_addr_r}
+fi
+END
+}
 sub setupboot_uboot ($$$) {
     my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
     my $bl= { };
@@ -132,6 +141,8 @@ sub setupboot_uboot ($$$) {
 
 	my $early_commands = get_host_property($ho, 'UBootScriptEarlyCommands', '');
 
+	my $load_dtb = uboot_scr_load_dtb();
+
 	target_cmd_root($ho, <<END);
 if test ! -f /boot/$kern ; then
     exit 1
@@ -143,9 +154,7 @@ cp -n /boot/boot.scr /boot/boot.scr.bak
 xen=`readlink /boot/$xen`
 
 cat >/boot/boot <<EOF
-
-mw.l 800000 0 10000
-scsi scan
+${load_dtb}
 
 fdt addr \\\${fdt_addr}
 fdt resize
@@ -692,6 +701,8 @@ END
 
 	my $bootargs = join ' ', @bootargs;
 
+	my $load_dtb = uboot_scr_load_dtb();
+
 	preseed_hook_command($ho, 'late_command', $sfx, <<END);
 #!/bin/sh
 set -ex
@@ -703,11 +714,13 @@ initrd=`readlink \$r/initrd.img | sed -e 's|boot/||'`
 
 cat >\$r/boot/boot <<EOF
 setenv bootargs $bootargs
-mw.l 800000 0 10000
-scsi scan
+${load_dtb}
+echo Loading \$kernel
 ext2load scsi 0 \\\${kernel_addr_r} \$kernel
+echo Loading \$initrd
 ext2load scsi 0 \\\${ramdisk_addr_r} \$initrd
-bootz \\\${kernel_addr_r} \\\${ramdisk_addr_r}:\\\${filesize} 0x1000
+echo Booting
+bootz \\\${kernel_addr_r} \\\${ramdisk_addr_r}:\\\${filesize} \\\${fdt_addr}
 EOF
 
 in-target mkimage -A arm -T script -d /boot/boot /boot/boot.scr
