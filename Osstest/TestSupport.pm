@@ -66,7 +66,7 @@ BEGIN {
 
                       selecthost get_hostflags get_host_property
                       get_host_native_linux_console
-                      power_state power_cycle power_cycle_time
+                      power_state power_cycle power_cycle_sleep
                       serial_fetch_logs
                       propname_massage
          
@@ -712,9 +712,11 @@ sub power_cycle_host_setup ($) {
     $ho->{PowerMethobjs} = $methobjs;
 }
 
-sub power_cycle_time ($) {
+sub power_cycle_sleep ($) {
     my ($ho) = @_;
-    return get_host_property($ho, 'power-cycle-time', 5);
+    my $to = get_host_property($ho, 'power-cycle-time', 5);
+    logm("power-cycle: waiting ${to}s");
+    sleep($to);
 }
 
 sub power_cycle ($) {
@@ -724,7 +726,7 @@ sub power_cycle ($) {
 	" possibly shared with other jobs\n"
 	if $ho->{SharedMaybeOthers};
     power_state($ho, 0);
-    sleep(power_cycle_time($ho));
+    power_cycle_sleep($ho);
     power_state($ho, 1);
 }
 
