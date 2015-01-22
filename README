@@ -396,6 +396,9 @@ The keys in ~/.ssh/id_{rsa,dsa}.pub and ~/.ssh/authorized_keys
 
 TestHostKeypairPath
 
+Platforms<Arch>
+   List of platforms (i.e. distinct host types) to run a basic test on.
+
 HostProp_GenEtherPrefixBase 5e:36:0e:f5
 # 	                               :00:01 guest number in job appended
 #            in standalone jobdb, ^^^^^ xor'd with low 16 bits of your uid

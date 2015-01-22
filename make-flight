@@ -27,6 +27,7 @@ buildflight=$4
 flight=`./cs-flight-create $blessing $branch`
 
 . cri-common
+. cri-getplatforms
 . ap-common
 . mfi-common
 
@@ -284,10 +285,14 @@ do_passthrough_tests () {
 test_matrix_do_one () {
 
   # Basic PV Linux test with xl
+  for platform in '' `getplatforms $xenarch` ; do
+    suffix=${platform:+-$platform}
+    hostflags=${most_hostflags}${platform:+,platform-$platform}
 
-  job_create_test test-$xenarch$kern-$dom0arch-xl test-debian xl \
+    job_create_test test-$xenarch$kern-$dom0arch-xl$suffix test-debian xl \
             $xenarch $dom0arch                                   \
-            $debian_runvars all_hostflags=$most_hostflags
+            $debian_runvars all_hostflags=$hostflags
+  done
 
   job_create_test test-$xenarch$kern-$dom0arch-libvirt test-debian libvirt \
             $xenarch $dom0arch                                       \

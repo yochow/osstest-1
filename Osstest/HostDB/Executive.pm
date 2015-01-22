@@ -67,6 +67,34 @@ END
     return $flags;
 }
 
+sub get_arch_platforms ($$) {
+    my ($hd, $blessing, $arch) = @_;
+
+    my @plats = ( );
+    my $platsq = $dbh_tests->prepare(<<END);
+SELECT DISTINCT hostflag
+           FROM hostflags h0
+   WHERE EXISTS (
+       SELECT *
+         FROM hostflags h1, hostflags h2
+        WHERE h0.hostname = h1.hostname AND h1.hostname = h2.hostname
+          AND h1.hostflag = ?
+          AND h2.hostflag = ?
+   )
+   AND hostflag like 'platform-%';
+END
+
+    $platsq->execute("blessed-$blessing", "arch-$arch");
+
+    while (my ($plat) = $platsq->fetchrow_array()) {
+	$plat =~ s/^platform-//g or die;
+	push @plats, $plat;
+    }
+
+    $platsq->finish();
+    return @plats;
+}
+
 sub default_methods ($$) {
     my ($hd, $ho) = @_;
 

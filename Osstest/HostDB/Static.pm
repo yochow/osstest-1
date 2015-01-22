@@ -65,6 +65,15 @@ sub get_flags ($$) { #method
     return $flags;
 }
 
+sub get_arch_platforms ($$) {
+    my ($hd, $blessing, $arch) = @_;
+
+    my $prop = "Platforms".ucfirst($arch);
+
+    return split /\s+/, $c{$prop} if $c{$prop};
+    return () unless $c{$prop};
+}
+
 sub default_methods ($$) { #method
     my ($hd, $ho) = @_;
 
