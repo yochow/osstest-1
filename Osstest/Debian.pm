@@ -136,6 +136,13 @@ sub setupboot_uboot ($$$) {
 
 	my $root= target_guest_lv_name($ho,"root");
 
+	my @xenkopt;
+	push @xenkopt, $xenkopt;
+	push @xenkopt, "ro";
+	push @xenkopt, "root=$root";
+
+	$xenkopt = join ' ', @xenkopt;
+
 	logm("Xen options: $xenhopt");
 	logm("Linux options: $xenkopt");
 
@@ -177,9 +184,9 @@ ext2load scsi 0 \\\${kernel_addr_r} $kern
 fdt mknod /chosen module\@0
 fdt set /chosen/module\@0 compatible "xen,linux-zimage" "xen,multiboot-module"
 fdt set /chosen/module\@0 reg <\\\${kernel_addr_r} \\\${filesize}>
-fdt set /chosen/module\@0 bootargs "$xenkopt ro root=$root"
+fdt set /chosen/module\@0 bootargs "$xenkopt"
 echo Loaded $kern to \\\${kernel_addr_r} (\\\${filesize})
-echo command line: $xenkopt ro root=$root
+echo command line: $xenkopt
 
 ext2load scsi 0 \\\${ramdisk_addr_r} $initrd
 fdt mknod /chosen module\@1
