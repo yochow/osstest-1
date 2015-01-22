@@ -20,6 +20,8 @@ package Osstest::Debian;
 use strict;
 use warnings;
 
+use POSIX;
+
 use IO::File;
 use File::Copy;
 
@@ -514,6 +516,9 @@ sub preseed_create ($$;@) {
     my $disk= $xopts{DiskDevice} || '/dev/sda';
     my $suite= $xopts{Suite} || $c{DebianSuite};
 
+    my $d_i= $ho->{Tftp}{Path}.'/'.$ho->{Tftp}{DiBase}.'/'.$r{arch}.'/'.
+	$c{TftpDiVersion}.'-'.$ho->{Suite};
+
     my $hostsq= $dbh_tests->prepare(<<END);
         SELECT val FROM runvars
          WHERE flight=? AND name LIKE '%host'
@@ -627,11 +632,28 @@ $overlays
 echo latecmd done.
 END
 
+    my $dtbs = "$d_i/dtbs.tar.gz";
+    if (!stat $dtbs) {
+        $!==&ENOENT or die "dtbs $!";
+    } elsif (-e _) {
+	my $durl = create_webfile($ho, "dtbs", sub {
+	    copy("$d_i/dtbs.tar.gz", $_[0])
+		or die "Copy dtbs failed: $!";
+	});
+	preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+r=/target
+
+wget -O \$r/tmp/dtbs.tar.gz $durl
+
+in-target tar -C /boot -xaf /tmp/dtbs.tar.gz
+END
+    }
+
     foreach my $kp (keys %{ $ho->{Flags} }) {
 	$kp =~ s/need-kernel-deb-// or next;
-
-	my $d_i= $ho->{Tftp}{Path}.'/'.$ho->{Tftp}{DiBase}.'/'.$r{arch}.'/'.
-	    $c{TftpDiVersion}.'-'.$ho->{Suite};
 
 	my $kurl = create_webfile($ho, "kernel", sub {
 	    copy("$d_i/$kp.deb", $_[0])
