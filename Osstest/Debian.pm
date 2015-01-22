@@ -114,6 +114,19 @@ sub bl_getmenu_open ($$$) {
     return $f;
 }
 
+sub uboot_common_kernel_bootargs ($)
+{
+    my ($ho) = @_;
+
+    my $root= target_guest_lv_name($ho,"root");
+
+    my @bootargs;
+    push @bootargs, "ro";
+    push @bootargs, "root=$root";
+
+    return @bootargs;
+}
+
 sub uboot_scr_load_dtb () {
     return <<'END';
 if test -z "\${fdt_addr}" && test -n "\${fdtfile}" ; then
@@ -134,12 +147,8 @@ sub setupboot_uboot ($$$) {
 	my $kern = "vmlinuz-$want_kernver";
 	my $initrd = "initrd.img-$want_kernver";
 
-	my $root= target_guest_lv_name($ho,"root");
-
-	my @xenkopt;
+	my @xenkopt = uboot_common_kernel_bootargs($ho);
 	push @xenkopt, $xenkopt;
-	push @xenkopt, "ro";
-	push @xenkopt, "root=$root";
 
 	$xenkopt = join ' ', @xenkopt;
 
@@ -698,12 +707,10 @@ END
     }
 
     if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
-	my @bootargs;
+	my @bootargs = uboot_common_kernel_bootargs($ho);
 
-	my $root=target_guest_lv_name($ho,"root");
 	my $console=get_host_native_linux_console($ho);
 
-	push @bootargs, "root=$root";
 	push @bootargs, "console=$console" unless $console eq "NONE";
 
 	my $bootargs = join ' ', @bootargs;
