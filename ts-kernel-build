@@ -171,6 +171,41 @@ setopt CONFIG_BLK_DEV_NBD y
 # At least with Linux 3.4.77 on wheezy, the nbd module is
 # not loaded automatically.
 
+# Enabling Exynos4 forces wierd CONFIG_HZ==200, and we don't
+# support that platform anyway.
+setopt CONFIG_ARCH_EXYNOS4 n
+
+# Having these on breaks USB
+setopt CONFIG_SAMSUNG_USB2PHY n
+setopt CONFIG_SAMSUNG_USB3PHY n
+
+# These cause i2c bus timeout errors on boot.
+# https://groups.google.com/a/chromium.org/forum/#!topic/chromium-os-reviews/f1DW9NcSPVU?
+# http://patchwork.ozlabs.org/patch/337812/
+setopt CONFIG_SENSORS_LM90 n
+setopt CONFIG_ICS932S401 n
+
+# Enable some additional drivers for Arndale.
+setopt CONFIG_PHY_EXYNOS5250_SATA m
+setopt CONFIG_USB_EHCI_EXYNOS m
+setopt CONFIG_USB_OHCI_EXYNOS m
+setopt CONFIG_USB_HSIC_USB3503 m
+setopt CONFIG_USB_DWC3 m
+setopt CONFIG_USB_DWC3_HOST y
+setopt CONFIG_USB_DWC3_EXYNOS m
+setopt CONFIG_USB_DWC3_PCI n
+setopt CONFIG_PHY_SAMSUNG_USB2 m
+setopt CONFIG_PHY_EXYNOS5250_USB2 y
+setopt CONFIG_PHY_EXYNOS5_USBDRD m
+setopt CONFIG_RTC_DRV_S5M y
+setopt CONFIG_COMMON_CLK_S2MPS11 m
+setopt CONFIG_I2C_S3C2410 y
+setopt CONFIG_MMC_DW m
+setopt CONFIG_MMC_DW_EXYNOS m
+setopt CONFIG_REGULATOR_S5M8767 m
+
+####
+
 END
 
 our $config_features= <<END;
