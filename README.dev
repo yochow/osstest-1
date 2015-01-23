@@ -136,3 +136,37 @@ $ cd ~/testing.git
 $ OSSTEST_CONFIG=production-config ./ap-push $branch $revision
 
 NOTE: $revision must be a revision *not* a tag.
+
+Temporarily stopping a branch or the entire system
+==================================================
+
+osstest can be paused by dropping a stop file into either the central
+$HOME/testing.git or $HOME/branches/for-$branch.git etc.
+
+$HOME/testing.git/stop
+
+  stop everything
+
+$HOME/testing.git/daily.stop
+
+  stops all regular tests
+
+$HOME/testing.git/bisect.stop
+
+  stops all bisections
+
+$HOME/testing.git/$branch.stop
+
+  stop regular tests and bisections of $branch
+
+$HOME/branches/for-$branch.git/stop
+
+  stops regular tests $branch
+
+$HOME/bisects/for-$branch.git/stop
+
+  stops bisections of $branch
+
+$HOME/testing.git/$xenbranch.stop
+
+  stops everything using $xenbranch
