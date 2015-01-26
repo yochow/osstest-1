@@ -109,6 +109,11 @@ info_linux_tree () {
 		: ${TAG_LINUX_THIS:=linux-arm-xen}
 		: ${TAG_LINUX_ARM_THIS:=linux-arm-xen}
 		;;
+	linux-3.16)
+		# unofficial Ubuntu (Canonical) kernel team (ckt) for now
+		: ${TREE_LINUX_THIS:=git://kernel.ubuntu.com/ubuntu/linux.git}
+		: ${TAG_LINUX_THIS:=$1.y}
+		;;
 	linux-3.*)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
 		: ${TAG_LINUX_THIS:=$1.y}
