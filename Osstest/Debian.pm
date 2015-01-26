@@ -809,7 +809,9 @@ END
     }
 
     foreach my $kp (keys %{ $ho->{Flags} }) {
-	$kp =~ s/need-kernel-deb-// or next;
+	# Backwards compatibility
+	$kp = "need-kernel-deb-wheezy-backports" if $kp eq "need-kernel-deb-armmp";
+	$kp =~ s/need-kernel-deb-$ho->{Suite}// or next;
 
 	my $kern = "$d_i/$kp.deb";
 	my $kurl = create_webfile($ho, "kernel", sub {

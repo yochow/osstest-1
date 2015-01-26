@@ -200,7 +200,9 @@ sub setup_pxeboot_firstboot($) {
     }
 
     foreach my $kp (keys %{ $ho->{Flags} }) {
-        $kp =~ s/need-kernel-deb-// or next;
+        # Backwards compatibility
+        $kp = "need-kernel-deb-wheezy-backports" if $kp eq "need-kernel-deb-armmp";
+        $kp =~ s/need-kernel-deb-$ho->{Suite}// or next;
         my $kern= "$ho->{Tftp}{Path}/$d_i/linux.$kp";
         if (stat $kern) {
             logm("using kernel from: $kern");
@@ -246,8 +248,14 @@ END
     }
 
     my $dtbs = "";
-    $dtbs = "fdtdir /$d_i/dtbs"
-	if -e "$ho->{Tftp}{Path}/$d_i/dtbs";
+    foreach my $kp (keys %{ $ho->{Flags} }) {
+	# Backwards compatibility
+	$kp = "need-kernel-deb-wheezy-backports" if $kp eq "need-kernel-deb-armmp";
+	$kp =~ s/need-kernel-deb-$ho->{Suite}// or next;
+
+	$dtbs = "fdtdir /$d_i/$kp-dtbs"
+	    if -e "$ho->{Tftp}{Path}/$d_i/$kp-dtbs";
+    }
 
     file_simple_write_contents("$initrd_overlay.cpio", sub {
         contents_make_cpio($_[0], 'newc', "$initrd_overlay.d");
