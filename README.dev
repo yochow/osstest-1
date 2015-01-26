@@ -69,60 +69,39 @@ former case, disables everything; in the latter, just that "branch")
 Creating a new branch
 =====================
 
-As osstest@osstest:
+* Add appropriate code to ap-*
+  (For linux-* this is not needed if the tag is in the standard namespace)
+  (ap-push should use refs/heads/foo, not just `foo', for the remote
+   ref name - so that the initial push works)
 
-$ cd branches
+* Create any necessary output tree on xenbits:
+  As xen@xenbits do   mkdir   and   git init --bare
+  If this tree is going to contain push gate input, push something to
+  the push gate input ref.
 
-($branch sort of matching ap-fetch-version modulo wildcards and must
-match cron invocation)
+* Create the actual trees and push an initial version
+  As osstest@osstest:
+  $ cd $HOME/testing.git
+  $ OSSTEST_CONFIG=production-config \
+    ./mg-branch-setup BRANCH bisect INITIAL-TESTED-VERSION
 
-$ cd ~osstest/branches
-$ umask 002
-$ git clone ../testing.git for-$branch.git
-
-If you want to bisect then:
-$ cd ../bisects
-$ git clone ../testing.git for-$branch.git
-
-$ cd ../branches
-$ ln -s /export/home/osstest/bisects/for-$branch.git for-$branch.git/tree-bisect
-
-$ mkdir for-$branch.git/tmp
-# For manual playing only.
-
-Now can play in here. Can push random stuff and run
-"cr-daily-branch --real $branch" as osstest@osstest. e.g.
+* Optional testing:
+  You can now play in here if you like.  Can push random stuff and run
+  "cr-daily-branch --real $branch" as osstest@osstest. e.g.
   $ OSSTEST_EMAIL_HEADER=/home/ianc/osstest-email-ijc \
     OSSTEST_CONFIG=production-config ./cr-daily-branch --real $branch
 
-Note: Push to incoming and git reset --hard incoming
-Note2:
-$ cat ~/osstest-email-ijc
-To: ian.campbell@citrix.com
+  If you do this, do not run cr-for-branches -- it will try to update
+  all sorts trees etc.
 
-Do not run cr-for-branches -- it will try to update all sorts trees
-etc.
+  Before enabling this in cron (eg by pushing the change to BRANCHES
+  to production pretest branch), rewind so that osstest can fast
+  forward it to the actual production version.  Ie in bisects and
+  branches for-$branch.git,
+     git fetch origin incoming
+     git reset --hard FETCH_HEAD
 
-Need to create any xenbits trees which are referenced:
-
-As xen@xenbits do mkdir and git init --bare, but this might confuse
-cr-daily-branches so you would want to push something there
-(e.g. current master, easiest to do as osstest@osstest). Or "git clone
---bare" but might create all sorts of unwanted refs.
-
-Use ap-push to populate tree, in order to test ap-push, after using
-ap-fetch-version to populate the local repo. e.g.
-OSSTEST_CONFIG=production-config ./ap-fetch-version $branch
-OSSTEST_CONFIG=production-config ./ap-push $branch $revision
-
-NOTE: $revision must be a revision *not* a tag. If you want to start
-with a known baseline then git rev-parse FOO~0 it first.
-NOTE2: ap-push should use refs/heads/foo explicitly so that this
-initial push works
-
-When pushing the patches, be sure to make sure that the
-for-$branch.git repo can fast forward to the pushed version (perhaps
-by resetting it).
+$ Add to BRANCHES setting in cr-for-branches
 
 Force pushing a branch
 ======================

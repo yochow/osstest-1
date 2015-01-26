@@ -1,0 +1,106 @@
+#!/bin/bash
+#
+# usage:
+#  ./mg-branch-setup BRANCH bisect INITIAL-TESTED-VERSION
+#  ./mg-branch-setup BRANCH no-bisect
+#  ./mg-branch-setup BRANCH no-check
+#
+#  - checks that ap-fetch works (only if not `no-check')
+#  - creates the tree in ~osstest/branches
+#  - if applicable, creates the tree in ~osstest/bisects
+#  - if applicable, pushes INITIAL-TESTED-VERSION with ap-push
+#
+# Does NOT
+#  - add anything to the branch list in cr-for-branches
+#  - create any input/output tree on xenbits
+#  - run any test flights (obviously)
+
+set -e
+
+fail () { echo >&2 "$*"; exit 1; }
+badusage () { fail 'bad usage'; }
+need_value () {
+	case "$1" in
+	-*|'')	badusage ;;
+	esac
+}
+
+branch=$1; shift
+need_value "$branch"
+
+mode=$1; shift
+
+case "$mode" in
+bisect)
+	fetch=true
+	push=true
+	bisect=true
+	push_version="$1"; shift
+	need_value "$push_version"
+	;;
+no-bisect)
+	fetch=true
+	push=false
+	bisect=false
+	;;
+no-check)
+	fetch=false
+	push=false
+	bisect=false
+	;;
+*)
+	badusage
+	;;
+esac
+
+if [ $# != 0 ]; then badusage; fi
+
+umask 002
+
+must_test () {
+	local dir="$1"; shift
+	local t
+	for t in "$@"; do
+		if ! test $t "$dir"; then fail "test $t $dir failed"; fi
+	done
+}
+
+(
+	set -e
+	cd $HOME
+	must_test testing.git -d
+	must_test branches -d -w
+	if $bisect; then
+		must_test bisects -d -w
+	fi
+)
+
+x () { echo >&2 "; $*"; "$@"; }
+
+if $fetch; then
+	x ./ap-fetch-version $branch
+fi
+
+if $push; then
+	x ./ap-push $branch "$push_version"~0
+	x ./ap-fetch-version-baseline $branch
+fi
+
+make_tree () {
+	(
+		set -e
+		x cd $HOME/$1
+		x git clone ../testing.git for-$branch.git
+		x mkdir for-$branch.git/tmp
+	)
+}
+
+set -e
+make_tree branches
+if $bisect; then
+	make_tree bisects
+	x ln -sf $HOME/branches/for-$branch.git \
+		$HOME/bisects/for-$branch.git/tree-bisect
+fi
+
+echo "Branch $branch set up ok."
