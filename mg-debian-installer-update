@@ -38,20 +38,29 @@ fetch () {
 }
 
 case ${suite}_${arch} in
+    lenny_armhf|squeeze_armhf|lenny_arm64|squeeze_arm64|wheezy_arm64)
+        # No such thing.
+        exit 0
+        ;;
     *_i386|*_amd64)
         src=$sbase/main/installer-$arch/current/images/netboot/
         files="debian-installer/$arch/initrd.gz:initrd.gz debian-installer/$arch/linux:linux xen/vmlinuz:vmlinuz-xen xen/initrd.gz:initrd.gz-xen"
         ;;
-    lenny_armhf|squeeze_armhf)
-        # No such thing.
-        exit 0
+    *_arm64)
+        src=$sbase/main/installer-$arch/current/images/netboot/
+        files="debian-installer/$arch/initrd.gz:initrd.gz \
+               debian-installer/$arch/linux:linux"
         ;;
-    *_armhf)
+    wheezy_armhf)
         # Use the vexpress image, we are going to bash in our own
         # kernel+modules anyway.
         src=$sbase/main/installer-$arch/current/images/vexpress/netboot
         files='initrd.gz' # no kernel -- needs a newer kernel
         ;;
+    *_armhf)
+        src=$sbase/main/installer-$arch/current/images/netboot
+        files='vmlinuz initrd.gz'
+	;;
 esac
 
 pfile=$sbase/non-free/binary-$arch/Packages.gz
@@ -89,28 +98,40 @@ for p in $packages; do
         rm -rf x
 done
 
-# armhf requires a newer kernel than was in Wheezy for most
-# platforms. Construct something suitable from the latest kernel in
-# wheezy-backports.
-if [ $arch = armhf ]; then
+# Some platforms require a newer kernel than is in Debian. Construct
+# something suitable from the latest kernel ($bpok=flavour) in
+# backports.
+case ${suite}_${arch} in
+    wheezy_armhf) bpok=armmp; need_initramfs=y;;
+esac
+if [ x$bpok != x ]; then
     bp="$sbase-backports"
-    pfile=$bp/main/binary-armhf/Packages.gz
+    pfile=$bp/main/binary-$arch/Packages.gz
 
     fetch $pfile >Packages.gz
 
-    # Newer kernel often needs a newer initramfs-tools. Make that available
-    echo >&2 "collecting backports initramfs-tools"
-    pkgfile=`zcat Packages.gz | grep-dctrl -PX initramfs-tools -nsFilename | sort -n -r | head -n1`
-    rc=$?
-    set -e
-    if [ $rc != 0 ]; then fail "initramfs-tools package not found"; fi
-    fetch "$site/$pkgfile" >initramfs-tools.deb
+    if [ x$need_initramfs = xy ]; then
+        # Newer kernel often needs a newer initramfs-tools. Make that
+        # available
+        echo >&2 "collecting backports initramfs-tools"
+        pkgfile=`zcat Packages.gz \
+                 | grep-dctrl -PX initramfs-tools -nsFilename \
+                 | sort -n -r | head -n1`
+        rc=$?
+        set -e
+        if [ $rc -ne 0 ] || [ x$pkgfile = x ]; then
+	    fail "initramfs-tools package not found";
+	fi
+        fetch "$site/$pkgfile" >initramfs-tools.deb
+    fi
 
     set +e
     echo >&2 "collecting backports kernel"
     # Be careful to pickup the actual kernel package from the 'linux'
     # source and not a meta package from 'linux-latest'
-    pkgfile=`zcat Packages.gz | grep-dctrl -S linux | grep-dctrl -Pe ^linux-image-.*-armmp$ -nsFilename | sort -n -r | head -n1`
+    pkgfile=`zcat Packages.gz | grep-dctrl -S linux \
+             | grep-dctrl -Pe ^linux-image-.*-${bpok}$ -nsFilename \
+             | sort -n -r | head -n1`
     rc=$?
     set -e
     if [ $rc != 0 ]; then fail "backports kernel package not found"; fi
@@ -143,11 +164,13 @@ if [ $arch = armhf ]; then
           |pax -x sv4cpio -s '%lib%/lib%' -d -w -M norm >../cpio; cd ..
     gzip -9nf cpio
     mv cpio.gz backports.cpio.gz
-    rm -rf backports-dtbs/
-    mkdir backports-dtbs/
-    mv x/usr/lib/linux-image-*-armmp/*.dtb backports-dtbs/
-    tar --mtime=./x/usr/lib -cf backports-dtbs.tar backports-dtbs
-    gzip -9nf backports-dtbs.tar
+    if [ -d x/usr/lib/linux-image-*-${bpok}/ ] ; then
+        rm -rf backports-dtbs/
+        mkdir backports-dtbs/
+        mv x/usr/lib/linux-image-*-${bpok}/*.dtb backports-dtbs/
+        tar --mtime=./x/usr/lib -cf backports-dtbs.tar backports-dtbs
+        gzip -9nf backports-dtbs.tar
+    fi
     rm -rf x
 fi
 
