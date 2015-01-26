@@ -24,7 +24,7 @@ set -e
 
 suite=`getconfig DebianSuite`
 fws=`getconfig DebianNonfreeFirmware`
-arches="armhf amd64 i386"
+arches="arm64 armhf amd64 i386"
 
 for arch in $arches ; do
     ./mg-debian-installer-update $suite $arch $fws

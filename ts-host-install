@@ -202,7 +202,7 @@ sub setup_pxeboot_firstboot($) {
     foreach my $kp (keys %{ $ho->{Flags} }) {
         # Backwards compatibility
         $kp = "need-kernel-deb-wheezy-backports" if $kp eq "need-kernel-deb-armmp";
-        $kp =~ s/need-kernel-deb-$ho->{Suite}// or next;
+        $kp =~ s/need-kernel-deb-$ho->{Suite}-// or next;
         my $kern= "$ho->{Tftp}{Path}/$d_i/linux.$kp";
         if (stat $kern) {
             logm("using kernel from: $kern");
@@ -251,7 +251,7 @@ END
     foreach my $kp (keys %{ $ho->{Flags} }) {
 	# Backwards compatibility
 	$kp = "need-kernel-deb-wheezy-backports" if $kp eq "need-kernel-deb-armmp";
-	$kp =~ s/need-kernel-deb-$ho->{Suite}// or next;
+	$kp =~ s/need-kernel-deb-$ho->{Suite}-// or next;
 
 	$dtbs = "fdtdir /$d_i/$kp-dtbs"
 	    if -e "$ho->{Tftp}{Path}/$d_i/$kp-dtbs";
