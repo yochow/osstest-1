@@ -206,7 +206,9 @@ To run osstest in standalone mode:
      netcat
      chiark-utils-bin
 
- - Optional: ipmitool
+ - Optional:
+     ipmitool -- for hosts which use IPMI for power control
+     grub-common -- for mg-pxe-loader-update
 
  - Write a config file
     ~/.xen-osstest/config
