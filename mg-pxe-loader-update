@@ -1,0 +1,89 @@
+#!/bin/bash
+# usage
+#   ./mg-pxe-loader-update jessie
+#
+# Requires grub-mkimage (Debian package: grub-common)
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2015 Citrix Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+set -e
+
+. cri-getconfig
+
+suite=$1
+
+fail () { echo >&2 "$0: $1"; exit 1; }
+
+site=http://ftp.debian.org/debian/
+sbase=$site/dists/$suite
+
+archs="amd64 i386 arm64"
+
+dstroot=`getconfig TftpPath`/`getconfig TftpGrubBase`/
+date=`date +%Y-%m-%d`
+dst=$date
+
+grubpfx=`getconfig TftpGrubBase`/$date/grub
+grubcfg=`getconfig TftpTmpDir`/grub.cfg-'$net_default_mac'
+
+mkdir -p $dstroot
+cd $dstroot
+mkdir -p $dst
+cd $dst
+rm -rf grub
+mkdir grub
+
+cat >grub/grub.cfg <<EOF
+set stage1=yes
+configfile $grubcfg
+EOF
+for arch in $archs ; do
+    case $arch in
+	amd64) grubdeb=grub-efi-amd64-bin; platform=x86_64-efi;;
+	i386)  grubdeb=grub-efi-ia32-bin;  platform=i386-efi;;
+	arm64) grubdeb=grub-efi-arm64-bin; platform=arm64-efi;;
+	*) echo "No grub on $arch" >&2; exit 0;;
+    esac
+
+    pfile=$sbase/main/binary-$arch/Packages.gz
+
+    curl -s $pfile >Packages.gz
+
+    echo >&2 "collecting $grubdeb"
+    pkgfile=`zcat Packages.gz | grep-dctrl -PX $grubdeb -nsFilename | sort -n -r | head -n1`
+    rc=$?
+    set -e
+    if [ $rc -ne 0 ] || [ x$pkgfile = x ]; then fail "$grubdeb package not found"; fi
+    curl -s "$site/$pkgfile" >$grubdeb.deb
+
+    dpkg-deb -x $grubdeb.deb x
+
+    mv x/usr/lib/grub/* grub/
+
+    rm -rf x
+
+    rm Packages.gz
+
+    grub-mkimage -O "$platform" \
+		 -d ./grub/$platform \
+		 -o pxegrub-$arch.efi -p "$grubpfx" \
+		 search configfile normal efinet tftp net
+done
+
+echo $date
+echo >&2 "downloaded $dstroot/$date"

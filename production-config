@@ -85,7 +85,11 @@ TftpPxeTemplates %name%/pxelinux.cfg
 TftpPxeTemplatesReal pxelinux.cfg/%ipaddrhex%
 
 TftpPxeGroup osstest
+# Update with /mg-debian-installer-update(-all)
 TftpDiVersion 2015-01-10
+
+# Update with /mg-pxe-loader-update
+TftpGrubVersion XXXX-XX-XX
 
 XenUsePath /usr/groups/xencore/systems/bin/xenuse
 XenUseUser osstest

@@ -199,6 +199,9 @@ sub readglobalconfig () {
     $c{TftpDiBase} ||= "$c{TftpPlayDir}debian-installer";
     $c{TftpDiVersion} ||= 'current';
 
+    $c{TftpGrubBase} ||= "$c{TftpPlayDir}grub";
+    $c{TftpGrubVersion} ||= 'current';
+
     $c{WebspaceFile} ||= "$ENV{'HOME'}/public_html/";
     $c{WebspaceUrl} ||= "http://$myfqdn/~$whoami/";
     $c{WebspaceCommon} ||= 'osstest/';
