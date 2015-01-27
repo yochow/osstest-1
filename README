@@ -455,6 +455,7 @@ TftpFoo_<scope> and TftpFoo
 
         DiBase        The path under `Path' to the root of the debian installer
                       images.
+        GrubBase      The path under `Path' to the root of the grub EFI PXE images.
 
     For hosts in scope "default", TftpFoo_default (if set) takes
     precedence over TftpFoo.  TftpFoo is used when the setting Foo is
