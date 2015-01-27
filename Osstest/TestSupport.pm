@@ -898,7 +898,7 @@ sub selecthost ($) {
     $ho->{Tftp} = { };
     $ho->{Tftp}{$_} = $c{"Tftp${_}_${tftpscope}"} || $c{"Tftp${_}"}
         foreach qw(Path TmpDir PxeDir PxeGroup PxeTemplates PxeTemplatesReal
-                   DiBase);
+                   DiBase GrubBase);
 
     #----- finalise -----
 
@@ -2137,6 +2137,39 @@ END
 # uboot emulates pxelinux, so reuse BIOS stuff
 sub setup_pxeboot_di_uboot ($$$$$;%) { return &setup_pxeboot_di_bios; }
 sub setup_pxeboot_local_uboot ($) { return &setup_pxeboot_local_bios; }
+
+sub setup_grub_efi_bootcfg ($$) {
+    my ($ho, $bootfile) = @_;
+    my $f = "grub.cfg-$ho->{Ether}";
+    my $grub= $ho->{Tftp}{Path}.'/'.$ho->{Tftp}{GrubBase}.'/'.
+	$c{TftpGrubVersion}."/pxegrub-$r{arch}.efi";
+    my $pxe=$ho->{Tftp}{Path}.'/'.$ho->{Name}.'/pxe.img';
+
+    logm("Copy $grub => $pxe");
+    copy($grub, $pxe) or die "Copy $grub to $pxe failed: $!";
+
+    logm("grub_efi bootcfg into $f");
+    file_link_contents("$ho->{Tftp}{Path}$ho->{Tftp}{TmpDir}$f",
+		       $bootfile,  "$ho->{Name}-pxegrub.cfg");
+}
+
+# UEFI systems PXE boot using grub.efi
+sub setup_pxeboot_di_uefi ($$$$$;%) {
+    my ($ho,$kern,$initrd,$dicmd,$hocmd,%xopts) = @_;
+    setup_grub_efi_bootcfg($ho, <<END);
+set default=0
+set timeout=5
+menuentry 'overwrite' {
+  linux $kern $dicmd -- $hocmd
+  initrd $initrd
+}
+END
+}
+
+sub setup_pxeboot_local_uefi ($) {
+    my ($ho) = @_;
+    die "TODO: setup efi local boot";
+}
 
 sub setup_pxeboot_local ($) {
     my ($ho) = @_;
