@@ -372,7 +372,7 @@ END
 	    $candrow->{EquivMostRecentStatus} = $esrow->{status};
 	    print DEBUG "$dbg EQUIV-MOST-RECENT ";
 	    print DEBUG ("$esrow->{flight}.$esrow->{job}".
-			 " $esrow->{val} $esrow->{status}") if $esrow;
+			 " $esrow->{val} $esrow->{status}") if %$esrow;
 	    print DEBUG ".\n";
 	}
 
