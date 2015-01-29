@@ -180,6 +180,22 @@ sub setupboot_uboot ($$$) {
 	my $set_xen_addr_r =
 	    $xen_addr_r ? "setenv xen_addr_r $xen_addr_r" : "";
 
+	# According to u-boot policy $filesize is an unprefixed hex
+	# number, but fdt set requires numbers to be prefixed
+	# (e.g. with 0x for a hex number). See:
+	#
+	# http://lists.denx.de/pipermail/u-boot/2014-October/193622.html,
+	# http://lists.denx.de/pipermail/u-boot/2014-November/194150.html and
+	# http://lists.denx.de/pipermail/u-boot/2014-November/194150.html.
+	#
+	# However some older u-boot versions (e.g. on midway) erroneously
+	# include the 0x prefix when setting $filesize from ext*load
+	# commands, meaning we cannot simply unconditionally prepend
+	# the 0x. Base it on a host flag quirk.
+	my $size_hex_prefix =
+	    $ho->{Flags}{'quirk-load-filesize-has-0x-prefix'} ?
+	    '' : '0x';
+
 	target_cmd_root($ho, <<END);
 if test ! -f /boot/$kern ; then
     exit 1
@@ -210,7 +226,7 @@ echo command line: \\\${bootargs}
 ext2load scsi 0 \\\${kernel_addr_r} $kern
 fdt mknod /chosen module\@0
 fdt set /chosen/module\@0 compatible "xen,linux-zimage" "xen,multiboot-module"
-fdt set /chosen/module\@0 reg <\\\${kernel_addr_r} 0x\\\${filesize}>
+fdt set /chosen/module\@0 reg <\\\${kernel_addr_r} ${size_hex_prefix}\\\${filesize}>
 fdt set /chosen/module\@0 bootargs "$xenkopt"
 echo Loaded $kern to \\\${kernel_addr_r} (\\\${filesize})
 echo command line: $xenkopt
@@ -218,7 +234,7 @@ echo command line: $xenkopt
 ext2load scsi 0 \\\${ramdisk_addr_r} $initrd
 fdt mknod /chosen module\@1
 fdt set /chosen/module\@1 compatible "xen,linux-initrd" "xen,multiboot-module"
-fdt set /chosen/module\@1 reg <\\\${ramdisk_addr_r} 0x\\\${filesize}>
+fdt set /chosen/module\@1 reg <\\\${ramdisk_addr_r} ${size_hex_prefix}\\\${filesize}>
 echo Loaded $initrd to \\\${ramdisk_addr_r} (\\\${filesize})
 
 fdt print /chosen
