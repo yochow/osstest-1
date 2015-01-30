@@ -21,7 +21,8 @@
 #
 #  ./mg-hosts mkpxedir HOST...
 #               Create directories for pxeboot as expected by the rest
-#               of osstest.  Will use "sudo".
+#               of osstest.  Will use "sudo". The HOST(s) must be
+#               allocated (via mg-allocate HOST).
 #
 #  ./mg-hosts create-like SOURCE-HOST NEW-HOST[,NEW-HOST...]
 #               Create new host(s).  This does NOT copy the
