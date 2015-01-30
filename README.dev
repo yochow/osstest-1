@@ -34,6 +34,9 @@ Base it on an existing machine:
 
 $ mg-hosts create-like marilith-n5 marilith-n4
 
+Allocate it for the duration of setup
+$ mg-allocate HOST
+
 Set up the props and flags
 $ mg-hosts setprops ...
 $ mg-hosts setflags ...
@@ -52,8 +55,20 @@ $ echo $FLIGHT
 Clone an existing flight, e.g. 20855 was previous successful flight
 $ OSSTEST_CONFIG=production-config ./cs-adjust-flight $FLIGHT copy 20855 
 
-Run it:
+"commission" is a blessing, hosts should be blessed with it, e.g.
+
+$ mg-hosts setflags HOSTA HOSTB -- blessed-commission
+
+Can use anything e.g. commission-$classofmachine if doing multiple
+commissions in parallel.
+
+Run it, e.g. in a screen session:
 OSSTEST_CONFIG=production-config ./mg-execute-flight  -Bcommission -Eian.campbell@citrix.com -f20855 $FLIGHT
+
+Once machines are ready for production use remove the commission
+blessing and add the production ones, e.g.
+
+$ mg-hosts setflags HOSTA HOSTB -- \!blessed-commission blessed-{real,play,adhoc}
 
 Shutting down
 =============
