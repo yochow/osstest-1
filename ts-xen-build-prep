@@ -178,7 +178,7 @@ sub prep () {
                                autoconf automake libtool xsltproc
                                libxml2-utils libxml2-dev libnl-dev
                                libdevmapper-dev w3c-dtd-xhtml libxml-xpath-perl
-			       ccache));
+                               ccache nasm));
 
     target_cmd_root($ho, "chmod -R a+r /usr/share/git-core/templates");
     # workaround for Debian #595728
