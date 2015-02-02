@@ -298,8 +298,7 @@ do_passthrough_tests () {
   done
 }
 
-test_matrix_do_one () {
-
+do_pv_debian_tests () {
   # Basic PV Linux test with xl
   for platform in '' `getplatforms $xenarch` ; do
     suffix=${platform:+-$platform}
@@ -313,6 +312,11 @@ test_matrix_do_one () {
   job_create_test test-$xenarch$kern-$dom0arch-libvirt test-debian libvirt \
             $xenarch $dom0arch                                       \
             $debian_runvars all_hostflags=$most_hostflags
+}
+
+test_matrix_do_one () {
+
+  do_pv_debian_tests
 
   do_multivcpu_tests
   do_sedf_tests
