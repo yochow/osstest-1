@@ -98,9 +98,14 @@ END
 }
 
 sub recordtools() {
-    my $apptool = "$rux/app-tools/rumpxen-app";
-    store_runvar('cmdprefix_configure', "$apptool-configure");
-    store_runvar('cmdprefix_make',      "$apptool-make");
+    foreach my $stem (qw(rumprun-xen rumpxen-app)) {
+	my $apptool = "$rux/app-tools/$stem";
+	next unless target_file_exists($ho, "$apptool-configure");
+	store_runvar('cmdprefix_configure', "$apptool-configure");
+	store_runvar('cmdprefix_make',      "$apptool-make");
+	return;
+    }
+    die "app-tools not found ($rux)";
 }
 
 sub install() {
