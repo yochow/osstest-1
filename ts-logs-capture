@@ -59,6 +59,7 @@ END
             logm("fetching $logfile to $llogfile");
             if (!eval {
                 target_getfile_root($lho,60, $logfile,"$stash/$llogfile");
+		chmod(0666&~umask, "$stash/$llogfile") or die "chmod $stash/$llogfile $!";
 		if ($logfile !~ m/\.gz$/) {
 		    stat("$stash/$llogfile") or die "$stash/$llogfile $!";
 		    compress_stashed($llogfile) if(stat _)[7] > 100000;
