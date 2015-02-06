@@ -103,12 +103,12 @@ proc run-ts {args} {
     if {![reap-ts $reap]} { error "test script failed" }
 }
 
-proc spawn-ts {iffail testid ts args} {
+proc spawn-ts {iffail testid args} {
     global flight c jobinfo reap_details env
 
     if {[file exists abort]} {
         jobdb::logputs stdout \
-            "aborting - not executing $flight.$jobinfo(job) $ts $args"
+            "aborting - not executing $flight.$jobinfo(job) $args"
         job-set-status $flight $jobinfo(job) aborted
         return {}
     }
@@ -127,7 +127,9 @@ proc spawn-ts {iffail testid ts args} {
         if {$adding} { lappend testid_args $arg }
     }
 
-    regsub {^ts-} $ts {} deftestid
+    set ts [lshift real_args]
+
+    regsub {^ts-} [lshift testid_args] {} deftestid
     append deftestid /@
 
     set host_testid_suffix {}
