@@ -115,8 +115,6 @@ proc spawn-ts {iffail testid ts args} {
 
     if {![string compare . $iffail]} { set iffail fail }
 
-    jobdb::spawn-step-begin $flight $jobinfo(job) $ts stepno
-
     set real_args {}
     set adding 1
     set host_testid_suffix {}
@@ -131,6 +129,8 @@ proc spawn-ts {iffail testid ts args} {
 
     regsub {^ts-} $ts {} deftestid
     append deftestid /@
+
+    jobdb::spawn-step-begin $flight $jobinfo(job) $ts stepno
 
     if {[string match =* $testid]} {
         set testid "$deftestid[string range $testid 1 end]"
