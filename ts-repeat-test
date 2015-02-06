@@ -1,0 +1,66 @@
+#!/usr/bin/perl -w
+#
+# usage:
+#   ./ts-repeat-test COUNT ARGSPECS...
+#   ./ts-repeat-test COUNT [-] ts-SCRIPT [ARGS...] [; ...]
+#
+# ts-SCRIPT  will be prefixed with ./ before execution
+#             (provided it actually starts with `ts-')
+# ;          separates multiple scripts to be run
+# -          before script name means to ignore errors
+# \          at the start of any ARGSPEC is removed (after the checks above)
+
+use strict;
+use Osstest::TestSupport;
+
+use Data::Dumper;
+
+tsreadconfig();
+
+my $reps = shift @ARGV;
+die unless @ARGV && $reps =~ m/^\d+$/;
+
+my @cmdis = ();
+my $cmdi = { };
+# $cmds[]{L} = qw(./ts-foo-bar arg arg...);
+# $cmds[]{IgnoreError} = undef or 1
+
+push @ARGV, ';';
+
+foreach (@ARGV) {
+    if ($_ eq ';') {
+	if (%$cmdi) {
+	    push @cmdis, $cmdi;
+	    $cmdi = { };
+	}
+    } else {
+	if (!$cmdi->{L}) {
+	    if ($_ eq '-') {
+		$cmdi->{IgnoreError} = 1;
+		next;
+	    }
+	    s#^(?=ts-)#./#;
+	}
+	s#^\\##;
+	push @{ $cmdi->{L} }, $_;
+    }
+}
+
+my $dumper = new Data::Dumper [\@cmdis], [qw(*cmdis)];
+$dumper->Indent(0);
+print $dumper->Dump,"\n";
+
+foreach my $rep (1..$reps) {
+    logm("========== rep $rep ==========");
+    foreach my $cmdi (@cmdis) {
+	my $l = $cmdi->{L};
+	logm("---------- rep $rep @$l ----------");
+	my $r = system @$l;
+	if ($r) {
+	    my $m = "$l->[0]: ".($r==-1 ? "$!" : "status $?")."\n";
+	    if ($cmdi->{IgnoreError}) { warn $m; } else { die $m; }
+	}
+    }
+}
+
+logm("========== did $reps ==========");

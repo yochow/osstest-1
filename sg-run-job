@@ -103,6 +103,10 @@ proc run-ts {args} {
     if {![reap-ts $reap]} { error "test script failed" }
 }
 
+proc repeat-ts {reps testid args} {
+     eval [list run-ts . $testid + ts-repeat-test $reps +] $args
+}
+
 proc spawn-ts {iffail testid args} {
     global flight c jobinfo reap_details env
 
