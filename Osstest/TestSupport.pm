@@ -55,6 +55,7 @@ BEGIN {
                       target_putfilecontents_stash
 		      target_putfilecontents_root_stash
                       target_put_guest_image target_editfile
+                      target_editfile_cancel
                       target_editfile_root target_file_exists
                       target_run_apt
                       target_install_packages target_install_packages_norec
@@ -483,6 +484,14 @@ sub target_file_exists ($$) {
     die "$rfile $out ?";
 }
 
+our $target_editfile_cancel_exception =
+    bless { }, 'Osstest::TestSupport::TargetEditfileCancelException';
+
+sub target_editfile_cancel ($) {
+    logm("cancelling edit: @_");
+    die $target_editfile_cancel_exception;
+}
+
 sub teditfileex {
     my $user= shift @_;
     my $code= pop @_;
@@ -512,12 +521,19 @@ sub teditfileex {
     open '::EI', "$lfile" or die "$lfile: $!";
     open '::EO', "> $lfile.new" or die "$lfile.new: $!";
 
-    &$code;
+    my $install = 1;
+
+    eval { &$code };
+    if ($@) {
+	ref $@ && $@ == $target_editfile_cancel_exception or die $@;
+	$install = 0;
+    }
 
     '::EI'->error and die $!;
     close '::EI' or die $!;
     close '::EO' or die $!;
-    tputfileex($user, $ho, 60, "$lfile.new", $rdest);
+    tputfileex($user, $ho, 60, "$lfile.new", $rdest)
+	if $install;
 }
 
 sub target_editfile_root ($$$;$$) { teditfileex('root',@_); }
