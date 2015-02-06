@@ -32,7 +32,11 @@ our $gn = $gho->{Guest};
 sub arrangepreserve () {
     target_editfile_root($ho,$r{"$gho->{Guest}_cfgpath"}, sub {
 	while (<EI>) {
-	    next if m/^\s*on_poweroff\s*=/;
+	    if (m/^\s*on_poweroff\s*=/) {
+		target_editfile_cancel("already configured to preserve")
+		    if m/\bpreserve\b/;
+		next;
+	    }
 	    print EO or die $!;
 	}
 	print EO "\n","on_poweroff='preserve'\n" or die $!;
