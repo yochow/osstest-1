@@ -117,18 +117,21 @@ proc spawn-ts {iffail testid ts args} {
 
     set real_args {}
     set adding 1
-    set host_testid_suffix {}
+    set testid_args {}
     foreach arg $args {
         if {![string compare + $arg]} {
             set adding [expr {!$adding}]
             continue
         }
         lappend real_args $arg
-        if {$adding} { append host_testid_suffix "/$arg" }
+        if {$adding} { lappend testid_args $arg }
     }
 
     regsub {^ts-} $ts {} deftestid
     append deftestid /@
+
+    set host_testid_suffix {}
+    foreach arg $testid_args { append host_testid_suffix "/$arg" }
 
     jobdb::spawn-step-begin $flight $jobinfo(job) $ts stepno
 
