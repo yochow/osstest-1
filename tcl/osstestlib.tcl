@@ -67,3 +67,10 @@ proc lremove {listvar item} {
     if {$ix<0} return
     set list [lreplace $list $ix $ix]
 }
+
+proc lshift {listvar} {
+    upvar 1 $listvar list
+    set head [lindex $list 0]
+    set list [lrange $list 1 end]
+    return $head
+}
