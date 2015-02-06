@@ -46,7 +46,7 @@ BEGIN {
 
                       store_runvar get_runvar get_runvar_maybe
                       get_runvar_default need_runvars flight_otherjob
-                      unique_incrementing_runvar 
+                      unique_incrementing_runvar next_unique_name
 
                       target_cmd_root target_cmd target_cmd_build
                       target_cmd_output_root target_cmd_output
@@ -484,6 +484,11 @@ sub target_file_exists ($$) {
     die "$rfile $out ?";
 }
 
+sub next_unique_name ($) {
+    my ($fnref) = @_;
+    $$fnref .= '+';
+}
+
 our $target_editfile_cancel_exception =
     bless { }, 'Osstest::TestSupport::TargetEditfileCancelException';
 
@@ -509,7 +514,7 @@ sub teditfileex {
             $! == &ENOENT or die "$lfile $!";
             last;
         }
-        $lleaf .= '+';
+        next_unique_name \$lleaf;
     }
     if ($rdest eq $rfile) {
         logm("editing $rfile as $lfile".'{,.new}');
@@ -929,7 +934,7 @@ sub open_unique_stashfile ($) {
         $dh= new IO::File "$stash/$df", O_WRONLY|O_EXCL|O_CREAT;
         last if $dh;
         die "$df $!" unless $!==&EEXIST;
-        $$leafref .= '+';
+        next_unique_name $leafref;
     }
     return $dh;
 }
