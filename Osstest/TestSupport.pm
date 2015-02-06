@@ -486,7 +486,8 @@ sub target_file_exists ($$) {
 
 sub next_unique_name ($) {
     my ($fnref) = @_;
-    $$fnref .= '+';
+    my $num = $$fnref =~ s/\+([1-9]\d*)$// ? $1 : 0;
+    $$fnref .= '+'.($num+1);
 }
 
 our $target_editfile_cancel_exception =
