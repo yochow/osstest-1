@@ -328,6 +328,9 @@ proc run-job/test-rumpuserxen {} {
     run-ts . =   ts-rumpuserxen-demo-setup      + host + $g
     run-ts . =   ts-rumpuserxen-demo-xenstorels + host + $g
     run-ts . =   ts-guest-destroy-hard          + host + $g
+    repeat-ts 50 =.repeat \
+                 ts-rumpuserxen-demo-xenstorels + host + $g     \; \
+             +   ts-guest-destroy-hard            host   $g   +
 }
 
 #---------- builds ----------
