@@ -527,7 +527,7 @@ test_matrix_do_one () {
 
   # Test live migration
   job_create_test test-$xenarch$kern-$dom0arch-pair test-pair \
-            $onetoolstack $xenarch $dom0arch \
+            $pairtoolstack $xenarch $dom0arch \
             !host !host_hostflags \
             $debian_runvars \
             all_hostflags=$most_hostflags,equiv-1

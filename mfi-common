@@ -322,10 +322,10 @@ job_create_test () {
 test_matrix_iterate () {
 
   case "$xenbranch" in
-  xen-3.*-testing)      onetoolstack=xend ;;
-  xen-4.0-testing)      onetoolstack=xend ;;
-  xen-4.1-testing)      onetoolstack=xend ;;
-  *)                    onetoolstack=xl ;;
+  xen-3.*-testing)      pairtoolstack=xend ;;
+  xen-4.0-testing)      pairtoolstack=xend ;;
+  xen-4.1-testing)      pairtoolstack=xend ;;
+  *)                    pairtoolstack=xl ;;
   esac
 
   for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
