@@ -206,7 +206,7 @@ sub prep () {
                       autoconf automake libtool xsltproc
                       libxml2-utils libxml2-dev
                       libdevmapper-dev w3c-dtd-xhtml libxml-xpath-perl
-                      ccache nasm checkpolicy);
+                      ccache nasm checkpolicy ebtables);
 
     if ($ho->{Suite} =~ m/wheezy|squeeze|lenny/) {
 	push(@packages, "libnl-dev");
