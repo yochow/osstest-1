@@ -28,6 +28,13 @@ if (@ARGV && $ARGV[0] =~ m/^--stage(\d+)$/) { $stage=$1; shift @ARGV; }
 
 defined($r{bios}) or die "Need to define which bios to use";
 
+# Libvirt doesn't know anything about bios. It will always use the
+# default one (seabios). Stub out rombios and ovmf to avoid false
+# positive results.
+if ($r{bios} =~ m/ovmf|rombios/ && $r{toolstack} eq 'libvirt') {
+    die "libvirt + $r{bios} is not supported yet.";
+}
+
 our ($whhost,$gn) = @ARGV;
 $whhost ||= 'host';
 $gn ||= 'debianhvm';
