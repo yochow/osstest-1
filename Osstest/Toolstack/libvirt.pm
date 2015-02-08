@@ -77,6 +77,20 @@ sub migrate_check ($) {
     die "Migration check is not yet supported on libvirt.";
 }
 
+sub check_for_command($$) {
+    my ($self,$cmd) = @_;
+    my $ho = $self->{Host};
+    my $help = target_cmd_output_root($ho, "virsh help");
+    my $rc = ($help =~ m/^\s*$cmd/m) ? 0 : 1;
+    logm("rc=$rc");
+    return $rc;
+}
+
+sub saverestore_check ($) {
+    my ($self) = @_;
+    return check_for_command($self, "save");
+}
+
 sub migrate ($) {
     my ($self,$gho,$dst,$timeout) = @_;
     die "Migration is not yet supported on libvirt.";

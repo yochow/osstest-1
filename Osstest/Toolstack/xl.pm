@@ -61,13 +61,23 @@ sub shutdown_wait ($$$) {
     target_cmd_root($ho,"$self->{_Command} shutdown -w${acpi_fallback} $gn", $timeout);
 }
 
-sub migrate_check ($) {
-    my ($self) = @_;
+sub check_for_command($$) {
+    my ($self,$cmd) = @_;
     my $ho = $self->{Host};
     my $help = target_cmd_output_root($ho, $self->{_Command}." help");
-    my $rc = ($help =~ m/^\s*migrate/m) ? 0 : 1;
+    my $rc = ($help =~ m/^\s*$cmd/m) ? 0 : 1;
     logm("rc=$rc");
     return $rc;
+}
+
+sub migrate_check ($) {
+    my ($self) = @_;
+    return check_for_command($self, "migrate");
+}
+
+sub saverestore_check ($) {
+    my ($self) = @_;
+    return check_for_command($self, "save");
 }
 
 sub migrate ($$$$) {
