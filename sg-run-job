@@ -313,13 +313,20 @@ proc run-job/test-pair {} {
 proc test-guest-migr {g} {
     set to_reap [spawn-ts . = ts-migrate-support-check + host $g 1]
     set can_migrate [reap-ts $to_reap]
-    if {!$can_migrate} return
+    set to_reap [spawn-ts . = ts-saverestore-support-check + host $g]
+    set can_saverestore [reap-ts $to_reap]
 
     foreach iteration {{} .2} {
-        run-ts . =$iteration ts-guest-saverestore + host $g
-        run-ts . =$iteration ts-guest-localmigrate + host $g
+        if {$can_saverestore} {
+            run-ts . =$iteration ts-guest-saverestore + host $g
+        }
+        if {$can_migrate} {
+            run-ts . =$iteration ts-guest-localmigrate + host $g
+        }
     }
-    run-ts . = ts-guest-localmigrate x10 + host $g
+    if {$can_migrate} {
+        run-ts . = ts-guest-localmigrate x10 + host $g
+    }
 }
 
 proc test-guest {g} {
