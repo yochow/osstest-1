@@ -93,17 +93,22 @@ sub saverestore_check ($) {
 
 sub migrate ($) {
     my ($self,$gho,$dst,$timeout) = @_;
-    die "Migration is not yet supported on libvirt.";
+    my $ho = $self->{Host};
+    my $gn = $gho->{Name};
+    target_cmd_root($ho, "virsh migrate $gn $dst", $timeout);
 }
 
 sub save ($$$$) {
     my ($self,$gho,$f,$timeout) = @_;
-    die "Save is not yet supported on libvirt.";
+    my $ho = $self->{Host};
+    my $gn = $gho->{Name};
+    target_cmd_root($ho, "virsh save $gn $f", $timeout);
 }
 
 sub restore ($$$$) {
     my ($self,$gho,$f,$timeout) = @_;
-    die "Restore is not yet supported on libvirt.";
+    my $ho = $self->{Host};
+    target_cmd_root($ho, "virsh restore $f", $timeout);
 }
 
 1;
