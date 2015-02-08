@@ -104,7 +104,9 @@ job_create_test_filter_callback () {
     *)
       case "$job" in
         *-qemuu-*)
-          if [ "x$toolstack" != xxl ]; then return 1; fi
+          if [ x$toolstack != xxl -a x$toolstack != xlibvirt ];then
+              return 1;
+          fi
           ;;
       esac
       ;;
@@ -220,19 +222,20 @@ do_hvm_win7_x64_tests () {
 
 do_hvm_debian_test_one () {
   testname=$1
-  bios=$2
-  xsm=$3
-  stubdom=$4
+  toolstack=$2
+  bios=$3
+  xsm=$4
+  stubdom=$5
 
   stubdom_suffix=""
   stubdom_runvar=""
-  if [ x$stubdom != x ]; then
+  if [ x$stubdom = xtrue ]; then
       stubdom_suffix="-stubdom"
       stubdom_runvar="debianhvm_stubdom=$stubdom"
   fi
 
-  job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix$stubdom_suffix-$testname-amd64\
-    test-debianhvm xl $xenarch $dom0arch $qemuu_runvar \
+  job_create_test test-$xenarch$kern-$dom0arch-$toolstack$qemuu_suffix$stubdom_suffix-$testname-amd64\
+    test-debianhvm $toolstack $xenarch $dom0arch $qemuu_runvar \
     enable_xsm=$xsm                             \
     $stubdom_runvar                             \
     debianhvm_image=debian-7.2.0-amd64-CD-1.iso \
@@ -247,20 +250,28 @@ do_hvm_debian_tests() {
     return
   fi
 
-  # QEMU upstream supports ovmf and seabios
+  # QEMU upstream supports
+  #   1. ovmf + xl
+  #   2. seabios + xl
+  #   3. seabios + libvirt
+  # For libvirt we only generate -xsm test case.
   if [ "x$qemuu_suffix" == "x-qemuu" ]; then
-    do_hvm_debian_test_one ovmf ovmf false
+    do_hvm_debian_test_one ovmf xl ovmf false
     for xsm in $xsms ; do
-      do_hvm_debian_test_one debianhvm seabios $xsm
+      do_hvm_debian_test_one debianhvm xl seabios $xsm
+      if [ x$xsm = xtrue ]; then
+          do_hvm_debian_test_one debianhvm libvirt seabios $xsm
+      fi
     done
   fi
 
   # QEMU traditional supports rombios and stubdom
+  # Only test xl with QEMU traditional
   if [ "x$qemuu_suffix" == "x-qemut" ]; then
     for xsm in $xsms ; do
-      do_hvm_debian_test_one debianhvm rombios $xsm
-      if [ x$xsm = xtrue ]; then
-          do_hvm_debian_test_one debianhvm rombios $xsm true
+      do_hvm_debian_test_one debianhvm xl rombios $xsm
+      if [ x$xsm = xtrue -a x$toolstack = xxl ]; then
+          do_hvm_debian_test_one debianhvm xl rombios $xsm true
       fi
     done
   fi
