@@ -325,7 +325,9 @@ test_matrix_iterate () {
   xen-3.*-testing)      pairtoolstack=xend ;;
   xen-4.0-testing)      pairtoolstack=xend ;;
   xen-4.1-testing)      pairtoolstack=xend ;;
-  *)                    pairtoolstack=xl ;;
+  xen-4.2-testing)      pairtoolstack=xl ;;
+  xen-4.3-testing)      pairtoolstack=xl ;;
+  *)                    pairtoolstack="xl libvirt" ;;
   esac
 
   for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do

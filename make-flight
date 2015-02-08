@@ -526,11 +526,20 @@ test_matrix_do_one () {
   done # qemuu_suffix
 
   # Test live migration
-  job_create_test test-$xenarch$kern-$dom0arch-pair test-pair \
-            $pairtoolstack $xenarch $dom0arch \
+  for toolstack in $pairtoolstack; do
+    # Don't change test case name for old test cases with xl and xend
+    if [ x$toolstack = xxl -o x$toolstack = xxend ]; then
+      toolstack_suffix=""
+    else
+      toolstack_suffix="-$toolstack"
+    fi
+    job_create_test test-$xenarch$kern-$dom0arch$toolstack_suffix-pair \
+            test-pair \
+            $toolstack $xenarch $dom0arch \
             !host !host_hostflags \
             $debian_runvars \
             all_hostflags=$most_hostflags,equiv-1
+  done
 
   if [ x$test_pvh = xy -a $xenarch = amd64 -a $dom0arch = amd64 ]; then
 
