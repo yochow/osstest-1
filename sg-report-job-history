@@ -155,24 +155,21 @@ sub processjobbranch ($$) {
     my @test_rows;
 
     my $blessingscond= '('.join(' OR ', map { "blessing=?" } @blessings).')';
-    my $stmt= <<END;
-        SELECT *
-          FROM jobs JOIN flights USING (flight)
-         WHERE job = ?
-           AND $blessingscond
-END
+    my $cond = "job = ? AND $blessingscond";
     my (@params) = ($j, @blessings);
     if (defined $bra) {
-        $stmt .= <<END;
+        $cond .= <<END;
            AND branch = ?
 END
         push @params, $bra;
     }
-    $stmt .= <<END;
+    my $flightsq= $dbh_tests->prepare(<<END);
+        SELECT *
+          FROM jobs JOIN flights USING (flight)
+         WHERE ($cond)
       ORDER BY flight DESC
          LIMIT 100
 END
-    my $flightsq= $dbh_tests->prepare($stmt);
     $flightsq->execute(@params);
 
     while (my $f= $flightsq->fetchrow_hashref()) {
