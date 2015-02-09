@@ -172,8 +172,33 @@ END
 END
     $flightsq->execute(@params);
 
+    my $hostsq= $dbh_tests->prepare(<<END);
+        SELECT DISTINCT name
+	 FROM runvars
+	 JOIN flights USING (flight)
+	WHERE ($cond)
+     ORDER BY name;
+END
+    $hostsq->execute(@params);
+    my @hostvarcols;
+    while (my ($hostvar) = $hostsq->fetchrow_array()) {
+	next unless $hostvar =~ m/(^|_)host$/;
+	push @hostvarcols, $hostvar;
+    }
+
+    my $hostq= $dbh_tests->prepare(<<END);
+        SELECT val FROM runvars WHERE flight=? AND job=? AND name=?
+END
+
     while (my $f= $flightsq->fetchrow_hashref()) {
         my $ri= run_getinfo($f);
+
+	$ri->{Hosts} = [ ];
+	foreach my $hostvar (@hostvarcols) {
+	    $hostq->execute($f->{flight}, $f->{job}, $hostvar);
+	    my ($host) = $hostq->fetchrow_array();
+	    push @{ $ri->{Hosts} }, ($host // "-");
+	}
 
         my %revisions;
         add_revisions(\%revisions, $f->{flight}, $f->{job}, '');
@@ -217,6 +242,7 @@ END
         print H "<h1>$title</h1>\n";
         print H "<table rules=all>";
         print H "<tr><th>flight</th><th>branch</th><th>failure</th>\n";
+        print H "<th>", (join ", ", @hostvarcols), "</th>\n";
         foreach my $c (@rev_grid_cols) {
             print H "<th>".encode_entities($c)."</th>\n";
         }
@@ -236,6 +262,8 @@ END
             print H "<td $colour><a href=\"$url\">".
                 encode_entities($r->{Summary})."</a></td>\n";
             my $lastrev;
+            my $hosts = join ", ", map { $_ // "-" } @{ $r->{Hosts} };
+            print H "<td>".encode_entities($hosts)."</td>\n";
             foreach my $i (0..$#rev_grid_cols) {
                 my $v= $r->{Revisions}[$i];
                 my $same=
