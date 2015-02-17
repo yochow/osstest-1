@@ -119,6 +119,26 @@ END
 
     target_install_packages($ho, qw(ed));
 
+    my $ntpserver = get_target_property($ho, 'NtpServer');
+    if ($ntpserver) {
+	target_editfile_root($ho, '/etc/ntp.conf', sub {
+	    my $done= 0;
+	    while (<EI>) {
+		if (m/^server\s/) {
+		    if ($ho->{Suite} =~ m/lenny|squeeze|wheezy|jessie/) {
+			$_= $done ? "" : "server $ntpserver\n";
+		    } else {
+			m/^server \Q$ntpserver\E\s/ or
+			    die "NTP server not honoured, Debian #778564 ";
+		    }
+		    $done= 1;
+		}
+		print EO or die $!;
+	    }
+	    $done or die;
+	});
+    }
+
     target_cmd_root($ho, "update-rc.d osstest-confirm-booted start 99 2 .");
 
     logm('OK: install completed');
