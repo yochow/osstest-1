@@ -334,6 +334,11 @@ HostProp_<testbox>_TftpScope
    Defines the Tftp scope (i.e. subnet) where this host resides. See
    "TftpFoo_<scope> and TftpFoo" below.
 
+HostProp_<testbox>_NtpServer
+   NTP server to use.  You should probably have your own local
+   NTP server for production use; the default is to use the operating
+   system's default (normally, Debian's pool.ntp.org servers).
+
 HostFlags_<testbox>
    Defines a set of flags for the host. Flags is a list separated by
    whitespace, comma or semi-colon. A flag can be unset by prepending
@@ -357,9 +362,7 @@ HostGroupFlags_<group>
    merged with the host specific flags. Only used in standalone mode.
 
 DebianPreseed
-   Text to add to the debian-installer preseed file.  Optional
-   but you will need to set some NTP servers here if your firewall
-   doesn't permit NTP to Debian's pool.ntp.org servers.
+   Text to add to the debian-installer preseed file.  Optional.
 
 ========================================
 

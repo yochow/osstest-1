@@ -574,6 +574,11 @@ $xopts{ExtraPreseed}
 
 END
 
+    my $ntpserver = get_target_property($ho,'NtpServer');
+    $preseed .= <<"END" if $ntpserver;
+d-i clock-setup/ntp-server string $ntpserver
+END
+
     $preseed .= <<"END";
 
 ### END OF DEBIAN PRESEED BASE
