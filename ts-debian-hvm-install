@@ -43,7 +43,7 @@ our $gho;
 
 sub preseed () {
 
-    my $preseed_file = preseed_base('wheezy','',());
+    my $preseed_file = preseed_base($gho,'wheezy','',());
     my $authkeys = join('\\n', split(/\n/, authorized_keys()));
 
     $preseed_file .= (<<END);

@@ -503,8 +503,8 @@ sub di_installcmdline_core ($$;@) {
     return @cl;
 }
 
-sub preseed_base ($$;@) {
-    my ($suite,$extra_packages,%xopts) = @_;
+sub preseed_base ($$$;@) {
+    my ($ho,$suite,$extra_packages,%xopts) = @_;
 
     return <<"END";
 d-i mirror/suite string $suite
@@ -813,7 +813,7 @@ END
 
     my $extra_packages = join(",",@extra_packages);
 
-    my $preseed_file= preseed_base($suite,$extra_packages,%xopts);
+    my $preseed_file= preseed_base($ho,$suite,$extra_packages,%xopts);
 
     $preseed_file .= (<<END);
 d-i partman-auto/method string lvm
