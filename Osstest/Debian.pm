@@ -506,7 +506,7 @@ sub di_installcmdline_core ($$;@) {
 sub preseed_base ($$$;@) {
     my ($ho,$suite,$extra_packages,%xopts) = @_;
 
-    return <<"END";
+    my $preseed = <<"END";
 d-i mirror/suite string $suite
 
 d-i debian-installer/locale string en_GB
@@ -572,10 +572,15 @@ d-i pkgsel/include string openssh-server, ntp, ntpdate, ethtool, chiark-utils-bi
 
 $xopts{ExtraPreseed}
 
-### END OF DEBIAN PRESEED BASE
-
 END
-}          
+
+    $preseed .= <<"END";
+
+### END OF DEBIAN PRESEED BASE
+END
+
+    return $preseed;
+}
 
 sub preseed_create ($$;@) {
     my ($ho, $sfx, %xopts) = @_;
