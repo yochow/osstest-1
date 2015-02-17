@@ -74,6 +74,8 @@ our %c = qw(
     DebianNonfreeFirmware firmware-bnx2
 );
 
+$c{DebianPreseed} = '';
+
 #---------- general setup and config reading ----------
 
 sub getmethod {
@@ -120,7 +122,7 @@ sub readglobalconfig () {
 			$val .= $_;
 		    }
 		    die $! unless length $_;
-		    die unless $val =~ m/\n$/;
+		    die unless !length $val || $val =~ m/\n$/;
 		    if ($qu eq '') {
 			my $reconstruct =
 			    "\$val = <<${qu}${delim}${qu}; 1;\n".
