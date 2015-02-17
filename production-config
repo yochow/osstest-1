@@ -77,8 +77,9 @@ XenUseUser osstest
 #DebianMirrorHost debian.uk.xensource.com
 DebianMirrorHost 10.80.16.196
 
+HostProp_NtpServer ntp.uk.xensource.com
+
 DebianPreseed= <<'END'
-d-i clock-setup/ntp-server string ntp.uk.xensource.com
 END
 
 HostProp_Serial sympathy woking
