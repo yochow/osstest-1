@@ -27,7 +27,7 @@ use HTML::Entities;
 use Osstest::TestSupport;
 
 our (@blessings,@branches);
-our $limit= 100;
+our $limit= 500;
 our $htmlout;
 
 open DEBUG, ">/dev/null";
