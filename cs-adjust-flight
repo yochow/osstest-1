@@ -40,6 +40,7 @@
 use strict qw(vars);
 use DBI;
 use Osstest;
+use Data::Dumper;
 
 csreadconfig();
 
