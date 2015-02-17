@@ -66,7 +66,7 @@ BEGIN {
                       contents_make_cpio file_simple_write_contents
 
                       selecthost get_hostflags get_host_property
-                      get_host_native_linux_console
+                      get_target_property get_host_native_linux_console
                       power_state power_cycle power_cycle_sleep
                       serial_fetch_logs
                       propname_massage
@@ -904,6 +904,17 @@ sub get_host_property ($$;$) {
     my ($ho, $prop, $defval) = @_;
     my $val = $ho->{Properties}{propname_massage($prop)};
     return defined($val) ? $val : $defval;
+}
+
+sub get_target_property ($$;$);
+sub get_target_property ($$;$) {
+    my ($ho, $prop, $defval) = @_;
+    # $ho may be a guest; if so we look for the property in the
+    # guest and failing that the same property in the host.
+    return
+	get_host_property($ho, $prop) //
+	($ho->{Host} && get_target_property($ho->{Host}, $prop)) //
+	$defval;
 }
 
 sub get_host_native_linux_console ($) {
