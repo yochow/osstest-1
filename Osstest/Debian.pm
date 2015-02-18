@@ -237,6 +237,8 @@ fdt set /chosen/module\@1 compatible "xen,linux-initrd" "xen,multiboot-module"
 fdt set /chosen/module\@1 reg <\\\${ramdisk_addr_r} ${size_hex_prefix}\\\${filesize}>
 echo Loaded $initrd to \\\${ramdisk_addr_r} (\\\${filesize})
 
+fdt chosen
+
 fdt print /chosen
 
 echo Booting \\\${xen_addr_r} - \\\${fdt_addr}
