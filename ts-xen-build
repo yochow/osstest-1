@@ -146,6 +146,19 @@ sub collectversions () {
 }
 
 sub divide () {
+    # Only move hv to xeninstall, so that we can have
+    # xenpolicy in tools tarball.
+    #
+    # The files inside boot/ after `make dist' are
+    # xen-$XEN_VERSION: Xen binary
+    # xen.gz/xen: symlink to xen-$XEN_VERSION
+    # xen-$MAJOR: symlink to xen-$XEN_VERSION
+    # xen-$MAJOR.$MINOR: symlink to xen-$XEN_VERSION
+    # xen-sym-$XEN_VERSION: Xen symbol
+    # xenpolicy-$XEN_VERSION: flask policy binary if xsm is enabled
+    #
+    # So the following snippet will leave xenpolicy* in
+    # install/boot and get packaged to tools tarball.
     target_cmd_build($ho, 100, $builddir, <<END);
         cd xen/dist
         mkdir xeninstall
@@ -155,7 +168,8 @@ sub divide () {
         if test -d install/boot; then
             if test -f install/boot/xen.gz || test -f install/boot/xen; then
                 mkdir xeninstall/boot
-                mv install/boot/xen* xeninstall/boot/.
+                mvfiles=`find install/boot -name 'xen[a-z]*' -prune -o -name 'xen*' -print`
+                mv \$mvfiles xeninstall/boot/.
             fi
         fi
 END
