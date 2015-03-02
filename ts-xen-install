@@ -114,19 +114,27 @@ sub adjustconfig () {
     }
     die unless defined $trace_config_file;
 
-    target_editfile_root($ho, $trace_config_file, sub {
+    my $kvp_replace = sub($$) {
+	my ($key,$value) = @_;
         my $prnow;
         $prnow= sub {
-            print EO "XENCONSOLED_TRACE=guest\n" or die $!;
+            print EO "$key=$value\n" or die $!;
             $prnow= sub { };
         };
         while (<EI>) {
-            print EO or die $! unless m/^XENCONSOLED_TRACE/;
-            $prnow->() if m/^#XENCONSOLED_TRACE/;
+            print EO or die $! unless m/^$key\b/;
+            $prnow->() if m/^#$key/;
         }
         print EO "\n" or die $!;
         $prnow->();
-    });
+    };
+
+    target_editfile_root($ho, $trace_config_file,
+			 sub { $kvp_replace->("XENCONSOLED_TRACE", "guest") });
+
+    target_editfile_root($ho, '/etc/libvirt/libvirtd.conf',
+			 sub { $kvp_replace->("log_level", "1") })
+	if toolstack($ho)->{Name} eq "libvirt";
 
     target_cmd_root($ho, 'mkdir -p /var/log/xen/console');
 
