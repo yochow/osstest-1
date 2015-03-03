@@ -112,7 +112,7 @@ start_email () {
 	  ./sg-report-job-history --html-dir=$job_html_dir --flight=$flight
 
 	./sg-report-flight --html-dir=$flight_html_dir/$flight/ \
-		--allow=allow.$branch --allow=allow.all \
+		--allow=allow.all --allow=allow.$branch \
 		$sgr_args $flight
 }
 
