@@ -76,13 +76,20 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
                 next unless m/\S/;
                 next if m/^\#/;
                 s/\s+/ /g;
+		my $remove = s/^!\s*//;
                 die if m/ /g > 1;
                 $_ .= ' @@' unless m/ /;
                 s/\@\@/ '[^ ]*' /ge;
                 s/\@/ '[^ -\/]*' /ge;
                 $_= '^(?:'.$_.')$';
-                print DEBUG "ALLOW $_\n";
-                push @allows, $_;
+		my $entry = $_;
+                if (!$remove) {
+		    print DEBUG "ALLOW $entry\n";
+		    push @allows, $entry;
+		} else {
+		    print DEBUG "DEALLOW $entry\n";
+		    @allows = grep { $_ ne $entry } @allows;
+		}
             }
             A->error and die "$allowfile $!";
             close A or die "$allowfile $!";
