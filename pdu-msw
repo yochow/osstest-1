@@ -30,6 +30,15 @@ my $community= 'private';
 my $baseoid= '.1.3.6.1.4.1.318.1.1.4.4.2.1';
 my $baseoid_write= "$baseoid.3";
 
+while (@ARGV && $ARGV[0] =~ m/^-/) {
+    $_ = shift @ARGV;
+    if (m/^--apc6$/) {
+	$baseoid_write= '.1.3.6.1.4.1.318.1.1.12.3.3.1.1.4';
+    } else {
+	die "$_ ?";
+    }
+}
+
 if (@ARGV<2 || @ARGV>3 || $ARGV[0] =~ m/^-/) { die "bad usage\n$usagemsg"; }
 
 our ($dnsname,$outlet,$action) = @ARGV;
