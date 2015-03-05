@@ -34,14 +34,15 @@ BEGIN {
 }
 
 sub new {
-    my ($class, $ho, $methname,$pdu,$port) = @_;
-    return bless { Pdu => $pdu, Port => $port }, $class;
+    my ($class, $ho, $methname, @args) = @_;
+
+    return bless { Args => \@args }, $class;
 }
 
 sub pdu_power_state {
     my ($mo, $on) = @_;
     my $onoff= $on ? "on" : "off";
-    system_checked("./pdu-msw $mo->{Pdu} $mo->{Port} $onoff");
+    system_checked("./pdu-msw @{ $mo->{Args} } $onoff");
 }
 
 1;
