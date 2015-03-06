@@ -101,6 +101,8 @@ sub default_methods ($$) {
     return if $ho->{Flags}{'no-reinstall'};
     return if $ho->{Ether} && $ho->{Power};
 
+    return if $c{HostDB_Executive_NoConfigDB};
+
     my $dbh_config= opendb('configdb');
     my $selname= $ho->{Fqdn};
     my $sth= $dbh_config->prepare(<<END);
