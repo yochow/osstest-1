@@ -3,3 +3,4 @@ build-@@                        logs-capture@@
 test-@@-pcipt@@
 test-@@-qemuu-@@		guest-localmigrate
 test-@@-libvirt@@
+test-@@-rumpuserxen@@		rumpuserxen-demo-xenstorels/xenstorels
