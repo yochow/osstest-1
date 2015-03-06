@@ -559,7 +559,12 @@ sub target_cmd_build ($$$$) {
         export CCACHE_PREFIX DISTCC_FALLBACK DISTCC_HOSTS
 END
 
-    target_cmd($ho, <<END.$distcc.<<END.$script, $timeout);
+    my $httpproxy = defined($c{HttpProxy}) ? <<END : "";
+        http_proxy=$c{HttpProxy}
+        export http_proxy
+END
+
+    target_cmd($ho, <<END.$distcc.$httpproxy.<<END.$script, $timeout);
 	set -xe
         LC_ALL=C; export LC_ALL
         PATH=/usr/lib/ccache:\$PATH:/usr/lib/git-core
