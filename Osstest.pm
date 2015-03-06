@@ -106,43 +106,50 @@ sub readglobalconfig () {
 
     my $cfgfiles = $ENV{'OSSTEST_CONFIG'} || "$ENV{'HOME'}/.xen-osstest/config";
 
-    foreach my $cfgfile (split /\:/, $cfgfiles) {
-	if (!open C, '<', "$cfgfile") {
-	    die "$cfgfile $!" unless $!==&ENOENT;
-	} else {
-	    while (<C>) {
-		die "missing newline" unless chomp;
-		s/^\s*//;
-		s/\s+$//;
-		next if m/^\#/;
-		next unless m/\S/;
-		if (m/^($cfgvar_re)\s+(\S.*)$/) {
-		    $c{$1} = $2;
-		} elsif (m/^($cfgvar_re)=\s*\<\<(\'?)(.*)\2\s*$/) {
-		    my ($vn,$qu,$delim) = ($1,$2,$3);
-		    my $val = '';
-		    $!=0; while (<C>) {
-			last if $_ eq "$delim\n";
-			$val .= $_;
-		    }
-		    die $! unless length $_;
-		    die unless !length $val || $val =~ m/\n$/;
-		    if ($qu eq '') {
-			my $reconstruct =
-			    "\$val = <<${qu}${delim}${qu}; 1;\n".
-			    "${val}${delim}\n";
-			eval $reconstruct or
-			    die "$1 here doc ($reconstruct) $@";
-		    }
-		    $c{$vn} = $val;
-		} elsif (m/^($cfgvar_re)=(.*)$/) {
-		    eval "\$c{$1} = ( $2 ); 1;" or die "$1 parsed val ($2) $@";
-		} else {
-		    die "bad syntax";
-		}
-	    }
-	    close C or die "$cfgfile $!";
+    my $readcfg;
+    $readcfg = sub ($$) {
+	my ($cfgfile,$enoent_ok) = @_;
+	my $fh = new IO::File $cfgfile, '<';
+	if (!$fh) {
+	    die "$cfgfile $!" unless $enoent_ok && $!==&ENOENT;
+	    return;
 	}
+	while (<$fh>) {
+	    die "missing newline" unless chomp;
+	    s/^\s*//;
+	    s/\s+$//;
+	    next if m/^\#/;
+	    next unless m/\S/;
+	    if (m/^($cfgvar_re)\s+(\S.*)$/) {
+		$c{$1} = $2;
+	    } elsif (m/^($cfgvar_re)=\s*\<\<(\'?)(.*)\2\s*$/) {
+		my ($vn,$qu,$delim) = ($1,$2,$3);
+		my $val = '';
+		$!=0; while (<$fh>) {
+		    last if $_ eq "$delim\n";
+		    $val .= $_;
+		}
+		die $! unless length $_;
+		die unless !length $val || $val =~ m/\n$/;
+		if ($qu eq '') {
+		    my $reconstruct =
+			"\$val = <<${qu}${delim}${qu}; 1;\n".
+			"${val}${delim}\n";
+		    eval $reconstruct or
+			die "$1 here doc ($reconstruct) $@";
+		}
+		$c{$vn} = $val;
+	    } elsif (m/^($cfgvar_re)=(.*)$/) {
+		eval "\$c{$1} = ( $2 ); 1;" or die "$1 parsed val ($2) $@";
+	    } else {
+		die "bad syntax";
+	    }
+	}
+	close $fh or die "$cfgfile $!";
+    };
+
+    foreach my $cfgfile (split /\:/, $cfgfiles) {
+	$readcfg->($cfgfile, 1);
     }
 
     # dynamic default config settings
