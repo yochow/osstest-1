@@ -810,14 +810,16 @@ END
     foreach my $kp (keys %{ $ho->{Flags} }) {
 	$kp =~ s/need-kernel-deb-// or next;
 
+	my $kern = "$d_i/$kp.deb";
 	my $kurl = create_webfile($ho, "kernel", sub {
-	    copy("$d_i/$kp.deb", $_[0])
-		or die "Copy kernel failed: $!";
+	    copy($kern, $_[0])
+		or die "Copy kernel $kern failed: $!";
         });
 
+	my $ird = "$d_i/initramfs-tools.deb";
 	my $iurl = create_webfile($ho, "initramfs-tools", sub {
-	    copy("$d_i/initramfs-tools.deb", $_[0])
-		or die "Copy initramfs-tools failed: $!";
+	    copy($ird, $_[0])
+		or die "Copy initramfs-tools $ird failed: $!";
         });
 
 	preseed_hook_command($ho, 'late_command', $sfx, <<END);
