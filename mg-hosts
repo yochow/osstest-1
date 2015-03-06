@@ -122,6 +122,19 @@ END
     }
 }
 
+sub cmd_power () {
+    die unless @ARGV==2;
+    my ($host,$power) = @ARGV;
+    $_ = $power;
+    $power = m/^1|^on/ ? 1 : m/^0|^off/ ? 0 : m/^r|^c/ ? -1 : die;
+    my $ho= selecthost("host=$host");
+    if ($power >= 0) {
+	power_state($ho, $power);
+    } else {
+	power_cycle($ho);
+    }
+}
+
 sub cmd_create_like () {
     die unless @ARGV==2;
     my ($src,$dsts) = @ARGV;
