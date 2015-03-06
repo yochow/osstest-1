@@ -453,6 +453,7 @@ TftpPxeTemplates
     List (space-separated) of template filenames for writing
     The templates contain variable substitutions %var%
     The variables are the runvars plus
+        name          hostname (short name as in resource databases etc.)
         ether         host/guest mac address
         etherhyp      ... in lowercase hyphen-separated form (for pxelinux)
 	ipaddr        host/guest static ip address

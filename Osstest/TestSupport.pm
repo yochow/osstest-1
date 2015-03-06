@@ -2017,6 +2017,7 @@ sub host_pxefile ($) {
 	$eth =~ s/\-$//;
 	$v{'etherhyph'} = $eth;
     }
+    $v{'name'} = $ho->{Name};
     if (defined $ho->{IpStatic}) {
 	my $ip = $ho->{IpStatic};
 	$ip =~ s/\b0+//g;
