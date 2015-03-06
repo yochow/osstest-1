@@ -20,6 +20,7 @@ use strict;
 use warnings;
 
 use POSIX;
+use File::Basename;
 
 BEGIN {
     use Exporter ();
@@ -120,7 +121,13 @@ sub readglobalconfig () {
 	    s/\s+$//;
 	    next if m/^\#/;
 	    next unless m/\S/;
-	    if (m/^($cfgvar_re)\s+(\S.*)$/) {
+	    if (m/^include\s+(\S.*)$/i) {
+		my $newfn = $1;
+		if ($newfn !~ m#^/|^\./#) {
+		    $newfn = dirname($cfgfile)."/".$newfn;
+		}
+		$readcfg->($newfn, 0);
+	    } elsif (m/^($cfgvar_re)\s+(\S.*)$/) {
 		$c{$1} = $2;
 	    } elsif (m/^($cfgvar_re)=\s*\<\<(\'?)(.*)\2\s*$/) {
 		my ($vn,$qu,$delim) = ($1,$2,$3);

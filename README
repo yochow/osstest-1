@@ -276,6 +276,9 @@ To set a value to the empty string, say
 For an example see  ./standalone-config-example
 Values later in the file, or in a later file, take precedence.
 
+You can say `Include <filename>'.  <filename> is relative to the file
+doing the including, unless it starts with `/' or `./'.
+
 ========================================
 
 Important config settings for standalone mode:
