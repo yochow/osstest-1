@@ -860,7 +860,8 @@ sub selecthost ($) {
     logm("TftpScope is $tftpscope");
     $ho->{Tftp} = { };
     $ho->{Tftp}{$_} = $c{"Tftp${_}_${tftpscope}"} || $c{"Tftp${_}"}
-        foreach qw(Path TmpDir PxeDir PxeGroup PxeTemplates DiBase);
+        foreach qw(Path TmpDir PxeDir PxeGroup PxeTemplates PxeTemplatesReal
+                   DiBase);
 
     #----- finalise -----
 
@@ -2005,9 +2006,11 @@ sub file_link_contents ($$$) {
     logm("wrote $fn". (defined $stash ? " (stashed as $stash)" : ""));
 }
 
-sub host_pxefile ($) {
-    my ($ho) = @_;
+sub host_pxefile ($;$) {
+    my ($ho, $templatekey) = @_;
     my %v = %r;
+    $templatekey //= 'PxeTemplates';
+    my $templates = $ho->{Tftp}{$templatekey} || $ho->{Tftp}{PxeTemplates};
     if (defined $ho->{Ether}) {
 	my $eth = $v{'ether'} = $ho->{Ether};
 	$eth =~ y/A-Z/a-z/;
@@ -2024,7 +2027,7 @@ sub host_pxefile ($) {
 	$v{'ipaddr'} = $ip;
 	$v{'ipaddrhex'} = sprintf "%02X%02X%02X%02X", split /\./, $ip;
     }
-    foreach my $pat (split /\s+/, $ho->{Tftp}{PxeTemplates}) {
+    foreach my $pat (split /\s+/, $templates) {
 	# we skip patterns that contain any references to undefined %var%s
 	$pat =~ s{\%(\w*)\%}{
 		    $1 eq '' ? '%' :
@@ -2034,7 +2037,7 @@ sub host_pxefile ($) {
 	# and return the first pattern we managed to completely substitute
         return $pat;
     }
-    die "no pxe template matched $ho->{Tftp}{PxeTemplates} ".
+    die "no pxe template ($templatekey) matched $templates ".
         (join ",", sort keys %v)." ?";
 }
 

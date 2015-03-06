@@ -76,6 +76,7 @@ our %c = qw(
 
 $c{$_}='' foreach qw(
     DebianPreseed
+    TftpPxeTemplatesReal
 );
 
 #---------- general setup and config reading ----------

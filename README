@@ -441,6 +441,7 @@ TftpFoo_<scope> and TftpFoo
                       (e.g. pxelinux.cfg)
         PxeGroup      The Unix group which should own files under `PxeDir'.
         PxeTemplates  See TftpPxeTemplates
+        PxeTemplatesReal
 
         DiBase        The path under `Path' to the root of the debian installer
                       images.
@@ -462,6 +463,10 @@ TftpPxeTemplates
     the host mac address when not known, or the guest's dynamic
     ip address - are skipped.  The first template all of whose ingredients
     are known is used, with TftpPath and TftpPxeDir prepended.
+
+TftpPxeTemplatesReal
+    Template filename which mg-hosts mkpxedir should make be a symlink to
+    the TftpPxeTemplates.  Not used otherwise.
 
 ========================================
 

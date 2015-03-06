@@ -87,6 +87,7 @@ use strict qw(vars refs);
 use DBI;
 use Osstest;
 use Osstest::TestSupport;
+use File::Basename;
 
 csreadconfig();
 
@@ -108,17 +109,28 @@ sub cmd_mkpxedir () {
     my $sudo = $ENV{'OSSTEST_SUDO'} // 'sudo';
     foreach my $hn (@ARGV) {
         my $ho= selecthost("host=$hn");
-        my $macdir= $ho->{Ether};
-        $macdir =~ s/\:/-/g;
-        system_checked(<<END);
+	my $pxefile = host_pxefile($ho);
+	my $pxerealfile = host_pxefile($ho, 'PxeTemplatesReal');
+	my $dirname = dirname $pxefile;
+	my $cmd = <<END;
             set -e
 	    cd $ho->{Tftp}{Path}$ho->{Tftp}{PxeDir}
-            $sudo chown root.$ho->{Tftp}{PxeGroup} $macdir
-            $sudo chmod 2775 $macdir
-            $sudo rm -f $hn
-            $sudo ln -s $macdir $hn
-            ls -ald $hn $macdir
 END
+        $cmd .= <<END if $dirname ne '.';
+	    $sudo mkdir -p $dirname
+END
+        $cmd .= <<END;
+            $sudo chown root.$ho->{Tftp}{PxeGroup} $dirname
+            $sudo chmod 2775 $dirname
+END
+        if ($pxefile ne $pxerealfile) {
+	    my $subdirs = "../" x $pxefile =~ m#/#;
+            $cmd .= <<END;
+	    $sudo ln -sf $subdirs$pxefile $pxerealfile
+END
+        }
+        print $cmd;
+        system_checked($cmd) unless $dryrun;
     }
 }
 
