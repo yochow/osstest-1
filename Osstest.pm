@@ -74,7 +74,9 @@ our %c = qw(
     DebianNonfreeFirmware firmware-bnx2
 );
 
-$c{DebianPreseed} = '';
+$c{$_}='' foreach qw(
+    DebianPreseed
+);
 
 #---------- general setup and config reading ----------
 
