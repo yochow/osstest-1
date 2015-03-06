@@ -19,31 +19,43 @@
 JobDB Executive
 HostDB Executive
 
-DnsDomain cam.xci-test.com
-NetNameservers 10.80.248.2 10.80.16.28 10.80.16.67
+HostDB_Executive_NoConfigDB 1
+Include /root/osstest-hosts-config
 
-Stash /home/xc_osstest/logs
-Images /home/xc_osstest/images
-Logs /home/xc_osstest/logs
+DnsDomain test-lab.xenproject.org
+NetNameservers 172.16.144.4
 
-Results /home/xc_osstest/results
-PubBaseDir /home/xc_osstest
+OwnerDaemonHost db
+QueueDaemonHost osstest
 
-OverlayLocal /export/home/osstest/overlay-local
+ExecutiveDbnamePat dbname=osstestdb;host=db
 
-LogsMinSpaceMby= 10*1e3
+Stash /home/osstest/pub/logs
+Images /home/osstest/pub/images
+Logs /home/osstest/pub/logs
+
+Results /home/osstest/pub/results
+PubBaseDir /home/osstest/pub
+
+OverlayLocal /home/osstest/overlay-local
+
+LogsMinSpaceMby= 50*1e3
 LogsMinExpireAge= 86400*4
+LogsPublishMinSpaceMby= 10*1e3
+LogsPublishMinExpireAge= 86400*7
 
-TestHostKeypairPath /export/home/osstest/.ssh/id_rsa_osstest
+TestHostKeypairPath /home/osstest/.ssh/id_rsa_osstest
 
-GitCacheProxy git://drall.uk.xensource.com:9419/
+GitCacheProxy git://cache:9419/
 
-PubBaseUrl http://www.chiark.greenend.org.uk/~xensrcts
+HttpProxy http://cache:3128/
+
+PubBaseUrl http://logs.test-lab.xenproject.org/osstest
 ReportHtmlPubBaseUrl="$c{PubBaseUrl}/logs"
 ResultsHtmlPubBaseUrl="$c{PubBaseUrl}/results"
 
-Publish xensrcts@login.chiark.greenend.org.uk:/home/ian/work/xc_osstest
-GlobalLockDir /export/home/osstest/testing.git
+Publish osstest@www:/var/www/osstest
+GlobalLockDir /home/osstest/testing.git
 
 LogsPublish= "$c{Publish}/logs"
 ResultsPublish= "$c{Publish}/results"
@@ -61,11 +73,12 @@ END
 
 PlanRogueAllocationDuration= 86400*7
 
-TftpPath /home/xc_tftpboot/pxe/
+TftpPath /home/tftp/
 TftpPlayDir osstest/
 TftpTmpDir osstest/tmp/
 TftpPxeDir /
-TftpPxeTemplates %ipaddrhex%/pxelinux.cfg
+TftpPxeTemplates %name%/pxelinux.cfg
+TftpPxeTemplatesReal pxelinux.cfg/%ipaddrhex%
 
 TftpPxeGroup osstest
 TftpDiVersion 2015-01-10
@@ -75,14 +88,15 @@ XenUseUser osstest
 
 # We use the IP address because Citrix can't manage reliable nameservice
 #DebianMirrorHost debian.uk.xensource.com
-DebianMirrorHost 10.80.16.196
+#DebianMirrorHost 10.80.16.196
+DebianMirrorProxy http://cache:3142/
 
-HostProp_NtpServer ntp.uk.xensource.com
+HostProp_NtpServer infra.test-lab.xenproject.org
 
 DebianPreseed= <<'END'
 END
 
-HostProp_Serial sympathy woking
+HostProp_Serial sympathy serial0
 HostProp_GenEtherPrefixBase 5a:36:0e:00
 #                                      :00:01 guest number in job appended
 #                                    ^^ xor'd with low 8 bits of flight
