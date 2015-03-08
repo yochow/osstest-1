@@ -253,7 +253,7 @@ proc become-task {comment} {
     global env c
     if {[info exists env(OSSTEST_TASK)]} return
 
-    set ownerqueue [socket $c(ControlDaemonHost) $c(OwnerDaemonPort)]
+    set ownerqueue [socket $c(OwnerDaemonHost) $c(OwnerDaemonPort)]
     fconfigure $ownerqueue -buffering line -translation lf
     must-gets $ownerqueue {^OK ms-ownerdaemon\M}
     puts $ownerqueue create-task

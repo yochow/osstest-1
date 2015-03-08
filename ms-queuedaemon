@@ -470,7 +470,7 @@ proc add-inhibit {why seconds} {
     log "inhibition $why: starts, ${seconds}s, now $inhibit"
 }
 
-main-daemon $c(QueueDaemonPort) {
+main-daemon Queue {
     global owndchan chandesc inhibit plan
     
     jobdb::db-open
@@ -484,7 +484,7 @@ main-daemon $c(QueueDaemonPort) {
     # 1: run queue only if new resources available
     # 2: definitely run queue
 
-    set owndchan [socket $c(ControlDaemonHost) $c(OwnerDaemonPort)]
+    set owndchan [socket $c(OwnerDaemonHost) $c(OwnerDaemonPort)]
     fconfigure $owndchan -buffering line -translation lf
     set chandesc($owndchan) ownd
     

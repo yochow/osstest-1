@@ -89,7 +89,7 @@ proc banner {chan} {
     return "OK ms-ownerdaemon"
 }
 
-main-daemon $c(OwnerDaemonPort) {
+main-daemon Owner {
     jobdb::db-open
     
     jobdb::transaction resources {

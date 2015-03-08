@@ -184,10 +184,11 @@ proc newconn {chan addr port} {
     }
 }
 
-proc main-daemon {port setup} {
+proc main-daemon {which setup} {
     global c argv
 
-    set host $c(ControlDaemonHost)
+    set host $c(${which}DaemonHost)
+    set port $c(${which}DaemonPort)
 
     foreach arg $argv {
         switch -glob -- $arg {

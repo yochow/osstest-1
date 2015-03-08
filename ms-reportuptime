@@ -23,7 +23,7 @@ source daemonlib.tcl
 
 readconfig
 
-set s [socket $c(ControlDaemonHost) $c(QueueDaemonPort)]
+set s [socket $c(QueueDaemonHost) $c(QueueDaemonPort)]
 fconfigure $s -buffering line
 set chandesc($s) qd
 

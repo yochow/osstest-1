@@ -100,6 +100,11 @@ augmentconfigdefaults(
     BisectionRevisonGraphSize => '600x300',
 );
 
+augmentconfigdefaults(
+    OwnerDaemonHost => $c{ControlDaemonHost},
+    QueueDaemonHost => $c{ControlDaemonHost},
+);
+
 #---------- configuration reader etc. ----------
 
 sub opendb_tests () {
@@ -241,7 +246,7 @@ sub alloc_resources_rollback_begin_work () {
 our $alloc_resources_waitstart;
 
 sub tcpconnect_queuedaemon () {
-    my $qserv= tcpconnect($c{ControlDaemonHost}, $c{QueueDaemonPort});
+    my $qserv= tcpconnect($c{QueueDaemonHost}, $c{QueueDaemonPort});
     $qserv->autoflush(1);
 
     $_= <$qserv>;  defined && m/^OK ms-queuedaemon\s/ or die "$_?";
