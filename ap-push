@@ -98,7 +98,7 @@ ovmf)
 	git push $TREE_OVMF $revision:refs/heads/xen-tested-master
 	;;
 osstest)
-	git push $HOME/testing.git $revision:incoming
+	git push $HOME/testing.git $revision:production
 	git push $XENBITS:/home/xen/git/osstest.git $revision:master
 	;;
 *)

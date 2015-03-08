@@ -99,7 +99,7 @@ ovmf)
 	;;
 osstest)
 	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
-	    git fetch -f $HOME/testing.git incoming:ap-fetch
+	    git fetch -f $HOME/testing.git production:ap-fetch
             git rev-parse ap-fetch^0
 	else
 	    git rev-parse HEAD^0

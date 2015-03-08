@@ -113,7 +113,7 @@ Creating a new branch
   to production pretest branch), rewind so that osstest can fast
   forward it to the actual production version.  Ie in bisects and
   branches for-$branch.git,
-     git fetch origin incoming
+     git fetch origin production
      git reset --hard FETCH_HEAD
 
 $ Add to BRANCHES setting in cr-for-branches

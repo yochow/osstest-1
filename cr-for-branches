@@ -43,7 +43,7 @@ with-lock-ex $fetchwlem data-tree-lock bash -ec '
 	exec >>$LOGFILE
 	date
         printf "%s\n" "$FOR_LOGFILE"
-	git pull . incoming:master 2>&1 ||:
+	git pull . production:master 2>&1 ||:
 	git checkout HEAD
 '
 
@@ -94,7 +94,7 @@ for branch in $BRANCHES; do
 		find tmp -type f -mtime +60 -print0 | xargs -0r rm -f --
 
 		git fetch $OSSTEST_TEST_PULLFROM master:incoming 2>&1 ||:
-		git fetch $OSSTEST_TEST_PULLFROM incoming:incoming 2>&1 ||:
+		git fetch $OSSTEST_TEST_PULLFROM production:incoming 2>&1 ||:
 		git pull --no-commit . incoming:master 2>&1 ||:
 		git checkout HEAD
 
