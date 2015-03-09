@@ -53,13 +53,22 @@ our @flights;
 our @sshopts= qw(-o batchmode=yes);
 
 my $cfgvalue = $c{$cfgbase};
-$cgvvalue =~ m/\:/ or die "$c{LogsPublish} ?";
-my ($pubhost, $pubdir) = ($`,$'); #';
+
+my ($pubhost, $pubdir);
+if ($cfgvalue =~ m/\:/) {
+    ($pubhost, $pubdir) = ($`,$'); #');
+} else {
+    ($pubhost, $pubdir) = (undef, $cfgvalue);
+}
 
 sub ontarget ($) {
     my ($shellcmd) = @_;
     # returns list to run that command
-    return qw(ssh -n), @sshopts, $pubhost, $shellcmd;
+    if (defined $pubhost) {
+	return qw(ssh -n), @sshopts, $pubhost, $shellcmd;
+    } else {
+	return qw(sh -ec), $shellcmd;
+    }
 }
 
 for (;;) {
