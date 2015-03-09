@@ -99,6 +99,8 @@ for (;;) {
 
     printf "...";
 
+    die if $dryrun;
+
     my $spawn= sub {
         $!=0; my $r= system @_; die "@_ $r $!" if $r;
     };
@@ -114,7 +116,6 @@ END
     $spawn->(qw(rm -rf), $flight);
 
     printf "done.\n";
-    exit 0 if $dryrun;
 }
 
 printf "ok.\n";
