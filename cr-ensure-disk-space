@@ -53,6 +53,12 @@ our @sshopts= qw(-o batchmode=yes);
 $c{LogsPublish} =~ m/\:/ or die "$c{LogsPublish} ?";
 my ($pubhost, $pubdir) = ($`,$'); #';
 
+sub ontarget ($) {
+    my ($shellcmd) = @_;
+    # returns list to run that command
+    return qw(ssh -n), @sshopts, $pubhost, $shellcmd;
+}
+
 for (;;) {
     open P, "df --block-size=1M -P . |" or die $!;
     $_= <P>;
@@ -91,7 +97,7 @@ for (;;) {
     my $spawn= sub {
         $!=0; my $r= system @_; die "@_ $r $!" if $r;
     };
-    $spawn->(qw(ssh -n), @sshopts, $pubhost, <<END);
+    $spawn->(ontarget <<END);
              set -e
              cd $pubdir
              test -e $flight || exit 0
