@@ -60,7 +60,7 @@ sub ontarget ($) {
 }
 
 for (;;) {
-    open P, "df --block-size=1M -P . |" or die $!;
+    open P, "-|", ontarget "df --block-size=1M -P $pubdir" or die $!;
     $_= <P>;
     m/^filesystem/i or die "$_ ?";
     $_= <P>;
