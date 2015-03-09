@@ -50,6 +50,9 @@ my $chkq= $dbh_tests->prepare("SELECT * FROM flights WHERE flight=?");
 our @flights;
 our @sshopts= qw(-o batchmode=yes);
 
+$c{LogsPublish} =~ m/\:/ or die "$c{LogsPublish} ?";
+my ($pubhost, $pubdir) = ($`,$'); #';
+
 for (;;) {
     open P, "df --block-size=1M -P . |" or die $!;
     $_= <P>;
@@ -82,9 +85,6 @@ for (;;) {
     printf "(age %dd) ", $age / 86400;
 
     die "age $age" if $age < $c{LogsMinExpireAge};
-
-    $c{LogsPublish} =~ m/\:/ or die "$c{LogsPublish} ?";
-    my ($pubhost, $pubdir) = ($`,$'); #';
 
     printf "...";
 
