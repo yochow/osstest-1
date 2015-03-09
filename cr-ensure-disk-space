@@ -36,7 +36,9 @@ while (@ARGV && $ARGV[0] =~ m/^\-/) {
     }
 }
 
-die if @ARGV;
+die unless @ARGV==1;
+
+our ($cfgbase) = @ARGV;
 
 csreadconfig();
 
@@ -50,7 +52,8 @@ my $chkq= $dbh_tests->prepare("SELECT * FROM flights WHERE flight=?");
 our @flights;
 our @sshopts= qw(-o batchmode=yes);
 
-$c{LogsPublish} =~ m/\:/ or die "$c{LogsPublish} ?";
+my $cfgvalue = $c{$cfgbase};
+$cgvvalue =~ m/\:/ or die "$c{LogsPublish} ?";
 my ($pubhost, $pubdir) = ($`,$'); #';
 
 sub ontarget ($) {
