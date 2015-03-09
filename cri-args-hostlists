@@ -74,6 +74,7 @@ execute_flight () {
         rm -f abort
         check_stop_core ''
 
+        ./cr-ensure-disk-space Logs
         ./cr-ensure-disk-space LogsPublish
 
 	export OSSTEST_RESOURCE_PREINFO="[$branch $2]"

@@ -45,7 +45,6 @@ csreadconfig();
 open LOCK, "> $c{GlobalLockDir}/publish-lock" or die $!;
 flock LOCK, LOCK_EX or die $!;
 
-chdir $c{Logs} or die $c{Logs};
 $|=1;
 
 my $chkq= $dbh_tests->prepare("SELECT * FROM flights WHERE flight=?");
@@ -120,9 +119,6 @@ for (;;) {
              printf remote...
              rm -rf $flight
 END
-
-    printf "local..";
-    $spawn->(qw(rm -rf), $flight);
 
     printf "done.\n";
 }
