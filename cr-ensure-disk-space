@@ -84,7 +84,7 @@ for (;;) {
     die "age $age" if $age < $c{LogsMinExpireAge};
 
     $c{LogsPublish} =~ m/\:/ or die "$c{LogsPublish} ?";
-    my ($pubhost, $pubdir) = ($`,$');
+    my ($pubhost, $pubdir) = ($`,$'); #';
 
     printf "...";
 
