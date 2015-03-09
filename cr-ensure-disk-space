@@ -71,11 +71,13 @@ for (;;) {
     last if $space >= $c{LogsMinSpaceMby};
 
     if (!@flights) {
-        opendir D, "." or die $!;
-        $!=0;
-        @flights = sort { $b <=> $a } grep { m/^\d+$/ } readdir D;
-        die if $!;
-        closedir D or die $!;
+	open P, "-|", ontarget "ls -1 $pubdir" or die $!;
+	while (<P>) {
+	    next unless m/^(\d+)\n$/;
+	    push @flights, $1;
+	}
+	$!=$?=0; close P or die "ls: $? $!";
+	@flights = sort { $b <=> $a } @flights;
         printf "(%d flights) ", scalar @flights;
         die unless @flights;
     }
