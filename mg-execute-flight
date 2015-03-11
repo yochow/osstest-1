@@ -24,11 +24,14 @@ usage () { cat <<END
     -B<blessing>
     -E<email>
     -f<basisflight>
+    -P                [run cr-publish-flight-logs]
 
 END
 }
 
 set -e
+
+publish=false
 
 badusage () { echo >&2 "bad usage"; usage >&2; exit 126; }
 
@@ -38,6 +41,7 @@ while [ $# != 0 ]; do
         -B?*)	blessing=${arg#-B}			;;
         -E?*)	email=${arg#-E}				;;
 	-f?*)	basisflightopt=--that-flight=${arg#-f}	;;
+	-P)	publish=true				;;
 	[0-9]*)	if [ "x$flight" != x ]; then badusage; fi
 		flight=$arg				;;
 	*)	badusage				;;
@@ -89,6 +93,10 @@ echo ============================================================
 cat <tmp/$flight.transcript
 
 exec >&2
+
+if $publish; then
+	./cr-publish-flight-logs $flight >/dev/null
+fi
 
 /usr/sbin/sendmail -odi -oee -oi -t <tmp/$flight.email
 mv tmp/$flight.email tmp/$flight.email.sent
