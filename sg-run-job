@@ -315,6 +315,11 @@ proc test-guest {g} {
 proc test-guest-nomigr {g} {
     run-ts . =   ts-guest-stop    + host $g
     run-ts . =.2 ts-guest-start   + host $g
+
+    repeat-ts 10 =.repeat \
+               + ts-guest-stop    host   $g \; \
+               + ts-guest-start + host + $g +
+
     run-ts . =   ts-guest-destroy + host $g
 }
 
