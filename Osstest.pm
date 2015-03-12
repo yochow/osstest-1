@@ -101,7 +101,7 @@ sub readglobalconfig () {
     return if $readglobalconfig_done;
     $readglobalconfig_done=1;
 
-    $c{HostProp_DhcpWatchMethod} = 'leases dhcp3 woking.cam.xci-test.com:5556';
+    $c{HostProp_DhcpWatchMethod} = 'leases dhcp3 infra:5556';
     $c{AuthorizedKeysFiles} = '';
     $c{AuthorizedKeysAppend} = '';
 
