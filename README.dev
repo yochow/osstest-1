@@ -164,3 +164,18 @@ $HOME/bisects/for-$branch.git/stop
 $HOME/testing.git/$xenbranch.stop
 
   stops everything using $xenbranch
+
+After restarting ms-ownerdaemon
+===============================
+
+... including after an (unexpected) restart of the controller VM.
+
+Run:
+
+$ ./mg-hosts previoustasks
+
+Double check that the listed tasks really are dead (which they
+probably are after a reboot) by looking for processes relating to the
+lists flight,job combinations and then:
+
+$ ./mg-hosts previoustasks --clear
