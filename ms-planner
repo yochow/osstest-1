@@ -563,7 +563,9 @@ sub cmd_show_html () {
 	} @{ $plan->{Events}{$reso} } ];
     }
 
-    my $colheadsortkey= sub { ($_[0] =~ m/-/ ? "$' $`" : "").$_[0]; };
+    my $colheadsortkey=
+	!$c{HostnameSortSwapWords} ? sub { $_[0]; }
+        : sub { ($_[0] =~ m/-/ ? "$' $`" : "").$_[0]; };
     my @colheads = sort {
         $colheadsortkey->($a) cmp $colheadsortkey->($b)
     } keys %{ $plan->{Events} };

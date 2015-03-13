@@ -439,9 +439,10 @@ END
 
 sub cmd_showflags () {
     die if @ARGV;
+    my $sortkey = !$c{HostnameSortSwapWords} ? "hostname"
+	: "split_part(hostname, '-', 2), hostname";
     my $hostsq= $dbh_tests->prepare(<<END);
-        SELECT hostname FROM hostflags ORDER BY
-            split_part(hostname, '-', 2), hostname
+        SELECT hostname FROM hostflags ORDER BY $sortkey
 END
     my $findq= $dbh_tests->prepare(<<END);
         SELECT * FROM hostflags ORDER BY hostflag

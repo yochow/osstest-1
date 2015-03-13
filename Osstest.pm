@@ -73,6 +73,8 @@ our %c = qw(
     Baud  115200
 
     DebianNonfreeFirmware firmware-bnx2
+
+    HostnameSortSwapWords 1
 );
 
 $c{$_}='' foreach qw(
