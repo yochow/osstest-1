@@ -52,6 +52,19 @@ END
     }
 }
 
+# Some runes for finding out what might be missing
+#
+# On working boot (eg Debian kernel eg before ts-xen-install):
+#   lsmod | perl -ne 'm/^\w+/ or die; push @e, "+= $&\\.o" if $& ne 
+#         "Module"; END { print "git-grep '\''"; print join "\\|", @e; 
+#         print "'\'' | perl -ne '\'' print \"# \",\$&,\" is not set\\n\" 
+#         if m/\\bCONFIG_[0-9A-Z_]+\\b/ '\''\n" }'
+# This prints a big git-grep | perl rune
+# Run said rune in a clone of linux.git
+# Output of git-grep |perl rune is list of "# CONFIG_... is not set"
+# Copy to a file on relevant host, and grep the osstest kernel's config
+#   grep -f t /boot/config-3.14.34+ |less
+
 our $config_hardware= <<END;
 setopt CONFIG_DM_CRYPT m
 setopt CONFIG_DM_SNAPSHOT m
