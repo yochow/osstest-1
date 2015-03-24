@@ -562,6 +562,7 @@ d-i finish-install/reboot_in_progress note
 d-i cdrom-detect/eject boolean false
 
 d-i mirror/http/hostname string $c{DebianMirrorHost}
+d-i mirror/http/proxy string $c{DebianMirrorProxy}
 d-i mirror/http/directory string /$c{DebianMirrorSubpath}
 d-i apt-setup/use_mirror boolean yes
 d-i apt-setup/another boolean false

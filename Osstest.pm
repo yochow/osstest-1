@@ -76,6 +76,7 @@ our %c = qw(
 
 $c{$_}='' foreach qw(
     DebianPreseed
+    DebianMirrorProxy
     TftpPxeTemplatesReal
 );
 
@@ -186,6 +187,8 @@ sub readglobalconfig () {
     $c{GuestDebianSuite} ||= $c{DebianSuite};
 
     $c{DefaultBranch} ||= 'xen-unstable';
+
+    $c{DebianMirrorHost} ||= 'ftp.debian.org' if $c{DebianMirrorProxy};
 }
 
 sub augmentconfigdefaults {

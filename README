@@ -291,7 +291,12 @@ NetNameservers
 DebianMirrorHost
    Domain name or address of the Debian mirror to use.
    Set DebianMirrorSubpath to the path inside the mirror if
-   your mirror isn't at http://<DebianMirrorHost>/debian/
+   your mirror isn't at http://<DebianMirrorHost>/debian/ .
+   Defaults to ftp.debian.org if DebianMirrorProxy is set.
+
+DebianMirrorProxy
+   The apt proxy to specify for Debian (and derivatives),
+   eg http://apt-cacher:3142/ .
 
 TestHost <hostname>
 TestHost_<ident> <hostname>
