@@ -136,6 +136,8 @@ sub fetch_logs_host_guests () {
 
                   /home/osstest/osstest-confirm-booted.log
 
+                  /var/core/*.core
+
                   )];
     if (!try_fetch_logs($ho, $logs)) {
         logm("log fetching failed, trying hard host reboot...");

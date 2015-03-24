@@ -139,6 +139,14 @@ END
 	});
     }
 
+    target_cmd_root($ho, 'mkdir -p /var/core');
+    target_editfile_root($ho, '/etc/sysctl.conf',
+	sub { target_editfile_kvp_replace(
+		  "kernel.core_pattern",
+		  # %p==pid,%e==executable name,%t==timestamp
+		  "/var/core/%t.%p.%e.core") });
+    target_cmd_root($ho, "sysctl --load /etc/sysctl.conf");
+
     target_cmd_root($ho, "update-rc.d osstest-confirm-booted start 99 2 .");
 
     logm('OK: install completed');
