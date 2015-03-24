@@ -158,10 +158,16 @@ sub setupboot_uboot ($$$$) {
 	    # Use the flaskpolicy from tools build job because we might
 	    # want to test cross releases policy compatibility.
 	    my $flaskpolicy = get_runvar('flaskpolicy',$r{buildjob});
+	    my $flask_policy_addr_r =
+		get_host_property($ho, 'UBootSetFlaskAddrR', undef);
+	    my $set_flask_addr_r =
+		$flask_policy_addr_r ?
+		"setenv flask_policy_addr_r $flask_policy_addr_r" : "";
+
 	    $xenhopt .= " flask=enforcing";
 	    $flask_commands = <<END;
 
-setenv flask_policy_addr_r 0x1200000
+${set_flask_addr_r}
 flaskpolicy=$flaskpolicy
 ext2load scsi 0 \\\${flask_policy_addr_r} \$flaskpolicy
 fdt mknod /chosen module\@2
