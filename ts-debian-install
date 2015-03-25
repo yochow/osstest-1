@@ -76,7 +76,12 @@ sub ginstall () {
             fi
 END
     }
-    target_cmd_root($ho, <<END, 2000);
+    my $cmd = '';
+    my $useproxy = $c{DebianMirrorProxy} // $c{HttpProxy};
+    $cmd .= <<END if defined $useproxy;
+        http_proxy=$useproxy \\
+END
+    $cmd .= <<END;
         xen-create-image \\
             --dhcp --mac $gho->{Ether} \\
             --memory ${ram_mb}Mb --swap ${swap_mb}Mb \\
@@ -89,6 +94,8 @@ END
             $initrd_opt \\
             $archarg
 END
+    target_cmd_root($ho, $cmd, 2000);
+
     my $cfg= "/etc/xen/$gho->{Name}.cfg";
     store_runvar("$gho->{Guest}_cfgpath", $cfg);
     store_runvar("$gho->{Guest}_swap_lv", "$gho->{Name}-swap");
