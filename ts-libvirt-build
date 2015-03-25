@@ -129,6 +129,7 @@ test -x $DAEMON || exit 0
 PIDFILE=/var/run/$NAME.pid
 
 start() {
+	ulimit -c unlimited
 	start-stop-daemon --start --pidfile $PIDFILE \
 	    --exec $DAEMON $@ -- -d $libvirtd_opts
 }
