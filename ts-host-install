@@ -146,6 +146,13 @@ END
 		  # %p==pid,%e==executable name,%t==timestamp
 		  "/var/core/%t.%p.%e.core") });
     target_cmd_root($ho, "sysctl --load /etc/sysctl.conf");
+    my $coredumps_conf = <<'END';
+#<domain>      <type>  <item>       <value>
+*               soft    core         -1
+root            soft    core         -1
+END
+    target_putfilecontents_root_stash($ho,10,$coredumps_conf,
+				'/etc/security/limits.d/coredumps.conf');
 
     target_cmd_root($ho, "update-rc.d osstest-confirm-booted start 99 2 .");
 

@@ -168,6 +168,7 @@ sub fetch_logs_host_guests () {
          'lspci -tv',
          'cat /proc/partitions',
          'virsh capabilities',
+         'cat /proc/self/limits',
          ) {
             try_cmd_output_save($cmd);
         }
