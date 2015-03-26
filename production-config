@@ -60,7 +60,7 @@ GlobalLockDir /home/osstest/testing.git
 LogsPublish= "$c{Publish}/logs"
 ResultsPublish= "$c{Publish}/results"
 
-HarnessPublishGitUserHost xen@xenbits.xensource.com
+HarnessPublishGitUserHost xen@xenbits.xen.org
 HarnessPublishGitRepoDir git/osstest.git
 
 ReportTrailer= <<END
@@ -68,7 +68,7 @@ Logs, config files, etc. are available at
     $c{ReportHtmlPubBaseUrl}
 
 Test harness code can be found at
-    http://xenbits.xensource.com/gitweb?p=osstest.git;a=summary
+    http://xenbits.xen.org/gitweb?p=osstest.git;a=summary
 END
 
 PlanRogueAllocationDuration= 86400*7

@@ -19,7 +19,7 @@
 
 # $xenbranch must already be set
 
-: ${XENBITS:=osstest@xenbits.xensource.com}
+: ${XENBITS:=osstest@xenbits.xen.org}
 
 : ${TREE_XEN:=git://xenbits.xen.org/xen.git}
 : ${PUSH_TREE_XEN:=$XENBITS:/home/xen/git/xen.git}
