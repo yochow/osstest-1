@@ -207,27 +207,36 @@ do_hvm_win7_x64_tests () {
 do_hvm_debian_test_one () {
   testname=$1
   bios=$2
+  xsm=$3
+
   job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-$testname-amd64\
     test-debianhvm xl $xenarch $dom0arch $qemuu_runvar \
+    enable_xsm=$xsm                             \
     debianhvm_image=debian-7.2.0-amd64-CD-1.iso \
     bios=$bios \
     all_hostflags=$most_hostflags,hvm
 }
 
 do_hvm_debian_tests() {
+  xsms=$(xenbranch_xsm_variants)
+
   if [ $xenarch != amd64 ]; then
     return
   fi
 
   # QEMU upstream supports ovmf and seabios
   if [ "x$qemuu_suffix" == "x-qemuu" ]; then
-    do_hvm_debian_test_one ovmf ovmf
-    do_hvm_debian_test_one debianhvm seabios
+    do_hvm_debian_test_one ovmf ovmf false
+    for xsm in $xsms ; do
+      do_hvm_debian_test_one debianhvm seabios $xsm
+    done
   fi
 
   # QEMU traditional supports rombios
   if [ "x$qemuu_suffix" == "x-qemut" ]; then
-    do_hvm_debian_test_one debianhvm rombios
+    for xsm in $xsms ; do
+      do_hvm_debian_test_one debianhvm rombios $xsm
+    done
   fi
 }
 
@@ -298,21 +307,41 @@ do_passthrough_tests () {
   done
 }
 
-test_matrix_do_one () {
+do_pv_debian_tests () {
+  xsms=$(xenbranch_xsm_variants)
 
-  # Basic PV Linux test with xl
-  for platform in '' `getplatforms $xenarch` ; do
-    suffix=${platform:+-$platform}
-    hostflags=${most_hostflags}${platform:+,platform-$platform}
+  for xsm in $xsms ; do
+    # Basic PV Linux test with xl
+    for platform in '' `getplatforms $xenarch` ; do
 
-    job_create_test test-$xenarch$kern-$dom0arch-xl$suffix test-debian xl \
-            $xenarch $dom0arch                                   \
-            $debian_runvars all_hostflags=$hostflags
+      # xsm test is not platform specific
+      if [ x$xsm = xtrue -a x$platform != x ]; then
+          continue
+      fi
+
+      suffix=${platform:+-$platform}
+      hostflags=${most_hostflags}${platform:+,platform-$platform}
+
+      job_create_test test-$xenarch$kern-$dom0arch-xl$suffix   \
+                      test-debian xl                           \
+                      $xenarch $dom0arch                       \
+                      enable_xsm=$xsm                          \
+                      $debian_runvars all_hostflags=$hostflags
+    done
   done
 
-  job_create_test test-$xenarch$kern-$dom0arch-libvirt test-debian libvirt \
-            $xenarch $dom0arch                                       \
-            $debian_runvars all_hostflags=$most_hostflags
+  for xsm in $xsms ; do
+    job_create_test test-$xenarch$kern-$dom0arch-libvirt         \
+                    test-debian libvirt                          \
+                    $xenarch $dom0arch                           \
+                    enable_xsm=$xsm                              \
+                    $debian_runvars all_hostflags=$most_hostflags
+  done
+}
+
+test_matrix_do_one () {
+
+  do_pv_debian_tests
 
   do_multivcpu_tests
   do_sedf_tests

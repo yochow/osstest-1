@@ -27,6 +27,8 @@ tsreadconfig();
 selectbuildhost(\@ARGV);
 # remaining arguments are passed as targets to "make"
 builddirsprops();
+
+my $enable_xsm = $r{enable_xsm} =~ m/true/ ? 1 : 0;
     
 sub checkout () {
     prepbuilddirs();
@@ -34,6 +36,7 @@ sub checkout () {
     build_clone($ho, 'xen', $builddir, 'xen');
 
     my $debug_build = $r{xen_build_debug} || 'y';
+    my $build_xsm = $enable_xsm ? 'y' : 'n';
 
     # Do not set this unless you know what you are doing. This arm
     # option makes the build specific to a particular type of
@@ -51,6 +54,9 @@ sub checkout () {
 	echo >>.config LIBLEAFDIR_x86_64=lib
 	echo >>.config QEMU_REMOTE='$r{tree_qemu}'
 	echo >>.config KERNELS=''
+END
+               (nonempty($r{enable_xsm}) ? <<END : '').
+	echo >>.config XSM_ENABLE='${build_xsm}'
 END
                (nonempty($r{revision_qemu}) ? <<END : '').
 	echo >>.config QEMU_TAG='$r{revision_qemu}'
@@ -120,6 +126,14 @@ END
     buildcmd_stamped_logged(9000, 'build', '',<<END,'');
             $make_prefix make $makeflags @ARGV
 END
+
+    if ($enable_xsm) {
+	my $xen_version = target_cmd_output($ho, <<END, 30);
+	    cd $builddir/xen
+	    $make_prefix make xenversion
+END
+	store_runvar("flaskpolicy", "xenpolicy-" . $xen_version);
+    }
 }
 
 sub collectversions () {
@@ -132,6 +146,19 @@ sub collectversions () {
 }
 
 sub divide () {
+    # Only move hv to xeninstall, so that we can have
+    # xenpolicy in tools tarball.
+    #
+    # The files inside boot/ after `make dist' are
+    # xen-$XEN_VERSION: Xen binary
+    # xen.gz/xen: symlink to xen-$XEN_VERSION
+    # xen-$MAJOR: symlink to xen-$XEN_VERSION
+    # xen-$MAJOR.$MINOR: symlink to xen-$XEN_VERSION
+    # xen-sym-$XEN_VERSION: Xen symbol
+    # xenpolicy-$XEN_VERSION: flask policy binary if xsm is enabled
+    #
+    # So the following snippet will leave xenpolicy* in
+    # install/boot and get packaged to tools tarball.
     target_cmd_build($ho, 100, $builddir, <<END);
         cd xen/dist
         mkdir xeninstall
@@ -141,7 +168,8 @@ sub divide () {
         if test -d install/boot; then
             if test -f install/boot/xen.gz || test -f install/boot/xen; then
                 mkdir xeninstall/boot
-                mv install/boot/xen* xeninstall/boot/.
+                mvfiles=`find install/boot -name 'xen[a-z]*' -prune -o -name 'xen*' -print`
+                mv \$mvfiles xeninstall/boot/.
             fi
         fi
 END

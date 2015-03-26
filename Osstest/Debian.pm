@@ -47,9 +47,9 @@ BEGIN {
 
 #---------- manipulation of Debian bootloader setup ----------
 
-sub debian_boot_setup ($$$$;$) {
+sub debian_boot_setup ($$$$$;$) {
     # $xenhopt==undef => is actually a guest, do not set up a hypervisor
-    my ($ho, $want_kernver, $xenhopt, $distpath, $hooks) = @_;
+    my ($ho, $want_kernver, $want_xsm, $xenhopt, $distpath, $hooks) = @_;
 
     target_kernkind_check($ho);
     target_kernkind_console_inittab($ho,$ho,"/");
@@ -74,11 +74,14 @@ sub debian_boot_setup ($$$$;$) {
 
     my $bootloader;
     if ( $ho->{Flags}{'need-uboot-bootscr'} ) {
-	$bootloader= setupboot_uboot($ho, $want_kernver, $xenhopt, $kopt);
+        $bootloader= setupboot_uboot($ho, $want_kernver,
+                                     $want_xsm, $xenhopt, $kopt);
     } elsif ($ho->{Suite} =~ m/lenny/) {
-        $bootloader= setupboot_grub1($ho, $want_kernver, $xenhopt, $kopt);
+        $bootloader= setupboot_grub1($ho, $want_kernver,
+                                     $want_xsm, $xenhopt, $kopt);
     } else {
-        $bootloader= setupboot_grub2($ho, $want_kernver, $xenhopt, $kopt);
+        $bootloader= setupboot_grub2($ho, $want_kernver,
+                                     $want_xsm, $xenhopt, $kopt);
     }
 
     $bootloader->{UpdateConfig}($ho);
@@ -138,8 +141,9 @@ if test -z "\${fdt_addr}" && test -n "\${fdtfile}" ; then
 fi
 END
 }
-sub setupboot_uboot ($$$) {
-    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
+
+sub setupboot_uboot ($$$$) {
+    my ($ho,$want_kernver,$want_xsm,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     $bl->{UpdateConfig}= sub {
@@ -148,6 +152,25 @@ sub setupboot_uboot ($$$) {
 	my $xen = "xen";
 	my $kern = "vmlinuz-$want_kernver";
 	my $initrd = "initrd.img-$want_kernver";
+
+	my $flask_commands = "";
+	if ($want_xsm) {
+	    # Use the flaskpolicy from tools build job because we might
+	    # want to test cross releases policy compatibility.
+	    my $flaskpolicy = get_runvar('flaskpolicy',$r{buildjob});
+	    $xenhopt .= " flask=enforcing";
+	    $flask_commands = <<END;
+
+setenv flask_policy_addr_r 0x1200000
+flaskpolicy=`readlink /boot/$flaskpolicy`
+ext2load scsi 0 \\\${flask_policy_addr_r} \$flaskpolicy
+fdt mknod /chosen module\@2
+fdt set /chosen/module\@2 compatible "xen,xsm-policy" "xen,multiboot-module"
+fdt set /chosen/module\@2 reg <\\\${flask_policy_addr_r} \\\${filesize}>
+echo Loaded $flaskpolicy to \\\${flask_policy_addr_r} (\\\${filesize})
+
+END
+	}
 
 	logm("Xen options: $xenhopt");
 
@@ -237,6 +260,10 @@ fdt set /chosen/module\@1 compatible "xen,linux-initrd" "xen,multiboot-module"
 fdt set /chosen/module\@1 reg <\\\${ramdisk_addr_r} ${size_hex_prefix}\\\${filesize}>
 echo Loaded $initrd to \\\${ramdisk_addr_r} (\\\${filesize})
 
+${flask_commands}
+
+fdt chosen
+
 fdt print /chosen
 
 echo Booting \\\${xen_addr_r} - \\\${fdt_addr}
@@ -270,12 +297,16 @@ END
     return $bl;
 }
 
-sub setupboot_grub1 ($$$) {
-    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
+sub setupboot_grub1 ($$$$) {
+    my ($ho,$want_kernver,$want_xsm,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= "/boot/grub/menu.lst";
     my $lmenu= "$stash/$ho->{Name}--menu.lst.out";
+
+    if ($want_xsm) {
+	die "Enabling XSM with GRUB is not supported";
+    }
 
     target_editfile_root($ho, $rmenu, sub {
         while (<::EI>) {
@@ -350,8 +381,13 @@ sub setupboot_grub1 ($$$) {
     return $bl;
 }
 
-sub setupboot_grub2 ($$$) {
-    my ($ho,$want_kernver,$xenhopt,$xenkopt) = @_;
+# Note on running OSSTest on Squeeze with old Xen kernel: check out
+# Debian bug #633127 "/etc/grub/20_linux does not recognise some old
+# Xen kernels"
+# Currently setupboot_grub2 relies on Grub menu not having submenu.
+# Check Debian bug #690538.
+sub setupboot_grub2 ($$$$) {
+    my ($ho,$want_kernver,$want_xsm,$xenhopt,$xenkopt) = @_;
     my $bl= { };
 
     my $rmenu= '/boot/grub/grub.cfg';
@@ -378,6 +414,9 @@ sub setupboot_grub2 ($$$) {
 			 $entry->{KernVer} ne $want_kernver) {
 		    logm("(skipping entry at $entry->{StartLine};".
 			 " kernel $entry->{KernVer}, not $want_kernver)");
+		} elsif ($want_xsm && !defined $entry->{Xenpolicy}) {
+		    logm("(skipping entry at $entry->{StartLine};".
+			 " XSM policy file not present)");
 		} else {
 		    # yes!
 		    last;
@@ -409,6 +448,9 @@ sub setupboot_grub2 ($$$) {
             }
             if (m/^\s*module\s*\/(initrd\S+)/) {
                 $entry->{Initrd}= $1;
+            }
+	    if (m/^\s*module\s*\/(xenpolicy\S+)/) {
+                $entry->{Xenpolicy}= $1;
             }
         }
         die 'grub 2 bootloader entry not found' unless $entry;

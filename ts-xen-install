@@ -46,6 +46,8 @@ if (@ARGV and $ARGV[0] eq '--check') {
 
 our $ho;
 
+my $enable_xsm = $r{enable_xsm} =~ m/true/ ? 1 : 0;
+
 my %distpath;
 
 sub packages () {
@@ -179,7 +181,8 @@ sub setupboot () {
     }
 
     my $want_kernver = get_runvar('kernel_ver',$r{'kernbuildjob'});
-    debian_boot_setup($ho, $want_kernver, $xenhopt, \%distpath, \@hooks);
+    debian_boot_setup($ho, $want_kernver, $enable_xsm, $xenhopt,
+                      \%distpath, \@hooks);
 
     logm("ready to boot Xen");
 }
