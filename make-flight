@@ -401,7 +401,7 @@ test_matrix_do_one () {
     done
 
   fi
-  do_passthrough_tests
+  #do_passthrough_tests
 }
 
 test_matrix_iterate
