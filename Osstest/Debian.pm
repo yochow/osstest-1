@@ -162,7 +162,7 @@ sub setupboot_uboot ($$$$) {
 	    $flask_commands = <<END;
 
 setenv flask_policy_addr_r 0x1200000
-flaskpolicy=`readlink /boot/$flaskpolicy`
+flaskpolicy=$flaskpolicy
 ext2load scsi 0 \\\${flask_policy_addr_r} \$flaskpolicy
 fdt mknod /chosen module\@2
 fdt set /chosen/module\@2 compatible "xen,xsm-policy" "xen,multiboot-module"
