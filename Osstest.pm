@@ -21,6 +21,7 @@ use warnings;
 
 use POSIX;
 use File::Basename;
+use IO::File;
 
 BEGIN {
     use Exporter ();
