@@ -235,7 +235,8 @@ END
                            "domain=$c{TestHostDomain}",
                            );
     push @installcmdline,
-        get_host_property($ho, "install-append $ho->{Suite}", '');
+        get_host_property($ho, "install-append $ho->{Suite}", ''),
+        get_host_property($ho, "install-append $ho->{Suite} $r{arch}", '');
 
     my $console = get_host_native_linux_console($ho);
 
@@ -248,7 +249,8 @@ END
     push @installcmdline, "console=$console" unless $console eq "NONE";
 
     push @installcmdline,
-        get_host_property($ho, "linux-boot-append $ho->{Suite}", '');
+        get_host_property($ho, "linux-boot-append $ho->{Suite}", ''),
+        get_host_property($ho, "linux-boot-append $ho->{Suite} $r{arch}", '');
 
     my $installcmdline= join ' ', @installcmdline;
 

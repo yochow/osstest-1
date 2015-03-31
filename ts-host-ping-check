@@ -1,0 +1,39 @@
+#!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict qw(vars);
+use Osstest;
+use DBI;
+use Osstest::TestSupport;
+
+tsreadconfig();
+
+our ($whhost) = @ARGV;
+$whhost ||= 'host';
+our $ho= selecthost($whhost);
+
+$_ = `ping -D -i 0.2 -c 100 $ho->{Ip} | tee /dev/stderr`;
+
+m/\b([0-9.]+)% packet loss\b/ or die "$_ ?";
+
+my $loss= $1;
+
+logm("packet loss $loss\%");
+
+die if $loss > 1;
+
+logm("ok.");

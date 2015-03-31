@@ -75,7 +75,7 @@ our %c = qw(
 
     DebianNonfreeFirmware firmware-bnx2
 
-    HostnameSortSwapWords 1
+    HostnameSortSwapWords 0
 );
 
 $c{$_}='' foreach qw(

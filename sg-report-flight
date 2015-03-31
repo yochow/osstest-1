@@ -541,16 +541,21 @@ END
 
         my $text= (sprintf" %-${jl}s %2s %-${sl}s %-${rl}s ",
                    $j->{job}, $s->{stepno}, $s->{testid}, $s->{status});
-        $text .= "in $failv->{Flight} " if $heisenflightp;
-        $text .= $failv->{Summary} if defined $failv->{Summary};
+	my $xstatus = '';
+        $xstatus .= "in $failv->{Flight} " if $heisenflightp;
+        $xstatus .= $failv->{Summary} if defined $failv->{Summary};
+	$text .= $xstatus;
         $text =~ s/ *$//;
         while (length($text) > $cw) { last unless $text =~ s/(.* ) /$1/; }
 
-        $notsucceeds{$cat} .= $text."\n";
+	push @{ $notsucceeds{$cat} }, [ "$s->{status} $xstatus", $text ];
     }
     foreach my $cat (sort keys %notsucceeds) {
         $cat =~ m/^\w+ / or die;
-        print "\n$'\n$notsucceeds{$cat}" or die $!;
+        print "\n$'\n" or die $!;
+	foreach (sort { $a->[0] cmp $b->[0] } @{ $notsucceeds{$cat} }) {
+	    print $_->[1], "\n" or die $!;
+	}
     }
 
     if (!%{ $r->{Failures} }) {
@@ -657,6 +662,14 @@ END
 
 	if ($st eq 'broken' && !$heisen_why) {
 	    print MRO "broken-step $s->{job} $s->{testid}\n";
+	}
+
+	if ($st eq 'running') {
+	    print MRO "running $j->{job} $s->{testid}\n";
+	    print DEBUG " running, unjustifiable\n";
+	    $failv->{Summary}= '';
+	    $failv->{Blocker}= 'unfinished';
+	    next;
 	}
 
         if (!($st eq 'fail' or $st eq 'broken')) {
