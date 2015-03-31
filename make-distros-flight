@@ -34,7 +34,10 @@ defsuite=`getconfig DebianSuite`
 defguestsuite=`getconfig GuestDebianSuite`
 
 job_create_build_filter_callback () {
-    :
+  case " $* " in
+    *" enable_xsm=true "*) return 1;;
+  esac
+  return 0
 }
 
 if [ x$buildflight = x ]; then
