@@ -1653,7 +1653,7 @@ sub guest_check_via_ssh ($) {
 sub guest_check_up_quick ($) {
     my ($gho) = @_;
     if (guest_check_via_ssh($gho)) {
-	target_cmd_root($gho, "date", undef, [qw(-v)]);
+	target_cmd_root($gho, "date", 10, [qw(-v)]);
     } else {
 	target_ping_check_up($gho);
     }
@@ -1663,7 +1663,7 @@ sub guest_check_up ($) {
     my ($gho) = @_;
     guest_await_dhcp_tcp($gho,20);
     target_ping_check_up($gho);
-    target_cmd_root($gho, "echo guest $gho->{Name}: ok", undef, [qw(-v)])
+    target_cmd_root($gho, "echo guest $gho->{Name}: ok", 10, [qw(-v)])
         if guest_check_via_ssh($gho);
 }
 
