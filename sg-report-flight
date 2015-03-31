@@ -664,6 +664,14 @@ END
 	    print MRO "broken-step $s->{job} $s->{testid}\n";
 	}
 
+	if ($st eq 'running') {
+	    print MRO "running $j->{job} $s->{testid}\n";
+	    print DEBUG " running, unjustifiable\n";
+	    $failv->{Summary}= '';
+	    $failv->{Blocker}= 'unfinished';
+	    next;
+	}
+
         if (!($st eq 'fail' or $st eq 'broken')) {
             print MRO "broken $j->{job} $s->{testid} $st\n";
             print DEBUG " not a fail, unjustifiable\n";
