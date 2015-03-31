@@ -595,14 +595,14 @@ sub target_await_down ($$) {
 }    
 
 sub tcmd { # $tcmd will be put between '' but not escaped
-    my ($stdout,$user,$ho,$tcmd,$timeout) = @_;
+    my ($stdout,$user,$ho,$tcmd,$timeout,$extrasshopts) = @_;
     $timeout=30 if !defined $timeout;
     tcmdex($timeout,$stdout,
-           'ssh', sshopts(),
+           'ssh', sshopts(), @{ $extrasshopts || [] },
            sshuho($user,$ho), $tcmd);
 }
-sub target_cmd ($$;$) { tcmd(undef,'osstest',@_); }
-sub target_cmd_root ($$;$) { tcmd(undef,'root',@_); }
+sub target_cmd ($$;$$) { tcmd(undef,'osstest',@_); }
+sub target_cmd_root ($$;$$) { tcmd(undef,'root',@_); }
 
 sub tcmdout {
     my $stdout= IO::File::new_tmpfile();
@@ -1653,7 +1653,7 @@ sub guest_check_via_ssh ($) {
 sub guest_check_up_quick ($) {
     my ($gho) = @_;
     if (guest_check_via_ssh($gho)) {
-	target_cmd_root($gho, "date");
+	target_cmd_root($gho, "date", undef, [qw(-v)]);
     } else {
 	target_ping_check_up($gho);
     }
@@ -1663,7 +1663,7 @@ sub guest_check_up ($) {
     my ($gho) = @_;
     guest_await_dhcp_tcp($gho,20);
     target_ping_check_up($gho);
-    target_cmd_root($gho, "echo guest $gho->{Name}: ok")
+    target_cmd_root($gho, "echo guest $gho->{Name}: ok", undef, [qw(-v)])
         if guest_check_via_ssh($gho);
 }
 
