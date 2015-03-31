@@ -117,7 +117,7 @@ proc db-update-1 {stmt} {
 }
 
 proc db-execute-debug {stmt} {
-    if {[info exists env(OSSTEST_TCL_JOBDB_DEBUG)]} {
+    if {[var-or-default env(OSSTEST_TCL_JOBDB_DEBUG) 0]} {
 	puts stderr "EXECUTING >$stmt<"
     }
 }

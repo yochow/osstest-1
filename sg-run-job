@@ -159,7 +159,7 @@ proc spawn-ts {iffail testid args} {
     jobdb::spawn-step-commit $flight $jobinfo(job) $stepno $testid
 
     set xprefix {}
-    if {[info exists env(OSSTEST_SIMULATE)]} { set xprefix echo }
+    if {[var-or-default env(OSSTEST_SIMULATE) 0]} { set xprefix echo }
 
     set log [jobdb::step-log-filename $flight $jobinfo(job) $stepno $ts]
     set redirects {< /dev/null}

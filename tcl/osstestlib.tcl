@@ -74,3 +74,9 @@ proc lshift {listvar} {
     set list [lrange $list 1 end]
     return $head
 }
+
+proc var-or-default {varname {default {}}} {
+    upvar 1 $varname var
+    if {[info exists var]} { return $var }
+    return $default
+}
