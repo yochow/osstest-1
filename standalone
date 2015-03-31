@@ -17,7 +17,7 @@ Operations:
   Setup dist path runvars for JOB from existing build results. Useful
   after recreating a flight to avoid the need to rebuild.
 
-* run-job [cfhrR] [JOB]
+* run-job [cfhrRs] [JOB]
 
   Run the named JOB.
 
@@ -42,6 +42,7 @@ Options:
 -h HOST, --host=HOST          Test host
 -r, --reuse                   Do not wipe test host (default)
 -R, --noreuse, --noreinstall  Wipe the test host (if job or test does so)
+-s, --simulate, --dry-run     Dry run, printing what would be run
 --lvextendmax=GB              Limit the size of the build logical volume
 --baseline                    Create a baseline flight instead of a tip flight
 
@@ -63,7 +64,7 @@ if [ x$op = x--help ] ; then
     exit 0
 fi
 
-TEMP=$(getopt -o c:f:h:rR --long config:,flight:,host:,reuse,noreuse,reinstall,lvextendmax:,baseline,help -- "$@")
+TEMP=$(getopt -o c:f:h:rRs --long config:,flight:,host:,reuse,noreuse,reinstall,simulate,dry-run,lvextendmax:,baseline,help -- "$@")
 
 eval set -- "$TEMP"
 
@@ -71,6 +72,7 @@ config=${OSSTEST_CONFIG-$HOME/.xen-osstest/config}
 flight="standalone"
 host=
 reuse=1 # Don't blow away machines by default
+dryrun=0
 lvextendmax=50 # Leave some LVM space free for running tests
 nobaseline=y
 
@@ -81,6 +83,7 @@ while true ; do
 	-h|--host)   host=$2;   shift 2;;
 	-r|--reuse)  reuse=1;   shift 1;;
 	-R|--noreuse|--reinstall)reuse=0;shift 1;;
+	-s|--simulate|--dry-run)dryrun=1;shift 1;;
 	--lvextendmax)lvextendmax=$2; shift 2;;
 	--baseline)nobaseline=n; shift 1;;
 	--help)      usage; exit 0;;
@@ -241,6 +244,7 @@ case $op in
 	OSSTEST_FLIGHT=$flight \
 	OSSTEST_HOST_HOST=$host \
 	OSSTEST_HOST_REUSE=$reuse \
+	OSSTEST_SIMULATE=$dryrun \
 	    with_logging logs/$flight/$job.log ./sg-run-job $job
 	;;
     run-test)
