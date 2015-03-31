@@ -93,10 +93,12 @@ sub for_things ($$$$$$$) {
     my $things_q = $things_q{$table} ||= $dbh_tests->prepare
         ("SELECT * FROM $table WHERE $basecond");
 
+    my $not = ($spec =~ s/^\!//) ? 'NOT' : '';
     my $re = spec_re($spec);
-    debug("FOR_THINGS $table.$keycol \`$spec' RE ",
+    debug("FOR_THINGS $table.$keycol $not \`$spec' RE ",
           (defined($re) ? "/$re/" : "<undef>"), "\n");
     if (!defined $re) {
+	die "cannot negate <foo-name>" if $not;
         $thing_q->execute(@$basecondvals, $spec);
         my $row = $thing_q->fetchrow_hashref();
         if ($row) {
@@ -112,8 +114,8 @@ sub for_things ($$$$$$$) {
         $things_q->execute(@$basecondvals);
         while (my $row = $things_q->fetchrow_hashref()) {
             my $thing = $row->{$keycol};
-            next unless $thing =~ m/$re/;
-            debug("FOR_THINGS $table.$keycol \`$spec' FOUND $row->{$keycol}\n");
+            next unless $thing =~ m/$re/ xor $not;
+            debug("FOR_THINGS $table.$keycol $not \`$spec' FOUND $row->{$keycol}\n");
             $fn->($thing, $row);
         }
     }
