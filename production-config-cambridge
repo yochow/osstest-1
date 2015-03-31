@@ -19,6 +19,8 @@
 JobDB Executive
 HostDB Executive
 
+HostnameSortSwapWords 1
+
 DnsDomain cam.xci-test.com
 NetNameservers 10.80.248.2 10.80.16.28 10.80.16.67
 

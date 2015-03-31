@@ -19,6 +19,8 @@
 JobDB Executive
 HostDB Executive
 
+HostnameSortSwapWords 0
+
 HostDB_Executive_NoConfigDB 1
 Include /root/osstest-hosts-config
 
