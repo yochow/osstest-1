@@ -34,6 +34,10 @@ flight=`./cs-flight-create $blessing $branch`
 defsuite=`getconfig DebianSuite`
 defguestsuite=`getconfig GuestDebianSuite`
 
+job_create_build_filter_callback () {
+    :
+}
+
 if [ x$buildflight = x ]; then
 
   create_build_jobs

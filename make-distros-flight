@@ -33,6 +33,10 @@ flight=`./cs-flight-create $blessing $branch`
 defsuite=`getconfig DebianSuite`
 defguestsuite=`getconfig GuestDebianSuite`
 
+job_create_build_filter_callback () {
+    :
+}
+
 if [ x$buildflight = x ]; then
 
   WANT_XEND=false REVISION_LINUX_OLD=disable

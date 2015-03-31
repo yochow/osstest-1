@@ -54,6 +54,15 @@ xenbranch_xsm_variants () {
     esac
 }
 
+job_create_build () {
+  job_create_build_filter_callback "$@" || return 0
+
+  local job=$1; shift
+  local recipe=$1; shift
+
+  ./cs-job-create $flight $job $recipe "$@"
+}
+
 create_build_jobs () {
 
   local arch
@@ -164,7 +173,7 @@ create_build_jobs () {
       else
         xsm_suffix=""
       fi
-      ./cs-job-create $flight build-$arch$xsm_suffix build                   \
+      job_create_build build-$arch$xsm_suffix build                          \
                 arch=$arch enable_xend=$build_defxend enable_ovmf=$enable_ovmf\
                 enable_xsm=$enable_xsm                                       \
         tree_qemu=$TREE_QEMU                                                 \
@@ -183,7 +192,7 @@ create_build_jobs () {
     done
 
     if [ $build_extraxend = "true" ] ; then
-    ./cs-job-create $flight build-$arch-xend build                           \
+    job_create_build build-$arch-xend build                                  \
                 arch=$arch enable_xend=true enable_ovmf=$enable_ovmf         \
         tree_qemu=$TREE_QEMU                                                 \
         tree_qemuu=$TREE_QEMU_UPSTREAM                                       \
@@ -196,7 +205,7 @@ create_build_jobs () {
                 revision_qemuu=$REVISION_QEMU_UPSTREAM
     fi
 
-    ./cs-job-create $flight build-$arch-pvops build-kern                     \
+    job_create_build build-$arch-pvops build-kern                            \
                 arch=$arch kconfighow=xen-enable-xen-config                  \
                 $RUNVARS $BUILD_RUNVARS $BUILD_LINUX_RUNVARS $arch_runvars   \
                 $suite_runvars                                               \
@@ -208,7 +217,7 @@ create_build_jobs () {
 
     if [ "x$REVISION_LIBVIRT" != xdisable ]; then
 
-    ./cs-job-create $flight build-$arch-libvirt build-libvirt                \
+    job_create_build build-$arch-libvirt build-libvirt                       \
                 arch=$arch                                                   \
         tree_xen=$TREE_XEN                                                   \
                 $RUNVARS $BUILD_RUNVARS $BUILD_LIBVIRT_RUNVARS $arch_runvars \
@@ -223,7 +232,7 @@ create_build_jobs () {
 
     case $arch in
     i386|amd64)
-    ./cs-job-create $flight build-$arch-rumpuserxen build-rumpuserxen        \
+    job_create_build build-$arch-rumpuserxen build-rumpuserxen               \
                 arch=$arch                                                   \
         tree_xen=$TREE_XEN                                                   \
                 $RUNVARS $BUILD_RUNVARS $BUILD_RUMPUSERXEN_RUNVARS $arch_runvars \
@@ -252,7 +261,7 @@ create_build_jobs () {
 
     if [ "x$REVISION_LINUX_OLD" != xdisable ]; then
 
-      ./cs-job-create $flight build-$arch-oldkern build-kern            \
+      job_create_build build-$arch-oldkern build-kern                   \
                 arch=$arch kconfighow=create-config-sh                  \
                 kimagefile=vmlinux                                      \
                 $RUNVARS $BUILD_RUNVARS $BUILD_LINUX_OLD_RUNVARS        \
