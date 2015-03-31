@@ -51,8 +51,10 @@ proc run-job {job} {
     if {$ok} { setstatus running                                          }
 
     per-host-ts broken  host-install/@(*) ts-host-install-twice
+    per-host-ts .       host-ping-check-native/@ ts-host-ping-check
     per-host-ts .       xen-install/@     ts-xen-install
     per-host-ts .       xen-boot/@        ts-host-reboot
+    per-host-ts .       host-ping-check-xen/@ ts-host-ping-check
 
     per-host-ts .       =(*)             {ts-leak-check basis}
 
