@@ -90,12 +90,77 @@ ovmf)
 		$TREE_OVMF_UPSTREAM master $LOCALREV_OVMF
 	;;
 osstest)
-	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
-	    git fetch $HOME/testing.git pretest:ap-fetch >&2
-            git rev-parse ap-fetch^0
+        if [ "x$OSSTEST_USE_HEAD" = "xy" ] ; then
+	    git update-ref -m "Arranging to test HEAD" \
+		ap-fetch HEAD^0
+	elif [ x"$TREEBRANCH_OSSTEST_UPSTREAM" != x ] ; then
+	    # Deciding what to test here is somewhat complex because
+	    # we would prefer to avoid octopus merges and to try and
+	    # keep the change history as clean as reasonably possible.
+	    #
+	    # Therefore we prefer to test anything which is in local
+	    # pretest before testing anything which is in
+	    # upstream. Whether or not there is anything in local
+	    # pretest is determined by using "git merge base"
+
+	    git fetch $HOME/testing.git +production:production
+	    git fetch $HOME/testing.git +pretest:pretest
+
+	    local_production=$(git rev-parse production^0)
+	    local_pretest=$(git rev-parse pretest^0)
+
+	    merge_base=$(git merge-base $local_production $local_pretest)
+
+	    echo >&2 "Considering merge from upstream"
+	    echo >&2 "Local production: $local_production"
+	    echo >&2 "Local pretest:    $local_pretest"
+	    echo >&2 "Merge base:       $merge_base"
+
+	    if [ x$merge_base = x$local_pretest ] ; then
+		# local production is a ff of local pretest
+		# (i.e. there is nothing local to test). So merge from
+		# upstream master into production and test that.
+
+		revision_merge=`repo_tree_rev_fetch_git osstest \
+		    $TREEBRANCH_OSSTEST_UPSTREAM daily-cron.$branch`
+		echo >&2 "Testing $TREEBRANCH_OSSTEST_UPSTREAM = $revision_merge"
+
+		rm -rf $repos/osstest-merge >&2
+		git clone -b production $HOME/testing.git $repos/osstest-merge >&2
+
+		(
+		    cd $repos/osstest-merge
+		    git fetch $repos/osstest daily-cron.$branch:ap-merge >&2
+		    git merge \
+			-m "Automerge of $TREEBRANCH_OSSTEST_UPSTREAM into production" \
+			ap-merge >&2
+		)
+
+		# Fetch the result of the above merge into local tree
+		# ready for use. cr-daily-branch handles reseting the
+		# working tree to this version
+		git fetch $repos/osstest-merge +production:ap-fetch
+	    elif [ x$merge_base = x$local_production ] ; then
+		# there are commits in pretest which we should test in
+		# an attempt to progress production to this point.
+		echo >&2 "Testing local pretest"
+		git update-ref -m "Arranging to test local pretest" \
+		    refs/heads/ap-fetch $local_pretest
+	    else
+		# It's too hard for to deal with automatically. This
+		# might happen if a push to pretest races with a
+		# successful flight which merges from upstream. We
+		# expect pushes to pretest to be rare in practice.
+		echo >&2 "************************************************"
+		echo >&2 "production and pretest have diverged."
+		echo >&2 "need manual fixup/rebase and push to pretest."
+		echo >&2 "************************************************"
+	    fi
 	else
-	    git rev-parse HEAD^0
+	    git fetch $HOME/testing.git pretest:ap-fetch >&2
 	fi
+
+	git rev-parse ap-fetch^0
         ;;
 *)
 	echo >&2 "branch $branch ?"
