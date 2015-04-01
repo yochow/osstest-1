@@ -50,9 +50,6 @@ GlobalLockDir /export/home/osstest/testing.git
 LogsPublish= "$c{Publish}/logs"
 ResultsPublish= "$c{Publish}/results"
 
-HarnessPublishGitUserHost xen@xenbits.xensource.com
-HarnessPublishGitRepoDir git/osstest.git
-
 ReportTrailer= <<END
 Logs, config files, etc. are available at
     $c{ReportHtmlPubBaseUrl}
