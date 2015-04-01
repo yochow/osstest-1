@@ -350,16 +350,19 @@ END
                      Shareix => $shareix,
                      Live => $alloc->{Live},
                     );
-        
+
+	my $job = $alloc->{Job};
 	push @{ $plan->{Events}{$reso} }, {
 	    Time => $alloc->{Start},
 	    Info => $alloc->{Info},
+	    ($job ? (Job => $job) : ()),
 	    Type => Start,
 	    ($share ? (Share => { %$share }) : ()),
 	    Allocated => { @ealloc },
 	}, {
 	    Time => $end_exptd,
 	    Info => $alloc->{Info},
+	    ($job ? (Job => $job) : ()),
 	    Type => End,
 	    ($share ? (Share => { %$share }) : ()),
 	    Allocated => { @ealloc },
@@ -385,10 +388,12 @@ sub cmd_get_plan () {
 	my @jevts;
 	foreach my $evt (@$evts) {
 	    my $share= $evt->{Share};
+	    my $job= $evt->{Job};
 	    push @jevts, {
 		Time => $evt->{Time} - $plan->{Start},
 		Type => $evt->{Type},
 		Avail => $evt->{Avail},
+		($job ? (Job => $job) : ()),
 		($share ? (Share => $share) : ()),
 	    };
 	}
@@ -450,6 +455,7 @@ sub cmd_book_resources () {
 	my $starttime= parse_reltime2abs($jbook->{Start});
 	my $endtime= parse_reltime2abs($jbook->{End});
 	my $reso= parse_reso($jbook->{Reso});
+	my $job= $jbook->{Job};
 
 	die unless $starttime < $endtime;
 
@@ -483,6 +489,7 @@ sub cmd_book_resources () {
                 Start => $starttime,
                 End => $endtime,
                 Live => 1,
+                ($job ? (Job => $job) : ()),
             };
 	}
 
@@ -491,6 +498,7 @@ sub cmd_book_resources () {
 		Info => $info,
 		(@share ? (Share => { @share }) : ()),
 		(@alloc ? (Allocated => { @alloc }) : ()),
+		($job ? (Job => $job) : ()),
 		@_,
 	    };
 	};
