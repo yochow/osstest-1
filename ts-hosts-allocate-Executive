@@ -669,6 +669,7 @@ sub compute_booking_list () {
 		Shares => $sel->{SharedMaxTasks},
 	    }) : ()),
 	};
+	$book->{Job}= "$flight.$job";
 	$book->{Reso}= "$sel->{restype} $sel->{resname}";
 	$book->{Xinfo}= $hid->{Ident};
 	$book->{Start}= $best->{Start},
