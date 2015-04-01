@@ -213,6 +213,7 @@ Plan is:
 			End	abs planned end time, *
 				 omitted for rogue tasks
 			Live	boolean, for reporting purposes only
+			Job	flight.job which made the allocation
 
 	Events
 		map from
@@ -231,6 +232,7 @@ Plan is:
 						Shareix
 						Task
 						Live
+			Job	flight.job which made the allocation
 
 	* = internal to plan
 	** = computed by launder_check_plan
