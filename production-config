@@ -41,7 +41,7 @@ PubBaseDir /home/osstest/pub
 
 OverlayLocal /home/osstest/overlay-local
 
-LogsMinSpaceMby= 50*1e3
+LogsMinSpaceMby= 10*1e3
 LogsMinExpireAge= 86400*4
 LogsPublishMinSpaceMby= 10*1e3
 LogsPublishMinExpireAge= 86400*7
