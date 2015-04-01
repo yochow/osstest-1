@@ -42,6 +42,8 @@ our ($cfgbase) = @ARGV;
 
 csreadconfig();
 
+exit 0 unless $c{$cfgbase};
+
 open LOCK, "> $c{GlobalLockDir}/publish-lock" or die $!;
 flock LOCK, LOCK_EX or die $!;
 

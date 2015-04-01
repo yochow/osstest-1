@@ -44,15 +44,11 @@ TestHostKeypairPath /export/home/osstest/.ssh/id_rsa_osstest
 
 GitCacheProxy git://drall.uk.xensource.com:9419/
 
-PubBaseUrl http://www.chiark.greenend.org.uk/~xensrcts
+PubBaseUrl http://osstest.xs.citrite.net/~osstest/testlogs
 ReportHtmlPubBaseUrl="$c{PubBaseUrl}/logs"
 ResultsHtmlPubBaseUrl="$c{PubBaseUrl}/results"
 
-Publish xensrcts@login.chiark.greenend.org.uk:/home/ian/work/xc_osstest
 GlobalLockDir /export/home/osstest/testing.git
-
-LogsPublish= "$c{Publish}/logs"
-ResultsPublish= "$c{Publish}/results"
 
 ReportTrailer= <<END
 Logs, config files, etc. are available at
