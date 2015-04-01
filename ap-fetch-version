@@ -90,11 +90,30 @@ ovmf)
 		$TREE_OVMF_UPSTREAM master $LOCALREV_OVMF
 	;;
 osstest)
-	if [ "x$OSSTEST_USE_HEAD" != "xy" ] ; then
+	if [ "x$OSSTEST_USE_HEAD" = "xy" ] ; then
+	    git rev-parse HEAD^0
+	elif [ x"$TREEBRANCH_OSSTEST_UPSTREAM" != x ] ; then
+	    revision_merge=`repo_tree_rev_fetch_git osstest \
+		$TREEBRANCH_OSSTEST_UPSTREAM daily-cron.$branch`
+	    echo >&2 "$TREEBRANCH_OSSTEST_UPSTREAM = $revision_merge"
+
+	    rm -rf $repos/osstest-merge >&2
+	    git clone -b pretest $HOME/testing.git $repos/osstest-merge >&2
+
+	    (
+	    cd $repos/osstest-merge
+	    git fetch $repos/osstest daily-cron.$branch:ap-merge >&2
+	    git merge \
+		-m "Automerge of $TREEBRANCH_OSSTEST_UPSTREAM into pretest" \
+		ap-merge >&2
+            )
+
+	    # cr-daily-branch will reset the local tree to this version.
+	    git fetch $repos/osstest-merge pretest
+	    git	rev-parse FETCH_HEAD^0
+	else
 	    git fetch $HOME/testing.git pretest:ap-fetch >&2
             git rev-parse ap-fetch^0
-	else
-	    git rev-parse HEAD^0
 	fi
         ;;
 *)
