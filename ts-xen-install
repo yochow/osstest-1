@@ -46,7 +46,7 @@ if (@ARGV and $ARGV[0] eq '--check') {
 
 our $ho;
 
-my $enable_xsm = $r{enable_xsm} =~ m/true/ ? 1 : 0;
+my $enable_xsm = ($r{enable_xsm}//'false') =~ m/true/ ? 1 : 0;
 
 my %distpath;
 

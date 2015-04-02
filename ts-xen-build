@@ -28,7 +28,7 @@ selectbuildhost(\@ARGV);
 # remaining arguments are passed as targets to "make"
 builddirsprops();
 
-my $enable_xsm = $r{enable_xsm} =~ m/true/ ? 1 : 0;
+my $enable_xsm = ($r{enable_xsm}//'false') =~ m/true/ ? 1 : 0;
     
 sub checkout () {
     prepbuilddirs();
