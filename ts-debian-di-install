@@ -121,7 +121,9 @@ sub setup_netboot($$$)
 	target_putfile_root($ho, 60, $initrd, "$didir/initrd_${suite}_${arch}");
 
     } else {
-	my $mirror = "http://$c{DebianMirrorHost}/$c{DebianMirrorSubpath}";
+	#my $mirror = "http://$c{DebianMirrorHost}/$c{DebianMirrorSubpath}";
+        # XXX local mirror seems to serve up stale files.
+	my $mirror = "http://ftp.debian.org/debian";
 
 	my $di_url = $suite eq "daily" ?
 	    "http://d-i.debian.org/daily-images/$arch/daily/netboot" :
