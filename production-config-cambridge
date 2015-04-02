@@ -80,6 +80,7 @@ XenUseUser osstest
 DebianMirrorHost 10.80.16.196
 
 HostProp_NtpServer ntp.uk.xensource.com
+HostProp_DhcpWatchMethod leases dhcp3 woking.cam.xci-test.com:5556
 
 DebianPreseed= <<'END'
 END
