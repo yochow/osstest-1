@@ -36,18 +36,6 @@ our $gho;
 
 our $mnt= '/root/freebsd_root';
 
-our $freebsd_version= "10.0-BETA3";
-
-# Folder where the FreeBSD VM images are stored inside of the host
-#
-# The naming convention of the stored images is:
-# FreeBSD-$freebsd_version-$arch.qcow2.xz
-# ie: FreeBSD-10.0-BETA3-amd64.qcow2.xz
-#
-# Used only if the runvar <guest>_image is not set.
-#
-our $freebsd_vm_repo= '/var/images';
-
 sub prep () {
     my $authkeys= authorized_keys();
 
@@ -59,13 +47,8 @@ sub prep () {
 
     more_prepareguest_hvm($ho, $gho, $ram_mb, $disk_mb, NoCdromImage => 1);
 
-    target_put_guest_image($ho, $gho,
-			   "$freebsd_vm_repo/FreeBSD-$freebsd_version-".
-			   (defined($r{"$gho->{Guest}_arch"})
-			    # Use amd64 as default arch
-			    ? $r{"$gho->{Guest}_arch"} : 'amd64').
-			   ".qcow2.xz");
-				
+    target_put_guest_image($ho, $gho);
+
     my $rootpartition_dev = target_guest_lv_name($ho, $gho->{Name}) . "--disk3";
 
     target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
