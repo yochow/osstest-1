@@ -51,8 +51,7 @@ our $freebsd_vm_repo= '/var/images';
 sub prep () {
     my $authkeys= authorized_keys();
 
-    target_install_packages_norec($ho, qw(rsync lvm2 qemu-utils
-                                          xz-utils kpartx));
+    target_install_packages_norec($ho, qw(rsync lvm2 xz-utils kpartx));
 
     $gho= prepareguest($ho, $gn, $guesthost, 22,
                        $disk_mb + 1,
@@ -76,9 +75,7 @@ sub prep () {
 
     target_cmd_root($ho, <<END, 900);
             set -ex
-            xz -dkc $rimage > $rimagebase.qcow2
-            qemu-img convert -f qcow2 $rimagebase.qcow2 -O raw $rimagebase.raw
-            rm $rimagebase.qcow2
+            xz -dkc $rimage > $rimagebase.raw
             dd if=$rimagebase.raw of=$gho->{Lvdev} bs=1M
             rm $rimagebase.raw
 
