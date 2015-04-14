@@ -29,7 +29,7 @@ $gn ||= 'freebsd';
 our $ho= selecthost($whhost);
 
 our $ram_mb=   1024;
-our $disk_mb= 20480;
+our $disk_mb= 24000;
 
 our $guesthost= "$gn.guest.osstest";
 our $gho;
