@@ -593,6 +593,7 @@ END
 END
         exec </dev/null
         cd $builddir
+        rm -f build-ok-stamp
 END
 }
 
