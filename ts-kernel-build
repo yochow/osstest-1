@@ -288,6 +288,12 @@ setopt CONFIG_DEVTMPFS y
 
 setopt CONFIG_HYPERVISOR_GUEST y
 
+setopt CONFIG_AMD_IOMMU y
+setopt CONFIG_AMD_IOMMU_V2 y
+setopt CONFIG_INTEL_IOMMU y
+setopt CONFIG_INTEL_IOMMU_DEFAULT_ON y
+setopt CONFIG_IRQ_REMAP y
+
 $config_hardware
 $config_features
 $config_runvars
