@@ -41,7 +41,7 @@ Options:
 -f FLIGHT, --flight=FLIGHT    Operate on FLIGHT
 -h HOST, --host=HOST          Test host
 -r, --reuse                   Do not wipe test host (default)
--R, --noreuse, --noreinstall  Wipe the test host (if job or test does so)
+-R, --noreuse, --reinstall    Wipe the test host (if job or test does so)
 -s, --simulate, --dry-run     Dry run, printing what would be run
 --lvextendmax=GB              Limit the size of the build logical volume
 --baseline                    Create a baseline flight instead of a tip flight
