@@ -19,9 +19,13 @@
 JobDB Executive
 HostDB Executive
 
+OwnerDaemonHost owner.daemon.osstest.xs.citrite.net
+QueueDaemonHost queue.daemon.osstest.xs.citrite.net
+ExecutiveDbnamePat dbname=<dbname>;user=<whoami>;host=<dbname>.db.cam.xci-test.com;password=<~/.xen-osstest/db-password>
+
 HostnameSortSwapWords 1
 
-DnsDomain cam.xci-test.com
+DnsDomain xs.citrite.net
 NetNameservers 10.80.248.2 10.80.16.28 10.80.16.67
 
 Stash /home/xc_osstest/logs
