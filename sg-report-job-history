@@ -163,12 +163,17 @@ sub processjobbranch ($$) {
 END
         push @params, $bra;
     }
-    my $flightsq= $dbh_tests->prepare(<<END);
-        SELECT *
+    my $limit= 100;
+    my $offset= $limit-1;
+
+    my $fromstuff= <<END;
           FROM jobs JOIN flights USING (flight)
          WHERE ($cond)
       ORDER BY flight DESC
-         LIMIT 100
+END
+    my $flightsq= $dbh_tests->prepare(<<END);
+        SELECT * $fromstuff
+         LIMIT $limit
 END
     $flightsq->execute(@params);
 
@@ -177,9 +182,13 @@ END
 	 FROM runvars
 	 JOIN flights USING (flight)
 	WHERE ($cond)
+	  AND flight >= (
+	      SELECT flight $fromstuff
+	      LIMIT 1 OFFSET $offset
+          )
      ORDER BY name;
 END
-    $hostsq->execute(@params);
+    $hostsq->execute(@params, @params); # sql text contains $cond twice
     my @hostvarcols;
     while (my ($hostvar) = $hostsq->fetchrow_array()) {
 	next unless $hostvar =~ m/(^|_)host$/;
