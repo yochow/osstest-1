@@ -992,8 +992,13 @@ END
         }
         1;
     }) {
-        system_checked("convert -resize $c{BisectionRevisonGraphSize}".
-                       " $graphfile.png $graphfile.mini.png");
+	my $gsize = $c{BisectionRevisonGraphSize};
+        system_checked("pngtopnm <$graphfile.png".
+		       " | pnmscale -xysize ".
+		       ($gsize =~ m/^(\d+)x(\d+)$/ ? "$1 $2" :
+			$gsize =~ m/^(\d+)$/ ? "$1 $1" :
+			die "$gsize ?").
+		       " | pnmtopng >$graphfile.mini.png");
         print HTML <<END or die $!;
 <h2>Revision graph overview</h2>
 <img src="$href.mini.png">
