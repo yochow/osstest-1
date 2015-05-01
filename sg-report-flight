@@ -948,7 +948,7 @@ END
         print H "</th>";
     }
     print H "\n";
-    print H "<tr><th>";
+    print H "<tr><th rowspan=2>";
     print H "Last pass / First worst fail";
     print H "</th>";
 
@@ -984,6 +984,8 @@ END
 	return ($h,$priority,$ch);
     };
 
+    my @worstrow1;
+    my @worstrow2;
     foreach my $col (@cols) {
 	my @worst=(' bgcolor="#444444">',0);
 	foreach my $rowix (0..$#{ $fi->{GridRows} }) {
@@ -993,9 +995,13 @@ END
 	    next if $this[1] < $worst[1];
 	    next if $this[1] == $worst[1] && $ei->{Step}{status} ne 'pass';
 	    @worst=@this;
+	    push @worst,
+	        encode_entities("$ei->{Step}{stepno}. $ei->{Step}{testid}");
 	}
-	print H "<td ",$worst[2],">",$worst[0],"</td>";
+	push @worstrow1, "<td ",$worst[2],">",$worst[3],"</td>";
+	push @worstrow2, "<td ",$worst[2],">",$worst[0],"</td>";
     }
+    print H "\n", @worstrow1, "\n<tr>\n", @worstrow2;
     print H "\n";
     # Create a gutter row after the headers.
     print H "<tr><td>&nbsp;</td></tr>\n";
