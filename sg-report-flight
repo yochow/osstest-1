@@ -953,7 +953,7 @@ END
     print H "</th>";
 
     my $cell_html = sub {
-	my ($ei) = @_;
+	my ($ei, $core_only) = @_;
 	# => ($h, $priority);
 	my $s= $ei->{Step};
 	my $sum_core= $ei->{SummaryCore};
@@ -965,6 +965,7 @@ END
 	    $sum_core= $s->{status};
 	    ($bgc,$priority)= html_status2_colour_priority($s->{status});
 	} else {
+	    $sum_core= "$s->{status} $sum_core" unless $core_only;
 	    ($bgc,$priority) =
 		$ei->{Blocker} eq 'regression'
 		? ('#ff8888',400)
@@ -1039,7 +1040,7 @@ END
             if ($ei) {
                 $deferred_cells->(1);
                 my $s= $ei->{Step};
-		my ($h,$priority,$ch) = $cell_html->($ei);
+		my ($h,$priority,$ch) = $cell_html->($ei, 1);
                 print H "<td ",$ch,">",$h,"</td>";
             } else {
                 $ndeferred++;
