@@ -970,8 +970,8 @@ END
 		? ('#ff8888',400)
 		: ('#ffff00',250);
 	}
-	my $h = " bgcolor=\"$bgc\">";
-	$h .= "<a href=\"".encode_entities($s->{job}).
+	my $ch = "bgcolor=\"$bgc\"";
+	my $h = "<a href=\"".encode_entities($s->{job}).
 	    "/$s->{stepno}.".encode_entities($s->{step}).".log\">";
 	#print H "[$s->{stepno}] ";
 	$h .= encode_entities($sum_core);
@@ -980,7 +980,7 @@ END
 	    $h .= " <a href=\"../$sum_flight/\">".
 		displayflightnum($sum_flight)."</a>";
 	}
-	return ($h,$priority);
+	return ($h,$priority,$ch);
     };
 
     foreach my $col (@cols) {
@@ -992,7 +992,7 @@ END
 	    next if $this[1] < $worst[1];
 	    @worst=@this;
 	}
-        print H "<td ",$worst[0],"</td>";
+	print H "<td ",$worst[2],">",$worst[0],"</td>";
     }
     print H "\n";
     # Create a gutter row after the headers.
@@ -1038,8 +1038,8 @@ END
             if ($ei) {
                 $deferred_cells->(1);
                 my $s= $ei->{Step};
-		my ($h,$priority) = $cell_html->($ei);
-                print H "<td", $h, "</td>";
+		my ($h,$priority,$ch) = $cell_html->($ei);
+                print H "<td ",$ch,">",$h,"</td>";
             } else {
                 $ndeferred++;
             }
