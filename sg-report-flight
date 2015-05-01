@@ -949,7 +949,7 @@ END
     }
     print H "\n";
     print H "<tr><th>";
-    print H "Worst/last";
+    print H "Last pass / First worst fail";
     print H "</th>";
 
     my $cell_html = sub {
@@ -990,6 +990,7 @@ END
 	    next unless $ei;
 	    my @this = $cell_html->($ei);
 	    next if $this[1] < $worst[1];
+	    next if $this[1] == $worst[1] && $ei->{Step}{status} ne 'pass';
 	    @worst=@this;
 	}
 	print H "<td ",$worst[2],">",$worst[0],"</td>";
