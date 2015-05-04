@@ -157,6 +157,22 @@ sub setupboot_uboot ($$$$) {
 	my $kern = "vmlinuz-$want_kernver";
 	my $initrd = "initrd.img-$want_kernver";
 
+	# According to u-boot policy $filesize is an unprefixed hex
+	# number, but fdt set requires numbers to be prefixed
+	# (e.g. with 0x for a hex number). See:
+	#
+	# http://lists.denx.de/pipermail/u-boot/2014-October/193622.html,
+	# http://lists.denx.de/pipermail/u-boot/2014-November/194150.html and
+	# http://lists.denx.de/pipermail/u-boot/2014-November/194150.html.
+	#
+	# However some older u-boot versions (e.g. on midway) erroneously
+	# include the 0x prefix when setting $filesize from ext*load
+	# commands, meaning we cannot simply unconditionally prepend
+	# the 0x. Base it on a host flag quirk.
+	my $size_hex_prefix =
+	    $ho->{Flags}{'quirk-load-filesize-has-0x-prefix'} ?
+	    '' : '0x';
+
 	my $flask_commands = "";
 	if ($want_xsm) {
 	    # Use the flaskpolicy from tools build job because we might
@@ -176,7 +192,7 @@ flaskpolicy=$flaskpolicy
 ext2load scsi 0 \\\${flask_policy_addr_r} \$flaskpolicy
 fdt mknod /chosen module\@2
 fdt set /chosen/module\@2 compatible "xen,xsm-policy" "xen,multiboot-module"
-fdt set /chosen/module\@2 reg <\\\${flask_policy_addr_r} \\\${filesize}>
+fdt set /chosen/module\@2 reg <\\\${flask_policy_addr_r} ${size_hex_prefix}\\\${filesize}>
 echo Loaded $flaskpolicy to \\\${flask_policy_addr_r} (\\\${filesize})
 
 END
@@ -212,22 +228,6 @@ END
 
 	my $set_xen_addr_r =
 	    $xen_addr_r ? "setenv xen_addr_r $xen_addr_r" : "";
-
-	# According to u-boot policy $filesize is an unprefixed hex
-	# number, but fdt set requires numbers to be prefixed
-	# (e.g. with 0x for a hex number). See:
-	#
-	# http://lists.denx.de/pipermail/u-boot/2014-October/193622.html,
-	# http://lists.denx.de/pipermail/u-boot/2014-November/194150.html and
-	# http://lists.denx.de/pipermail/u-boot/2014-November/194150.html.
-	#
-	# However some older u-boot versions (e.g. on midway) erroneously
-	# include the 0x prefix when setting $filesize from ext*load
-	# commands, meaning we cannot simply unconditionally prepend
-	# the 0x. Base it on a host flag quirk.
-	my $size_hex_prefix =
-	    $ho->{Flags}{'quirk-load-filesize-has-0x-prefix'} ?
-	    '' : '0x';
 
 	target_cmd_root($ho, <<END);
 if test ! -f /boot/$kern ; then
