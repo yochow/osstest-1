@@ -388,6 +388,13 @@ test_matrix_do_one () {
   for qemuu_suffix in '' -qemut -qemuu; do
     case "$qemuu_suffix" in
     '')
+          case $xenbranch in
+          xen-3.*-testing) ;;
+          xen-4.0-testing) ;;
+          xen-4.1-testing) ;;
+          xen-4.2-testing) ;;
+          *) continue ;;
+          esac
           qemuu_runvar=''
           ;;
     -qemut)
