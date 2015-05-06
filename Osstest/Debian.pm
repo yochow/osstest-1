@@ -37,6 +37,7 @@ BEGIN {
                       %preseed_cmds
                       preseed_base
                       preseed_create
+                      preseed_ssh
                       preseed_hook_command preseed_hook_installscript preseed_hook_cmds
                       di_installcmdline_core
                       );
@@ -551,8 +552,70 @@ sub di_installcmdline_core ($$;@) {
     return @cl;
 }
 
-sub preseed_base ($$$;@) {
-    my ($ho,$suite,$extra_packages,%xopts) = @_;
+sub preseed_ssh ($$) {
+    my ($ho,$sfx) = @_;
+
+    my $authkeys_url= create_webfile($ho, "authkeys$sfx", authorized_keys());
+
+    my $hostkeyfile= "$c{OverlayLocal}/etc/ssh/ssh_host_rsa_key.pub";
+    my $hostkey= get_filecontents($hostkeyfile);
+    chomp($hostkey); $hostkey.="\n";
+    my $knownhosts= '';
+
+    my $hostsq= $dbh_tests->prepare(<<END);
+        SELECT val FROM runvars
+         WHERE flight=? AND name LIKE '%host'
+         GROUP BY val
+END
+    $hostsq->execute($flight);
+    while (my ($node) = $hostsq->fetchrow_array()) {
+        my $defaultfqdn = $node;
+        $defaultfqdn .= ".$c{TestHostDomain}" unless $defaultfqdn =~ m/\./;
+
+        my %props;
+        $mhostdb->get_properties($node, \%props);
+
+        my $longname= $props{Fqdn} // $defaultfqdn;
+        my (@hostent)= gethostbyname($longname);
+        if (!@hostent) {
+            logm("skipping host key for nonexistent host $longname");
+            next;
+        }
+        my $specs= join ',', $longname, $node, map {
+            join '.', unpack 'W4', $_;
+        } @hostent[4..$#hostent];
+        logm("adding host key for $specs");
+        $knownhosts.= "$specs ".$hostkey;
+    }
+    $hostsq->finish();
+
+    $knownhosts.= "localhost,127.0.0.1 ".$hostkey;
+    my $knownhosts_url= create_webfile($ho, "known_hosts$sfx", $knownhosts);
+
+    preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+r=/target/root
+cd \$r
+
+umask 022
+mkdir .ssh
+wget -O .ssh/authorized_keys '$authkeys_url'
+wget -O .ssh/known_hosts     '$knownhosts_url'
+
+u=osstest
+h=/home/\$u
+mkdir /target\$h/.ssh
+cp .ssh/authorized_keys /target\$h/.ssh
+chroot /target chown -R \$u.\$u \$h/.ssh
+END
+}
+
+sub preseed_base ($$$$;@) {
+    my ($ho,$suite,$sfx,$extra_packages,%xopts) = @_;
+
+    preseed_ssh($ho, $sfx);
 
     my $preseed = <<"END";
 d-i mirror/suite string $suite
@@ -639,48 +702,11 @@ END
 sub preseed_create ($$;@) {
     my ($ho, $sfx, %xopts) = @_;
 
-    my $authkeys_url= create_webfile($ho, "authkeys$sfx", authorized_keys());
-
-    my $hostkeyfile= "$c{OverlayLocal}/etc/ssh/ssh_host_rsa_key.pub";
-    my $hostkey= get_filecontents($hostkeyfile);
-    chomp($hostkey); $hostkey.="\n";
-    my $knownhosts= '';
-
     my $disk= $xopts{DiskDevice} || '/dev/sda';
     my $suite= $xopts{Suite} || $c{DebianSuite};
 
     my $d_i= $ho->{Tftp}{Path}.'/'.$ho->{Tftp}{DiBase}.'/'.$r{arch}.'/'.
 	$c{TftpDiVersion}.'-'.$ho->{Suite};
-
-    my $hostsq= $dbh_tests->prepare(<<END);
-        SELECT val FROM runvars
-         WHERE flight=? AND name LIKE '%host'
-         GROUP BY val
-END
-    $hostsq->execute($flight);
-    while (my ($node) = $hostsq->fetchrow_array()) {
-        my $defaultfqdn = $node;
-        $defaultfqdn .= ".$c{TestHostDomain}" unless $defaultfqdn =~ m/\./;
-
-        my %props;
-        $mhostdb->get_properties($node, \%props);
-
-        my $longname= $props{Fqdn} // $defaultfqdn;
-        my (@hostent)= gethostbyname($longname);
-        if (!@hostent) {
-            logm("skipping host key for nonexistent host $longname");
-            next;
-        }
-        my $specs= join ',', $longname, $node, map {
-            join '.', unpack 'W4', $_;
-        } @hostent[4..$#hostent];
-        logm("adding host key for $specs");
-        $knownhosts.= "$specs ".$hostkey;
-    }
-    $hostsq->finish();
-
-    $knownhosts.= "localhost,127.0.0.1 ".$hostkey;
-    my $knownhosts_url= create_webfile($ho, "known_hosts$sfx", $knownhosts);
 
     my $overlays= '';
     my $create_overlay= sub {
@@ -752,17 +778,6 @@ set -ex
 
 r=/target/root
 cd \$r
-
-umask 022
-mkdir .ssh
-wget -O .ssh/authorized_keys '$authkeys_url'
-wget -O .ssh/known_hosts     '$knownhosts_url'
-
-u=osstest
-h=/home/\$u
-mkdir /target\$h/.ssh
-cp .ssh/authorized_keys /target\$h/.ssh
-chroot /target chown -R \$u.\$u \$h/.ssh
 
 echo FANCYTTY=0 >> /target/etc/lsb-base-logging.sh
 
@@ -878,7 +893,7 @@ END
 
     my $extra_packages = join(",",@extra_packages);
 
-    my $preseed_file= preseed_base($ho,$suite,$extra_packages,%xopts);
+    my $preseed_file= preseed_base($ho,$suite,$sfx,$extra_packages,%xopts);
 
     $preseed_file .= (<<END);
 d-i partman-auto/method string lvm
