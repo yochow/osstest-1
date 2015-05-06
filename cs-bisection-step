@@ -771,7 +771,11 @@ sub need_repro ($$$) {
     my $fl= $n->{Flights} || [];
     foreach my $f (sort { $a->{Flight} <=> $b->{Flight} } @$fl) {
         next unless $f->{Flight} > $repro_lastflight;
-        next unless $f->{Result} eq $st;
+	if ($f->{Result} ne $st) {
+	    return report_conflict($n, $what, 'Unexpected test results')
+		if $f->{Result} =~ m/^(?:pass|fail)$/;
+	    next;
+	}
         print STDERR " ".
             ($repro_count ? "Repro" : "Result").
             " found: flight $f->{Flight} ($st), for $what\n";
