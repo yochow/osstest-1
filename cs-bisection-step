@@ -714,24 +714,31 @@ sub do_choose_this ($) {
     $choose->{Target}= 1;
 }
 
-sub conflicted_warning ($$) {
-    my ($n, $what) = @_;
-    if ($n->{Conflicted}) {
-        my $show_rtuple= $n->{Rtuple};
-        foreach my $flight (@{ $n->{Flights} }) {
-            $show_rtuple .= "\n flight $flight->{Flight}".
-                " (blessed $flight->{Blessing}) result $flight->{Result}";
-        }
-        summary_report(<<END, <<END, 16);
+sub report_conflict ($$$) {
+    my ($n, $what, $desc) = @_;
+    # always returns 1 for the convenience of its callers
+    my $show_rtuple= $n->{Rtuple};
+    foreach my $flight (@{ $n->{Flights} }) {
+	$show_rtuple .= "\n flight $flight->{Flight}".
+	    " (blessed $flight->{Blessing}) result $flight->{Result}";
+    }
+    summary_report(<<END, <<END, 16);
 Not reproducible - supposed $what
 END
 Could not reproduce problem, or could not reproduce basis pass.
-Inconsistent test results at this revision (supposed $what):
+$desc; at this revision (supposed $what):
 $show_rtuple
 END
-        $n->{Target}= 1;
-        return 1;
+    $n->{Target}= 1;
+    return 1;
+}
+
+sub conflicted_warning ($$) {
+    my ($n, $what) = @_;
+    if ($n->{Conflicted}) {
+	return report_conflict($n, $what, 'Inconsistent test results')
     }
+    return 0;
 }
 
 our $repro_lastflight;
