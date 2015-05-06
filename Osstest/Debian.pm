@@ -38,7 +38,9 @@ BEGIN {
                       preseed_base
                       preseed_create
                       preseed_ssh
-                      preseed_hook_command preseed_hook_installscript preseed_hook_cmds
+                      preseed_hook_command preseed_hook_installscript
+                      preseed_hook_overlay
+                      preseed_hook_cmds
                       di_installcmdline_core
                       );
     %EXPORT_TAGS = ( );
@@ -616,6 +618,7 @@ sub preseed_base ($$$$;@) {
     my ($ho,$suite,$sfx,$extra_packages,%xopts) = @_;
 
     preseed_ssh($ho, $sfx);
+    preseed_hook_overlay($ho, $sfx, $c{OverlayLocal}, 'overlay-local.tar');
 
     my $preseed = <<"END";
 d-i mirror/suite string $suite
@@ -708,26 +711,6 @@ sub preseed_create ($$;@) {
     my $d_i= $ho->{Tftp}{Path}.'/'.$ho->{Tftp}{DiBase}.'/'.$r{arch}.'/'.
 	$c{TftpDiVersion}.'-'.$ho->{Suite};
 
-    my $overlays= '';
-    my $create_overlay= sub {
-        my ($srcdir, $tfilename) = @_;
-        my $url= create_webfile($ho, "$tfilename$sfx", sub {
-            my ($fh) = @_;
-            contents_make_cpio($fh, 'ustar', $srcdir);
-        });
-        $overlays .= <<END;
-wget -O overlay.tar '$url'
-cd /target
-tar xf \$r/overlay.tar
-cd \$r
-rm overlay.tar
-
-END
-    };
-
-    $create_overlay->('overlay',        'overlay.tar');
-    $create_overlay->($c{OverlayLocal}, 'overlay-local.tar');
-
     preseed_hook_installscript($ho, $sfx,
           '/lib/partman/init.d', '000override-parted-devices', <<END);
 #!/bin/sh
@@ -772,18 +755,13 @@ ls -l /dev/sd*
 true
 END
 
+    preseed_hook_overlay($ho, $sfx, 'overlay', 'overlay.tar');
+
     preseed_hook_command($ho, 'late_command', $sfx, <<END);
 #!/bin/sh
 set -ex
 
-r=/target/root
-cd \$r
-
 echo FANCYTTY=0 >> /target/etc/lsb-base-logging.sh
-
-$overlays
-
-echo latecmd done.
 END
 
     my $dtbs = "$d_i/dtbs.tar.gz";
@@ -969,6 +947,30 @@ set -ex
 mkdir -p '$installer_dir'
 wget -O '$installer_pathname' '$url'
 chmod +x '$installer_pathname'
+END
+}
+
+sub preseed_hook_overlay ($$$$) {
+    my ($ho, $sfx, $srcdir, $tfilename) = @_;
+    my $url= create_webfile($ho, "$tfilename$sfx", sub {
+        my ($fh) = @_;
+        contents_make_cpio($fh, 'ustar', $srcdir);
+    });
+    preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+r=/target/root
+cd \$r
+
+umask 022
+
+wget -O overlay.tar '$url'
+cd /target
+tar xf \$r/overlay.tar
+cd \$r
+rm overlay.tar
+
 END
 }
 
