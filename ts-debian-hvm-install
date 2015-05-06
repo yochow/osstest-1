@@ -41,9 +41,11 @@ our $disk_mb= 10000;
 our $guesthost= "$gn.guest.osstest";
 our $gho;
 
+our $gsuite= guest_var($gho,'suite',$c{GuestDebianSuite});
+
 sub preseed () {
 
-    my $preseed_file = preseed_base($gho,'wheezy','','',());
+    my $preseed_file = preseed_base($gho,$gsuite,'','',());
 
     $preseed_file .= (<<END);
 d-i netcfg/get_hostname string $gn
@@ -71,7 +73,15 @@ d-i partman-auto/expert_recipe string \\
 d-i apt-setup/cdrom/set-first boolean false
 END
 
-preseed_hook_command($gho, 'late_command', '', <<END);
+
+    # Our OVMF does not have a persistent variable store and therefore
+    # cannot remember the boot entry added by the Debian
+    # installer. Therefore we ensure that a copy of the bootloader is
+    # copied to the removable media path, which is the EFI fallback.
+    #
+    # From Jessie onwards this can be worked around by using the fix to
+    # #767037 i.e. preseeding grub-installer/force-efi-extra-removable.
+preseed_hook_command($gho, 'late_command', '', <<END) if $gsuite =~ /wheezy/;
 #!/bin/sh
 set -ex
 
