@@ -60,7 +60,11 @@ sub shutdown_wait ($$$) {
     my ($self,$gho,$timeout) = @_;
     my $ho = $self->{Host};
     my $gn = $gho->{Name};
-    target_cmd_root($ho, "virsh shutdown $gn", 30);
+    my $mode = "paravirt";
+    $mode .= ",acpi"
+	if guest_var($gho,'acpi_shutdown','false') eq 'true';
+
+    target_cmd_root($ho, "virsh shutdown --mode $mode $gn", 30);
     guest_await_destroy($gho,$timeout);
 }
 
