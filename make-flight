@@ -184,6 +184,7 @@ do_hvm_winxp_tests () {
             test-$xenarch$kern-$dom0arch-$toolstack$qemuu_suffix-winxpsp3$vcpus_suffix \
             test-win $toolstack $xenarch $dom0arch $qemuu_runvar \
             win_image=winxpsp3.iso $vcpus_runvars   \
+            win_acpi_shutdown=true \
             all_hostflags=$most_hostflags,hvm
 
   done
@@ -197,6 +198,7 @@ do_hvm_win7_x64_tests () {
   job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-win7-amd64 \
             test-win xl $xenarch $dom0arch $qemuu_runvar \
             win_image=win7-x64.iso \
+            win_acpi_shutdown=true \
             all_hostflags=$most_hostflags,hvm
 }
 

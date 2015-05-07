@@ -55,7 +55,9 @@ sub shutdown_wait ($$$) {
     my ($self,$gho,$timeout) = @_;
     my $ho = $self->{Host};
     my $gn = $gho->{Name};
-    target_cmd_root($ho,"$self->{_Command} shutdown -w $gn", $timeout);
+    my $acpi_fallback = guest_var($gho,'acpi_shutdown','false') eq 'true'
+	? "F" : "";
+    target_cmd_root($ho,"$self->{_Command} shutdown -w${acpi_fallback} $gn", $timeout);
 }
 
 sub migrate_check ($) {
