@@ -102,6 +102,8 @@ sub readglobalconfig () {
     return if $readglobalconfig_done;
     $readglobalconfig_done=1;
 
+    $c{OsstestUpstream} = 'git://xenbits.xen.org/osstest.git master';
+
     $c{HostProp_DhcpWatchMethod} = 'leases dhcp3 infra:5556';
     $c{AuthorizedKeysFiles} = '';
     $c{AuthorizedKeysAppend} = '';

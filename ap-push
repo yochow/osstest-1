@@ -99,7 +99,13 @@ ovmf)
 	;;
 osstest)
 	git push $HOME/testing.git $revision:production
-	git push $XENBITS:/home/xen/git/osstest.git $revision:master
+	if [ x"$TREEBRANCH_OSSTEST_UPSTREAM" != x ] ; then
+	    # could push to instance specific location, but
+	    # certainly not to master instance's xenbits repo!
+	    :
+	else
+	    git push $XENBITS:/home/xen/git/osstest.git $revision:master
+	fi
 	;;
 *)
 	echo >&2 "branch $branch ?"

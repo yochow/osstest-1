@@ -21,6 +21,8 @@
 
 : ${XENBITS:=osstest@xenbits.xen.org}
 
+: ${TREEBRANCH_OSSTEST_UPSTREAM=`getconfig OsstestUpstream`}
+
 : ${TREE_XEN:=git://xenbits.xen.org/xen.git}
 : ${PUSH_TREE_XEN:=$XENBITS:/home/xen/git/xen.git}
 

@@ -659,7 +659,13 @@ sub preseed_create ($$;@) {
 END
     $hostsq->execute($flight);
     while (my ($node) = $hostsq->fetchrow_array()) {
-        my $longname= "$node.$c{TestHostDomain}";
+        my $defaultfqdn = $node;
+        $defaultfqdn .= ".$c{TestHostDomain}" unless $defaultfqdn =~ m/\./;
+
+        my %props;
+        $mhostdb->get_properties($node, \%props);
+
+        my $longname= $props{Fqdn} // $defaultfqdn;
         my (@hostent)= gethostbyname($longname);
         if (!@hostent) {
             logm("skipping host key for nonexistent host $longname");
