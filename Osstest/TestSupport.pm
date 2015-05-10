@@ -57,6 +57,7 @@ BEGIN {
                       target_put_guest_image target_editfile
                       target_editfile_cancel
                       target_editfile_root target_file_exists
+                      target_editfile_kvp_replace
                       target_run_apt
                       target_install_packages target_install_packages_norec
                       target_jobdir target_extract_jobdistpath_subdir
@@ -542,6 +543,27 @@ sub teditfileex {
 	if $install;
 }
 
+# Replace a Key=Value style line in a config file.
+#
+# To be used as 3rd argument to target_editfile(_root) as:
+#    target_editfile_root($ho, "/path/to/a/file",
+#			 sub { target_editfile_kvp_replace($key, $value) });
+sub target_editfile_kvp_replace ($$)
+{
+    my ($key,$value) = @_;
+    my $prnow;
+    $prnow= sub {
+	print ::EO "$key=$value\n" or die $!;
+	$prnow= sub { };
+    };
+    while (<::EI>) {
+	print ::EO or die $! unless m/^$key\b/;
+	$prnow->() if m/^#$key/;
+    }
+    print ::EO "\n" or die $!;
+    $prnow->();
+};
+
 sub target_editfile_root ($$$;$$) { teditfileex('root',@_); }
 sub target_editfile      ($$$;$$) { teditfileex('osstest',@_); }
     # my $code= pop @_;
@@ -571,6 +593,7 @@ END
 END
         exec </dev/null
         cd $builddir
+        rm -f build-ok-stamp
 END
 }
 
@@ -1560,7 +1583,7 @@ END
     return $cfgpath;
 }
 
-sub target_put_guest_image ($$$) {
+sub target_put_guest_image ($$;$) {
     my ($ho, $gho, $default) = @_;
     my $specimage = $r{"$gho->{Guest}_image"};
     $specimage = $default if !defined $specimage;
@@ -1580,7 +1603,7 @@ sub more_prepareguest_hvm ($$$$;@) {
     my @disks = "phy:$gho->{Lvdev},hda,w";
 
     if (!$xopts{NoCdromImage}) {
-	target_put_guest_image($ho, $gho, undef);
+	target_put_guest_image($ho, $gho);
 
 	my $postimage_hook= $xopts{PostImageHook};
 	$postimage_hook->() if $postimage_hook;

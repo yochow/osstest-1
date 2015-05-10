@@ -72,6 +72,7 @@ setopt CONFIG_DM_SNAPSHOT m
 setopt CONFIG_BLK_DEV_NBD m
 
 setopt CONFIG_ATA_GENERIC y
+setopt CONFIG_SCSI_SAS_ATA y
 
 setopt CONFIG_SATA_SIL24 m
 setopt CONFIG_SATA_SVW m
@@ -287,6 +288,12 @@ setopt CONFIG_TUN y
 setopt CONFIG_DEVTMPFS y
 
 setopt CONFIG_HYPERVISOR_GUEST y
+
+setopt CONFIG_AMD_IOMMU y
+setopt CONFIG_AMD_IOMMU_V2 y
+setopt CONFIG_INTEL_IOMMU y
+setopt CONFIG_INTEL_IOMMU_DEFAULT_ON y
+setopt CONFIG_IRQ_REMAP y
 
 $config_hardware
 $config_features
