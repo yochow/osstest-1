@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This is the master instance, therefore it has no upstream
-OsstestUpstream ''
+OsstestUpstream= ''
 
 JobDB Executive
 HostDB Executive
