@@ -1200,8 +1200,99 @@ END
             $addhost->execute($popflight, $job, $`, $'); # '
         }
     });
+}
 
-    print STDERR "Flight $popflight ready to go.\n";
+sub checkrepetition () {
+    return unless $popflight && defined $choose;
+
+    # Repetition check: check that there are not too many recent
+    # identical flights on this branch.  We do this in a separate
+    # transaction so that we leave the broken flight in the database
+    # for debugging purposes.
+
+    my $runvarsqt= sub {
+        return
+	    "(SELECT job,name,val FROM runvars".
+	    " WHERE runvars.flight=$_[0] AND NOT synth)";
+END
+    };
+
+    my $maxequalflights = 4;
+
+    my $runvarsqt1 = $runvarsqt->('?');
+    my $runvarsqt2 = $runvarsqt->('flights.flight');
+
+    # The SELECT 1 subquery looks for differing runvars: the two inner
+    # subqueries fetch all the runvars for the two flights to be
+    # compared and then the full outer join produces a complete list
+    # of all mentioned runvars (identified by (job,name)) with their
+    # values in each flight.  The IS NOT TRUE is there so that when
+    # one side is NULL (runvar was missing) it still counts.
+    my $equalflightsqt = <<END;
+        SELECT flight, blessing, started FROM flights
+	    WHERE branch=? AND $blessingscond $maxflight_cond
+	      AND NOT EXISTS (
+		SELECT 1
+		  FROM $runvarsqt1 r1 FULL OUTER JOIN
+		       $runvarsqt2 r2
+		  USING (job,name)
+		  WHERE (r1.val = r2.val) IS NOT TRUE
+		)
+              AND flight >= ?
+              ORDER BY flight DESC
+              LIMIT $maxequalflights + 1;
+END
+
+    print DEBUG "equalflightsq:\n$equalflightsqt";
+    my $equalflightsq = $dbh_tests->prepare($equalflightsqt);
+
+    db_retry($popflight,'constructing', $dbh_tests,[qw(flights)], sub {
+        print STDERR "Checking for flail...\n";
+
+	my ($minflight) = $dbh_tests->selectrow_array(<<END, {}, $branch);
+            SELECT flight FROM (
+		SELECT flight FROM flights
+		    WHERE branch=? AND $blessingscond $maxflight_cond
+		    ORDER BY flight DESC
+		    LIMIT 100
+            ) last100 ORDER BY FLIGHT ASC LIMIT 1
+END
+        $minflight //= 0;
+	print DEBUG "minflight=$minflight\n";
+
+	$equalflightsq->execute($branch, $popflight, $minflight);
+	my $nequalflights = 0;
+	my $explanation = '';
+	while (my $identical = $equalflightsq->fetchrow_hashref()) {
+	    $explanation .= sprintf
+		" %s  started %s  blessed %s\n",
+	        $identical->{flight},
+	        show_abs_time($identical->{started}),
+	        $identical->{blessing};
+	    $nequalflights++;
+	}
+	chomp $explanation;
+	print DEBUG "nequalflights=$nequalflights\n$explanation\n";
+	if ($nequalflights > $maxequalflights) {
+	    summary_report(<<END, <<END, 32);
+Flailing - >$nequalflights identical flights to no useful effect
+END
+Bisector is flailing: >$nequalflights identical flights generated.
+Perhaps machinery for building correct version is broken ?
+Problem occurs when attempting to test this revision:
+ $choose->{Rtuple}
+
+Identical previous flights on this branch:
+$explanation
+ $popflight  just generated
+END
+            $choose = undef;
+
+            $dbh_tests->do(<<END, {}, $popflight);
+                UPDATE FLIGHTS SET blessing='broken' WHERE flight=?
+END
+	}
+    });
 }
 
 sub compute_exitstatus () {
@@ -1226,4 +1317,7 @@ consolidateresults();
 search();
 writegraph();
 populateflight();
+checkrepetition();
+print STDERR "Flight $popflight ready to go.\n"
+    if $popflight && defined $choose;
 compute_exitstatus();
