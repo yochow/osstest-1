@@ -4,3 +4,4 @@ test-@@-pcipt@@
 test-@@-qemuu-@@		guest-localmigrate
 test-@@-libvirt@@
 test-@@-rumpuserxen@@		rumpuserxen-demo-xenstorels/xenstorels
+test-@@-freebsd10@@		guest-localmigrate
