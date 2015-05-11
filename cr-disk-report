@@ -1,0 +1,336 @@
+#!/usr/bin/perl -w
+#
+# Generate a report on the disk space used by the logs
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# usage: ./cr-disk-report [<options>] cfgbase
+
+use strict qw(vars);
+use Osstest;
+use Osstest::Management qw(:logs);
+
+use HTML::Entities;
+use URI::Escape;
+use POSIX;
+
+use Data::Dumper;
+
+our $outdir;
+our $output;
+our $du_output;
+our $graphs_px=0;
+our $graphs_py=0;
+open DEBUG, ">/dev/null" or die $!;
+
+our @blessings = qw(real real-bisect);
+# for these blessings column is       "<blessing> <branch>"
+# for other blessings column is       "<intended> [<blessing>]"
+
+while (@ARGV && $ARGV[0] =~ m/^\-/) {
+    $_= shift @ARGV;
+    last if m/^--$/;
+    if (m/^--html=(.+)$/) {
+	$output= $1;
+    } elsif (m/^--html-dir=(.+)$/) {
+	$outdir= $1;
+    } elsif (m/^--blessings=(.+)$/) {
+	@blessings = split /,/, $1;
+    } elsif (m/^--graphs(?:=(\d*)x(\d*))?$/) {
+	$graphs_px = $1 || 50;
+	$graphs_py = $1 || 20;
+    } elsif (m/^--debug$/) {
+	open DEBUG, ">&STDERR" or die $!;
+    } elsif (m/^--du-output=(.*)$/) {
+	$du_output = $1;
+    } else {
+	die "$_ ?";
+    }
+}
+
+die unless @ARGV==1;
+die unless !!$graphs_px == !!$graphs_py;
+die if defined $outdir && defined $output;
+
+our ($cfgbase) = @ARGV;
+
+csreadconfig();
+
+logs_select $cfgbase or exit 4;
+
+$outdir //= ".";
+$output //= "$outdir/diskusage-$cfgbase.html";
+
+my $flightq = $dbh_tests->prepare(<<END);
+    SELECT started,blessing,branch,intended FROM flights WHERE flight=?
+END
+
+our $now = time;
+
+our ($totaldata, %coldata, %rowdata, %celldata);
+
+if (!defined $du_output) {
+    open P, "-|", onloghost "du -sk $logdir/*/*" or die $!;
+} else {
+    open P, "<", $du_output or die "$du_output $!";
+}
+
+my $frow;
+
+our @alldata;
+our (%totalinfo, %rowheadsinfo, %colheadsinfo, %bulkinfo);
+
+sub perinfo ($) {
+    my ($fn) = @_;
+    $fn->( \%totalinfo    );
+    $fn->( \%colheadsinfo );
+    $fn->( \%rowheadsinfo );
+    $fn->( \%bulkinfo     );
+}
+
+sub perdatum ($$) {
+    my ($fn, $datum) = @_;
+    my ($rowhead, $colhead, $kb, $age) = @$datum;
+    $fn->( \%totalinfo,    \$totaldata,                    $kb, $age );
+    $fn->( \%colheadsinfo, \$coldata{$colhead},            $kb, $age );
+    $fn->( \%rowheadsinfo, \$rowdata{$rowhead},            $kb, $age );
+    $fn->( \%bulkinfo,     \$celldata{$rowhead}{$colhead}, $kb, $age );
+}
+
+sub prepinfo ($) {
+    my ($info) = @_;
+    $info->{MaxAge} = 1;
+    $info->{MaxCellKb} = 0;
+}
+
+perinfo \&prepinfo;
+
+sub updatemax ($$) {
+    my ($maxref, $val) = @_;
+    $$maxref = $val if $val > $$maxref;
+}
+
+sub updatecell ($$$) {
+    my ($info, $cellrefref, $kb, $age) = @_;
+    $$cellrefref //= { Kb => 0, N => 0, MaxAge => 0 };
+    my $cellref = $$cellrefref;
+    $cellref->{Kb} += $kb;
+    $cellref->{N}++;
+    # MaxAge is actually necessarily the same for every \%info, but
+    # we retain this code structure because it is more orthogonal, and
+    # it would make it easier to scale each cell differently.
+    updatemax \ $info->{MaxAge}, $age;
+    updatemax \ $info->{MaxCellKb}, $cellref->{Kb};
+}
+
+while (<P>) {
+    m#^(\d+)\s+\S+/([^/]+)/([^/]+)\n$# or die "$_ ?";
+    my ($kb, $flight, $job) = ($1, $2, $3);
+
+    print DEBUG "kb=$kb flight=$flight job=$job\n";
+
+    if (!(defined $frow->{flight} && $frow->{flight} eq $flight)) {
+	$frow = undef;
+	if ($flight =~ m/^\d+$/) {
+	    $flightq->execute($flight);
+	    $frow = $flightq->fetchrow_hashref();
+	}
+    }
+
+    my $age = $now - ($frow->{started} || $now);
+
+    my $colhead;
+    if (!defined $frow->{blessing}) {
+	$colhead = "?";
+    } elsif (grep { $_ eq $frow->{blessing} } @blessings) {
+	$colhead = "$frow->{blessing} $frow->{branch}";
+    } else {
+	$colhead = $frow->{intended};
+	$colhead .= " [$frow->{blessing}]"
+	    if $frow->{blessing} ne $frow->{intended};
+    }
+
+    my $rowhead = $job;
+
+    my @datum = ($rowhead, $colhead, $kb, $age);
+    push @alldata, \@datum if $graphs_px;
+    perdatum \&updatecell, \@datum;
+}
+
+my $minexpire = logcfg('MinExpireAge');
+
+sub graphscale ($) {
+    my ($info) = @_;
+
+    $info->{SecondsPerPixel} = ($info->{MaxAge} + 1) / $graphs_px;
+    $info->{KbPerPixel} = ($info->{MaxCellKb} + 1) / $graphs_py;
+    $info->{MinExpireBucket} =
+	floor($minexpire / $info->{SecondsPerPixel});
+}
+
+sub agebucket ($$$$) {
+    my ($info, $cellrefref, $kb, $age) = @_;
+    my $bucket = floor($age / $info->{SecondsPerPixel});
+#    $bucket++ if $age > $minexpire;
+#    $bucket = $graphs_px-1 if $bucket >= $graphs_px;
+    my $cellref = $$cellrefref;                              
+    $cellref->{Ages} //= [ (0) x $graphs_px ];
+    $cellref->{Ages}[$bucket] += $kb;
+}
+
+print DEBUG Dumper(\%coldata, \%rowdata, \%celldata);
+
+sub dumpinfo ($) {
+    my ($info) = @_;
+    print DEBUG Dumper($info);
+}
+
+if ($graphs_px) {
+    perinfo \&graphscale;
+    foreach my $datum (@alldata) {
+	perdatum \&agebucket, $datum;
+    }
+}
+
+perinfo \&dumpinfo;
+
+$!=0; $?=0; close P or die "$? $!";
+
+my @cols = sort { $coldata{$b}{Kb} <=> $coldata{$a}{Kb} } keys %coldata;
+my @rows = sort { $rowdata{$b}{Kb} <=> $rowdata{$a}{Kb} } keys %rowdata;
+
+our @o = '';
+
+sub headcell ($) {
+    my ($text) = @_;
+    return "<th>$text</th>";
+}
+
+our $span2 = $graphs_px?"colspan=2":"";
+
+sub cheadcell ($) {
+    my ($text) = @_;
+    return "<th $span2>$text</th>";
+}
+
+sub prow {
+    push @o, "<thead><tr>";
+    push @o, @_;
+    push @o, "</tr></thead>\n";
+}
+
+sub cell_graph_fn ($$$$) {
+    my ($ginfo,$rowk,$colk,$cellref) = @_;
+    my $fn = $output;
+    $fn =~ s/\.html?$//i;
+    foreach my $k ($rowk, $colk) {
+	$_ = $k;
+	s{\W}{ sprintf "=%02x", ord $& }ge;
+	$fn .= "_$_";
+    }
+    flush STDOUT or die $!;
+    $fn .= ".png";
+    my $pid = open PBM, "|-"; defined $pid or die $!;
+    my $cmd = 'pnmflip -cw -tb | pnmtopng --quiet';
+    if (!length $rowk && !length $colk) {
+	$cmd = "tee $fn.pbm | $cmd";
+    }
+    if (!$pid) {
+	open STDOUT, ">", "$fn.tmp" or die $!;
+	exec qw(bash -ec), "set -o pipefail; $cmd";
+	die $!;
+    }
+    print PBM "P3\n$graphs_py $graphs_px 7\n" or die $!;
+    my $kbthisyoung=0;
+    for (my $bucket=0; $bucket < $graphs_px; $bucket++) {
+	$kbthisyoung += $cellref->{Ages}[$bucket];
+	my $fullpixels = floor($kbthisyoung / $ginfo->{KbPerPixel});
+	my ($fullcolour,$emptycolour) =
+	    ($bucket <= $ginfo->{MinExpireBucket}
+	     ? ('7 0 0 ', '5 5 7 ')
+	     : ('0 0 0 ', '7 7 7 '));
+
+	print PBM ($fullcolour) x $fullpixels or die $!;
+	print PBM ($emptycolour) x ($graphs_py - $fullpixels) or die $!;
+	print PBM "\n" or die $!;
+    }
+    $?=0; $!=0; close PBM or die "$? $!";
+    rename "$fn.tmp", "$fn" or die "$fn $!";
+    $fn =~ s#.*/##;
+    return $fn;
+}
+
+sub spcell ($$$$) {
+    my ($ginfo,$rowk,$colk,$cellref) = @_;
+    return "<td $span2></td>" unless $cellref;
+    my $s = '';
+    $s .= "<td align='right'>";
+    $s .= sprintf "<em>%d</em><br>%d",
+        ceil($cellref->{Kb} / 1024), $cellref->{N};
+    $s .= "</td>";
+    if ($graphs_px) {
+	my $fn = cell_graph_fn($ginfo,$rowk,$colk,$cellref);
+	$s .= "<td><img src='".uri_escape($fn)."'></td>";
+    }
+    $s .= "\n";
+    return $s;
+}
+
+sub prowdata ($$$$$) {
+    my ($rowk,$head1,$head2, $ginfo,$dataref) = @_;
+    my @data;
+    foreach my $col (@cols) {
+	my $cellref = $dataref->{$col};
+	push @data, spcell($ginfo,$rowk,$col,$cellref);
+    }
+    prow($head1,$head2,@data);
+}
+
+push @o, <<END;
+<html><head>
+<title>Disk report for $cfgbase</title>
+</head><body>
+<table rules=groups>
+END
+
+push @o, "<colgroup></colgroup>";
+my $g = sprintf "<colgroup span=%d></colgroup>", ($graphs_px ? 2 : 1);
+push @o, $g;
+push @o, $g foreach @cols;
+push @o, "\n";
+
+prow(headcell('[<em>MiB</em><br>count]'),
+     cheadcell('Branch / blessing'),
+     map { cheadcell(encode_entities($_)) } @cols);
+prowdata('', headcell('Job'), spcell(\%totalinfo, '','',$totaldata),
+	 \%colheadsinfo, \%coldata);
+
+foreach my $row (@rows) {
+    print DEBUG "###$row\n";
+    prowdata($row, headcell(encode_entities($row)),
+	     spcell(\%rowheadsinfo, $row,'',$rowdata{$row}),
+	     \%bulkinfo, $celldata{$row});
+}
+
+push @o, <<END;
+</table>
+END
+
+open O, ">", "$output.tmp" or die "$output $!";
+print O @o or die $!;
+close O or die $!;
+rename "$output.tmp", "$output" or die "$output $!";

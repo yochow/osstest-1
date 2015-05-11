@@ -28,3 +28,5 @@ id_rsa_osstest
 id_rsa_osstest.pub
 overlay-local
 images
+diskusage-[A-Z]*.html
+diskusage-[A-Z]*.png
