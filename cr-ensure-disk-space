@@ -22,6 +22,7 @@
 
 use strict qw(vars);
 use Osstest;
+use Osstest::Management qw(:logs);
 use Fcntl qw(:flock);
 
 our $dryrun= 0;
@@ -42,7 +43,7 @@ our ($cfgbase) = @ARGV;
 
 csreadconfig();
 
-exit 0 unless $c{$cfgbase};
+logs_select $cfgbase or exit 0;
 
 open LOCK, "> $c{GlobalLockDir}/publish-lock" or die $!;
 flock LOCK, LOCK_EX or die $!;
@@ -51,45 +52,20 @@ $|=1;
 
 my $chkq= $dbh_tests->prepare("SELECT * FROM flights WHERE flight=?");
 our @flights;
-our @sshopts= qw(-o batchmode=yes);
-
-my $cfgvalue = $c{$cfgbase};
-
-my ($pubhost, $pubdir);
-if ($cfgvalue =~ m/\:/) {
-    ($pubhost, $pubdir) = ($`,$'); #');
-} else {
-    ($pubhost, $pubdir) = (undef, $cfgvalue);
-}
-
-sub ontarget ($) {
-    my ($shellcmd) = @_;
-    # returns list to run that command
-    if (defined $pubhost) {
-	return qw(ssh -n), @sshopts, $pubhost, $shellcmd;
-    } else {
-	return qw(sh -ec), $shellcmd;
-    }
-}
-
-sub dircfg ($) {
-    my ($k) = @_;
-    return $c{"${cfgbase}${k}"} // $c{"Logs${k}"};
-}
 
 for (;;) {
-    open P, "-|", ontarget "df --block-size=1M -P $pubdir" or die $!;
+    open P, "-|", onloghost "df --block-size=1M -P $logdir" or die $!;
     $_= <P>;
     m/^filesystem/i or die "$_ ?";
     $_= <P>;
     m,^\S+\s+\d+\s+\d+\s+(\d+)\s+, or die "$_ ?";
     $!=0; $?=0; close P or die "$! $?";
     my $space= $1;
-    printf "space: %8d, wanted: %8d ", $space, dircfg('MinSpaceMby');
-    last if $space >= dircfg('MinSpaceMby');
+    printf "space: %8d, wanted: %8d ", $space, logcfg('MinSpaceMby');
+    last if $space >= logcfg('MinSpaceMby');
 
     if (!@flights) {
-	open P, "-|", ontarget "ls -1 $pubdir" or die $!;
+	open P, "-|", onloghost "ls -1 $logdir" or die $!;
 	while (<P>) {
 	    next unless m/^(\d+)\n$/;
 	    push @flights, $1;
@@ -110,7 +86,7 @@ for (;;) {
 
     printf "(age %dd) ", $age / 86400;
 
-    die "age $age" if $age < dircfg('MinExpireAge');
+    die "age $age" if $age < logcfg('MinExpireAge');
 
     printf "...";
 
@@ -119,9 +95,9 @@ for (;;) {
     my $spawn= sub {
         $!=0; my $r= system @_; die "@_ $r $!" if $r;
     };
-    $spawn->(ontarget <<END);
+    $spawn->(onloghost <<END);
              set -e
-             cd $pubdir
+             cd $logdir
              test -e $flight || exit 0
              printf remote...
              rm -rf $flight
