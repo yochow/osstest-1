@@ -1,4 +1,5 @@
 *~
+*.bak
 tmp
 bisection.ps
 bisection.dot
@@ -30,3 +31,4 @@ overlay-local
 images
 diskusage-[A-Z]*.html
 diskusage-[A-Z]*.png
+diskusage-[A-Z]*.pdf

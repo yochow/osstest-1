@@ -313,7 +313,22 @@ push @o, $g;
 push @o, $g foreach @cols;
 push @o, "\n";
 
-prow(headcell('[<em>MiB</em><br>count]'),
+my $headcell = '[<em>MiB</em><br>count]';
+if ($graphs_px) {
+    my $meaning_pdf = $output;
+    $meaning_pdf =~ s/\.html?$//i;
+    $meaning_pdf .= "_graph-meaning.pdf";
+    open STDOUT, ">", "$meaning_pdf.tmp" or die "$meaning_pdf $!";
+    $?=0; $!=0;
+    system 'cd Docs/cr-disk-report && fig2dev -L pdf graph-meaning.fig'
+	and die "$? $!";
+    open STDOUT, ">/dev/null" or die $!;
+    rename "$meaning_pdf.tmp", "$meaning_pdf" or die "$meaning_pdf $!";
+    $meaning_pdf =~ s#.*/##;
+    $headcell = "<a href='$meaning_pdf'>$headcell</a>";
+}
+
+prow(headcell($headcell),
      cheadcell('Branch / blessing'),
      map { cheadcell(encode_entities($_)) } @cols);
 prowdata('', headcell('Job'), spcell(\%totalinfo, '','',$totaldata),
