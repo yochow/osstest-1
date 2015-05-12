@@ -19,6 +19,8 @@
 JobDB Executive
 HostDB Executive
 
+HostDB_Executive_NoConfigDB 1
+
 OwnerDaemonHost owner.daemon.osstest.xs.citrite.net
 QueueDaemonHost queue.daemon.osstest.xs.citrite.net
 ExecutiveDbnamePat dbname=<dbname>;user=<whoami>;host=<dbname>.db.cam.xci-test.com;password=<~/.xen-osstest/db-password>
@@ -82,7 +84,7 @@ HostProp_DhcpWatchMethod leases dhcp3 woking.cam.xci-test.com:5556
 DebianPreseed= <<'END'
 END
 
-HostProp_Serial sympathy woking
+HostProp_Serial sympathy osstser1.cam.xci-test.com
 HostProp_GenEtherPrefixBase 5a:36:0e:00
 #                                      :00:01 guest number in job appended
 #                                    ^^ xor'd with low 8 bits of flight
