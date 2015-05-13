@@ -879,13 +879,17 @@ sub selecthost ($) {
     serial_host_setup($ho);
 
     $ho->{IpStatic} = get_host_property($ho,'ip-addr');
-    if (!defined $ho->{IpStatic}) {
-	my $ip_packed= gethostbyname($ho->{Fqdn});
-	die "$ho->{Fqdn} ?" unless $ip_packed;
-	$ho->{IpStatic}= inet_ntoa($ip_packed);
-	die "$ho->{Fqdn} ?" unless defined $ho->{IpStatic};
+    if (defined $r{"${ident}_ip"}) {
+        $ho->{Ip} = $r{"${ident}_ip"};
+    } else {
+        if (!defined $ho->{IpStatic}) {
+	    my $ip_packed= gethostbyname($ho->{Fqdn});
+	    die "$ho->{Fqdn} ?" unless $ip_packed;
+	    $ho->{IpStatic}= inet_ntoa($ip_packed);
+	    die "$ho->{Fqdn} ?" unless defined $ho->{IpStatic};
+        }
+        $ho->{Ip}= $ho->{IpStatic};
     }
-    $ho->{Ip}= $ho->{IpStatic};
 
     #----- tftp -----
 
@@ -1528,12 +1532,14 @@ sub prepareguest ($$$$$$) {
     store_runvar("${gn}_tcpcheckport", $tcpcheckport);
     store_runvar("${gn}_boot_timeout", $boot_timeout);
 
+    my $gho= selectguest($gn, $ho);
+    store_runvar("${gn}_domname", $gho->{Name});
+
+    # If we have defined guest specific disksize, use it
+    $mb = guest_var($gho,'disksize',$mb);
     if (defined $mb) {
 	store_runvar("${gn}_disk_lv", $r{"${gn}_hostname"}.'-disk');
     }
-
-    my $gho= selectguest($gn, $ho);
-    store_runvar("${gn}_domname", $gho->{Name});
 
     if (defined $mb) {
 	store_runvar("${gn}_vg", '');
@@ -1562,12 +1568,14 @@ sub prepareguest_part_xencfg ($$$$$) {
     my $oncrash= $xopts->{OnCrash} || 'preserve';
     my $vcpus= guest_var($gho, 'vcpus', $xopts->{DefVcpus} || 2);
     my $viftype= $xopts->{VifType} ? "type=$xopts->{VifType}," : "";
+    my $vif= guest_var($gho, 'vifmodel','');
+    my $vifmodel= $vif ? "model=$vif," : '';
     my $xoptcfg= $xopts->{ExtraConfig};
     $xoptcfg='' unless defined $xoptcfg;
     my $xencfg= <<END;
 name        = '$gho->{Name}'
 memory = ${ram_mb}
-vif         = [ '${viftype}mac=$gho->{Ether}' ]
+vif         = [ '${viftype}${vifmodel}mac=$gho->{Ether}' ]
 #
 on_poweroff = '$onpoweroff'
 on_reboot   = '$onreboot'
