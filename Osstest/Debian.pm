@@ -407,10 +407,18 @@ sub setupboot_grub2 ($$$$) {
     
         my $count= 0;
         my $entry;
+        my $submenu;
         while (<$f>) {
             next if m/^\s*\#/ || !m/\S/;
             if (m/^\s*\}\s*$/) {
-                die unless $entry;
+                die unless $entry || $submenu;
+                if (!defined $entry && defined $submenu) {
+                    logm("Met end of a submenu starting from ".
+                        "$submenu->{StartLine}. ".
+                        "Our want kern is $want_kernver");
+                    $submenu=undef;
+                    next;
+                }
                 my (@missing) =
                     grep { !defined $entry->{$_} } 
 		        (defined $xenhopt
@@ -440,6 +448,9 @@ sub setupboot_grub2 ($$$$) {
                 die $entry->{StartLine} if $entry;
                 $entry= { Title => $1, StartLine => $., Number => $count };
                 $count++;
+            }
+            if (m/^submenu\s+[\'\"](.*)[\'\"].*\{\s*$/) {
+                $submenu={ StartLine =>$.};
             }
             if (m/^\s*multiboot\s*\/(xen\-[0-9][-+.0-9a-z]*\S+)/) {
                 die unless $entry;
