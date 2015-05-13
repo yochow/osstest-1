@@ -166,6 +166,18 @@ sub prep () {
     target_putfilecontents_root_stash($ho, 10, preseed(),
                                       $preseed_file_path);
 
+    # If host has >8G free memory, create a guest with 4G memory to catch
+    # any error that triggers cross 4G boundary
+    my $host_freemem_mb = host_get_free_memory($ho);
+    my $ram_minslop = 100;
+    my $ram_lots = 5000;
+    if ($host_freemem_mb > $ram_lots * 2 + $ram_minslop) {
+        $ram_mb = $ram_lots;
+    } else {
+        $ram_mb = 768;
+    }
+    logm("Host has $host_freemem_mb MB free memory, setting guest memory size to $ram_mb MB");
+
     more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb,
                           OnReboot => 'preserve',
                           Bios => $r{bios},
@@ -182,18 +194,6 @@ sub prep () {
         iso_create_genisoimage($ho, $gho->{Rimage}, $newiso, $isotimeout, @isogen_opts);
     });
 }
-
-# If host has >8G free memory, create a guest with 4G memory to catch
-# any error that triggers cross 4G boundary
-my $host_freemem_mb = host_get_free_memory($ho);
-my $ram_minslop = 100;
-my $ram_lots = 5000;
-if ($host_freemem_mb > $ram_lots * 2 + $ram_minslop) {
-    $ram_mb = $ram_lots;
-} else {
-    $ram_mb = 768;
-}
-logm("Host has $host_freemem_mb MB free memory, setting guest memory size to $ram_mb MB");
 
 if (!$stage) {
     prep();
