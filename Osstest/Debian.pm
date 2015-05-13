@@ -452,21 +452,21 @@ sub setupboot_grub2 ($$$$) {
             if (m/^submenu\s+[\'\"](.*)[\'\"].*\{\s*$/) {
                 $submenu={ StartLine =>$.};
             }
-            if (m/^\s*multiboot\s*\/(xen\-[0-9][-+.0-9a-z]*\S+)/) {
+            if (m/^\s*multiboot\s*(?:\/boot)?\/(xen\S+)/) {
                 die unless $entry;
                 $entry->{Hv}= $1;
             }
-            if (m/^\s*multiboot\s*\/(vmlinu[xz]-(\S+))/) {
+            if (m/^\s*multiboot\s*(?:\/boot)?\/(vmlinu[xz]-(\S+))/) {
                 die unless $entry;
                 $entry->{KernOnly}= $1;
                 $entry->{KernVer}= $2;
             }
-            if (m/^\s*module\s*\/(vmlinu[xz]-(\S+))/) {
+            if (m/^\s*module\s*(?:\/boot)?\/(vmlinu[xz]-(\S+))/) {
                 die unless $entry;
                 $entry->{KernDom0}= $1;
                 $entry->{KernVer}= $2;
             }
-            if (m/^\s*module\s*\/(initrd\S+)/) {
+            if (m/^\s*module\s*(?:\/boot)?\/(initrd\S+)/) {
                 $entry->{Initrd}= $1;
             }
 	    if (m/^\s*module\s*\/(xenpolicy\S+)/) {
