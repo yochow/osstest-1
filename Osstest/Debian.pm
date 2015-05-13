@@ -632,6 +632,7 @@ sub preseed_base ($$$$;@) {
 
     preseed_ssh($ho, $sfx);
     preseed_hook_overlay($ho, $sfx, $c{OverlayLocal}, 'overlay-local.tar');
+    preseed_hook_overlay($ho, $sfx, 'overlay', 'overlay.tar');
 
     my $preseed = <<"END";
 d-i mirror/suite string $suite
@@ -787,8 +788,6 @@ set +e
 ls -l /dev/sd*
 true
 END
-
-    preseed_hook_overlay($ho, $sfx, 'overlay', 'overlay.tar');
 
     preseed_hook_command($ho, 'late_command', $sfx, <<END);
 #!/bin/sh
