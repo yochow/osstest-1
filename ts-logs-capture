@@ -102,6 +102,8 @@ sub fetch_logs_host_guests () {
                   /var/log/kern.log*
                   /var/log/syslog*
                   /var/log/daemon.log*
+                  /var/log/messages*
+                  /var/log/debug*
 
                   /var/log/dmesg*
                   /var/log/user.log*
