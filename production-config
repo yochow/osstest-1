@@ -34,12 +34,12 @@ QueueDaemonHost osstest
 
 ExecutiveDbnamePat dbname=osstestdb;host=db
 
-Stash /home/osstest/pub/logs
-Images /home/osstest/pub/images
-Logs /home/osstest/pub/logs
+Stash /home/logs/logs
+Images /home/logs/images
+Logs /home/logs/logs
 
-Results /home/osstest/pub/results
-PubBaseDir /home/osstest/pub
+Results /home/logs/results
+PubBaseDir /home/logs
 
 OverlayLocal /home/osstest/overlay-local
 
