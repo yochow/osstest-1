@@ -82,7 +82,7 @@ END
 
             sed -i '/^ttyu0/s/off/on/' $mnt/etc/ttys
 
-            cp $mnt/usr/share/zoneinfo/Europe/London $mnt/etc/localtime
+            cp $mnt/usr/share/zoneinfo/$c{Timezone} $mnt/etc/localtime
 
             cat <<'ENDKEYS' >$mnt/boot/loader.conf
 boot_multicons="YES"

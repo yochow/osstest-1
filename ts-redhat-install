@@ -59,7 +59,7 @@ selinux --disable
 sshpw --username=root xenroot --plaintext
 sshpw --username=iwj xenroot --plaintext
 
-timezone --utc Europe/London
+timezone --utc $c{Timezone}
 bootloader --location=mbr --driveorder=sda --append="crashkernel=auto rhgb console=ttyS0,$c{Baud}n8"
 
 # The following is the partition information you requested

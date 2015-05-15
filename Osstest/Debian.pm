@@ -636,7 +636,7 @@ d-i mirror/country string manual
 d-i mirror/http/proxy string
 
 d-i clock-setup/utc boolean true
-d-i time/zone string Europe/London
+d-i time/zone string $c{Timezone}
 d-i clock-setup/ntp boolean true
 
 d-i partman-md/device_remove_md boolean true

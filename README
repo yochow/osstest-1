@@ -476,6 +476,9 @@ TftpPxeTemplatesReal
     Template filename which mg-hosts mkpxedir should make be a symlink to
     the TftpPxeTemplates.  Not used otherwise.
 
+Timezone
+    Olson TZ name, used by host and guest installers
+
 ========================================
 
 Host-specific config settigs

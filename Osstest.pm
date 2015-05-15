@@ -76,6 +76,8 @@ our %c = qw(
     DebianNonfreeFirmware firmware-bnx2
 
     HostnameSortSwapWords 0
+
+    Timezone UTC
 );
 
 $c{$_}='' foreach qw(
