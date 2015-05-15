@@ -27,6 +27,7 @@ use Osstest::Logtailer;
 tsreadconfig();
 
 my $debconf_priority;
+my $poweron_test_only;
 
 our %xopts;
 
@@ -35,6 +36,8 @@ while (@ARGV and $ARGV[0] =~ m/^-/) {
     last if m/^--$/;
     if (m/^--priority(?:=(.*))?$/) {
         $xopts{DebconfPriority}= defined($1) ? $1 : 'low';
+    } elsif  (m/^--poweron-test-only$/) {
+	$poweron_test_only= 1;
     } elsif  (m/^--rescue$/) {
 	$xopts{RescueMode}= 1;
     }
@@ -71,6 +74,13 @@ END
     await_webspace_fetch_byleaf(get_timeout($ho,'reboot',$timeout{ReadPreseed})
                                 , 1,
                                 $logtailer, $ho, $ps_url);
+
+    if ($poweron_test_only) {
+	logm("Hooray, power on worked.");
+	power_state($ho, 0);
+	exit 0;
+    }
+
     setup_pxeboot_local($ho);
 
     await_tcp(get_timeout($ho,'reboot',$timeout{Sshd}), 14,$ho);
