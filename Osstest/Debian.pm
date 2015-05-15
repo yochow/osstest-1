@@ -188,8 +188,7 @@ sub setupboot_uboot ($$$$) {
 	    $flask_commands = <<END;
 
 ${set_flask_addr_r}
-flaskpolicy=$flaskpolicy
-ext2load scsi 0 \\\${flask_policy_addr_r} \$flaskpolicy
+ext2load scsi 0 \\\${flask_policy_addr_r} $flaskpolicy
 fdt mknod /chosen module\@2
 fdt set /chosen/module\@2 compatible "xen,xsm-policy" "xen,multiboot-module"
 fdt set /chosen/module\@2 reg <\\\${flask_policy_addr_r} ${size_hex_prefix}\\\${filesize}>
