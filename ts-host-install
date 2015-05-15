@@ -34,7 +34,7 @@ while (@ARGV and $ARGV[0] =~ m/^-/) {
     $_= shift @ARGV;
     last if m/^--$/;
     if (m/^--priority(?:=(.*))?$/) {
-    $xopts{DebconfPriority}= defined($1) ? $1 : 'low';
+        $xopts{DebconfPriority}= defined($1) ? $1 : 'low';
     } elsif  (m/^--rescue$/) {
 	$xopts{RescueMode}= 1;
     }
