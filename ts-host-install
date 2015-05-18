@@ -40,6 +40,8 @@ while (@ARGV and $ARGV[0] =~ m/^-/) {
 	$poweron_test_only= 1;
     } elsif  (m/^--rescue$/) {
 	$xopts{RescueMode}= 1;
+    } else {
+	die "$_ $!";
     }
 }
 
