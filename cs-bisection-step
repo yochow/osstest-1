@@ -769,10 +769,6 @@ sub need_repro ($$$) {
     return 1 if conflicted_warning($n, $what);
 
     my $fl= $n->{Flights} || [];
-
-    return report_conflict($n, $what, 'Too many attempts')
-	if @$fl > 5;
-
     foreach my $f (sort { $a->{Flight} <=> $b->{Flight} } @$fl) {
         next unless $f->{Flight} > $repro_lastflight;
 	if ($f->{Result} ne $st) {
