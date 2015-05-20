@@ -1275,10 +1275,9 @@ END
 	print DEBUG "nequalflights=$nequalflights\n$explanation\n";
 	if ($nequalflights > $maxequalflights) {
 	    summary_report(<<END, <<END, 32);
-Flailing - >$nequalflights identical flights to no useful effect
+Flailing - >=$nequalflights identical flights to no useful effect
 END
-Bisector is flailing: >$nequalflights identical flights generated.
-Perhaps machinery for building correct version is broken ?
+Bisector is flailing: >=$nequalflights identical flights generated.
 Problem occurs when attempting to test this revision:
  $choose->{Rtuple}
 
