@@ -1230,7 +1230,10 @@ END
     # one side is NULL (runvar was missing) it still counts.
     my $equalflightsqt = <<END;
         SELECT flight, blessing, started FROM flights
-	    WHERE branch=? AND $blessingscond $maxflight_cond
+	    WHERE branch=?  $maxflight_cond
+              AND blessing = (
+		SELECT intended FROM flights WHERE flight = ?
+                )
 	      AND NOT EXISTS (
 		SELECT 1
 		  FROM $runvarsqt1 r1 FULL OUTER JOIN
@@ -1260,7 +1263,7 @@ END
         $minflight //= 0;
 	print DEBUG "minflight=$minflight\n";
 
-	$equalflightsq->execute($branch, $popflight, $minflight);
+	$equalflightsq->execute($branch, $popflight, $popflight, $minflight);
 	my $nequalflights = 0;
 	my $explanation = '';
 	while (my $identical = $equalflightsq->fetchrow_hashref()) {
