@@ -87,7 +87,9 @@ END
 
     await_tcp(get_timeout($ho,'reboot',$timeout{Sshd}), 14,$ho);
 
-    our $vgname= $ho->{Name};
+    our $vgname= $ho->{Suite} =~ m/jessie/
+                 ? "$ho->{Name}-vg"
+                 : $ho->{Name};
 
     if ($ho->{Suite} =~ m/lenny/) {
         $vgname .= ".$c{TestHostDomain}";

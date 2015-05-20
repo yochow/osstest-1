@@ -53,8 +53,8 @@ sub overall_limit_pe ($) {
 
 sub determine_vg_lv () {
     $vg=
-        $ho->{Suite} =~ m/lenny/
-        ? "$ho->{Name}.$c{TestHostDomain}"
+        $ho->{Suite} =~ m/jessie/
+        ? "$ho->{Name}-vg"
         : $ho->{Name};
     $lv = "/dev/$vg/$lvleaf";
 }
