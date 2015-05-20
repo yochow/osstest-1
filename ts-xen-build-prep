@@ -198,19 +198,24 @@ END
 }
 
 sub prep () {
-    target_install_packages($ho,
-                            qw(mercurial
-                               build-essential bin86 bcc iasl bc
-                               flex bison cmake
-                               libpci-dev libncurses5-dev libssl-dev python-dev
-                               libx11-dev git-core uuid-dev gettext gawk
-                               libsdl-dev libyajl-dev libaio-dev libpixman-1-dev
-                               libglib2.0-dev liblzma-dev pkg-config
-                               autoconf automake libtool xsltproc
-                               libxml2-utils libxml2-dev libnl-dev
-                               libdevmapper-dev w3c-dtd-xhtml libxml-xpath-perl
-                               ccache nasm checkpolicy));
+    my @packages = qw(mercurial
+                      build-essential bin86 bcc iasl bc
+                      flex bison cmake
+                      libpci-dev libncurses5-dev libssl-dev python-dev
+                      libx11-dev git-core uuid-dev gettext gawk
+                      libsdl-dev libyajl-dev libaio-dev libpixman-1-dev
+                      libglib2.0-dev liblzma-dev pkg-config
+                      autoconf automake libtool xsltproc
+                      libxml2-utils libxml2-dev
+                      libdevmapper-dev w3c-dtd-xhtml libxml-xpath-perl
+                      ccache nasm checkpolicy);
 
+    if ($ho->{Suite} =~ m/jessie/) {
+	push(@packages, "libnl-route-3-dev");
+    } else {
+	push(@packages, "libnl-dev");
+    }
+    target_install_packages($ho, @packages);
     target_cmd_root($ho, "chmod -R a+r /usr/share/git-core/templates");
     # workaround for Debian #595728
 
