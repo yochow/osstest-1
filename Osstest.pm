@@ -68,6 +68,7 @@ our %c = qw(
     TestHostKeypairPath id_rsa_osstest
     HostProp_GenEtherPrefixBase 5e:36:0e:f5
 
+    HostDiskESP    300
     HostDiskBoot   300
     HostDiskRoot 10000
     HostDiskSwap  2000

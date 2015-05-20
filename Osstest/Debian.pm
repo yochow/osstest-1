@@ -987,6 +987,12 @@ d-i partman-basicmethods/method_only boolean false
 
 d-i partman-auto/expert_recipe string					\\
 	boot-root ::							\\
+		$c{HostDiskESP} 60 $c{HostDiskESP} free			\\
+			\$iflabel{ gpt }				\\
+			reusemethod{ }					\\
+			method{ efi }					\\
+			format{ }					\\
+		.							\\
 		$c{HostDiskBoot} 50 $c{HostDiskBoot} ext3		\\
 			\$primary{ } \$bootable{ }			\\
 			method{ format } format{ }			\\
