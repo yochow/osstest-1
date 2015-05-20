@@ -742,6 +742,7 @@ sub conflicted_warning ($$) {
 }
 
 our $repro_lastflight;
+our $repro_firstflight = 0;
 our $repro_count;
 
 sub need_repro_sequence ($$) {
@@ -780,6 +781,7 @@ sub need_repro ($$$) {
             ($repro_count ? "Repro" : "Result").
             " found: flight $f->{Flight} ($st), for $what\n";
         $repro_lastflight= $f->{Flight};
+        $repro_firstflight ||= $f->{Flight};
         return 0;
     }
     print STDERR "Need to reproduce $what ($st); had $repro_count already.\n";
@@ -1246,12 +1248,13 @@ END
     my $equalflightsq = $dbh_tests->prepare($equalflightsqt);
 
     db_retry($popflight,'constructing', $dbh_tests,[qw(flights)], sub {
-        print STDERR "Checking for flail...\n";
+        print STDERR "Checking for flail (since $repro_firstflight)...\n";
 
 	my ($minflight) = $dbh_tests->selectrow_array(<<END, {}, $branch);
             SELECT flight FROM (
 		SELECT flight FROM flights
 		    WHERE branch=? AND $blessingscond $maxflight_cond
+                       AND flight >= $repro_firstflight
 		    ORDER BY flight DESC
 		    LIMIT 100
             ) last100 ORDER BY FLIGHT ASC LIMIT 1
