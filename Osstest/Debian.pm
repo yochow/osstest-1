@@ -727,6 +727,8 @@ popularity-contest popularity-contest/participate boolean false
 tasksel tasksel/first multiselect standard, web-server
 
 d-i grub-installer/only_debian boolean true
+# see https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=759737
+d-i grub-installer/bootdev string default
 
 d-i finish-install/keep-consoles boolean true
 d-i finish-install/reboot_in_progress note
