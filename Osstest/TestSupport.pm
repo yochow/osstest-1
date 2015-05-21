@@ -104,7 +104,7 @@ BEGIN {
 
                       await_webspace_fetch_byleaf create_webfile
                       file_link_contents get_timeout
-                      setup_pxeboot setup_pxeboot_local host_pxefile
+                      setup_pxeboot_di setup_pxeboot_local host_pxefile
 
                       ether_prefix
 
@@ -2098,22 +2098,63 @@ sub host_pxefile ($;$) {
         (join ",", sort keys %v)." ?";
 }
 
-sub setup_pxeboot ($$) {
+sub setup_pxelinux_bootcfg ($$) {
     my ($ho, $bootfile) = @_;
     my $f= host_pxefile($ho);
     file_link_contents("$ho->{Tftp}{Path}$ho->{Tftp}{PxeDir}$f", $bootfile,
 	"$ho->{Name}-pxelinux.cfg");
 }
 
-sub setup_pxeboot_local ($) {
+# Systems using BIOS are configured to use pxelinux
+sub setup_pxeboot_di_bios ($$$$$;%) {
+    my ($ho,$kern,$initrd,$dicmd,$hocmd,%xopts) = @_;
+    my $dtbs = "fdtdir $xopts{dtbs}" if $xopts{dtbs};
+    setup_pxelinux_bootcfg($ho, <<END);
+    serial 0 $c{Baud}
+timeout 5
+label overwrite
+	menu label ^Overwrite
+	menu default
+	kernel $kern
+	append $dicmd initrd=$initrd -- $hocmd
+	ipappend $xopts{ipappend}
+	$dtbs
+default overwrite
+END
+}
+
+sub setup_pxeboot_local_bios ($) {
     my ($ho) = @_;
-    setup_pxeboot($ho, <<END);
+    setup_pxelinux_bootcfg($ho, <<END);
 serial 0 $c{Baud}
 timeout 5
 label local
 	LOCALBOOT 0
 default local
 END
+}
+
+# uboot emulates pxelinux, so reuse BIOS stuff
+sub setup_pxeboot_di_uboot ($$$$$;%) { return &setup_pxeboot_di_bios; }
+sub setup_pxeboot_local_uboot ($) { return &setup_pxeboot_local_bios; }
+
+sub setup_pxeboot_local ($) {
+    my ($ho) = @_;
+    my $firmware = get_host_property($ho, "firmware", "bios");
+    $firmware =~ s/-/_/g;
+    no strict qw(refs);
+    return &{"setup_pxeboot_local_${firmware}"}($ho);
+}
+
+sub setup_pxeboot_di ($$$$$;%) {
+    my ($ho,$kern,$initrd,$dicmd,$hocmd,%xopts) = @_;
+    my $firmware = get_host_property($ho, "firmware", "bios");
+    $firmware =~ s/-/_/g;
+    no strict qw(refs);
+    return &{"setup_pxeboot_di_${firmware}"}($ho,$kern,$initrd,
+					     join(' ',@{$dicmd}),
+					     join(' ',@{$hocmd}),
+					     %xopts);
 }
 
 #---------- ISO images ----------
