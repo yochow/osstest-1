@@ -247,13 +247,14 @@ SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="$ho->{Ether}", A
 END
     }
 
-    my $dtbs = "";
+    my %xopts;
+
     foreach my $kp (keys %{ $ho->{Flags} }) {
 	# Backwards compatibility
 	$kp = "need-kernel-deb-wheezy-backports" if $kp eq "need-kernel-deb-armmp";
 	$kp =~ s/need-kernel-deb-$ho->{Suite}-// or next;
 
-	$dtbs = "fdtdir /$d_i/$kp-dtbs"
+	$xopts{dtbs} = "/$d_i/$kp-dtbs"
 	    if -e "$ho->{Tftp}{Path}/$d_i/$kp-dtbs";
     }
 
@@ -290,18 +291,8 @@ END
     my $dicmd= join ' ', @dicmdline;
     my $hocmd= join ' ', @hocmdline;
 
-    setup_pxeboot($ho, <<END);
-serial 0 $c{Baud}
-timeout 5
-label overwrite
-	menu label ^Overwrite
-	menu default
-	kernel $kernel
-	append initrd=/$initrd $dicmd -- $hocmd
-	ipappend $ipappend
-	$dtbs
-default overwrite
-END
+    $xopts{ipappend} = $ipappend;
+    setup_pxeboot($ho, $kernel, "/$initrd", $dicmd, $hocmd, %xopts);
 }
 
 install();

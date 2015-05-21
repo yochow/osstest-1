@@ -2078,22 +2078,60 @@ sub host_pxefile ($;$) {
         (join ",", sort keys %v)." ?";
 }
 
-sub setup_pxeboot ($$) {
+sub setup_pxelinux_bootcfg ($$) {
     my ($ho, $bootfile) = @_;
     my $f= host_pxefile($ho);
     file_link_contents("$ho->{Tftp}{Path}$ho->{Tftp}{PxeDir}$f", $bootfile,
 	"$ho->{Name}-pxelinux.cfg");
 }
 
-sub setup_pxeboot_local ($) {
+# Systems using BIOS are configured to use pxelinux
+sub setup_bios_pxeboot ($$$$$;%) {
+    my ($ho,$kern,$initrd,$dicmd,$hocmd,%xopts) = @_;
+    my $dtbs = "fdtdir $xopts{dtbs}" if $xopts{dtbs};
+    setup_pxelinux_bootcfg($ho, <<END);
+    serial 0 $c{Baud}
+timeout 5
+label overwrite
+	menu label ^Overwrite
+	menu default
+	kernel $kern
+	append $dicmd initrd=$initrd -- $hocmd
+	ipappend $xopts{ipappend}
+	$dtbs
+default overwrite
+END
+}
+
+sub setup_bios_pxeboot_local ($) {
     my ($ho) = @_;
-    setup_pxeboot($ho, <<END);
+    setup_pxelinux_bootcfg($ho, <<END);
 serial 0 $c{Baud}
 timeout 5
 label local
 	LOCALBOOT 0
 default local
 END
+}
+
+# uboot emulates pxelinux, so reuse BIOS stuff
+sub setup_uboot_pxeboot ($$$$$;%) { return &setup_bios_pxeboot; }
+sub setup_uboot_pxeboot_local ($) { return &setup_bios_pxeboot_local; }
+
+sub setup_pxeboot_local ($) {
+    my ($ho) = @_;
+    my $firmware = get_host_property($ho, "firmware", "bios");
+    $firmware =~ s/-/_/g;
+    no strict qw(refs);
+    return &{"setup_${firmware}_pxeboot_local"}($ho);
+}
+
+sub setup_pxeboot ($$$$$;%) {
+    my ($ho,$kern,$initrd,$dicmd,$hocmd,%xopts) = @_;
+    my $firmware = get_host_property($ho, "firmware", "bios");
+    $firmware =~ s/-/_/g;
+    no strict qw(refs);
+    return &{"setup_${firmware}_pxeboot"}($ho,$kern,$initrd,$dicmd,$hocmd,%xopts);
 }
 
 #---------- ISO images ----------
