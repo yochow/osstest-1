@@ -265,9 +265,7 @@ END
     my $initrd= "$ho->{Tftp}{TmpDir}$ho->{Name}--initrd.gz";
     system_checked("cat -- @initrds >$ho->{Tftp}{Path}$initrd");
     
-    push @installcmdline, ("initrd=/$initrd",
-                           "domain=$c{TestHostDomain}",
-                           );
+    push @installcmdline, "domain=$c{TestHostDomain}";
     push @installcmdline,
         get_host_property($ho, "install-append $ho->{Suite}", ''),
         get_host_property($ho, "install-append $ho->{Suite} $r{arch}", '');
@@ -295,7 +293,7 @@ label overwrite
 	menu label ^Overwrite
 	menu default
 	kernel $kernel
-	append $installcmdline
+	append initrd=/$initrd $installcmdline
 	ipappend $ipappend
 	$dtbs
 default overwrite
