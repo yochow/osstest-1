@@ -942,6 +942,21 @@ d-i partman-auto/expert_recipe string					\\
 
 END
 
+    if (get_host_property($ho, "firmware") eq "uefi" &&
+        $ho->{Flags}{'quirk-uefi-bootorder-reset'}) {
+	# Disable any new Debian boot entry, so we reboot from PXE.
+        preseed_hook_command($ho, 'late_command', $sfx, <<'END');
+#!/bin/sh
+set -ex
+
+entry=`in-target --pass-stdout bash -c 'efibootmgr -v | sed -ne "s/BootCurrent: \([0-9]\+\)/\1/p"'` #/
+in-target efibootmgr -o $entry
+
+#in-target bash -c 'efibootmgr -o `efibootmgr -v | sed -ne "s/BootCurrent: \([0-9]\+\)/\1/p"`' #/
+
+END
+    }
+
     $preseed_file .= preseed_hook_cmds();
 
     if ($ho->{Flags}{'no-di-kernel'}) {
