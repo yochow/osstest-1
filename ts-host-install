@@ -175,8 +175,8 @@ sub setup_pxeboot_firstboot($) {
     
     my $d_i= $ho->{Tftp}{DiBase}.'/'.$r{arch}.'/'.$c{TftpDiVersion}.'-'.$ho->{Suite};
     
-    my @installcmdline= qw(vga=normal);
-    push @installcmdline, di_installcmdline_core($ho, $ps_url, %xopts);
+    my @dicmdline= qw(vga=normal);
+    push @dicmdline, di_installcmdline_core($ho, $ps_url, %xopts);
 
     my $src_initrd= "$d_i/initrd.gz";
     my @initrds= "$ho->{Tftp}{Path}/$src_initrd";
@@ -265,26 +265,27 @@ END
     my $initrd= "$ho->{Tftp}{TmpDir}$ho->{Name}--initrd.gz";
     system_checked("cat -- @initrds >$ho->{Tftp}{Path}$initrd");
     
-    push @installcmdline, "domain=$c{TestHostDomain}";
-    push @installcmdline,
+    push @dicmdline, "domain=$c{TestHostDomain}";
+    push @dicmdline,
         get_host_property($ho, "install-append $ho->{Suite}", ''),
         get_host_property($ho, "install-append $ho->{Suite} $r{arch}", '');
 
     my $console = get_host_native_linux_console($ho);
 
-    push @installcmdline, "console=$console" unless $console eq "NONE";
+    push @dicmdline, "console=$console" unless $console eq "NONE";
 
-    push @installcmdline, qw(--);
+    my @hocmdline;
 
     # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=762007 for
     # why this is repeated.
-    push @installcmdline, "console=$console" unless $console eq "NONE";
+    push @hocmdline, "console=$console" unless $console eq "NONE";
 
-    push @installcmdline,
+    push @hocmdline,
         get_host_property($ho, "linux-boot-append $ho->{Suite}", ''),
         get_host_property($ho, "linux-boot-append $ho->{Suite} $r{arch}", '');
 
-    my $installcmdline= join ' ', @installcmdline;
+    my $dicmd= join ' ', @dicmdline;
+    my $hocmd= join ' ', @hocmdline;
 
     setup_pxeboot($ho, <<END);
 serial 0 $c{Baud}
@@ -293,7 +294,7 @@ label overwrite
 	menu label ^Overwrite
 	menu default
 	kernel $kernel
-	append initrd=/$initrd $installcmdline
+	append initrd=/$initrd $dicmd -- $hocmd
 	ipappend $ipappend
 	$dtbs
 default overwrite
