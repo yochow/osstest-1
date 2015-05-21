@@ -258,6 +258,9 @@ END
 	    if -e "$ho->{Tftp}{Path}/$d_i/$kp-dtbs";
     }
 
+    $xopts{dtbs} = "/$d_i/dtbs"
+	if !$xopts{dtbs} && -e "$ho->{Tftp}{Path}/$d_i/dtbs";
+
     file_simple_write_contents("$initrd_overlay.cpio", sub {
         contents_make_cpio($_[0], 'newc', "$initrd_overlay.d");
     });
