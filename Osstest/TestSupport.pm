@@ -2168,7 +2168,25 @@ END
 
 sub setup_pxeboot_local_uefi ($) {
     my ($ho) = @_;
-    die "TODO: setup efi local boot";
+    my %efi_archs = qw(amd64 X64
+                       arm32 ARM
+                       arm64 AARCH64
+                       i386  IA32);
+    die "EFI arch" unless $efi_archs{ $r{arch} };
+    my $efi = $efi_archs{ $r{arch} };
+    setup_grub_efi_bootcfg($ho, <<END);
+set default=0
+set timeout=5
+menuentry 'local' {
+  insmod chain
+  insmod part_gpt
+  insmod part_msdos
+  set root=(hd0,gpt1)
+  echo "Chainloading (\${root})/EFI/BOOT/BOOTAA64.EFI"
+  chainloader (\${root})/EFI/BOOT/BOOTAA64.EFI
+  boot
+}
+END
 }
 
 sub setup_pxeboot_local ($) {
