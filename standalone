@@ -317,11 +317,18 @@ case $op in
 	job=$1; shift
 	ts=$1; shift
 
+	options=()
+	for i in "$@" ; do
+	    if [ x$i = x-- ] ; then shift; break ; fi
+	    options+=("$i")
+	    shift
+	done
+
 	OSSTEST_CONFIG=$config \
 	OSSTEST_FLIGHT=$flight \
 	OSSTEST_HOST_REUSE=$reuse \
 	OSSTEST_JOB=$job \
-	    with_logging logs/$flight/$job.$ts.log ./$ts $hosts "$@"
+	    with_logging logs/$flight/$job.$ts.log ./$ts "${options[@]}" $hosts "$@"
 	;;
 
     get-job-status)
