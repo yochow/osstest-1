@@ -393,8 +393,6 @@ sub setupboot_grub1 ($$$$) {
 # Note on running OSSTest on Squeeze with old Xen kernel: check out
 # Debian bug #633127 "/etc/grub/20_linux does not recognise some old
 # Xen kernels"
-# Currently setupboot_grub2 relies on Grub menu not having submenu.
-# Check Debian bug #690538.
 sub setupboot_grub2 ($$$$) {
     my ($ho,$want_kernver,$want_xsm,$xenhopt,$xenkopt) = @_;
     my $bl= { };
@@ -405,12 +403,22 @@ sub setupboot_grub2 ($$$$) {
     my $parsemenu= sub {
         my $f= bl_getmenu_open($ho, $rmenu, "$stash/$ho->{Name}--grub.cfg.1");
     
-        my $count= 0;
+        my @offsets = (0);
         my $entry;
+        my $submenu;
         while (<$f>) {
             next if m/^\s*\#/ || !m/\S/;
             if (m/^\s*\}\s*$/) {
-                die unless $entry;
+                die unless $entry || $submenu;
+                if (!defined $entry && defined $submenu) {
+                    logm("Met end of a submenu starting from ".
+                        "$submenu->{StartLine}. ".
+                        "Our want kern is $want_kernver");
+                    $submenu=undef;
+                    pop @offsets;
+                    $offsets[$#offsets]++;
+                    next;
+                }
                 my (@missing) =
                     grep { !defined $entry->{$_} } 
 		        (defined $xenhopt
@@ -438,8 +446,12 @@ sub setupboot_grub2 ($$$$) {
             }
             if (m/^menuentry\s+[\'\"](.*)[\'\"].*\{\s*$/) {
                 die $entry->{StartLine} if $entry;
-                $entry= { Title => $1, StartLine => $., Number => $count };
-                $count++;
+                $entry= { Title => $1, StartLine => $., MenuEntryPath => join ">", @offsets };
+                $offsets[$#offsets]++;
+            }
+            if (m/^submenu\s+[\'\"](.*)[\'\"].*\{\s*$/) {
+                $submenu={ StartLine =>$., MenuEntryPath => join ">", @offsets };
+                push @offsets,(0);
             }
             if (m/^\s*multiboot\s*\/(xen\-[0-9][-+.0-9a-z]*\S+)/) {
                 die unless $entry;
@@ -500,7 +512,7 @@ sub setupboot_grub2 ($$$$) {
             }
             print ::EO <<END or die $!;
 
-GRUB_DEFAULT=$entry->{Number}
+GRUB_DEFAULT="$entry->{MenuEntryPath}"
 END
 
             print ::EO <<END or die $! if defined $xenhopt;
