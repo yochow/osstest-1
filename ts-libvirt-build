@@ -108,8 +108,8 @@ sub libvirtd_init () {
 #
 ### BEGIN INIT INFO
 # Provides:          libvirt-bin libvirtd
-# Required-Start:    $network $local_fs $remote_fs $syslog
-# Required-Stop:     $local_fs $remote_fs $syslog
+# Required-Start:    $network $local_fs $remote_fs $syslog xenstored
+# Required-Stop:     $local_fs $remote_fs $syslog xenstored
 # Should-Start:      avahi-daemon cgconfig
 # Should-Stop:       avahi-daemon cgconfig
 # Default-Start:     2 3 4 5
