@@ -154,7 +154,7 @@ do_freebsd_tests () {
  job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-freebsd10-$freebsdarch \
                         test-freebsd xl $xenarch $dom0arch \
                         freebsd_arch=$freebsdarch \
- freebsd_image=${FREEBSD_IMAGE_PREFIX-FreeBSD-10.1-CUSTOM-}$freebsdarch${FREEBSD_IMAGE_SUFFIX--20150518.raw.xz} \
+ freebsd_image=${FREEBSD_IMAGE_PREFIX-FreeBSD-10.1-CUSTOM-}$freebsdarch${FREEBSD_IMAGE_SUFFIX--20150525.raw.xz} \
                         all_hostflags=$most_hostflags
 
   done
