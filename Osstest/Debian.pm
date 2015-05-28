@@ -412,8 +412,7 @@ sub setupboot_grub2 ($$$$) {
             if (m/^\s*\}\s*$/) {
                 die unless $entry || $submenu;
                 if (!defined $entry && defined $submenu) {
-                    logm("Met end of a submenu starting from ".
-                        "$submenu->{StartLine}. ".
+                    logm("Met end of a submenu $submenu->{StartLine}..$.. ".
                         "Our want kern is $want_kernver");
                     $submenu=undef;
                     pop @offsets;
@@ -426,14 +425,14 @@ sub setupboot_grub2 ($$$$) {
 			 ? qw(Title Hv KernDom0 KernVer)
 			 : qw(Title Hv KernOnly KernVer));
 		if (@missing) {
-		    logm("(skipping entry at $entry->{StartLine};".
+		    logm("(skipping entry at $entry->{StartLine}..$.;".
 			 " no @missing)");
 		} elsif (defined $want_kernver &&
 			 $entry->{KernVer} ne $want_kernver) {
-		    logm("(skipping entry at $entry->{StartLine};".
+		    logm("(skipping entry at $entry->{StartLine}..$.;".
 			 " kernel $entry->{KernVer}, not $want_kernver)");
 		} elsif ($want_xsm && !defined $entry->{Xenpolicy}) {
-		    logm("(skipping entry at $entry->{StartLine};".
+		    logm("(skipping entry at $entry->{StartLine}..$.;".
 			 " XSM policy file not present)");
 		} else {
 		    # yes!
