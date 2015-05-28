@@ -445,12 +445,12 @@ sub setupboot_grub2 ($$$$) {
             if (m/^function.*\{/) {
                 $entry= { StartLine => $. };
             }
-            if (m/^menuentry\s+[\'\"](.*)[\'\"].*\{\s*$/) {
+            if (m/^\s*menuentry\s+[\'\"](.*)[\'\"].*\{\s*$/) {
                 die $entry->{StartLine} if $entry;
                 $entry= { Title => $1, StartLine => $., MenuEntryPath => join ">", @offsets };
                 $offsets[$#offsets]++;
             }
-            if (m/^submenu\s+[\'\"](.*)[\'\"].*\{\s*$/) {
+            if (m/^\s*submenu\s+[\'\"](.*)[\'\"].*\{\s*$/) {
                 $submenu={ StartLine =>$., MenuEntryPath => join ">", @offsets };
                 push @offsets,(0);
             }
