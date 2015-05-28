@@ -507,7 +507,7 @@ sub setupboot_grub2 ($$$$) {
                     $v =~ s/^\s*([\'\"])(.*)\1\s*$/$2/;
                     $k{$k}= $v;
                 }
-                next if m/^GRUB_CMDLINE_(?:XEN|LINUX).*\=|^GRUB_DEFAULT.*\=/;
+                next if m/^GRUB_CMDLINE_(?:XEN|LINUX(?:_XEN_REPLACE)?(?:_DEFAULT)?).*\=|^GRUB_DEFAULT.*\=/;
                 print ::EO;
             }
             print ::EO <<END or die $!;
@@ -521,11 +521,20 @@ GRUB_CMDLINE_XEN="$xenhopt"
 END
             foreach my $k (qw(GRUB_CMDLINE_LINUX GRUB_CMDLINE_LINUX_DEFAULT)) {
                 my $v= $k{$k};
+
+                # Tailor native case
                 $v =~ s/\bquiet\b//;
+                print ::EO "$k=\"$v\"\n" or die $!;
+
+                # Xen overrides
                 $v =~ s/\b(?:console|xencons)=[0-9A-Za-z,]+//;
                 $v .= " $xenkopt" if $k eq 'GRUB_CMDLINE_LINUX';
-                print ::EO "$k=\"$v\"\n" or die $!;
-            }
+                # Ensure variable isn't zero length, or 20_linux_xen will ignore it.
+                $v .= " ";
+                my $rk = $k;
+                $rk =~ s/LINUX/LINUX_XEN_REPLACE/;
+                print ::EO "$rk=\"$v\"\n" or die $!;
+	    }
         });
     };
 
