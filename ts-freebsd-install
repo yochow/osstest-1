@@ -67,7 +67,7 @@ sub prep () {
             mount -t ufs -o ufstype=ufs2,rw $rootpartition_dev $mnt
 END
 
-    target_cmd_root($ho, <<END, 900);
+    target_cmd_root($ho, <<END, 15);
             mkdir -p $mnt/root/.ssh
             cat <<'ENDKEYS' >$mnt/root/.ssh/authorized_keys
 $authkeys
@@ -75,7 +75,7 @@ ENDKEYS
 
 END
 
-    target_cmd_root($ho, <<END, 900);
+    target_cmd_root($ho, <<END, 30);
             echo 'sshd_enable="YES"' >> $mnt/etc/rc.conf
             echo 'ifconfig_xn0="DHCP"' >> $mnt/etc/rc.conf
             echo 'PermitRootLogin yes' >> $mnt/etc/ssh/sshd_config
