@@ -52,9 +52,9 @@ BEGIN {
                       duration_estimator
                       db_pg_dsn opendb opendb_state
                       );
-    %EXPORT_TAGS = ( );
+    %EXPORT_TAGS = ( colours => [qw($green $red $yellow $purple $blue)] );
 
-    @EXPORT_OK   = qw();
+    @EXPORT_OK   = @{ $EXPORT_TAGS{colours} };
 }
 
 # DATABASE TABLE LOCK HIERARCHY
@@ -195,6 +195,7 @@ our $green=  '#008800';
 our $red=    '#ff8888';
 our $yellow= '#ffff00';
 our $purple= '#ff00ff';
+our $blue=   '#0000ff';
 
 sub report_run_getinfo ($) {
     # $f is a joined flight/job row, must contain at least
