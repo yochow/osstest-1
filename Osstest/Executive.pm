@@ -204,7 +204,8 @@ sub report_run_getinfo ($) {
     my $status= $f->{status};
     if ($status eq 'pass') {
         return { Summary => "($status)", Colour => $green };
-    } elsif ($status eq 'fail') {
+    } elsif ($status eq 'fail' or $status eq 'broken') {
+	my $failcolour = $status eq 'fail' ? $red : $yellow;
 	our $failstepq //= db_prepare(<<END);
 	    SELECT * FROM steps
 	     WHERE flight=? AND job=?
@@ -217,10 +218,12 @@ END
         if (!defined $fs) {
             return { Summary => "(unknown)", Colour => $yellow };
         } elsif ($fs->{status} eq 'fail') {
-            return { Summary => "$fs->{testid}", Colour => $red };
+            return { Summary => "$fs->{testid}", Colour => $failcolour };
+        } elsif ($fs->{status} eq 'broken') {
+            return { Summary => "$fs->{testid} broken", Colour => $yellow };
         } else {
             return { Summary => "$fs->{testid} $fs->{status}",
-                     Colour => $red };
+                     Colour => $failcolour };
         }
     } elsif ($status eq 'blocked') {
         return { Summary => "blocked", Colour => $purple },
