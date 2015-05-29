@@ -35,7 +35,7 @@ BEGIN {
                       getmethod
                       postfork
                       $dbh_tests db_retry db_retry_retry db_retry_abort
-                      db_begin_work
+                      db_begin_work db_prepare
                       ensuredir get_filecontents_core_quiet system_checked
                       nonempty visible_undef show_abs_time
                       );
@@ -48,6 +48,10 @@ our $mhostdb;
 our $mjobdb;
 
 our $dbh_tests;
+
+scalar *main::DEBUG;
+# declaration prevents `Name "main::DEBUG" used only once'
+# scalar prevents `useless use of a variable in void context'
 
 #---------- static default config settings ----------
 
@@ -266,6 +270,13 @@ sub db_retry ($$$;$$) {
         sleep(1);
     }
     return $r;
+}
+
+sub db_prepare ($) {
+    # caller must ensure global filehandle DEBUG is open
+    my ($stmt) = @_;
+    print ::DEBUG "DB PREPARING:\n$stmt\n";
+    return $dbh_tests->prepare($stmt);
 }
 
 sub postfork () {
