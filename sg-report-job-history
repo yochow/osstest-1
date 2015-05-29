@@ -182,10 +182,11 @@ END
 	 FROM runvars
 	 JOIN flights USING (flight)
 	WHERE ($cond)
-	  AND flight >= (
+	  AND flight >= COALESCE(
+             (
 	      SELECT flight $fromstuff
 	      LIMIT 1 OFFSET $offset
-          )
+	     ), 0)
      ORDER BY name;
 END
     $hostsq->execute(@params, @params); # sql text contains $cond twice
