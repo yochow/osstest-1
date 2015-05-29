@@ -1,0 +1,246 @@
+#!/usr/bin/perl -w
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+use strict qw(vars);
+
+use DBI;
+use Osstest;
+use IO::Handle;
+use HTML::Entities;
+
+use Osstest::Executive qw(:DEFAULT :colours);
+
+our $limit= 200;
+our $flightlimit;
+our $htmlout = ".";
+our @blessings;
+
+open DEBUG, ">/dev/null";
+
+my $namecond= "(name = 'host' or name like '%_host')";
+csreadconfig();
+
+while (@ARGV && $ARGV[0] =~ m/^-/) {
+    $_= shift @ARGV;
+    last if m/^--?$/;
+    if (m/^--(limit)\=([1-9]\d*)$/) {
+        $$1= $2;
+    } elsif (m/^--flight-limit\=([1-9]\d*)$/) {
+	$flightlimit= $1;
+    } elsif (m/^--blessings?=(.*)$/) {
+        push @blessings, split ',', $1;
+    } elsif (m/^--html-dir=(.*)$/) {
+        $htmlout= $1;
+    } elsif (m/^--debug/) {
+        open DEBUG, ">&2" or die $!;
+        DEBUG->autoflush(1);
+    } else {
+        die "$_ ?";
+    }
+}
+@blessings= qw(real) if !@blessings;
+
+@ARGV or die $!;
+
+$dbh_tests->begin_work;
+
+if (!$flightlimit) {
+    my $flagscond =
+	'('.join(' OR ', map { "f.hostflag = 'blessed-$_'" } @blessings).')';
+    my $nhostsq = db_prepare(<<END);
+        SELECT count(*)
+	  FROM resources r
+	 WHERE restype='host'
+	   AND EXISTS (SELECT 1
+		         FROM hostflags f
+		        WHERE f.hostname=r.resname
+		          AND $flagscond)
+END
+    $nhostsq->execute();
+    my ($nhosts) = $nhostsq->fetchrow_array();
+    print DEBUG "COUNTED $nhosts hosts\n";
+    $flightlimit = $nhosts * $limit * 2;
+}
+
+my $minflightsq = db_prepare(<<END);
+    SELECT flight
+      FROM (
+	SELECT flight
+	  FROM flights
+	 ORDER BY flight DESC
+	 LIMIT $flightlimit
+      ) f
+      ORDER BY flight ASC
+      LIMIT 1
+END
+$minflightsq->execute();
+my ($minflight) = $minflightsq->fetchrow_array();
+$minflight //= 0;
+
+our $flightcond = "(flight > $minflight)";
+
+$dbh_tests->do("SET LOCAL enable_seqscan=false");
+# Otherwise the PostgreSQL query planner likes to do a complete scan
+# of the runvars table, rather than walking backwards through the
+# flights until it has what we've told it is enough.
+
+my $runvarq = db_prepare(<<END);
+    SELECT flight, job, name, val
+      FROM runvars
+     WHERE $namecond
+       AND val = ?
+       AND $flightcond
+     ORDER BY flight DESC
+     LIMIT $limit * 2 + 100
+END
+
+my $endedq = db_prepare(<<END);
+    SELECT finished, testid, status AS laststepstatus
+      FROM steps
+     WHERE flight=? AND job=? AND finished IS NOT NULL
+     ORDER BY finished DESC
+     LIMIT 1
+END
+
+my $infoq = db_prepare(<<END);
+    SELECT blessing, branch, intended, status
+      FROM flights
+      JOIN jobs USING (flight)
+     WHERE flight=? AND job=?
+END
+
+my $allocdq = db_prepare(<<END);
+    SELECT testid, finished, status
+      FROM steps
+     WHERE flight=? AND job=?
+       AND (testid='hosts-allocate' OR step='ts-hosts-allocate')
+     ORDER BY finished ASC
+     LIMIT 1
+END
+
+sub jobquery ($$) {
+    my ($q, $jr) = @_;
+    $q->execute($jr->{flight}, $jr->{job});
+    return $q->fetchrow_hashref();
+}
+
+sub reporthost ($) {
+    my ($hostname) = @_;
+
+    die if $hostname =~ m/[^-_.+0-9a-z]/;
+
+    my $html_file= "$htmlout/host.$hostname.html";
+    open H, "> $html_file.new" or die "$html_file $!";
+
+    my $title= "host history $hostname\n";
+    $title= encode_entities($title);
+    print H "<html><head><title>$title</title></head><body>\n";
+    print H "<h1>$title</h1>\n";
+    print H "<table rules=all><tr>\n";
+
+    print H "<th>alloc testid</th><th>alloc completed</th>\n";
+    print H "<th>job finished</th>\n";
+    print H "<th>role</th>\n";
+
+    print H "<th>flight</th>\n";
+    print H "<th>branch</th><th>intended</th><th>blessing</th>\n";
+
+    print H "<th>job</th><th>failure</th>\n";
+
+    print H "</tr>\n";
+
+    my @rows;
+    $runvarq->execute($hostname);
+
+    print DEBUG "FIRST PASS\n";
+    while (my $jr= $runvarq->fetchrow_hashref()) {
+	print DEBUG "JOB $jr->{flight}.$jr->{job} ";
+
+	my $endedrow = jobquery($endedq, $jr);
+	if (!$endedrow) {
+	    print DEBUG "no-finished\n";
+	    next;
+	}
+	print DEBUG join " ", map { $endedrow->{$_} } sort keys %$endedrow;
+	print DEBUG ".\n";
+
+	push @rows, { %$jr, %$endedrow };
+    }
+
+    print DEBUG "FOUND ", (scalar @rows), " ROWS\n";
+
+    @rows = sort { $b->{finished} <=> $a->{finished} } @rows;
+    $#rows = $limit-1 if @rows > $limit;
+
+    my $alternate = 0;
+    foreach my $jr (@rows) {
+	print DEBUG "JOB $jr->{flight}.$jr->{job}\n";
+
+	my $ir = jobquery($infoq, $jr);
+	my $ar = jobquery($allocdq, $jr);
+
+	my $altcolour = report_altcolour($alternate);
+	print H "<tr $altcolour>";
+
+	if (!defined $ar->{testid}) {
+	    print H "<td bgcolor=\"$red\"></td>";
+	    print H "<td>?</td>";
+	} else {
+	    if ($ar->{status} eq 'pass') {
+		print H "<td>$ar->{testid}</td>";
+		print H "<td>", (show_abs_time $ar->{finished}), "</td>";
+	    } elsif ($ar->{status} eq 'running') {
+		print H "<td bgcolor=\"$blue\">$ar->{testid}</td>";
+		print H "<td>$ar->{status}</td>";
+	    } else {
+		print H "<td bgcolor=\"$red\">$ar->{testid}</td>";
+		print H "<td>$ar->{status}</td>";
+	    }
+	}
+	print H "\n";
+
+	print H "<td>", (show_abs_time $jr->{finished}), "</td>\n";
+	print H "<td>", $jr->{name}, "</td>\n";
+
+	my $url= "$c{ReportHtmlPubBaseUrl}/$jr->{flight}";
+	print H "<td><a href=\"$url\">$jr->{flight}</a></td>\n";
+	$url= "$c{ReportHtmlPubBaseUrl}/$jr->{flight}/".
+	    encode_entities($jr->{job})."/";
+	print H "<td>$ir->{branch}</td>";
+	print H "<td>$ir->{intended}</td>";
+	print H "<td>";
+	print H $ir->{blessing} unless $ir->{blessing} eq 'running';
+	print H "</td>";
+
+	print H "<td><a href=\"$url\">$jr->{job}</td>\n";
+
+	my $ri = report_run_getinfo({ %$jr, %$ir });
+	print H "<td bgcolor=\"$ri->{Colour}\">$ri->{Summary}</td>\n";
+
+	print H "</tr>\n\n";
+	$alternate ^= 1;
+    }
+
+    print H "</table></body></html>\n";
+
+    close H or die $!;
+    rename "$html_file.new", "$html_file" or die "$html_file $!";
+}
+
+reporthost $_ foreach @ARGV;
