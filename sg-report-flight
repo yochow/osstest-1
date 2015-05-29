@@ -163,7 +163,7 @@ sub findaflight ($$$$$) {
         return undef;
     }
 
-    my $checkq= $dbh_tests->prepare(<<END);
+    my $checkq= db_prepare(<<END);
         SELECT status FROM steps WHERE flight=? AND job=? AND testid=?
 END
 
@@ -188,11 +188,10 @@ END
       ) AS sub
       ORDER BY blessing ASC, flight DESC
 END
-    #print DEBUG "===\n$flightsq\n===\n";
-    $flightsq= $dbh_tests->prepare($flightsq);
+    $flightsq= db_prepare($flightsq);
     $flightsq->execute(@blessings);
 
-    my $buildflightsq= $dbh_tests->prepare(<<END);
+    my $buildflightsq= db_prepare(<<END);
         SELECT val FROM runvars
 	 WHERE flight = ?
            AND name LIKE '%buildjob'
@@ -204,10 +203,9 @@ END
 		  AND name=?
 		GROUP BY flight, job, val
 END
-    #print DEBUG "===\n$mismatchq\n===\n";
-    $revisionsq= $dbh_tests->prepare($revisionsq);
+    $revisionsq= db_prepare($revisionsq);
 
-    my $revisionsosstestq= $dbh_tests->prepare(<<END);
+    my $revisionsosstestq= db_prepare(<<END);
             SELECT harness AS val FROM flights_harness_touched
                 WHERE flight=?
 END
@@ -319,7 +317,7 @@ END
     };
     $jobs= [ sort { $colmap->($a) cmp $colmap->($b) } @$jobs ];
 
-    my $stepsq= $dbh_tests->prepare(<<END);
+    my $stepsq= db_prepare(<<END);
         SELECT * FROM steps
             WHERE flight=$flight AND job=?
             ORDER BY stepno
@@ -441,7 +439,7 @@ END
             });
         }
 
-        my $revh= $dbh_tests->prepare(<<END);
+        my $revh= db_prepare(<<END);
             SELECT * FROM runvars
                 WHERE flight=$flight AND job='$j->{job}'
                   AND name like 'built_revision_%'
@@ -623,7 +621,7 @@ sub justifyfailures ($;$) {
               AND $blessingscond
             LIMIT 1
 END
-    $anypassq= $dbh_tests->prepare($anypassq);
+    $anypassq= db_prepare($anypassq);
 
     my $duration_estimator= duration_estimator($branch, $blessings[0]);
     foreach my $failv (@failures) {
@@ -802,7 +800,7 @@ sub htmloutjob ($$) {
     my $title= "Info on flight $fi->{Flight} job $job";
     my $branch= $fi->{FlightInfo}{branch};
 
-    our $htmlout_jobq ||= $dbh_tests->prepare(<<END);
+    our $htmlout_jobq ||= db_prepare(<<END);
         SELECT * FROM jobs WHERE flight = ? AND job = ?
 END
     $htmlout_jobq->execute($fi->{Flight}, $job);
@@ -826,7 +824,7 @@ END
 END
 
     my %issteplog;
-    my $stepsq= $dbh_tests->prepare(<<END);
+    my $stepsq= db_prepare(<<END);
         SELECT * FROM steps
                 WHERE flight=? AND job=?
              ORDER BY stepno ASC
@@ -892,7 +890,7 @@ END
 <h2>Test control variables</h2>
 <table rules=all><tr><th>Name</th><th>Value</th><th>Source</th></tr>
 END
-    my $varsq= $dbh_tests->prepare(<<END);
+    my $varsq= db_prepare(<<END);
         SELECT * FROM runvars
                 WHERE flight=? AND job=?
              ORDER BY synth, name
@@ -1086,7 +1084,7 @@ END
     }
     my $started_str = show_abs_time $fi->{FlightInfo}{started};
 
-    our $htmlout_finishedq ||= $dbh_tests->prepare(<<END);
+    our $htmlout_finishedq ||= db_prepare(<<END);
         SELECT
  (SELECT max(finished) FROM steps WHERE flight=?)                 max,
  (SELECT count(*) FROM steps WHERE finished IS NULL AND flight=?) unfinished
@@ -1110,7 +1108,7 @@ END
 <td>Test harness revision(s):</td><td>
 END
 
-    our $htmlout_touchedq ||= $dbh_tests->prepare(<<END);
+    our $htmlout_touchedq ||= db_prepare(<<END);
         SELECT harness FROM flights_harness_touched WHERE flight=?
 END
     $htmlout_touchedq->execute($fi->{Flight});
