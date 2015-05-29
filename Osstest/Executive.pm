@@ -45,6 +45,7 @@ BEGIN {
     @ISA         = qw(Exporter);
     @EXPORT      = qw(get_harness_rev grabrepolock_reexec
                       findtask @all_lock_tables
+                      report_run_getinfo report_altcolour
                       tcpconnect_queuedaemon plan_search
                       alloc_resources alloc_resources_rollback_begin_work
                       resource_check_allocated resource_shared_mark_ready
@@ -186,6 +187,50 @@ sub opendb ($) {
         })
         or die "could not open state db $pg";
     return $dbh;
+}
+
+#---------- history reporting ----------
+
+our $green=  '#008800';
+our $red=    '#ff8888';
+our $yellow= '#ffff00';
+our $purple= '#ff00ff';
+
+sub report_run_getinfo ($) {
+    # $f is a joined flight/job row, must contain at least
+    #    flight job status
+    my ($f) = @_;
+    my $status= $f->{status};
+    if ($status eq 'pass') {
+        return { Summary => "($status)", Colour => $green };
+    } elsif ($status eq 'fail') {
+	our $failstepq //= db_prepare(<<END);
+	    SELECT * FROM steps
+	     WHERE flight=? AND job=?
+	       AND status!='pass'
+	  ORDER BY stepno
+	     LIMIT 1
+END
+        $failstepq->execute($f->{flight}, $f->{job});
+        my $fs= $failstepq->fetchrow_hashref();
+        if (!defined $fs) {
+            return { Summary => "(unknown)", Colour => $yellow };
+        } elsif ($fs->{status} eq 'fail') {
+            return { Summary => "$fs->{testid}", Colour => $red };
+        } else {
+            return { Summary => "$fs->{testid} $fs->{status}",
+                     Colour => $red };
+        }
+    } elsif ($status eq 'blocked') {
+        return { Summary => "blocked", Colour => $purple },
+    } else {
+        return { Summary => "($f->{status})", Colour => $yellow };
+    }
+}
+
+sub report_altcolour ($) {
+    my ($bool) = @_;
+    return "bgcolor=\"#".(qw(d0d0d0 ffffff))[$bool]."\"";
 }
 
 #---------- host (and other resource) allocation ----------
