@@ -150,6 +150,8 @@ sub altcolour ($) {
 sub processjobbranch ($$) {
     my ($j,$bra) = @_;
 
+    print DEBUG "processjobbranch('$j',", ($bra ? "'$bra'" : 'undef'), ")\n";
+
     my %rev_grid_col;
     my @rev_grid_cols;
     my @test_rows;
