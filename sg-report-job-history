@@ -251,7 +251,8 @@ END
         print H "<html><head><title>$title</title></head><body>\n";
         print H "<h1>$title</h1>\n";
         print H "<table rules=all>";
-        print H "<tr><th>flight</th><th>branch</th><th>failure</th>\n";
+        print H "<tr><th>started</th><th>flight</th>",
+	        "<th>branch</th><th>failure</th>\n";
         print H "<th>", (join ", ", @hostvarcols), "</th>\n";
         foreach my $c (@rev_grid_cols) {
             print H "<th>".encode_entities($c)."</th>\n";
@@ -264,6 +265,10 @@ END
             my $colour= "bgcolor=\"$r->{Colour}\"";
             my $altcolour= altcolour($alternate);
             print H "<tr $altcolour>";
+	    my $started = $r->{Flight}{started};
+	    print H "<td>";
+	    print H show_abs_time $started if $started;
+	    print H "</td>\n";
             my $flt= $r->{Flight}{flight};
             $url= "$c{ReportHtmlPubBaseUrl}/$flt";
             print H "<td><a href=\"$url\">$flt</a></td>\n";
