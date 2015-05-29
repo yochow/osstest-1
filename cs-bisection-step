@@ -203,7 +203,7 @@ END
 	       AND flight = ?
 END
 
-    my $sth= $dbh_tests->prepare(<<END);
+    my $sth= db_prepare(<<END);
 
         SELECT url.val AS uval,
 	       rev.val AS rval,
@@ -303,7 +303,7 @@ sub findbasics () {
             ? "flight = $specflights{$fp}" : "TRUE";
     }
 
-    my $latestq= $dbh_tests->prepare(<<END);
+    my $latestq= db_prepare(<<END);
             SELECT flights.flight, steps.status,
                    $flight_is_not_broken AS notbroken
                 FROM flights JOIN steps USING (flight)
@@ -316,7 +316,7 @@ sub findbasics () {
                      $maxflight_cond
                ORDER BY notbroken DESC, flights.started DESC
 END
-    my $basisq= $dbh_tests->prepare(<<END);
+    my $basisq= db_prepare(<<END);
         SELECT * FROM flights JOIN steps USING (flight)
 	   WHERE job = ?
 	     AND testid = ?
@@ -553,14 +553,14 @@ END
 
     print STDERR "Searching for test results:\n";
 
-    my $stepq= $dbh_tests->prepare("
+    my $stepq= db_prepare("
        SELECT * FROM steps
           WHERE flight = ?
             AND job = ?
             AND testid = ?
     ");
 
-    my $jobq= $dbh_tests->prepare("
+    my $jobq= db_prepare("
        SELECT * FROM flights JOIN jobs USING (flight)
           WHERE job = ?
             AND $blessingscond
@@ -1059,7 +1059,7 @@ sub preparejob ($$$) {
 END
     my (@trevisions) = split / /, $choose->{Rtuple};
 
-    my $treeq= $dbh_tests->prepare(<<END);
+    my $treeq= db_prepare(<<END);
         SELECT name FROM runvars
           WHERE  flight=? AND job=?
             AND  name = ?
@@ -1082,7 +1082,7 @@ END
 
     # Check for subjobs:
 
-    my $jobq= $dbh_tests->prepare(<<END);
+    my $jobq= db_prepare(<<END);
         SELECT name, val FROM runvars
             WHERE  flight=? AND job=?
               AND  name LIKE '%job';
@@ -1156,7 +1156,7 @@ END
 
     $dbh_tests->do("DROP TABLE bisection_runvars");
 
-    my $jobsetq= $dbh_tests->prepare(<<END);
+    my $jobsetq= db_prepare(<<END);
         UPDATE runvars SET val=?
             WHERE  flight=? AND job=? AND name=?
 END
@@ -1185,7 +1185,7 @@ sub populateflight () {
     }
 
     my $removehosts= 
-    my $addhost= $dbh_tests->prepare(<<END);
+    my $addhost= db_prepare(<<END);
         INSERT INTO runvars (flight,job,name,val,synth)
                      VALUES (?,     ?,  ?,   ?,  'f')
 END
@@ -1244,8 +1244,7 @@ END
               LIMIT $maxequalflights + 1;
 END
 
-    print DEBUG "equalflightsq:\n$equalflightsqt";
-    my $equalflightsq = $dbh_tests->prepare($equalflightsqt);
+    my $equalflightsq = db_prepare($equalflightsqt);
 
     db_retry($popflight,'constructing', $dbh_tests,[qw(flights)], sub {
         print STDERR "Checking for flail (since $repro_firstflight)...\n";
