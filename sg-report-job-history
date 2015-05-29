@@ -67,7 +67,7 @@ END
     die "$flight ? @$branches ?" if @$branches!=1;
     @branches= @$branches;
 
-    my $selectq= $dbh_tests->prepare(<<END);
+    my $selectq= db_prepare(<<END);
         SELECT job FROM jobs WHERE flight=? ORDER BY JOB
 END
     $selectq->execute($flight);
@@ -84,7 +84,7 @@ if (defined($flight)) {
     push @jobs, $job;
 }
 
-our $failstepq= $dbh_tests->prepare(<<END);
+our $failstepq= db_prepare(<<END);
         SELECT * FROM steps
          WHERE flight=? AND job=?
            AND status!='pass'
@@ -120,7 +120,7 @@ sub run_getinfo ($) {
     }
 }
 
-our $revisionsq= $dbh_tests->prepare(<<END);
+our $revisionsq= db_prepare(<<END);
         SELECT * FROM runvars
          WHERE flight=? AND job=?
            AND name LIKE E'built\\_revision\\_\%'
@@ -136,7 +136,7 @@ sub add_revisions ($$$$) {
     }
 }
 
-our $buildsq= $dbh_tests->prepare(<<END);
+our $buildsq= db_prepare(<<END);
         SELECT * FROM runvars
          WHERE flight=? AND job=?
            AND name LIKE E'\%buildjob'
@@ -171,13 +171,13 @@ END
          WHERE ($cond)
       ORDER BY flight DESC
 END
-    my $flightsq= $dbh_tests->prepare(<<END);
+    my $flightsq= db_prepare(<<END);
         SELECT * $fromstuff
          LIMIT $limit
 END
     $flightsq->execute(@params);
 
-    my $hostsq= $dbh_tests->prepare(<<END);
+    my $hostsq= db_prepare(<<END);
         SELECT DISTINCT name
 	 FROM runvars
 	 JOIN flights USING (flight)
@@ -195,7 +195,7 @@ END
 	push @hostvarcols, $hostvar;
     }
 
-    my $hostq= $dbh_tests->prepare(<<END);
+    my $hostq= db_prepare(<<END);
         SELECT val FROM runvars WHERE flight=? AND job=? AND name=?
 END
 
