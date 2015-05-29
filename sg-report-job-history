@@ -160,9 +160,7 @@ sub processjobbranch ($$) {
     my $cond = "job = ? AND $blessingscond";
     my (@params) = ($j, @blessings);
     if (defined $bra) {
-        $cond .= <<END;
-           AND branch = ?
-END
+        $cond .= " AND branch = ?";
         push @params, $bra;
     }
     my $limit= 100;
