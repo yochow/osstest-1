@@ -56,7 +56,7 @@ sub shutdown_wait ($$$) {
     my $ho = $self->{Host};
     my $gn = $gho->{Name};
     my $acpi_fallback = guest_var($gho,'acpi_shutdown','false') eq 'true'
-	? "F" : "";
+	&& $self->{Name} eq 'xl' ? "F" : "";
     target_cmd_root($ho,"$self->{_Command} shutdown -w${acpi_fallback} $gn", $timeout);
 }
 
