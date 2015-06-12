@@ -945,6 +945,14 @@ in-target update-initramfs -u -k all
 END
     }
 
+    # Systemd doesn't honor osstest-confirm-booted service, which
+    # breaks ts-leak-check.  Fall back to SysV init for now.
+    if ( $ho->{Suite} =~ /jessie/ ) {
+       preseed_hook_command($ho, 'late_command', $sfx, <<END)
+in-target apt-get install -y sysvinit-core
+END
+    }
+
     my @extra_packages = ();
     push(@extra_packages, "u-boot-tools") if $ho->{Flags}{'need-uboot-bootscr'};
 
