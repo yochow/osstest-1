@@ -54,6 +54,9 @@ sub packages () {
     target_install_packages($ho,
                             qw(bridge-utils vncsnapshot libaio1 libpixman-1-0
                                libsdl1.2debian libglib2.0-0 liblzma5));
+    if ($ho->{Suite} =~ m/jessie/) {
+        target_install_packages($ho, 'libnl-route-3-200');
+    }
     target_install_packages($ho,
 			    $ho->{Suite} =~ /squeeze/ ? "libyajl1" : "libyajl2");
     if ($ho->{Suite} !~ m/lenny|squeeze/) {
