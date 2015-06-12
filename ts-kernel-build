@@ -539,6 +539,8 @@ setopt CONFIG_FUSION_LOGGING n
 
 setopt CONFIG_BLK_CPQ_CISS_DA m
 
+setopt CONFIG_FHANDLE y
+
 case ${XEN_TARGET_ARCH} in
     x86_32) setopt CONFIG_64BIT n ;;
     x86_64)
