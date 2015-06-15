@@ -172,6 +172,13 @@ sub divide () {
                 mv \$mvfiles xeninstall/boot/.
             fi
         fi
+	if test -d install/usr/lib64/efi/; then
+            if test -f install/usr/lib64/efi/xen.efi; then
+                mkdir -p xeninstall/usr/lib64/efi
+                mvfiles=`find install/usr/lib64/efi -name 'xen[a-z]*' -prune -o -name 'xen*' -print`
+                mv \$mvfiles xeninstall/usr/lib64/efi/.
+            fi
+	fi
 END
 }
 
