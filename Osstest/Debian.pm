@@ -427,6 +427,9 @@ sub setupboot_grub2 ($$$$) {
 		if (@missing) {
 		    logm("(skipping entry at $entry->{StartLine}..$.;".
 			 " no @missing)");
+		} elsif ($entry->{Hv} =~ m/xen-syms/) {
+		    logm("(skipping entry at $entry->{StartLine}..$.;".
+			 " is xen-syms)");
 		} elsif (defined $want_kernver &&
 			 $entry->{KernVer} ne $want_kernver) {
 		    logm("(skipping entry at $entry->{StartLine}..$.;".
