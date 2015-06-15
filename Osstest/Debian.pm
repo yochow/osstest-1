@@ -460,15 +460,17 @@ sub setupboot_grub2 ($$$$) {
                 die unless $entry;
                 $entry->{Hv}= $1;
             }
-            if (m/^\s*multiboot\s*(?:\/boot)?\/(vmlinu[xz]-(\S+))/) {
+            if (m/^\s*multiboot\s*(?:\/boot)?\/(vmlinu[xz]-(\S+))\s+(.*)/) {
                 die unless $entry;
                 $entry->{KernOnly}= $1;
                 $entry->{KernVer}= $2;
+                $entry->{KernOpts}= $3;
             }
-            if (m/^\s*module\s*(?:\/boot)?\/(vmlinu[xz]-(\S+))/) {
+            if (m/^\s*module\s*(?:\/boot)?\/(vmlinu[xz]-(\S+))\s+(.*)/) {
                 die unless $entry;
                 $entry->{KernDom0}= $1;
                 $entry->{KernVer}= $2;
+                $entry->{KernOpts}= $3;
             }
             if (m/^\s*module\s*(?:\/boot)?\/(initrd\S+)/) {
                 $entry->{Initrd}= $1;
