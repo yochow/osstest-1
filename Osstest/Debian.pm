@@ -400,12 +400,18 @@ sub setupboot_grub2 ($$$$) {
 
     my $rmenu= '/boot/grub/grub.cfg';
     my $kernkey= (defined $xenhopt ? 'KernDom0' : 'KernOnly');
- 
+
+    # Grub2 on Jessie/arm* doesn't do multiboot, so we must chainload.
+    my $need_uefi_chainload =
+        get_host_property($ho, "firmware") eq "uefi" &&
+        $ho->{Suite} =~ m/jessie/ && $r{arch} =~ m/^arm/;
+
     my $parsemenu= sub {
         my $f= bl_getmenu_open($ho, $rmenu, "$stash/$ho->{Name}--grub.cfg.1");
     
         my @offsets = (0);
         my $entry;
+        my $chainentry;
         my $submenu;
         while (<$f>) {
             next if m/^\s*\#/ || !m/\S/;
@@ -424,7 +430,13 @@ sub setupboot_grub2 ($$$$) {
 		        (defined $xenhopt
 			 ? qw(Title Hv KernDom0 KernVer)
 			 : qw(Title Hv KernOnly KernVer));
-		if (@missing) {
+		if ($need_uefi_chainload && $entry->{Chainload}) {
+		    # Needs to be before check of @missing, since a
+		    # chained entry doesn't have anything useful in it
+		    logm("Found chainload entry at $entry->{StartLine}..$.");
+		    die "already got one" if $chainentry;
+		    $chainentry = $entry;
+		} elsif (@missing) {
 		    logm("(skipping entry at $entry->{StartLine}..$.;".
 			 " no @missing)");
 		} elsif ($entry->{Hv} =~ m/xen-syms/) {
@@ -456,9 +468,15 @@ sub setupboot_grub2 ($$$$) {
                 $submenu={ StartLine =>$., MenuEntryPath => join ">", @offsets };
                 push @offsets,(0);
             }
+            if (m/^\s*chainloader\s*\/EFI\/osstest\/xen.efi/) {
+                die unless $entry;
+                $entry->{Hv}= $1;
+                $entry->{Chainload} = 1;
+            }
             if (m/^\s*multiboot\s*(?:\/boot)?\/(xen\S+)/) {
                 die unless $entry;
                 $entry->{Hv}= $1;
+                $entry->{Chainload} = 0;
             }
             if (m/^\s*multiboot\s*(?:\/boot)?\/(vmlinu[xz]-(\S+))\s+(.*)/) {
                 die unless $entry;
@@ -490,13 +508,68 @@ sub setupboot_grub2 ($$$$) {
 	    die unless $entry->{Hv};
 	}
 
+	if ($need_uefi_chainload) {
+	    die 'chainload entry not found' unless $chainentry;
+
+            # Propagate relevant fields of the main entry over to the
+            # chain entry for use of subsequent code.
+            foreach (qw(KernVer KernDom0 KernOnly KernOpts
+                        Initrd Xenpolicy)) {
+		next unless $entry->{$_};
+		die if $chainentry->{$_};
+		$chainentry->{$_} = $entry->{$_};
+            }
+
+            $entry = $chainentry;
+	}
+
         return $entry;
     };
 
 
     $bl->{UpdateConfig}= sub {
 	my ( $ho ) = @_;
+
+        target_editfile_root($ho, '/etc/default/grub', sub {
+            while (<::EI>) {
+                next if m/^export GRUB_ENABLE_XEN_UEFI_CHAINLOAD\=/;
+                print ::EO;
+            }
+	    print ::EO "export GRUB_ENABLE_XEN_UEFI_CHAINLOAD=\"osstest\"\n"
+		if $need_uefi_chainload;
+	});
+
 	target_cmd_root($ho, "update-grub");
+
+	if ($need_uefi_chainload) {
+	    my $entry= $parsemenu->();
+	    my $xencfg = <<END;
+[global]
+default=osstest
+
+[osstest]
+options=$xenhopt
+kernel=vmlinuz $entry->{KernOpts}
+END
+            $xencfg .= "ramdisk=initrd.gz\n" if $entry->{Initrd};
+            $xencfg .= "xsm=xenpolicy\n" if $entry->{Xenpolicy};
+
+            target_putfilecontents_root_stash($ho,30,$xencfg,
+				"/boot/efi/EFI/osstest/xen.cfg");
+
+            # /boot/efi should be a mounted EFI system partition, and
+            # /boot/efi/EFI/osstest/xen.efi should already exist. Hence no mkdir
+            # here.
+            target_cmd_root($ho,
+	        <<END.($entry->{Initrd}?<<END:"").($entry->{Xenpolicy}?<<END:""));
+set -ex
+cp -vL /boot/$entry->{KernDom0} /boot/efi/EFI/osstest/vmlinuz #/
+END
+cp -vL /boot/$entry->{Initrd} /boot/efi/EFI/osstest/initrd.gz #/
+END
+cp -vL /boot/$entry->{Xenpolicy} /boot/efi/EFI/osstest/xenpolicy #/
+END
+	}
     };
 
     $bl->{GetBootKern}= sub { return $parsemenu->()->{$kernkey}; };
