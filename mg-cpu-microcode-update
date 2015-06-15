@@ -1,0 +1,82 @@
+#!/bin/bash
+
+set -e
+
+. cri-getconfig
+
+# iucode_tool is in /usr/sbin, see #788459.
+export PATH="/usr/local/sbin:$PATH:/sbin:/usr/sbin"
+
+images=`getconfig Images`
+gitproxy=`getconfig GitCacheProxy`
+date=`date +%Y-%m-%d`
+
+cpiodir=cpio.x86
+ucodepath=kernel/x86/microcode
+
+intelbin=GenuineIntel.bin
+amdbin=AuthenticAMD.bin
+
+ucodecpio=$images/microcode.x86.$date.cpio
+
+linuxfw=git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
+
+rm -rf $ucodecpio.tmp
+mkdir $ucodecpio.tmp
+cd $ucodecpio.tmp
+
+mkdir -p $cpiodir/$ucodepath/
+
+# Intel
+#
+# From http://feeds.downloadcenter.intel.com/rss/?p=483&lang=eng look for
+# Linux* Processor Microcode Data File which will take you to e.g.
+# https://downloadcenter.intel.com/downloads/eula/24661/Linux-Processor-Microcode-Data-File?httpDown=http%3A%2F%2Fdownloadmirror.intel.com%2F24661%2Feng%2Fmicrocode-20150121.tgz' which redirects to the following:
+INTEL_TGZ='http://downloadmirror.intel.com/24661/eng/microcode-20150121.tgz'
+
+# The microcode-YYYYMMDD.tgz contains a microcode.dat which we must
+# then convert to the appropriate binary format using iucode_tool
+# (available in Debian).
+
+mkdir intel-ucode
+
+echo >&2 "Fetching Intel ucode"
+curl -s $INTEL_TGZ > intel-ucode/microcode.tgz
+
+tar -C intel-ucode -xaf intel-ucode/microcode.tgz microcode.dat
+
+echo >&2 "Converting Intel ucode"
+iucode_tool -t d -q \
+    --write-to=$cpiodir/$ucodepath/$intelbin \
+    intel-ucode/microcode.dat
+
+# AMD
+#
+# http://xenbits.xen.org/docs/unstable/misc/amd-ucode-container.txt
+#
+# From linux-firmware.git:
+AMD_BINS='
+  amd-ucode/microcode_amd.bin
+  amd-ucode/microcode_amd_fam15h.bin
+  amd-ucode/microcode_amd_fam16h.bin
+'
+
+echo >&2 "Cloning $gitproxy$linuxfw"
+git clone --quiet --depth=1 $gitproxy$linuxfw linux-firmware
+
+# Concatenate into $ucodepath/$amdbin within the
+# cpio.
+echo >&2 "Conveting AMD ucode"
+( cd linux-firmware && cat $AMD_BINS ) > $cpiodir/$ucodepath/$amdbin
+
+# Ensure the cpio is reproducible, we don't care about timestamps
+# inside the archive.
+find $cpiodir -exec touch -d @0 {} \;
+
+echo >&2 "Building cpio archive"
+( cd $cpiodir && find . | cpio -o -H newc --quiet > $ucodecpio )
+
+echo "New x86 microcode: $ucodecpio"
+
+cd $images # Get out of $ucodecpio.tmp
+rm -rf $ucodecpio.tmp

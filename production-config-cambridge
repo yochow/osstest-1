@@ -73,6 +73,10 @@ TftpPxeTemplates %ipaddrhex%/pxelinux.cfg
 TftpPxeGroup osstest
 TftpDiVersion 2015-01-10
 
+# These should normally be the same.
+MicrocodeUpdateAmd64 microcode.x86.2015-06-12.cpio
+MicrocodeUpdateI386 microcode.x86.2015-06-12.cpio
+
 XenUsePath /usr/groups/xencore/systems/bin/xenuse
 XenUseUser osstest
 

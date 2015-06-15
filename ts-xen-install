@@ -145,6 +145,13 @@ sub setupboot () {
     if (toolstack($ho)->{Dom0MemFixed}) {
         $xenhopt .= " dom0_mem=512M,max:512M";
     }
+
+    # If /boot/microcode.cpio is present then ts-host-install has
+    # arranged that it will be prepended to the initrd already, all we
+    # need to do is look for it.
+    $xenhopt .= " ucode=scan"
+	if target_file_exists($ho, "/boot/microcode.cpio");
+
     my $append= $r{xen_boot_append};
     $xenhopt .= " $append" if defined $append;
     $append = get_host_property($ho, 'xen-commandline-append', undef);

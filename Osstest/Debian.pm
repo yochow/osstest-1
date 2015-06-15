@@ -626,6 +626,48 @@ chroot /target chown -R \$u.\$u \$h/.ssh
 END
 }
 
+sub preseed_microcode($$)
+{
+    my ($ho,$sfx) = @_;
+    my $prop = "MicrocodeUpdate".ucfirst($r{arch});
+    return unless $c{$prop};
+    logm("ucode=$prop $c{$prop}");
+    my $ucode = get_filecontents("$c{Images}/$c{$prop}");
+    my $cpio_url = create_webfile($ho, "microcode-cpio",
+	sub {
+	    my $f = "$c{Images}/$c{$prop}";
+	    copy($f, $_[0]) or die "Copy $f failed: $!";
+    });
+
+    # The ability to prepend from an initramfs-hook was not added
+    # until Jessie, therefore for Wheezy we use a custom compression
+    # method which sneaks the necessary cpio onto the front.
+    my $gzip_url = create_webfile($ho, "microcode-gzip",<<END);
+#!/bin/bash
+if [ -f /boot/microcode.cpio ]; then
+    cat /boot/microcode.cpio
+fi
+exec gzip
+END
+
+    preseed_hook_installscript($ho, $sfx,
+       '/usr/lib/base-installer.d/','osstest-microcode', <<END);
+#!/bin/sh
+set -ex
+
+mkdir -p /target/boot
+wget -Y off -O /target/boot/microcode.cpio $cpio_url
+
+mkdir -p /target/usr/sbin
+wget -Y off -O /target/usr/sbin/osstest-initramfs-gzip $gzip_url
+chmod +x /target/usr/sbin/osstest-initramfs-gzip
+
+mkdir -p /target/etc/initramfs-tools/conf.d/
+echo COMPRESS=/usr/sbin/osstest-initramfs-gzip >> \\
+	/target/etc/initramfs-tools/conf.d/osstest-initramfs-gzip.conf
+END
+}
+
 sub preseed_base ($$$$;@) {
     my ($ho,$suite,$sfx,$extra_packages,%xopts) = @_;
 
@@ -940,6 +982,8 @@ d-i partman-auto/expert_recipe string					\\
 		.
 
 END
+
+    preseed_microcode($ho,$sfx);
 
     $preseed_file .= preseed_hook_cmds();
 
