@@ -1653,7 +1653,6 @@ vncdisplay=0
 vnclisten='$ho->{Ip}'
 vncpasswd='$passwd'
 
-serial='file:/dev/stderr'
 #
 boot = 'dc'
 END
@@ -1666,6 +1665,14 @@ END
     my $bios = $xopts{'Bios'};
     if (defined $bios) {
         $cfg .= "bios='$bios'\n";
+    }
+
+    my $stubdom = guest_var_boolean($gho, 'stubdom');
+    if ($stubdom) {
+	$cfg .= "device_model_stubdomain_override=1\n";
+	$cfg .= "serial='pty'\n";
+    } else {
+	$cfg .= "serial='file:/dev/stderr'\n";
     }
 
     $xopts{VifType} ||= "ioemu";

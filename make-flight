@@ -214,10 +214,19 @@ do_hvm_debian_test_one () {
   testname=$1
   bios=$2
   xsm=$3
+  stubdom=$4
 
-  job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix-$testname-amd64\
+  stubdom_suffix=""
+  stubdom_runvar=""
+  if [ x$stubdom != x ]; then
+      stubdom_suffix="-stubdom"
+      stubdom_runvar="debianhvm_stubdom=$stubdom"
+  fi
+
+  job_create_test test-$xenarch$kern-$dom0arch-xl$qemuu_suffix$stubdom_suffix-$testname-amd64\
     test-debianhvm xl $xenarch $dom0arch $qemuu_runvar \
     enable_xsm=$xsm                             \
+    $stubdom_runvar                             \
     debianhvm_image=debian-7.2.0-amd64-CD-1.iso \
     bios=$bios \
     all_hostflags=$most_hostflags,hvm
@@ -238,10 +247,13 @@ do_hvm_debian_tests() {
     done
   fi
 
-  # QEMU traditional supports rombios
+  # QEMU traditional supports rombios and stubdom
   if [ "x$qemuu_suffix" == "x-qemut" ]; then
     for xsm in $xsms ; do
       do_hvm_debian_test_one debianhvm rombios $xsm
+      if [ x$xsm = xtrue ]; then
+          do_hvm_debian_test_one debianhvm rombios $xsm true
+      fi
     done
   fi
 }
