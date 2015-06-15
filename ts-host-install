@@ -87,10 +87,9 @@ END
 
     await_tcp(get_timeout($ho,'reboot',$timeout{Sshd}), 14,$ho);
 
-    our $vgname= $ho->{Name};
+    our $vgname = di_vg_name($ho);
 
     if ($ho->{Suite} =~ m/lenny/) {
-        $vgname .= ".$c{TestHostDomain}";
         target_editfile_root($ho, '/boot/grub/menu.lst', sub {
             while (<EI>) {
                 s/^terminal.*/terminal --timeout=10 serial console/;

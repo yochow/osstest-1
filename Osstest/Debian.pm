@@ -43,6 +43,7 @@ BEGIN {
                       preseed_hook_overlay
                       preseed_hook_cmds
                       di_installcmdline_core
+                      di_vg_name
                       );
     %EXPORT_TAGS = ( );
 
@@ -564,6 +565,18 @@ sub di_installcmdline_core ($$;@) {
     push @cl, "rescue/enable=true" if $xopts{RescueMode};
 
     return @cl;
+}
+
+sub di_vg_name($) {
+    my ($ho) = @_;
+
+    if ($ho->{Suite} =~ m/wheezy|squeeze/) {
+	return $ho->{Name};
+    }
+    if ($ho->{Suite} =~ m/lenny/){
+	return "$ho->{Name}.$c{TestHostDomain}";
+    }
+    return "$ho->{Name}-vg";
 }
 
 sub preseed_ssh ($$) {

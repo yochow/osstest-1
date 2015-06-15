@@ -20,6 +20,7 @@ use DBI;
 use Osstest;
 use POSIX;
 use Osstest::TestSupport;
+use Osstest::Debian;
 
 tsreadconfig();
 
@@ -52,10 +53,7 @@ sub overall_limit_pe ($) {
 }
 
 sub determine_vg_lv () {
-    $vg=
-        $ho->{Suite} =~ m/lenny/
-        ? "$ho->{Name}.$c{TestHostDomain}"
-        : $ho->{Name};
+    $vg = di_vg_name($ho);
     $lv = "/dev/$vg/$lvleaf";
 }
 
