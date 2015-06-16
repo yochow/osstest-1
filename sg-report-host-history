@@ -58,42 +58,44 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
 
 @ARGV or die $!;
 
-$dbh_tests->begin_work;
+our $flightcond;
 
-if (!$flightlimit) {
-    my $flagscond =
-	'('.join(' OR ', map { "f.hostflag = 'blessed-$_'" } @blessings).')';
-    my $nhostsq = db_prepare(<<END);
-        SELECT count(*)
-	  FROM resources r
-	 WHERE restype='host'
-	   AND EXISTS (SELECT 1
-		         FROM hostflags f
-		        WHERE f.hostname=r.resname
-		          AND $flagscond)
+sub computeflightsrange () {
+    if (!$flightlimit) {
+	my $flagscond =
+	    '('.join(' OR ', map { "f.hostflag = 'blessed-$_'" } @blessings).')';
+	my $nhostsq = db_prepare(<<END);
+	    SELECT count(*)
+	      FROM resources r
+	     WHERE restype='host'
+	       AND EXISTS (SELECT 1
+			     FROM hostflags f
+			    WHERE f.hostname=r.resname
+			      AND $flagscond)
 END
-    $nhostsq->execute();
-    my ($nhosts) = $nhostsq->fetchrow_array();
-    print DEBUG "COUNTED $nhosts hosts\n";
-    $flightlimit = $nhosts * $limit * 2;
-}
+        $nhostsq->execute();
+	my ($nhosts) = $nhostsq->fetchrow_array();
+	print DEBUG "COUNTED $nhosts hosts\n";
+	$flightlimit = $nhosts * $limit * 2;
+    }
 
-my $minflightsq = db_prepare(<<END);
-    SELECT flight
-      FROM (
+    my $minflightsq = db_prepare(<<END);
 	SELECT flight
-	  FROM flights
-	 ORDER BY flight DESC
-	 LIMIT $flightlimit
-      ) f
-      ORDER BY flight ASC
-      LIMIT 1
+	  FROM (
+	    SELECT flight
+	      FROM flights
+	     ORDER BY flight DESC
+	     LIMIT $flightlimit
+	  ) f
+	  ORDER BY flight ASC
+	  LIMIT 1
 END
-$minflightsq->execute();
-my ($minflight) = $minflightsq->fetchrow_array();
-$minflight //= 0;
+    $minflightsq->execute();
+    my ($minflight) = $minflightsq->fetchrow_array();
+    $minflight //= 0;
 
-our $flightcond = "(flight > $minflight)";
+    $flightcond = "(flight > $minflight)";
+}
 
 $dbh_tests->do("SET LOCAL enable_seqscan=false");
 # Otherwise the PostgreSQL query planner likes to do a complete scan
@@ -243,4 +245,5 @@ sub reporthost ($) {
     rename "$html_file.new", "$html_file" or die "$html_file $!";
 }
 
+computeflightsrange();
 reporthost $_ foreach @ARGV;
