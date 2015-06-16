@@ -20,8 +20,9 @@
 compute_state_core () {
         reportfile=tmp/$flight.bisection-report
         summaryfile=tmp/$flight.bisection-summary
-        bisleaf=bisect.$branch.$job.$laundered_testid
+        bisleaf=bisect/$branch/$job.$laundered_testid
         bisfile=$OSSTEST_HTML_DIR/$bisleaf
+	mkdir -p "${bisfile%/*}"
 
         echo "computing $branch $job $testid $*"
 
