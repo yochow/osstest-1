@@ -102,40 +102,6 @@ $dbh_tests->do("SET LOCAL enable_seqscan=false");
 # of the runvars table, rather than walking backwards through the
 # flights until it has what we've told it is enough.
 
-my $runvarq = db_prepare(<<END);
-    SELECT flight, job, name, val
-      FROM runvars
-     WHERE $namecond
-       AND val = ?
-       AND $flightcond
-     ORDER BY flight DESC
-     LIMIT $limit * 2 + 100
-END
-
-my $endedq = db_prepare(<<END);
-    SELECT finished, testid, status AS laststepstatus
-      FROM steps
-     WHERE flight=? AND job=? AND finished IS NOT NULL
-     ORDER BY finished DESC
-     LIMIT 1
-END
-
-my $infoq = db_prepare(<<END);
-    SELECT blessing, branch, intended, status
-      FROM flights
-      JOIN jobs USING (flight)
-     WHERE flight=? AND job=?
-END
-
-my $allocdq = db_prepare(<<END);
-    SELECT testid, finished, status
-      FROM steps
-     WHERE flight=? AND job=?
-       AND (testid='hosts-allocate' OR step='ts-hosts-allocate')
-     ORDER BY finished ASC
-     LIMIT 1
-END
-
 sub jobquery ($$) {
     my ($q, $jr) = @_;
     $q->execute($jr->{flight}, $jr->{job});
@@ -166,6 +132,40 @@ sub reporthost ($) {
     print H "<th>job</th><th>failure</th>\n";
 
     print H "</tr>\n";
+
+    our $runvarq //= db_prepare(<<END);
+	SELECT flight, job, name, val
+	  FROM runvars
+	 WHERE $namecond
+	   AND val = ?
+	   AND $flightcond
+	 ORDER BY flight DESC
+	 LIMIT $limit * 2 + 100
+END
+
+    our $endedq //= db_prepare(<<END);
+	SELECT finished, testid, status AS laststepstatus
+	  FROM steps
+	 WHERE flight=? AND job=? AND finished IS NOT NULL
+	 ORDER BY finished DESC
+	 LIMIT 1
+END
+
+    our $infoq //= db_prepare(<<END);
+	SELECT blessing, branch, intended, status
+	  FROM flights
+	  JOIN jobs USING (flight)
+	 WHERE flight=? AND job=?
+END
+
+    our $allocdq //= db_prepare(<<END);
+	SELECT testid, finished, status
+	  FROM steps
+	 WHERE flight=? AND job=?
+	   AND (testid='hosts-allocate' OR step='ts-hosts-allocate')
+	 ORDER BY finished ASC
+	 LIMIT 1
+END
 
     my @rows;
     $runvarq->execute($hostname);
