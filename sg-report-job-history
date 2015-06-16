@@ -198,12 +198,14 @@ END
 
     if (defined $htmlout) {
         my ($title,$html_file,$url);
+	ensuredir "$htmlout/history";
+	ensuredir "$htmlout/history/$j";
         if (defined $bra) {
-            $title= "$j $bra";
-            $html_file= "history.$j.$bra.html";
+            $title= "$j (branch $bra)";
+            $html_file= "history/$j/$bra.html";
         } else {
-            $title= $j;
-            $html_file= "history.$j.html";
+            $title= "$j (all branches)";
+            $html_file= "history/$j/ALL.html";
         }
         $html_file= "$htmlout/$html_file";
         open H, "> $html_file.new" or die "$html_file $!";
