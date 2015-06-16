@@ -50,6 +50,7 @@ case ${suite}_${arch} in
         src=$sbase/main/installer-$arch/current/images/netboot/
         files="debian-installer/$arch/initrd.gz:initrd.gz \
                debian-installer/$arch/linux:linux"
+        dtbs=$sbase/main/installer-$arch/current/images/device-tree/
         ;;
     wheezy_armhf)
         # Use the vexpress image, we are going to bash in our own
@@ -60,7 +61,8 @@ case ${suite}_${arch} in
     *_armhf)
         src=$sbase/main/installer-$arch/current/images/netboot
         files='vmlinuz initrd.gz'
-	;;
+        dtbs=$sbase/main/installer-$arch/current/images/device-tree/
+        ;;
 esac
 
 pfile=$sbase/non-free/binary-$arch/Packages.gz
@@ -79,6 +81,15 @@ for f in $files; do
         echo >&2 "$src/$s => $d.new"
         fetch $src/$s >$d.new
 done
+
+if [ "x$dtbs" != "x" ] ; then
+    # Can't seem to get curl to globs.
+    rm -rf dtbs
+    mkdir dtbs
+    ( cd dtbs && wget -nv -A README,\*.dtb -nd -nH -np -m  $dtbs )
+    tar --mtime=./dtbs/README -cf dtbs.tar dtbs
+    gzip -9nf dtbs.tar
+fi
 
 fetch $pfile >Packages.gz
 
