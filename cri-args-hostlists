@@ -108,6 +108,7 @@ start_email () {
 
 	local flight_html_dir=$OSSTEST_HTMLPUB_DIR/
 	local job_html_dir=$OSSTEST_HTML_DIR/
+	local host_html_dir=$OSSTEST_HTML_DIR/host/
 
 	globallockdir=`getconfig GlobalLockDir`
 
@@ -117,6 +118,10 @@ start_email () {
 	./sg-report-flight --html-dir=$flight_html_dir/$flight/ \
 		--allow=allow.all --allow=allow.$branch \
 		$sgr_args $flight
+
+	mkdir -p $host_html_dir
+	with-lock-ex -w $globallockdir/report-lock \
+	  ./sg-report-host-history --html-dir=$host_html_dir flight:$flight
 }
 
 publish_send_email () {
