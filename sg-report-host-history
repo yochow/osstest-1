@@ -218,7 +218,7 @@ END
 		print H "<td>", (show_abs_time $ar->{finished}), "</td>";
 	    } elsif ($ar->{status} eq 'running') {
 		print H "<td bgcolor=\"$blue\">$ar->{testid}</td>";
-		print H "<td>$ar->{status}</td>";
+		print H "<td>(incomplete)</td>";
 	    } else {
 		print H "<td bgcolor=\"$red\">$ar->{testid}</td>";
 		print H "<td>$ar->{status}</td>";
