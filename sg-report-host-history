@@ -97,11 +97,6 @@ END
     $flightcond = "(flight > $minflight)";
 }
 
-$dbh_tests->do("SET LOCAL enable_seqscan=false");
-# Otherwise the PostgreSQL query planner likes to do a complete scan
-# of the runvars table, rather than walking backwards through the
-# flights until it has what we've told it is enough.
-
 sub jobquery ($$) {
     my ($q, $jr) = @_;
     $q->execute($jr->{flight}, $jr->{job});
@@ -245,5 +240,17 @@ END
     rename "$html_file.new", "$html_file" or die "$html_file $!";
 }
 
-computeflightsrange();
-reporthost $_ foreach @ARGV;
+db_retry($dbh_tests, [qw(flights resources)], sub {
+    computeflightsrange();
+});
+
+$dbh_tests->do("SET LOCAL enable_seqscan=false");
+# Otherwise the PostgreSQL query planner likes to do a complete scan
+# of the runvars table, rather than walking backwards through the
+# flights until it has what we've told it is enough.
+
+foreach my $host (@ARGV) {
+    db_retry($dbh_tests, [qw(flights)], sub {
+	reporthost $host;
+    });
+}
