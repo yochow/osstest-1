@@ -122,29 +122,12 @@ END
 
     push @params, scalar keys %hosts;
 
-    our $endedq //= db_prepare(<<END);
-	SELECT finished, testid, status AS laststepstatus
-	  FROM steps
-	 WHERE flight=? AND job=? AND finished IS NOT NULL
-	 ORDER BY finished DESC
-	 LIMIT 1
-END
-
     $runvarq->execute(@params);
 
     print DEBUG "FIRST PASS\n";
     while (my $jr= $runvarq->fetchrow_hashref()) {
 	print DEBUG "JOB $jr->{flight}.$jr->{job} ";
-
-	my $endedrow = jobquery($endedq, $jr);
-	if (!$endedrow) {
-	    print DEBUG "no-finished\n";
-	    next;
-	}
-	print DEBUG join " ", map { $endedrow->{$_} } sort keys %$endedrow;
-	print DEBUG ".\n";
-
-	push @{ $hosts{$jr->{val}} }, { %$jr, %$endedrow };
+	push @{ $hosts{$jr->{val}} }, $jr;
     }
 }
 
@@ -173,6 +156,14 @@ sub reporthost ($) {
 
     print H "</tr>\n";
 
+    our $endedq //= db_prepare(<<END);
+	SELECT finished, testid, status AS laststepstatus
+	  FROM steps
+	 WHERE flight=? AND job=? AND finished IS NOT NULL
+	 ORDER BY finished DESC
+	 LIMIT 1
+END
+
     our $infoq //= db_prepare(<<END);
 	SELECT blessing, branch, intended, status
 	  FROM flights
@@ -189,18 +180,29 @@ END
 	 LIMIT 1
 END
 
-    my @rows;
-    @rows = @{ $hosts{$hostname} };
+    my $inrows = $hosts{$hostname};
+    print DEBUG "FOUND ", (scalar @$inrows), " ROWS for $hostname\n";
 
-    print DEBUG "FOUND ", (scalar @rows), " ROWS for $hostname\n";
+    my @rows;
+    foreach my $jr (@$inrows) {
+	print DEBUG "JOB $jr->{flight}.$jr->{job}\n";
+
+	my $endedrow = jobquery($endedq, $jr);
+	if (!$endedrow) {
+	    print DEBUG "no-finished\n";
+	    next;
+	}
+	print DEBUG join " ", map { $endedrow->{$_} } sort keys %$endedrow;
+	print DEBUG ".\n";
+
+	push @rows, { %$jr, %$endedrow };
+    }
 
     @rows = sort { $b->{finished} <=> $a->{finished} } @rows;
     $#rows = $limit-1 if @rows > $limit;
 
     my $alternate = 0;
     foreach my $jr (@rows) {
-	print DEBUG "JOB $jr->{flight}.$jr->{job}\n";
-
 	my $ir = jobquery($infoq, $jr);
 	my $ar = jobquery($allocdq, $jr);
 
