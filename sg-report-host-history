@@ -162,6 +162,8 @@ END
 	 LIMIT 1
 END
 
+    print DEBUG "QUERYING RUNVARS FOR $hostname\n";
+
     my @rows;
     $runvarq->execute($hostname);
 
@@ -252,7 +254,25 @@ $dbh_tests->do("SET LOCAL enable_seqscan=false");
 our %hosts;
 
 foreach my $host (@ARGV) {
-    $hosts{$host}++;
+    if ($host =~ m/^flight:/) {
+	my $flight=$'; #';
+	db_retry($dbh_tests, [qw(flights)], sub {
+	    our $hostsinflightq //= db_prepare(<<END);
+	        SELECT DISTINCT val
+		  FROM runvars
+		 WHERE flight=?
+		   AND (name = 'host' or name like '%_host')
+END
+            $hostsinflightq->execute($flight);
+	    while (my $row = $hostsinflightq->fetchrow_hashref()) {
+		$hosts{$row->{val}}++;
+	    }
+	});
+    } elsif ($host !~ m/:/) {
+	$hosts{$host}++;
+    } else {
+	die "$host ?";
+    }
 }
 
 foreach my $host (sort keys %hosts) {
