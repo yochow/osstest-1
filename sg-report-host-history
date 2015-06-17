@@ -249,7 +249,13 @@ $dbh_tests->do("SET LOCAL enable_seqscan=false");
 # of the runvars table, rather than walking backwards through the
 # flights until it has what we've told it is enough.
 
+our %hosts;
+
 foreach my $host (@ARGV) {
+    $hosts{$host}++;
+}
+
+foreach my $host (sort keys %hosts) {
     db_retry($dbh_tests, [qw(flights)], sub {
 	reporthost $host;
     });
