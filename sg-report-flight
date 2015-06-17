@@ -178,10 +178,23 @@ END
         return undef;
     }
 
+    my @flightsq_params;
+    my $flightsq_jobcond='TRUE';
+    if (defined $job) {
+	push @flightsq_params, $job;
+	$flightsq_jobcond = <<END;
+                  EXISTS (SELECT 1
+			    FROM jobs
+			   WHERE jobs.flight = flights.flight
+			     AND jobs.job = ?)
+END
+    }
+
     my $flightsq= <<END;
       SELECT * FROM (
         SELECT flight, blessing FROM flights
             WHERE $branches_cond_q
+              AND $flightsq_jobcond
               AND $blessingscond
             ORDER BY flight DESC
             LIMIT 1000
@@ -189,7 +202,7 @@ END
       ORDER BY blessing ASC, flight DESC
 END
     $flightsq= db_prepare($flightsq);
-    $flightsq->execute(@blessings);
+    $flightsq->execute(@flightsq_params, @blessings);
 
     my $buildflightsq= db_prepare(<<END);
         SELECT val FROM runvars
