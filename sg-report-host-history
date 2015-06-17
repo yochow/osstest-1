@@ -23,6 +23,7 @@ use DBI;
 use Osstest;
 use IO::Handle;
 use HTML::Entities;
+use POSIX;
 
 use Osstest::Executive qw(:DEFAULT :colours);
 
@@ -103,6 +104,50 @@ sub jobquery ($$) {
     return $q->fetchrow_hashref();
 }
 
+our %hosts;
+
+sub mainquery () {
+    our $valcond = join " OR ", map { "val = ?" } keys %hosts;
+    our @params = keys %hosts;
+
+    our $runvarq //= db_prepare(<<END);
+	SELECT flight, job, name, val
+	  FROM runvars
+	 WHERE $namecond
+	   AND ($valcond)
+	   AND $flightcond
+	 ORDER BY flight DESC
+	 LIMIT ($limit * 3 + 100) * ?
+END
+
+    push @params, scalar keys %hosts;
+
+    our $endedq //= db_prepare(<<END);
+	SELECT finished, testid, status AS laststepstatus
+	  FROM steps
+	 WHERE flight=? AND job=? AND finished IS NOT NULL
+	 ORDER BY finished DESC
+	 LIMIT 1
+END
+
+    $runvarq->execute(@params);
+
+    print DEBUG "FIRST PASS\n";
+    while (my $jr= $runvarq->fetchrow_hashref()) {
+	print DEBUG "JOB $jr->{flight}.$jr->{job} ";
+
+	my $endedrow = jobquery($endedq, $jr);
+	if (!$endedrow) {
+	    print DEBUG "no-finished\n";
+	    next;
+	}
+	print DEBUG join " ", map { $endedrow->{$_} } sort keys %$endedrow;
+	print DEBUG ".\n";
+
+	push @{ $hosts{$jr->{val}} }, { %$jr, %$endedrow };
+    }
+}
+
 sub reporthost ($) {
     my ($hostname) = @_;
 
@@ -128,24 +173,6 @@ sub reporthost ($) {
 
     print H "</tr>\n";
 
-    our $runvarq //= db_prepare(<<END);
-	SELECT flight, job, name, val
-	  FROM runvars
-	 WHERE $namecond
-	   AND val = ?
-	   AND $flightcond
-	 ORDER BY flight DESC
-	 LIMIT $limit * 2 + 100
-END
-
-    our $endedq //= db_prepare(<<END);
-	SELECT finished, testid, status AS laststepstatus
-	  FROM steps
-	 WHERE flight=? AND job=? AND finished IS NOT NULL
-	 ORDER BY finished DESC
-	 LIMIT 1
-END
-
     our $infoq //= db_prepare(<<END);
 	SELECT blessing, branch, intended, status
 	  FROM flights
@@ -162,27 +189,10 @@ END
 	 LIMIT 1
 END
 
-    print DEBUG "QUERYING RUNVARS FOR $hostname\n";
-
     my @rows;
-    $runvarq->execute($hostname);
+    @rows = @{ $hosts{$hostname} };
 
-    print DEBUG "FIRST PASS\n";
-    while (my $jr= $runvarq->fetchrow_hashref()) {
-	print DEBUG "JOB $jr->{flight}.$jr->{job} ";
-
-	my $endedrow = jobquery($endedq, $jr);
-	if (!$endedrow) {
-	    print DEBUG "no-finished\n";
-	    next;
-	}
-	print DEBUG join " ", map { $endedrow->{$_} } sort keys %$endedrow;
-	print DEBUG ".\n";
-
-	push @rows, { %$jr, %$endedrow };
-    }
-
-    print DEBUG "FOUND ", (scalar @rows), " ROWS\n";
+    print DEBUG "FOUND ", (scalar @rows), " ROWS for $hostname\n";
 
     @rows = sort { $b->{finished} <=> $a->{finished} } @rows;
     $#rows = $limit-1 if @rows > $limit;
@@ -251,8 +261,6 @@ $dbh_tests->do("SET LOCAL enable_seqscan=false");
 # of the runvars table, rather than walking backwards through the
 # flights until it has what we've told it is enough.
 
-our %hosts;
-
 foreach my $host (@ARGV) {
     if ($host =~ m/^flight:/) {
 	my $flight=$'; #';
@@ -265,15 +273,21 @@ foreach my $host (@ARGV) {
 END
             $hostsinflightq->execute($flight);
 	    while (my $row = $hostsinflightq->fetchrow_hashref()) {
-		$hosts{$row->{val}}++;
+		$hosts{$row->{val}} = [ ];
 	    }
 	});
     } elsif ($host !~ m/:/) {
-	$hosts{$host}++;
+	$hosts{$host} = [ ];
     } else {
 	die "$host ?";
     }
 }
+
+exit 0 unless %hosts;
+
+db_retry($dbh_tests, [qw(flights)], sub {
+    mainquery();
+});
 
 foreach my $host (sort keys %hosts) {
     db_retry($dbh_tests, [qw(flights)], sub {
