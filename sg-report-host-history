@@ -136,7 +136,7 @@ sub reporthost ($) {
 
     die if $hostname =~ m/[^-_.+0-9a-z]/;
 
-    my $html_file= "$htmlout/host.$hostname.html";
+    my $html_file= "$htmlout/$hostname.html";
     open H, "> $html_file.new" or die "$html_file $!";
 
     my $title= "host history $hostname\n";
