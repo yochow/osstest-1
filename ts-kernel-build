@@ -22,6 +22,18 @@ use Osstest::TestSupport;
 use Osstest::BuildSupport;
 
 tsreadconfig();
+
+our $reuse = 0;
+while (@ARGV and $ARGV[0] =~ m/^-/) {
+    $_= shift @ARGV;
+    last if m/^--$/;
+    if (m/^--reuse$/) {
+	$reuse = 1;
+    } else {
+	die "$_ ?";
+    }
+}
+
 selectbuildhost(\@ARGV);
 builddirsprops();
 
@@ -34,6 +46,8 @@ my $archparms = {
 sub enable_xen_config ();
 
 sub checkout () {
+    return if $reuse;
+
     prepbuilddirs();
 
     build_clone($ho, 'linux', $builddir, 'linux');
