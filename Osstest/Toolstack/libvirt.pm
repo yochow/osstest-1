@@ -24,11 +24,15 @@ use Osstest::TestSupport;
 
 sub new {
     my ($class, $ho, $methname,$asset) = @_;
+    my @extra_packages = qw(libavahi-client3);
+    my $nl_lib = "libnl-3-200";
+    $nl_lib = "libnl1" if ($ho->{Suite} =~ m/wheezy/);
+    push(@extra_packages, $nl_lib);
     return bless { Name => "libvirt",
 		   Host => $ho,
 		   NewDaemons => [qw(libvirtd)],
 		   Dom0MemFixed => 1,
-		   ExtraPackages => [qw(libnl1 libavahi-client3)],
+		   ExtraPackages => \@extra_packages,
     }, $class;
 }
 
