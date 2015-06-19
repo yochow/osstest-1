@@ -32,7 +32,6 @@ NetNameservers 10.80.248.2 10.80.16.28 10.80.16.67
 
 Timezone Europe/London
 
-Stash /home/xc_osstest/logs
 Images /home/xc_osstest/images
 Logs /home/xc_osstest/logs
 

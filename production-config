@@ -34,7 +34,6 @@ QueueDaemonHost osstest
 
 ExecutiveDbnamePat dbname=osstestdb;host=db
 
-Stash /home/logs/logs
 Images /home/logs/images
 Logs /home/logs/logs
 

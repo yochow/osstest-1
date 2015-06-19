@@ -60,7 +60,6 @@ our %c = qw(
     JobDB Standalone
     HostDB Static
 
-    Stash logs
     Images images
     Logs logs
     Results results
@@ -214,6 +213,8 @@ sub readglobalconfig () {
     $c{DefaultBranch} ||= 'xen-unstable';
 
     $c{DebianMirrorHost} ||= 'ftp.debian.org' if $c{DebianMirrorProxy};
+
+    $c{Stash} //= $c{Logs};
 }
 
 sub augmentconfigdefaults {
