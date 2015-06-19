@@ -541,6 +541,9 @@ setopt CONFIG_BLK_CPQ_CISS_DA m
 
 setopt CONFIG_FHANDLE y
 
+# Needed for efibootmgr
+setopt CONFIG_EFI_VARS y
+
 # APM XGENE
 setopt CONFIG_PHY_XGENE y
 setopt CONFIG_NET_XGENE y
