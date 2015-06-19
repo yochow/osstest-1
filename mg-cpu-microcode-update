@@ -3,6 +3,7 @@
 set -e
 
 . cri-getconfig
+. mgi-common
 
 # iucode_tool is in /usr/sbin, see #788459.
 export PATH="/usr/local/sbin:$PATH:/sbin:/usr/sbin"
@@ -41,7 +42,7 @@ INTEL_TGZ='http://downloadmirror.intel.com/24661/eng/microcode-20150121.tgz'
 mkdir intel-ucode
 
 echo >&2 "Fetching Intel ucode"
-curl -s $INTEL_TGZ > intel-ucode/microcode.tgz
+fetch $INTEL_TGZ > intel-ucode/microcode.tgz
 
 tar -C intel-ucode -xaf intel-ucode/microcode.tgz microcode.dat
 

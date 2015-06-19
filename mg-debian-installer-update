@@ -22,20 +22,14 @@
 set -e
 
 . cri-getconfig
+. mgi-common
 
 suite=$1
 arch=$2
 packages="$3"
 
-fail () { echo >&2 "$0: $1"; exit 1; }
-
 site=http://ftp.debian.org/debian/
 sbase=$site/dists/$suite
-
-fetch () {
-	# no-cache due to intercepting proxies messing things up.
-	curl -s -H 'Pragma: no-cache' $1
-}
 
 case ${suite}_${arch} in
     lenny_armhf|squeeze_armhf|lenny_arm64|squeeze_arm64|wheezy_arm64)
