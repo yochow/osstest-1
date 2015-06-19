@@ -59,8 +59,6 @@ case ${suite}_${arch} in
         ;;
 esac
 
-pfile=$sbase/non-free/binary-$arch/Packages.gz
-
 tftpdiversion=`getconfig TftpDiVersion`
 dstroot=`getconfig TftpPath`/`getconfig TftpDiBase`/
 date=`date +%Y-%m-%d`
@@ -86,16 +84,13 @@ if [ "x$dtbs" != "x" ] ; then
     gzip -9nf dtbs.tar
 fi
 
+pfile=$sbase/non-free/binary-$arch/Packages.gz
+
 fetch $pfile >Packages.gz
 
 for p in $packages; do
-        set +e
         echo >&2 "collecting $p"
-        pkgfile=`zcat Packages.gz | grep-dctrl -PX $p -nsFilename`
-        rc=$?
-        set -e
-        if [ $rc != 0 ]; then fail "package $p not found"; fi
-        fetch "$site/$pkgfile" >$p.deb
+        fetch_debian_package "$site" Packages.gz -PX $p >$p.deb
         rm -rf x
         dpkg-deb -x $p.deb x
         cd x; pax -x sv4cpio -s '%lib%/lib%' -w -M norm lib >../cpio; cd ..
@@ -118,30 +113,18 @@ if [ x$bpok != x ]; then
 
     if [ x$need_initramfs = xy ]; then
         # Newer kernel often needs a newer initramfs-tools. Make that
-        # available
+        # is available
         echo >&2 "collecting backports initramfs-tools"
-        pkgfile=`zcat Packages.gz \
-                 | grep-dctrl -PX initramfs-tools -nsFilename \
-                 | sort -n -r | head -n1`
-        rc=$?
-        set -e
-        if [ $rc -ne 0 ] || [ x$pkgfile = x ]; then
-	    fail "initramfs-tools package not found";
-	fi
-        fetch "$site/$pkgfile" >initramfs-tools.deb
+        fetch_debian_package $site Packages.gz -PX initramfs-tools \
+                      >initramfs-tools.deb
     fi
 
     set +e
     echo >&2 "collecting backports kernel"
     # Be careful to pickup the actual kernel package from the 'linux'
     # source and not a meta package from 'linux-latest'
-    pkgfile=`zcat Packages.gz | grep-dctrl -S linux \
-             | grep-dctrl -Pe ^linux-image-.*-${bpok}$ -nsFilename \
-             | sort -n -r | head -n1`
-    rc=$?
-    set -e
-    if [ $rc != 0 ]; then fail "backports kernel package not found"; fi
-    fetch "$site/$pkgfile" >backports.deb
+    fetch_debian_package $site Packages.gz -Pe ^linux-image-.*-${bpok}$ \
+                  >backports.deb
     dpkg-deb -x backports.deb x
     cp x/boot/vmlinuz-* linux.backports
     # The full set of modules is pretty large and not that

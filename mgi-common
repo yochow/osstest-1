@@ -24,3 +24,22 @@ fetch () {
 	# no-cache due to intercepting proxies messing things up.
 	curl -s -H 'Pragma: no-cache' $1
 }
+
+# Arguments: <Base URL> <Packages.gz> <grep-dctrl arguments>
+#
+# nb: -nsFilename argument to grep-dctrl is supplied here
+fetch_debian_package () {
+    local site=$1 ; shift 1
+    local pgz=$1 ; shift 1
+
+    set +e
+    pkgfile=`zcat $pgz | grep-dctrl $@ -nsFilename | sort -n -r | head -n1`
+    rc=$?
+    set -e
+
+    if [ $rc -ne 0 ] || [ x$pkgfile = x ]; then
+	fail "package matching $@ not found";
+    fi
+
+    fetch "$site/$pkgfile"
+}
