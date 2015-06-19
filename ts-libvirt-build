@@ -56,8 +56,8 @@ sub config() {
     my $gnulib = submodule_find($submodules, "gnulib");
     target_cmd_build($ho, 3600, $builddir, <<END);
         cd libvirt
-        CFLAGS="-I$xenprefix/include/" \\
-        LDFLAGS="-L$xenprefix/lib/ -Wl,-rpath-link=$xenprefix/lib/" \\
+        CFLAGS="-g -I$xenprefix/include/" \\
+        LDFLAGS="-g -L$xenprefix/lib/ -Wl,-rpath-link=$xenprefix/lib/" \\
         GNULIB_SRCDIR=$builddir/libvirt/$gnulib->{Path} \\
             ./autogen.sh --no-git \\
                          --with-libxl --without-xen --without-xenapi --without-selinux \\
