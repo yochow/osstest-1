@@ -61,8 +61,6 @@ our %c = qw(
     HostDB Static
 
     Images images
-    Logs logs
-    Results results
 
     DebianSuite wheezy
     DebianMirrorSubpath debian
@@ -213,6 +211,13 @@ sub readglobalconfig () {
     $c{DefaultBranch} ||= 'xen-unstable';
 
     $c{DebianMirrorHost} ||= 'ftp.debian.org' if $c{DebianMirrorProxy};
+
+    my $pubbaseprefix = $c{PubBaseDir} ? "$c{PubBaseDir}/" : "";
+    foreach my $l (qw(logs results)) {
+	my $u = ucfirst $l;
+	next if defined $c{$u};
+	$c{"${u}"} = "$pubbaseprefix$l";
+    }
 
     $c{Stash} //= $c{Logs};
 }

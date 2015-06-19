@@ -33,9 +33,7 @@ NetNameservers 10.80.248.2 10.80.16.28 10.80.16.67
 Timezone Europe/London
 
 Images /home/xc_osstest/images
-Logs /home/xc_osstest/logs
 
-Results /home/xc_osstest/results
 PubBaseDir /home/xc_osstest
 
 OverlayLocal /export/home/osstest/overlay-local

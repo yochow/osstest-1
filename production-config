@@ -35,9 +35,7 @@ QueueDaemonHost osstest
 ExecutiveDbnamePat dbname=osstestdb;host=db
 
 Images /home/logs/images
-Logs /home/logs/logs
 
-Results /home/logs/results
 PubBaseDir /home/logs
 
 OverlayLocal /home/osstest/overlay-local
