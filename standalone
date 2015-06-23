@@ -142,6 +142,12 @@ need_host() {
     fi
 }
 
+check_repos() {
+    # We don't care about the answer, just the error checking and
+    # logging to stderr.
+    OSSTEST_CONFIG=$config getrepos >/dev/null
+}
+
 ensure_logs() {
     if [ ! -d "logs" ] ; then
 	mkdir "logs"
@@ -171,6 +177,7 @@ case $op in
 	;;
 
     make-flight)
+        check_repos
         need_flight
 
         if [ $# -lt 1 ] ; then

@@ -422,6 +422,11 @@ Stash
 Images
 Logs
 
+Repos              Full path to a temporary directory where repositories
+                   can be cloned. This is needed for anything which uses
+                   cr-daily-branch, including "./standalone make-flight"
+                   and "standalone-generate-dump-flight-runvars".
+
 DebianSuite
 GuestDebianSuite   defaults to DebianSuite
 

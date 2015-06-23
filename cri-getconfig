@@ -24,3 +24,18 @@ getconfig () {
                 print $c{"'$1'"} or die $!;
         '
 }
+
+getrepos() {
+	local repos=`getconfig Repos`
+	if [ -z "$repos" ] ; then
+		echo "Repos must be configured in $config" >&2
+		exit 1
+	fi
+	if [ ! -d "$repos" ] ; then
+		# Is likely an absolute path, so don't create automatically,
+		# just in case...
+		echo "Repos $repos does not exist" >&2
+		exit 1
+	fi
+	echo $repos
+}
