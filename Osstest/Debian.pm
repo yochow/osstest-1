@@ -1018,6 +1018,31 @@ END
 
     preseed_microcode($ho,$sfx);
 
+    if (get_host_property($ho, "firmware") eq "uefi") {
+	die unless $ho->{Suite} =~ m/jessie/;
+	# Prevent grub-install from making a new Debian boot entry, so
+	# we always reboot from PXE. Debian bug #789798 proposes a
+	# properly preseedable solution to this.
+	preseed_hook_installscript($ho, $sfx,
+		'/usr/lib/base-installer.d/',
+		'osstest-disable-grub-nvram', <<'END');
+#!/bin/sh
+set -ex
+
+logger -t osstest-disable-grub-nvram "Adding our grub-install wrapper"
+
+t=/usr/sbin/grub-install
+
+in-target dpkg-divert --divert $t.osstest --rename --add $t
+
+cat >/target/$t <<EOF
+#!/bin/sh
+exec $t.osstest --no-nvram \$@
+EOF
+chmod +x /target/$t
+END
+    }
+
     $preseed_file .= preseed_hook_cmds();
 
     if ($ho->{Flags}{'no-di-kernel'}) {
