@@ -67,6 +67,7 @@ esac
 
 pfile=$sbase/non-free/binary-$arch/Packages.gz
 
+tftpdiversion=`getconfig TftpDiVersion`
 dstroot=`getconfig TftpPath`/`getconfig TftpDiBase`/
 date=`date +%Y-%m-%d`
 dst=$arch/$date-$suite
@@ -192,10 +193,12 @@ done
 
 rm Packages.gz
 
-#cd $dstroot/$arch
-#rm -rf current.new
-#ln -s $date current.new
-#mv -Tf current.new current
+if [ x$tftpdiversion = xcurrent ]; then
+    cd $dstroot/$arch
+    rm -rf current-$suite.new
+    ln -s $date-$suite current-$suite.new
+    mv -Tf current-$suite.new current-$suite
+fi
 
 echo "TftpDiVersion $date"
 echo >&2 "downloaded $dstroot/$dst"
