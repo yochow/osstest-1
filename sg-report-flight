@@ -965,7 +965,7 @@ END
 
     my $cell_html = sub {
 	my ($ei, $core_only) = @_;
-	# => ($h, $priority);
+	# => ($h, $priority, $ch);
 	my $s= $ei->{Step};
 	my $sum_core= $ei->{SummaryCore};
 	$sum_core= $ei->{Summary} if !defined $sum_core;
@@ -998,7 +998,9 @@ END
     my @worstrow1;
     my @worstrow2;
     foreach my $col (@cols) {
-	my @worst=(' bgcolor="#444444">',0);
+	# @worst = ( $cell_html->(stuff), $failing_stepid_html ) =
+	# ($step_cell_html, $priority, $colour_attr, $failing_stepid_html)
+	my @worst=('',0,'bgcolor="#444444"','');
 	foreach my $rowix (0..$#{ $fi->{GridRows} }) {
             my $ei= $fi->{GridGrid}{$col}[$rowix];
 	    next unless $ei;
