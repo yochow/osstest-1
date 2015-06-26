@@ -153,10 +153,19 @@ sub inventory_domains () {
     }
 }
 
+sub inventory_losetup () {
+    my $loops= target_cmd_output_root($ho, "losetup -a");
+    foreach (split /\n/, $loops) {
+	m,(/dev/loop\d+): , or die "$_ ?";
+	item('loop-device', $1, $_, 1);
+    }
+}
+
 sub inventory () {
     inventory_domains();
     inventory_processes();
     inventory_xenstore();
+    inventory_losetup();
     inventory_files('/tmp /var/run /var/tmp /var/lib/xen /var/core');
 }
 
