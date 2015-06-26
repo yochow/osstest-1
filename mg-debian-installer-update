@@ -68,8 +68,8 @@ esac
 pfile=$sbase/non-free/binary-$arch/Packages.gz
 
 dstroot=`getconfig TftpPath`/`getconfig TftpDiBase`/
-date=`date +%Y-%m-%d`-$suite
-dst=$arch/$date
+date=`date +%Y-%m-%d`
+dst=$arch/$date-$suite
 
 cd $dstroot
 mkdir -p $dst
@@ -197,5 +197,5 @@ rm Packages.gz
 #ln -s $date current.new
 #mv -Tf current.new current
 
-echo $date
-echo >&2 "downloaded $dstroot/$arch/$date"
+echo "TftpDiVersion $date"
+echo >&2 "downloaded $dstroot/$dst"
