@@ -275,7 +275,7 @@ do_hvm_rhel6_tests () {
 }
 
 do_sedf_tests () {
-  if [ $xenarch != $dom0arch ]; then
+  if [ $xenarch != $dom0arch -o x$test_sedf != xy ]; then
     return
   fi
 
@@ -297,6 +297,17 @@ do_credit2_tests () {
   job_create_test test-$xenarch$kern-$dom0arch-xl-credit2             \
        test-debian xl $xenarch $dom0arch                              \
             guests_vcpus=4 xen_boot_append='sched=credit2'            \
+            $debian_runvars all_hostflags=$most_hostflags
+}
+
+do_rtds_tests () {
+  if [ $xenarch != $dom0arch -o x$test_rtds != xy ]; then
+    return
+  fi
+
+  job_create_test test-$xenarch$kern-$dom0arch-xl-rtds                \
+       test-debian xl $xenarch $dom0arch                              \
+            guests_vcpus=4 xen_boot_append='sched=rtds'               \
             $debian_runvars all_hostflags=$most_hostflags
 }
 
@@ -362,7 +373,21 @@ test_matrix_do_one () {
   do_pv_debian_tests
 
   do_multivcpu_tests
+
+  # RTDS came in 4.4, while SEDF is going away in 4.6
+  case "$xenbranch" in
+  xen-3.*-testing) test_sedf=y; test_rtds=n ;;
+  xen-4.0-testing) test_sedf=y; test_rtds=n ;;
+  xen-4.1-testing) test_sedf=y; test_rtds=n ;;
+  xen-4.2-testing) test_sedf=y; test_rtds=n ;;
+  xen-4.3-testing) test_sedf=y; test_rtds=n ;;
+  xen-4.4-testing) test_sedf=y; test_rtds=n ;;
+  xen-4.5-testing) test_sedf=y; test_rtds=y ;;
+  *)               test_sedf=n; test_rtds=y ;;
+  esac
+
   do_sedf_tests
+  do_rtds_tests
   do_credit2_tests
 
   # No further arm tests at the moment
