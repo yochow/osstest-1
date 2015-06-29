@@ -499,6 +499,46 @@ sub printversions ($) {
     }
 }
 
+sub print_pushgate_summary () {
+    my @thistree = sort keys %{ $specver{'this'} };
+    my @thattree = sort keys %{ $specver{'that'} };
+    if (!(@thistree==1 && @thattree==1 && $thistree[0] eq $thattree[0])) {
+	print DEBUG "NO PUSHGATE SUMMARY (@thistree) != (@thattree)";
+	return
+    }
+    my $tree = $thistree[0];
+
+    my $info = report_find_push_age_info(
+	[ $blessings[0] ], $maxflight, [ $branch ],
+	$tree, $specver{that}{$tree}, $specver{this}{$tree}
+	);
+    print "\n";
+    my $now = time;
+    my $pinfo = sub {
+	my ($what, $flightkey, $countkey) = @_;
+	my $f = $info->{$flightkey};
+	my $count = $info->{$countkey};
+	printf "%-20s", $what;
+	if ($f) {
+	    printf(" %6d  %s %4d days",
+		   $f->{flight},
+		   show_abs_time($f->{started}),
+		   floor(($now - $f->{started}) / 86400));
+	} else {
+	    printf(" %34s     ","(not found)");
+	}
+	if (defined $count) {
+	    printf(" %4d attempts", $count);
+	}
+	print "\n";
+    };
+    $pinfo->('Last test of basis', "Basis",'');
+    $pinfo->('Failing since', "FirstAfterBasis","CountAfterBasis")
+        unless ($info->{FirstAfterBasis}{flight} // 'NONE')
+	    eq ($info->{FirstTip}{flight}        // 'NONE');
+    $pinfo->('Testing same since', "FirstTip","CountTip");
+}
+
 sub printout {
     my ($r, @failures) = @_;
     print <<END or die $!;
@@ -578,6 +618,8 @@ END
         print "baseline version:\n" or die $!;
         printversions('that');
     }
+
+    print_pushgate_summary();
 
     if (@includefiles) {
         print "\n","-"x60, "\n" or die $!;
