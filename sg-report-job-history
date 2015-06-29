@@ -28,7 +28,7 @@ use Osstest::TestSupport;
 use Osstest::Executive;
 
 our (@blessings,@branches);
-our $limit= 500;
+our $limit= 100;
 our $htmlout;
 
 open DEBUG, ">/dev/null";
@@ -123,7 +123,6 @@ sub processjobbranch ($$) {
         $cond .= " AND branch = ?";
         push @params, $bra;
     }
-    my $limit= 100;
     my $offset= $limit-1;
 
     my $fromstuff= <<END;
