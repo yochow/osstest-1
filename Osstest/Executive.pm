@@ -205,7 +205,10 @@ sub report_run_getinfo ($) {
 
     my $single = sub {
 	my ($summary, $colour) = @_;
-	return { Summary => $summary, Colour => $colour };
+	return {
+	    Summary => $summary,
+	    ColourAttr => "bgcolor=\"$colour\"",
+	};
     };
 
     if ($status eq 'pass') {

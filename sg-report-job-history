@@ -226,7 +226,6 @@ END
         my @last_revs;
         my @alt_revs= ('0')x $#rev_grid_cols;
         foreach my $r (@test_rows) {
-            my $colour= "bgcolor=\"$r->{Colour}\"";
             my $altcolour= report_altcolour($alternate);
             print H "<tr $altcolour>";
 	    my $started = $r->{Flight}{started};
@@ -238,7 +237,7 @@ END
             print H "<td><a href=\"$url\">$flt</a></td>\n";
             print H "<td>".encode_entities($r->{Flight}{branch})."</td>\n";
             $url= "$c{ReportHtmlPubBaseUrl}/$flt/".encode_entities($j)."/";
-            print H "<td $colour><a href=\"$url\">".
+            print H "<td $r->{ColourAttr}><a href=\"$url\">".
                 encode_entities($r->{Summary})."</a></td>\n";
             my $lastrev;
             my $hosts = join ", ", map { $_ // "-" } @{ $r->{Hosts} };

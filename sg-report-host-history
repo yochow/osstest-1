@@ -248,7 +248,7 @@ END
 	print H "<td><a href=\"$url\">$jr->{job}</td>\n";
 
 	my $ri = report_run_getinfo({ %$jr, %$ir });
-	print H "<td bgcolor=\"$ri->{Colour}\">$ri->{Summary}</td>\n";
+	print H "<td $ri->{ColourAttr}>$ri->{Summary}</td>\n";
 
 	print H "</tr>\n\n";
 	$alternate ^= 1;
