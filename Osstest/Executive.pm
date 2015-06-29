@@ -202,8 +202,14 @@ sub report_run_getinfo ($) {
     #    flight job status
     my ($f) = @_;
     my $status= $f->{status};
+
+    my $single = sub {
+	my ($summary, $colour) = @_;
+	return { Summary => $summary, Colour => $colour };
+    };
+
     if ($status eq 'pass') {
-        return { Summary => "($status)", Colour => $green };
+        return $single->("($status)", $green);
     } elsif ($status eq 'fail' or $status eq 'broken') {
 	my $failcolour = $status eq 'fail' ? $red : $yellow;
 	our $failstepq //= db_prepare(<<END);
@@ -216,19 +222,18 @@ END
         $failstepq->execute($f->{flight}, $f->{job});
         my $fs= $failstepq->fetchrow_hashref();
         if (!defined $fs) {
-            return { Summary => "(unknown)", Colour => $yellow };
+            return $single->("(unknown)", $yellow);
         } elsif ($fs->{status} eq 'fail') {
-            return { Summary => "$fs->{testid}", Colour => $failcolour };
+            return $single->("$fs->{testid}", $failcolour);
         } elsif ($fs->{status} eq 'broken') {
-            return { Summary => "$fs->{testid} broken", Colour => $yellow };
+            return $single->("$fs->{testid} broken", $yellow);
         } else {
-            return { Summary => "$fs->{testid} $fs->{status}",
-                     Colour => $failcolour };
+            return $single->("$fs->{testid} $fs->{status}", $failcolour);
         }
     } elsif ($status eq 'blocked') {
-        return { Summary => "blocked", Colour => $purple },
+        return $single->("blocked", $purple),
     } else {
-        return { Summary => "($f->{status})", Colour => $yellow };
+        return $single->("($f->{status})", $yellow);
     }
 }
 
