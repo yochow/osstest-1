@@ -116,10 +116,6 @@ info_linux_tree () {
 		: ${TREE_LINUX_THIS:=git://kernel.ubuntu.com/ubuntu/linux.git}
 		: ${TAG_LINUX_THIS:=$1.y}
 		;;
-	linux-3.*)
-		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
-		: ${TAG_LINUX_THIS:=$1.y}
-		;;
 	linux-mingo-tip-master)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/tip/tip.git}
 		: ${GITFORCEFLAG_TREE_LINUX_THIS:=-f}
@@ -128,6 +124,10 @@ info_linux_tree () {
 	linux-next)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/next/linux-next.git}
 		: ${GITFORCEFLAG_TREE_LINUX_THIS:=-f}
+		;;
+	linux-[3-9].[0-9]*)
+		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
+		: ${TAG_LINUX_THIS:=$1.y}
 		;;
 
 	*)
