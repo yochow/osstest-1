@@ -47,7 +47,7 @@ BEGIN {
     @EXPORT      = qw(get_harness_rev grabrepolock_reexec
                       findtask @all_lock_tables
                       report_run_getinfo report_altcolour
-                      report_blessingscond
+                      report_blessingscond report_find_push_age_info
                       tcpconnect_queuedaemon plan_search
                       alloc_resources alloc_resources_rollback_begin_work
                       resource_check_allocated resource_shared_mark_ready
@@ -269,6 +269,146 @@ sub report_blessingscond ($$) {
 	$blessingscond= "( flight <= $maxflight AND $blessingscond )";
     }
     return $blessingscond;
+}
+
+sub report__find_test ($$$$$$$$) {
+    my ($blessings, $maxflight, $branches, $tree,
+	$revision, $selection, $extracond, $sortlimit) = @_;
+    # Reports information about a flight which tried to test $revision
+    # of $tree.  ($revision may be undef);
+
+    my @params;
+
+    my $querytext = <<END;
+        SELECT $selection
+	 FROM flights f
+	WHERE
+END
+
+    if (defined $revision) {
+	if ($tree eq 'osstest') {
+	    $querytext .= <<END;
+		EXISTS (
+		   SELECT 1
+		    FROM flights_harness_touched t
+		   WHERE t.harness=?
+		     AND t.flight=f.flight
+		 )
+END
+            push @params, $revision;
+	} else {
+	    $querytext .= <<END;
+		EXISTS (
+		   SELECT 1
+		    FROM runvars r
+		   WHERE name=?
+		     AND val=?
+		     AND r.flight=f.flight
+		 )
+END
+            push @params, "revision_$tree", $revision;
+        }
+    } else {
+	$querytext .= <<END;
+	    TRUE
+END
+    }
+
+    my $blessingscond = report_blessingscond($blessings,$maxflight);
+    $querytext .= <<END;
+	  AND $blessingscond
+END
+
+    my $branchescond = join ' OR ', map { "branch=?" } @$branches;
+    $querytext .= <<END;
+	  AND ($branchescond)
+END
+    push @params, @$branches;
+
+    $querytext .= $extracond;
+    $querytext .= $sortlimit;
+
+    my $query = db_prepare($querytext);
+    $query->execute(@params);
+
+    my $row = $query->fetchrow_hashref();
+    $query->finish();
+    return $row;
+}
+
+sub report_find_push_age_info ($$$$$$) {
+    my ($blessings, $maxflight, $branches, $tree,
+	$basis_revision, $tip_revision) = @_;
+    # Reports information about tests of $tree.
+    # (Subject to @$blessings, $maxflight, @$branches)
+    # Returns {
+    #    Basis           =>  row for last test of basis
+    #    FirstAfterBasis =>  row for first test after basis
+    #    FirstTip        =>  row for first test of tip (after Basis)
+    #    LastTip         =>  row for last test of tip (after Basis)
+    #    CountAfterBasis =>  count of runs strictly after Basis
+    #    CountTip        =>  count of runs on Tip
+    #  }
+    # where
+    #  row for ... is from fetchrow_hashref of SELECT * FROM flights
+    #                 (or undef if no such thing exists)
+    #  Count       is a scalar integer.
+    #
+    # Only flights which specified the exact revision specified
+    # are considered (not ones which specified a tag, for example).
+
+    my $findtest = sub {
+	my ($revision,$selection,$extracond,$sortlimit) = @_;
+	report__find_test($blessings,$maxflight,$branches,$tree,
+			 $revision,$selection,$extracond,$sortlimit);
+    };
+
+    my $findcount = sub {
+	my ($revision,$extracond,$sortlimit) = @_;
+	my $row = $findtest->($revision, 'COUNT(*) AS count',
+			      $extracond, $sortlimit);
+	return $row->{count} // die "$revision $extracond $sortlimit ?";
+    };
+
+    my $out = { };
+    $out->{Basis} = $findtest->($basis_revision, '*', '', <<END);
+        ORDER BY flight DESC
+        LIMIT 1
+END
+
+    my $afterbasis = $out->{Basis} ? <<END : '';
+        AND flight > $out->{Basis}{flight}
+END
+
+    $out->{FirstAfterBasis} = $findtest->(undef, '*', $afterbasis, <<END)
+        ORDER BY flight ASC
+	LIMIT 1
+END
+        if $afterbasis;
+
+    $out->{FirstTip} = $findtest->($tip_revision, '*', $afterbasis, <<END);
+        ORDER BY flight ASC
+        LIMIT 1
+END
+
+    my $likelytip = $out->{FirstTip} ? <<END : '';
+        AND flight >= $out->{FirstTip}{flight}
+END
+
+    $out->{LastTip} = $findtest->($tip_revision, '*', $likelytip, <<END)
+        ORDER BY flight DESC
+        LIMIT 1
+END
+        if $out->{FirstTip};
+
+    $out->{CountAfterBasis} = $findcount->(undef, $afterbasis, '')
+        if $afterbasis;
+
+    $out->{CountTip} =
+	$out->{FirstTip} ? $findcount->($tip_revision, $likelytip, '')
+	: 0;
+
+    return $out;
 }
 
 #---------- host (and other resource) allocation ----------
