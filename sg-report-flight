@@ -127,11 +127,7 @@ our $cw= 79;
 our $tl= 20;
 our $htmlleaf= "info.html";
 
-our $blessingscond= '('.join(' OR ', map { "blessing=?" } @blessings).')';
-
-if (defined $maxflight) {
-    $blessingscond= "( flight <= $maxflight AND $blessingscond )";
-}
+our $blessingscond= report_blessingscond(\@blessings, $maxflight);
 
 sub displayflightnum ($) {
     my ($flight) = @_;
@@ -202,7 +198,7 @@ END
       ORDER BY blessing ASC, flight DESC
 END
     $flightsq= db_prepare($flightsq);
-    $flightsq->execute(@flightsq_params, @blessings);
+    $flightsq->execute(@flightsq_params);
 
     my $buildflightsq= db_prepare(<<END);
         SELECT val FROM runvars
@@ -691,7 +687,7 @@ END
             next;
         }
 
-        $anypassq->execute($j->{job}, $s->{testid}, @blessings);
+        $anypassq->execute($j->{job}, $s->{testid});
         if (!$anypassq->fetchrow_hashref()) {
             print MRO "never-passed $j->{job} $s->{testid} $st\n";
             print DEBUG " never passed\n";

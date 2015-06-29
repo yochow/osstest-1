@@ -47,6 +47,7 @@ BEGIN {
     @EXPORT      = qw(get_harness_rev grabrepolock_reexec
                       findtask @all_lock_tables
                       report_run_getinfo report_altcolour
+                      report_blessingscond
                       tcpconnect_queuedaemon plan_search
                       alloc_resources alloc_resources_rollback_begin_work
                       resource_check_allocated resource_shared_mark_ready
@@ -244,6 +245,18 @@ END
 sub report_altcolour ($) {
     my ($bool) = @_;
     return "bgcolor=\"#".(qw(d0d0d0 ffffff))[$bool]."\"";
+}
+
+sub report_blessingscond ($$) {
+    my ($blessings, $maxflight) = @_;
+    my $blessingscond= '('.join(' OR ', map {
+	die if m/[^-_.0-9a-z]/;
+	"blessing='$_'"
+				} @$blessings).')';
+    if (defined $maxflight) {
+	$blessingscond= "( flight <= $maxflight AND $blessingscond )";
+    }
+    return $blessingscond;
 }
 
 #---------- host (and other resource) allocation ----------
