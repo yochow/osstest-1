@@ -30,6 +30,7 @@ use Osstest::Executive;
 our (@blessings,@branches);
 our $limit= 100;
 our $htmlout;
+our $maxflight;
 
 open DEBUG, ">/dev/null";
 
@@ -40,6 +41,8 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
         $$1= $2;
     } elsif (m/^--(limit)\=([1-9]\d*)$/) {
         $$1= $2;
+    } elsif (m/^--max-flight\=([1-9]\d*)$/) {
+	$maxflight= $1;
     } elsif (m/^--html-dir=(.*)$/) {
         $htmlout= $1;
     } elsif (m/^--branches?=(.*)$/) {
@@ -116,9 +119,9 @@ sub processjobbranch ($$) {
     my @rev_grid_cols;
     my @test_rows;
 
-    my $blessingscond= '('.join(' OR ', map { "blessing=?" } @blessings).')';
+    my $blessingscond= report_blessingscond(\@blessings, $maxflight);
     my $cond = "job = ? AND $blessingscond";
-    my (@params) = ($j, @blessings);
+    my (@params) = ($j);
     if (defined $bra) {
         $cond .= " AND branch = ?";
         push @params, $bra;
