@@ -222,19 +222,31 @@ sub report_run_getinfo ($) {
 	     WHERE flight=? AND job=?
 	       AND status!='pass'
 	  ORDER BY stepno
-	     LIMIT 1
 END
         $failstepq->execute($f->{flight}, $f->{job});
-        my $fs= $failstepq->fetchrow_hashref();
-        if (!defined $fs) {
-            return $single->("(unknown)", $yellow);
-        } elsif ($fs->{status} eq 'fail') {
-            return $single->("$fs->{testid}", $failcolour);
-        } elsif ($fs->{status} eq 'broken') {
-            return $single->("$fs->{testid} broken", $yellow);
-        } else {
-            return $single->("$fs->{testid} $fs->{status}", $failcolour);
+	my @content;
+	while (my $fs = $failstepq->fetchrow_hashref()) {
+	    my $summary = $fs->{testid};
+	    my $colour;
+	    if ($fs->{status} eq 'fail') {
+		$colour = $red;
+	    } elsif ($fs->{status} eq 'broken') {
+		$summary .= " broken";
+		$colour = $yellow;
+	    } else {
+		$summary .= " $fs->{status}";
+		$colour = $failcolour;
+	    }
+	    push @content, "<span style=\"background-color: $colour\">".
+		encode_entities($summary)."</span>";
         }
+	if (!@content) {
+	    return $single->("(unknown)", $yellow);
+	}
+	return {
+	    Content => (join " | ", @content),
+	    ColourAttr => "bgcolor=\"$failcolour\"",
+	};
     } elsif ($status eq 'blocked') {
         return $single->("blocked", $purple),
     } else {
