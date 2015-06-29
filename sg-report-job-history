@@ -238,7 +238,7 @@ END
             print H "<td>".encode_entities($r->{Flight}{branch})."</td>\n";
             $url= "$c{ReportHtmlPubBaseUrl}/$flt/".encode_entities($j)."/";
             print H "<td $r->{ColourAttr}><a href=\"$url\">".
-                encode_entities($r->{Summary})."</a></td>\n";
+                $r->{Content}."</a></td>\n";
             my $lastrev;
             my $hosts = join ", ", map { $_ // "-" } @{ $r->{Hosts} };
             print H "<td>".encode_entities($hosts)."</td>\n";

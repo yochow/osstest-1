@@ -32,6 +32,7 @@ use IO::Handle;
 use JSON;
 use File::Basename;
 use IO::Socket::INET;
+use HTML::Entities;
 #use Data::Dumper;
 
 use Osstest;
@@ -206,7 +207,7 @@ sub report_run_getinfo ($) {
     my $single = sub {
 	my ($summary, $colour) = @_;
 	return {
-	    Summary => $summary,
+	    Content => encode_entities($summary),
 	    ColourAttr => "bgcolor=\"$colour\"",
 	};
     };
