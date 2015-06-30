@@ -112,6 +112,27 @@ Email information headers
 Test report emails sent by osstest have some extra information in the
 email headers, where applicable:
 
+X-Osstest-Failures:
+    osstest:test-armhf-armhf-xl-midway:guest-start:fail:heisenbug
+    osstest:test-amd64-amd64-xl-rtds:xen-boot:fail:blocked
+    ^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^ ^^^^ ^^^^^^^
+    branch    job                       |      |    |
+			      step testid      |    analysis
+				               |
+				     step status
+
+The `analysis' field may be:
+
+   regression   "Tests which did not succeed and are blocking"
+   heisenbug    "Tests which are failing intermittently (not blocking)"
+   allowable    "Regressions which are regarded as allowable"
+   nonblocking  "Tests which did not succeed, but are not blocking"
+   fail         "Tests which did not succeed" (non-regression-test flights)
+
+When using email filtering, you should filter on the relevant From:
+line as well as X-Osstest-Failures, as there is nothing in
+X-Osstest-Failures identifying the instance.
+
 X-Osstest-Versions-This:
     osstest=cc8b79ce9586d2b0fbddbd4260e876eab1d408d4
 X-Osstest-Versions-That:

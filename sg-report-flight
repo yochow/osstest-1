@@ -587,18 +587,21 @@ END
         my $heisenflightp= $failv->{Flight} != $specflight;
         print DEBUG "PRINTOUT ",Dumper($failv);
         if (!keys %{ $specver{that} }) {
-            $cat= "A Tests which did not succeed,\n".
+            $cat= "A fail ".
+"Tests which did not succeed,\n".
 "including tests which could not be run:";
         } elsif ($failv->{Blocker}) {
-            $cat= "A Tests which did not succeed and are blocking,\n".
+            $cat= "A regression ".
+"Tests which did not succeed and are blocking,\n".
 "including tests which could not be run:";
         } elsif ($failv->{Heisen}) {
-            $cat= "K Tests which are failing intermittently (not blocking):";
+            $cat= "K heisenbug ".
+"Tests which are failing intermittently (not blocking):";
         } elsif ($failv->{Allow}) {
-            $cat= "M ".
+            $cat= "M allowable ".
 "Regressions which are regarded as allowable (not blocking):";
         } else {
-            $cat= "P ".
+            $cat= "P nonblocking ".
 "Tests which did not succeed, but are not blocking:";
         }
         my $heisencat= \$heisenreported_jobstep{"$j->{job} $s->{testid}"};
@@ -614,13 +617,22 @@ END
         $text =~ s/ *$//;
         while (length($text) > $cw) { last unless $text =~ s/(.* ) /$1/; }
 
-	push @{ $notsucceeds{$cat} }, [ "$s->{status} $xstatus", $text ];
+	$cat =~ m/\w+ (\S+) / or die "$cat ?";
+	my $blockstatus = $1;
+
+	push @{ $notsucceeds{$cat} }, [
+	    "$s->{status} $xstatus",
+	    $text,
+	    "$branch:$j->{job}:$s->{testid}:$s->{status}:$blockstatus",
+	];
     }
+    headerprint "X-Osstest-Failures:\n" if %notsucceeds;
     foreach my $cat (sort keys %notsucceeds) {
-        $cat =~ m/^\w+ / or die;
+        $cat =~ m/^\w+ \S+ / or die;
         bodyprint "\n$'\n";
 	foreach (sort { $a->[0] cmp $b->[0] } @{ $notsucceeds{$cat} }) {
 	    bodyprint $_->[1], "\n";
+	    headerprint "    $_->[2]\n";
 	}
     }
 
