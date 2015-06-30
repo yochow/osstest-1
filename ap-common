@@ -101,10 +101,6 @@ info_linux_tree () {
 	linux-linus)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/torvalds/linux-2.6.git}
 		;;
-	linux-3.0)
-		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/stable/linux-stable.git}
-		: ${TAG_LINUX_THIS:=linux-3.0.y}
-		;;
 	linux-arm-xen)
 		: ${TREE_LINUX_THIS:=${KERNEL_SCM}/sstabellini/xen.git}
 		: ${TREE_LINUX_ARM_THIS:=${KERNEL_SCM}/sstabellini/xen.git}
