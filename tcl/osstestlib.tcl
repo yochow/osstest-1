@@ -75,6 +75,13 @@ proc lshift {listvar} {
     return $head
 }
 
+proc lunappend {listvar} {
+    upvar 1 $listvar list
+    set tail [lindex $list end]
+    set list [lrange $list 0 end-1]
+    return $tail
+}
+
 proc var-or-default {varname {default {}}} {
     upvar 1 $varname var
     if {[info exists var]} { return $var }
