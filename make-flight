@@ -274,21 +274,6 @@ do_hvm_rhel6_tests () {
   done
 }
 
-do_sedf_tests () {
-  if [ $xenarch != $dom0arch -o x$test_sedf != xy ]; then
-    return
-  fi
-
-  for pin in '' -pin; do
-    job_create_test test-$xenarch$kern-$dom0arch-xl-sedf$pin  \
-       test-debian xl $xenarch $dom0arch                      \
-            guests_vcpus=4                                    \
-            xen_boot_append="sched=sedf loglvl=all ${pin:+dom0_vcpus_pin}" \
-            linux_boot_append='loglevel=9 debug'              \
-            $debian_runvars all_hostflags=$most_hostflags
-  done
-}
-
 do_credit2_tests () {
   if [ $xenarch != $dom0arch ]; then
     return
@@ -374,19 +359,18 @@ test_matrix_do_one () {
 
   do_multivcpu_tests
 
-  # RTDS came in 4.4, while SEDF is going away in 4.6
+  # RTDS came in 4.5
   case "$xenbranch" in
-  xen-3.*-testing) test_sedf=y; test_rtds=n ;;
-  xen-4.0-testing) test_sedf=y; test_rtds=n ;;
-  xen-4.1-testing) test_sedf=y; test_rtds=n ;;
-  xen-4.2-testing) test_sedf=y; test_rtds=n ;;
-  xen-4.3-testing) test_sedf=y; test_rtds=n ;;
-  xen-4.4-testing) test_sedf=y; test_rtds=n ;;
-  xen-4.5-testing) test_sedf=y; test_rtds=y ;;
-  *)               test_sedf=n; test_rtds=y ;;
+  xen-3.*-testing) test_rtds=n ;;
+  xen-4.0-testing) test_rtds=n ;;
+  xen-4.1-testing) test_rtds=n ;;
+  xen-4.2-testing) test_rtds=n ;;
+  xen-4.3-testing) test_rtds=n ;;
+  xen-4.4-testing) test_rtds=n ;;
+  xen-4.5-testing) test_rtds=y ;;
+  *)               test_rtds=y ;;
   esac
 
-  do_sedf_tests
   do_rtds_tests
   do_credit2_tests
 
