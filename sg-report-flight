@@ -490,11 +490,14 @@ END
     };
 }
 
+sub bodyprint { print @_ or die $!; }
+sub bodyprintf { printf @_ or die $!; }
+
 sub printversions ($) {
     my ($thisthat) = @_;
     my ($sv) = $specver{$thisthat};
     foreach my $k (sort keys %$sv) {
-        printf " %-${tl}s %s\n", $k, $sv->{$k} or die $!;
+        bodyprintf " %-${tl}s %s\n", $k, $sv->{$k};
         print MRO "version $thisthat $k $sv->{$k}\n" or die $!;
     }
 }
@@ -512,25 +515,25 @@ sub print_pushgate_summary () {
 	[ $blessings[0] ], $maxflight, [ $branch ],
 	$tree, $specver{that}{$tree}, $specver{this}{$tree}
 	);
-    print "\n";
+    bodyprint "\n";
     my $now = time;
     my $pinfo = sub {
 	my ($what, $flightkey, $countkey) = @_;
 	my $f = $info->{$flightkey};
 	my $count = $info->{$countkey};
-	printf "%-20s", $what;
+	bodyprintf "%-20s", $what;
 	if ($f) {
-	    printf(" %6d  %s %4d days",
+	    bodyprintf(" %6d  %s %4d days",
 		   $f->{flight},
 		   show_abs_time($f->{started}),
 		   floor(($now - $f->{started}) / 86400));
 	} else {
-	    printf(" %34s     ","(not found)");
+	    bodyprintf(" %34s     ","(not found)");
 	}
 	if (defined $count) {
-	    printf(" %4d attempts", $count);
+	    bodyprintf(" %4d attempts", $count);
 	}
-	print "\n";
+	bodyprint "\n";
     };
     $pinfo->('Last test of basis', "Basis",'');
     $pinfo->('Failing since', "FirstAfterBasis","CountAfterBasis")
@@ -541,7 +544,7 @@ sub print_pushgate_summary () {
 
 sub printout {
     my ($r, @failures) = @_;
-    print <<END or die $!;
+    bodyprint <<END;
 $r->{Flight}: $r->{OutcomeSummary}
 
 END
@@ -549,13 +552,13 @@ END
         STDOUT->flush();
         system_checked('cat','--',$include);
     }
-    print <<END or die $!;
+    bodyprint <<END;
 flight $r->{Flight} $branch $r->{FlightInfo}{blessing} [$r->{FlightInfo}{intended}]
 $c{ReportHtmlPubBaseUrl}/$r->{Flight}/
 END
     if (defined $r->{Overall}) {
-        print "\n" or die $!;
-        print $r->{Overall} or die $!;
+        bodyprint "\n";
+        bodyprint $r->{Overall};
     }
 
     my %notsucceeds;
@@ -599,44 +602,44 @@ END
     }
     foreach my $cat (sort keys %notsucceeds) {
         $cat =~ m/^\w+ / or die;
-        print "\n$'\n" or die $!;
+        bodyprint "\n$'\n";
 	foreach (sort { $a->[0] cmp $b->[0] } @{ $notsucceeds{$cat} }) {
-	    print $_->[1], "\n" or die $!;
+	    bodyprint $_->[1], "\n";
 	}
     }
 
     if (!%{ $r->{Failures} }) {
-        print "All tests in this flight passed" or die $!;
+        bodyprint "All tests in this flight passed";
     }
-    print "\n" or die $!;
+    bodyprint "\n";
 
     if (keys %{ $specver{this} }) {
-        print "version targeted for testing:\n" or die $!;
+        bodyprint "version targeted for testing:\n";
         printversions('this');
     }
     if (keys %{ $specver{that} }) {
-        print "baseline version:\n" or die $!;
+        bodyprint "baseline version:\n";
         printversions('that');
     }
 
     print_pushgate_summary();
 
     if (@includefiles) {
-        print "\n","-"x60, "\n" or die $!;
+        bodyprint "\n","-"x60, "\n";
     }
     foreach my $include (@includefiles) {
         STDOUT->flush();
         system_checked('cat','--',$include);
-        print "-"x60, "\n" or die $!;
+        bodyprint "-"x60, "\n";
     }
 
-    print "\njobs:\n", $r->{JobsSummary}, "\n" or die $!;
+    bodyprint "\njobs:\n", $r->{JobsSummary}, "\n";
 
 #    foreach my $jt (@{ $r->{JobTexts} }) {
-#	print '-'x$cw or die $!;
-#        print "\n" or die $!;
-#        print join "\n", @$jt or die $!;
-#        print "\n" or die $!;
+#	bodyprint '-'x$cw;
+#        bodyprint "\n";
+#        bodyprint join "\n", @$jt;
+#        bodyprint "\n";
 #    }
 
     my $hostname= `hostname -f`;
@@ -644,7 +647,7 @@ END
 
     my $logs= $c{Logs};
 
-    print <<END or die $!;
+    bodyprint <<END;
 
 ------------------------------------------------------------
 sg-report-flight on $hostname
