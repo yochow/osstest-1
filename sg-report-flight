@@ -490,8 +490,11 @@ END
     };
 }
 
-sub bodyprint { print @_ or die $!; }
-sub bodyprintf { printf @_ or die $!; }
+our $header_text;
+our $body_text;
+
+sub bodyprint { $body_text .= $_ foreach @_; }
+sub bodyprintf { my $fmt = shift @_; $body_text .= sprintf $fmt, @_; }
 
 sub printversions ($) {
     my ($thisthat) = @_;
@@ -544,9 +547,12 @@ sub print_pushgate_summary () {
 
 sub printout {
     my ($r, @failures) = @_;
-    bodyprint <<END;
-$r->{Flight}: $r->{OutcomeSummary}
+    $header_text = '';
+    $body_text = '';
 
+    # Caller expects to provide `Subject: ', so this must come first.
+    $header_text .= <<END or die $!;
+$r->{Flight}: $r->{OutcomeSummary}
 END
     foreach my $include (@includebeginfiles) {
         STDOUT->flush();
@@ -656,6 +662,8 @@ images: $c{Images}
 
 $c{ReportTrailer}
 END
+
+    print $header_text, "\n", $body_text;
 }
 
 our %heisenjustified;
