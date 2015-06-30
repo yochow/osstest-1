@@ -246,7 +246,7 @@ $DAILY_BRANCH_POSTMAKE_HOOK
 
 heading=tmp/$flight.heading-info
 : >$heading
-sgr_args+=" --include-begin=$heading"
+sgr_args+=" --info-headers --include-begin=$heading"
 
 if $force_baseline; then
 	subject_prefix="[$branch baseline test] "

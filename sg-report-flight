@@ -37,6 +37,7 @@ our %specver;
 our (@blessings, @branches_also);
 our $mro;
 our $htmldir;
+our $want_info_headers;
 our ($branch, $branches_cond_q);
 our @allows;
 our (@includebeginfiles,@includefiles);
@@ -56,6 +57,8 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
         open MRO, "> $mro.new" or die "$mro.new $!";
     } elsif (m/^--html-dir=(.*)$/) {
         $htmldir= $1;
+    } elsif (m/^--info-headers$/) {
+        $want_info_headers = 1;
     } elsif (m/^--blessings?=(.*)$/) {
         push @blessings, split ',', $1;
     } elsif (m/^--branches-also?=(.*)$/) {
@@ -496,11 +499,18 @@ our $body_text;
 sub bodyprint { $body_text .= $_ foreach @_; }
 sub bodyprintf { my $fmt = shift @_; $body_text .= sprintf $fmt, @_; }
 
+sub headerprint {
+    return unless $want_info_headers;
+    $header_text .= $_ foreach @_;
+}
+
 sub printversions ($) {
     my ($thisthat) = @_;
     my ($sv) = $specver{$thisthat};
+    headerprint "X-Osstest-Versions-\u$thisthat:\n" if %$sv;
     foreach my $k (sort keys %$sv) {
         bodyprintf " %-${tl}s %s\n", $k, $sv->{$k};
+	headerprint "    $k=$sv->{$k}\n";
         print MRO "version $thisthat $k $sv->{$k}\n" or die $!;
     }
 }

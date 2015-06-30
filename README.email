@@ -104,3 +104,19 @@ history.  Here are some examples:
 The flight numbers quoted in these step failure summaries may
 sometimes be suffixed with `-bisect' to show that the indicated flight
 was part of a bisection attempt, rather than a main test flight.
+
+
+Email information headers
+-------------------------
+
+Test report emails sent by osstest have some extra information in the
+email headers, where applicable:
+
+X-Osstest-Versions-This:
+    osstest=cc8b79ce9586d2b0fbddbd4260e876eab1d408d4
+X-Osstest-Versions-That:
+    osstest=280a18b2b2612174e473a1c1a137ddd47c49aab9
+    ^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     tree     revision
+
+`This' is the version being tested, and `That' is the baseline.
