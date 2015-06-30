@@ -1,0 +1,106 @@
+Email reports
+=============
+
+osstest's primary output is the email reports to the mailing list,
+along with the associated HTML scoreboards.
+
+Subject line
+------------
+
+  Subject: [xen-4.4-testing test] 58975: tolerable trouble: broken/pass - PUSHED
+            ^^^^^^^^^^^^^^^ ^^^^  ^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^	  ^^^^^^
+       	    branch          |  	  flight  overall outcome         	    |
+                            |	       			     	       push mark
+ 		  always exactly "test"
+
+
+The overall outcome is preceded by `tolerable' if the there were no
+excusable regressions, or `regressions - ' if there were.
+
+The overall outcome is then one of:
+   all pass
+   FAIL
+   ALL FAIL
+   trouble: <set of individual job outcomes>
+
+
+Main mail body listing failed tests
+-----------------------------------
+
+The main top part of the body lists test failures.  Each line lists a
+failing test step.  These are categorised by how much of problem the
+failure is.
+
+Each line looks something like this:
+
+ test-amd64-i386-xl-qemuu-win7-amd64 14 guest-localmigrate.2 fail pass in 58960
+ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ^^ ^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^
+     job                              |    step testid       results
+                          step number-'
+
+The results normally start with the result in this flight, and can be
+followed by various information about the status of this step in the
+history.  Here are some examples:
+
+   fail REGR. vs. 58530
+
+      This step failed just now; whereas it previously passed in the
+      baseline (in flight 58530).  This is a regression, which is
+      normally blocking.
+
+   fail like 58963
+
+      This step failed just now; but it also failed on the baseline,
+      in flight 58963.  So it is not a regression.
+
+   fail never pass
+
+      This step has never passed on this branch and is not a
+      regression.
+
+   fail pass in 58863
+
+      This step failed just now; but it passed in 58863 which was
+      another test of the same version.  Such failures are not
+      blocking.
+
+   fail baseline untested
+
+      The results processor didn't find any executions of this step in
+      tests of the baseline version.  So it would not be able to
+      detect regressions of this test.  Perhaps the test has been
+      recently introduced.
+
+   fail in 58948 pass in 58965
+   fail in 58948 like 37628
+
+      The results processor used 58948 (another flight testing the
+      just-tested version) to convince itself that some other test is
+      failing intermittently.  However, in 58948, this step failed,
+      which would be a problem.  But this step passed in 58965, or
+      failed in 37628, so it is not a blocker (cf `pass in' and like',
+      above).
+
+   broken REGR. vs. 36514
+
+      The step failed and this is probably an indication of a problem
+      with the test infrastructure.  Such failures are always regarded
+      as regressions because they may mask other problems.
+
+   blocked n/a
+
+      The test step was blocked by a previous failure.  This is not
+      regarded as a regression - instead, the underlying failure is
+      checked for regression.
+
+   queued
+   running
+   preparing
+
+      The flight was cancelled before it finished executing.  (Also
+      appears if a report is manually requested on a still-running
+      flight.)
+
+The flight numbers quoted in these step failure summaries may
+sometimes be suffixed with `-bisect' to show that the indicated flight
+was part of a bisection attempt, rather than a main test flight.

@@ -68,6 +68,10 @@ ReportTrailer= <<END
 Logs, config files, etc. are available at
     $c{ReportHtmlPubBaseUrl}
 
+Explanation of these reports, and of osstest in general, is at
+    http://xenbits.xen.org/gitweb/?p=osstest.git;a=blob;f=README.email;hb=master
+    http://xenbits.xen.org/gitweb/?p=osstest.git;a=blob;f=README;hb=master
+
 Test harness code can be found at
     http://xenbits.xen.org/gitweb?p=osstest.git;a=summary
 END
