@@ -199,6 +199,12 @@ END
         push @test_rows, $ri;
     }
 
+    my $osstestverq= db_prepare(<<END);
+        SELECT DISTINCT harness
+          FROM flights_harness_touched
+         WHERE flight=?
+END
+
     if (defined $htmlout) {
         my ($title,$html_file,$url);
 	ensuredir "$htmlout/history";
@@ -219,6 +225,7 @@ END
         print H "<tr><th>started</th><th>flight</th>",
 	        "<th>branch</th><th>failure</th>\n";
         print H "<th>", (join ", ", @hostvarcols), "</th>\n";
+        print H "<th>osstest</th>";
         foreach my $c (@rev_grid_cols) {
             print H "<th>".encode_entities($c)."</th>\n";
         }
@@ -243,6 +250,17 @@ END
             my $lastrev;
             my $hosts = join ", ", map { $_ // "-" } @{ $r->{Hosts} };
             print H "<td>".encode_entities($hosts)."</td>\n";
+            $osstestverq->execute($r->{Flight}{flight});
+            print H
+                "<td>",
+                (join ' ',
+                 map {
+                    $_ = $_->{harness};
+                    s/^([0-9a-f]{12})[0-9a-f]+\b/$1/;
+                    "<kbd>".encode_entities($_)."</kbd>";
+                 }
+                 @{ $osstestverq->fetchall_arrayref({}) }),
+                "</td>\n";
             foreach my $i (0..$#rev_grid_cols) {
                 my $v= $r->{Revisions}[$i];
                 my $same=
