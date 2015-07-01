@@ -987,6 +987,17 @@ END
         my $url;
         if ($vn =~ m/^(?:\w+_)?host$/ && $vv !~ m/[^-.0-9a-z]/) {
             $url = "$c{ResultsHtmlPubBaseUrl}/host/$vv.html";
+        } elsif ($vn =~ m/^(\w*job)$/ && $vv !~ m/[^-+._,=:0-9a-z]/i) {
+            my ($otherflight,$otherjob) =
+                eval { flight_otherjob($fi->{Flight}, $vv); };
+            if (defined $otherjob) {
+                if ($otherflight eq $fi->{Flight}) {
+                    $url = "..";
+                } else {
+                    $url = "$c{ReportHtmlPubBaseUrl}/$otherflight";
+                }
+                $url .= "/$otherjob/info.html";
+            }
         }
         print H "<a href=\"",encode_entities($url),"\">" if $url;
         print H encode_entities($vv);
