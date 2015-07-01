@@ -975,15 +975,18 @@ END
 <table rules=all><tr><th>Name</th><th>Value</th><th>Source</th></tr>
 END
     my $varsq= db_prepare(<<END);
-        SELECT * FROM runvars
+        SELECT name, val, synth FROM runvars
                 WHERE flight=? AND job=?
              ORDER BY synth, name
 END
     $varsq->execute($fi->{Flight}, $job);
-    while (my $varrow= $varsq->fetchrow_hashref()) {
-        print H "<tr><th>".encode_entities($varrow->{name})."</th>";
-        print H "<td>".encode_entities($varrow->{val})."</td>";
-        print H "<td>".($varrow->{synth} ? 'execution' : 'definition')."</td>";
+    while (my $varrow= $varsq->fetchrow_arrayref()) {
+        my ($vn,$vv,$synth) = (@$varrow);
+        print H "<tr><th>".encode_entities($vn)."</th>";
+        print H "<td>";
+        print H encode_entities($vv);
+        print H "</td>";
+        print H "<td>".($synth ? 'execution' : 'definition')."</td>";
         print H "\n";
     }
     print H "</table></body></html>\n";
