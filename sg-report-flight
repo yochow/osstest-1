@@ -984,7 +984,13 @@ END
         my ($vn,$vv,$synth) = (@$varrow);
         print H "<tr><th>".encode_entities($vn)."</th>";
         print H "<td>";
+        my $url;
+        if ($vn =~ m/^(?:\w+_)?host$/ && $vv !~ m/[^-.0-9a-z]/) {
+            $url = "$c{ResultsHtmlPubBaseUrl}/host/$vv.html";
+        }
+        print H "<a href=\"",encode_entities($url),"\">" if $url;
         print H encode_entities($vv);
+        print H "</a>" if $url;
         print H "</td>";
         print H "<td>".($synth ? 'execution' : 'definition')."</td>";
         print H "\n";
