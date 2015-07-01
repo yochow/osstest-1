@@ -34,6 +34,7 @@ BEGIN {
                       csreadconfig
                       getmethod
                       postfork
+                      flight_otherjob
                       $dbh_tests db_retry db_retry_retry db_retry_abort
                       db_begin_work db_prepare
                       ensuredir get_filecontents_core_quiet system_checked
@@ -301,6 +302,13 @@ sub csreadconfig () {
 }
 
 #---------- generally useful subroutines ----------
+
+sub flight_otherjob ($$) {
+    my ($thisflight, $otherflightjob) = @_;    
+    return $otherflightjob =~ m/^([^.]+)\.([^.]+)$/ ? ($1,$2) :
+           $otherflightjob =~ m/^\.?([^.]+)$/ ? ($thisflight,$1) :
+           die "$otherflightjob ?";
+}
 
 sub get_filecontents_core_quiet ($) { # ENOENT => undef
     my ($path) = @_;

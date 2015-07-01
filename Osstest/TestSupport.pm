@@ -45,7 +45,7 @@ BEGIN {
                       report_once
 
                       store_runvar get_runvar get_runvar_maybe
-                      get_runvar_default need_runvars flight_otherjob
+                      get_runvar_default need_runvars
                       unique_incrementing_runvar next_unique_name
 
                       target_cmd_root target_cmd target_cmd_build
@@ -281,13 +281,6 @@ sub need_runvars {
     my @missing= grep { !defined $r{$_} } @_;
     return unless @missing;
     die "missing runvars @missing ";
-}
-
-sub flight_otherjob ($$) {
-    my ($thisflight, $otherflightjob) = @_;    
-    return $otherflightjob =~ m/^([^.]+)\.([^.]+)$/ ? ($1,$2) :
-           $otherflightjob =~ m/^\.?([^.]+)$/ ? ($thisflight,$1) :
-           die "$otherflightjob ?";
 }
 
 sub otherflightjob ($) {
