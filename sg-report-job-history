@@ -24,13 +24,14 @@ use Osstest;
 use IO::Handle;
 use HTML::Entities;
 
-use Osstest::TestSupport;
 use Osstest::Executive;
 
 our (@blessings,@branches);
 our $limit= 100;
 our $htmlout;
 our $maxflight;
+our $flight;
+our $job;
 
 open DEBUG, ">/dev/null";
 
