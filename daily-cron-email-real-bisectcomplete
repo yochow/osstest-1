@@ -1,4 +1,3 @@
-To: xen-devel@lists.xensource.com
-Cc: keir@xen.org,
-    stefano.stabellini@eu.citrix.com,
-    ian.jackson@eu.citrix.com
+To: xen-devel@lists.xensource.com,
+    osstest-admin@xenproject.org
+Bcc: osstest-output@lists.xenproject.org
