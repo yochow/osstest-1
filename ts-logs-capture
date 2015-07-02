@@ -203,14 +203,9 @@ sub fetch_logs_host () {
         }
 }
 
-sub fetch_logs_guest ($) {
+sub fetch_xenctx_guest ($) {
     my ($gho) = @_;
-    my $gn = $gho->{Name};
-    logm("saving logs for $gn");
-
-    my $consolecmd= toolstack($ho)->consolecmd($gho);
-    try_cmd_output_save("sleep 1 | $consolecmd | cat",
-                        "guest-$gho->{Name}-console");
+    logm("collecting xenctx for $gho->{Name}");
 
     if (defined $gho->{Vcpus}) {
         foreach (my $vcpu=0; $vcpu < $gho->{Vcpus}; $vcpu++) {
@@ -224,6 +219,16 @@ sub fetch_logs_guest ($) {
 		);
         }
     }
+}
+
+sub fetch_logs_guest ($) {
+    my ($gho) = @_;
+    my $gn = $gho->{Name};
+    logm("saving logs for $gn");
+
+    my $consolecmd= toolstack($ho)->consolecmd($gho);
+    try_cmd_output_save("sleep 1 | $consolecmd | cat",
+                        "guest-$gho->{Name}-console");
 
     if (!eval {
         my $vnc= guest_vncsnapshot_begin($ho,$gho);
@@ -235,6 +240,7 @@ sub fetch_logs_guest ($) {
 }
 
 find_guests();
+fetch_xenctx_guest($_) foreach @guests;
 serial_fetch_logs($ho);
 fetch_logs_host();
 fetch_logs_guest($_) foreach @guests;
