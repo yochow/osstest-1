@@ -103,8 +103,8 @@ osstest)
 	    # upstream. Whether or not there is anything in local
 	    # pretest is determined by using "git merge base"
 
-	    git fetch $HOME/testing.git +production:production
-	    git fetch $HOME/testing.git +pretest:pretest
+	    git fetch $HOME/testing.git +production:production >&2
+	    git fetch $HOME/testing.git +pretest:pretest >&2
 
 	    local_production=$(git rev-parse production^0)
 	    local_pretest=$(git rev-parse pretest^0)
@@ -134,12 +134,42 @@ osstest)
 		    git merge \
 			-m "Automerge of $TREEBRANCH_OSSTEST_UPSTREAM into production" \
 			ap-merge >&2
+		    merge=$(git log -n1 --pretty='%T %P' HEAD)
+
+		    if git fetch $HOME/testing.git +merge-epoch:merge-epoch >&2 ; then
+			# If the new merge matches the current epoch's
+			# tree (%T) and parents (%P) then it is the
+			# same in all the ways which matter. (It
+			# likely only differs in the date). In which
+			# case reuse the epoch merge so that repeated
+			# flights and potential bisections over
+			# osstest see something stable.
+			#
+			# If e.g the parents have changed
+			# (e.g. upstream has progressed) or the trees
+			# differ then use the new merge and establish
+			# a new merge-epoch.
+			epoch=$(git log -n1 --pretty='%T %P' merge-epoch)
+		    else
+			echo >&2 "Failed to fetch merge-epoch"
+			epoch="NONE"
+		    fi
+
+		    echo >&2 "Merge Epoch: $epoch"
+		    echo >&2 "This Merge:  $merge"
+		    if [ x"$epoch" = x"$merge" ] ; then
+			echo >&2 "Reusing existing merge-epoch"
+			git reset --hard merge-epoch >&2
+		    else
+			echo >&2 "New merge-epoch"
+			git push $HOME/testing.git +production:merge-epoch >&2
+		    fi
 		)
 
 		# Fetch the result of the above merge into local tree
 		# ready for use. cr-daily-branch handles reseting the
 		# working tree to this version
-		git fetch $repos/osstest-merge +production:ap-fetch
+		git fetch $repos/osstest-merge +production:ap-fetch >&2
 	    elif [ x$merge_base = x$local_production ] ; then
 		# there are commits in pretest which we should test in
 		# an attempt to progress production to this point.
