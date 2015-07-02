@@ -2,6 +2,11 @@
 #
 # args:
 #   <flight> <job> <recipe> <runvar>=<value> ...
+#
+# If <runvar> ends in ~, the ~ is stripped and the runvar is marked
+# `synth'.  (Normally runvars marked `synth' are defined during test
+# execution.  They are not taken as part of the runvar set copied
+# when cloning flights, eg for bisection.)
 
 # This is part of "osstest", an automated testing framework for Xen.
 # Copyright (C) 2009-2013 Citrix Inc.
@@ -47,9 +52,9 @@ foreach my $rv (@runvars) {
         $suppress{$1}= 1;
         next;
     }
-    $rv =~ m/^([a-z][0-9a-z_]*)\=(.*)$/ or die "$rv ?";
-    my ($name,$val) = ($1,$2);
-    $runvars{$name}= $val;
+    $rv =~ m/^([a-z][0-9a-z_]*)(\~?)\=(.*)$/ or die "$rv ?";
+    my ($name,$synth,$val) = ($1,$2,$3);
+    $runvars{$name}= [$val,$synth];
 }
 
 foreach my $name (keys %suppress) {
@@ -61,9 +66,10 @@ db_retry($flight,'constructing', $dbh_tests,[qw(flights)], sub {
         INSERT INTO jobs VALUES (?,'$job','$recipe','queued')
 END
     my $q= $dbh_tests->
-        prepare("INSERT INTO runvars VALUES (?,'$job',?,?,'f')");
+        prepare("INSERT INTO runvars VALUES (?,'$job',?,?,?)");
     foreach my $name (keys %runvars) {
-        $q->execute($flight, $name, $runvars{$name});
+        $q->execute($flight, $name, $runvars{$name}[0],
+	            $runvars{$name}[1] ? 't' : 'f');
         $q->finish();
     }
 });
