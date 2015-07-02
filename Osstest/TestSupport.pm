@@ -1918,7 +1918,7 @@ sub guest_find_domid ($$) {
     return if defined $gho->{Domid};
     my $list= target_cmd_output_root($ho,
                 common_toolstack($ho)." list $gho->{Name}");
-    $list =~ m/^(?!Name\s)(\S+)\s+(\d+)\s+(\d+)+(\d+)\s.*$/m
+    $list =~ m/^(?!Name\s)(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s.*$/m
         or die "domain list: $list";
     $1 eq $gho->{Name} or die "domain list name $1 expected $gho->{Name}";
     $gho->{MemUsed}= $3;
