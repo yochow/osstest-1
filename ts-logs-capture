@@ -210,8 +210,10 @@ sub fetch_logs_guest ($) {
 	    my $sysmaparg = !defined $kernpath ? '' :
 		$kernpath !~ m,/vmlinuz-, ? die "$kernpath ?" :
 		"-s $`/System.map-$'";
-	    try_cmd_output_save("/usr/lib/xen/bin/xenctx ".$sysmaparg.
-				" $gho->{Domid} $vcpu");
+	    try_cmd_output_save(
+		'PATH=/usr/local/lib/xen/bin:/usr/lib/xen/bin:$PATH; '.
+		"xenctx $sysmaparg $gho->{Domid} $vcpu"
+		);
         }
     }
 
