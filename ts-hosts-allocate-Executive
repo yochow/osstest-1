@@ -564,14 +564,19 @@ sub hid_recurse ($$) {
 
     my $log_variation_age = log(1+$variation_age/86400);
     my $variation_bonus = $log_variation_age * 3600*2;
-    my $max_variation_bonus = 12*3600;
+    my $max_variation_bonus = $r{hostalloc_maxbonus_variation} // 12*3600;
     $variation_bonus=$max_variation_bonus
 	if $variation_bonus>$max_variation_bonus;
 
+    my $prevfail_bonus = $r{hostalloc_bonus_previousfail} // 7.0*86400;
+    my $prevfail_equiv_bonus = $prevfail_bonus * (6.5 / 7.0);
+
+    my $share_reuse_bonus = $r{hostalloc_bonus_sharereuse} // 10000;
+
     my $cost= $start_time
 	+ $duration_for_cost
-        - ($previously_failed      ==@hids ?   7*86400 :
-	   $previously_failed_equiv==@hids ? 6.5*86400 :
+        - ($previously_failed      ==@hids ? $prevfail_bonus       :
+	   $previously_failed_equiv==@hids ? $prevfail_equiv_bonus :
 	   # We wait 7d extra to try a failing test on the same
 	   # hardware, or 6.5d on `equivalent' hardware (as defined by
 	   # equiv-* flags).  Compared to `equivalent' hardware, we
@@ -579,7 +584,7 @@ sub hid_recurse ($$) {
 	   0)
         + ($previously_failed || $previously_failed_equiv
 	   ? (-$max_variation_bonus+$variation_bonus) : -$variation_bonus)
-	- $share_reuse * 10000;
+	- $share_reuse * $share_reuse_bonus;
     
     print DEBUG "$dbg FINAL start=$start_time va=$variation_age".
 	" variation_bonus=$variation_bonus".
