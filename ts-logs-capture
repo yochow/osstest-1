@@ -33,6 +33,34 @@ our ($whhost) = @ARGV;
 $whhost ||= 'host';
 our $ho= selecthost($whhost);
 
+our @guests;
+
+sub find_guests () {
+    my $sth= $dbh_tests->prepare(<<END);
+        SELECT name FROM runvars WHERE flight=? AND job=?
+            AND name LIKE '%_domname'
+            ORDER BY name
+END
+    $sth->execute($flight, $job);
+    my $row;
+    while ($row= $sth->fetchrow_hashref) {
+        my $gn= $row->{name};
+        $gn =~ s/_domname$//;
+
+	my $gho= selectguest($gn,$ho);
+	if (!eval {
+	    guest_find_domid($ho,$gho);
+	    1;
+	}) {
+	    logm("cannot find domid: $@");;
+	    next;
+	}
+
+	push @guests, $gho;
+    }
+    $sth->finish();
+}
+
 sub try_fetch_logs ($$) {
     my ($lho, $logfilepats) = @_;
     my $ok= 0;
@@ -97,7 +125,7 @@ sub try_cmd_output_save ($;$) {
     close $fh or die $!;
 }
 
-sub fetch_logs_host_guests () {
+sub fetch_logs_host () {
     my $logs= [qw(
                   /var/log/kern.log*
                   /var/log/syslog*
@@ -173,33 +201,13 @@ sub fetch_logs_host_guests () {
          ) {
             try_cmd_output_save($cmd);
         }
-
-    my $sth= $dbh_tests->prepare(<<END);
-        SELECT name FROM runvars WHERE flight=? AND job=?
-            AND name LIKE '%_domname'
-            ORDER BY name
-END
-    $sth->execute($flight, $job);
-    my $row;
-    while ($row= $sth->fetchrow_hashref) {
-        my $gn= $row->{name};
-        $gn =~ s/_domname$//;
-        fetch_logs_guest($gn);
-    }
-    $sth->finish();
 }
 
 sub fetch_logs_guest ($) {
-    my ($gn) = @_;
+    my ($gho) = @_;
+    my $gn = $gho->{Name};
     logm("saving logs for $gn");
-    my $gho= selectguest($gn,$ho);
-    if (!eval {
-        guest_find_domid($ho,$gho);
-        1;
-    }) {
-        logm("cannot find domid: $@");
-        return;
-    }
+
     my $consolecmd= toolstack($ho)->consolecmd($gho);
     try_cmd_output_save("sleep 1 | $consolecmd | cat",
                         "guest-$gho->{Name}-console");
@@ -226,6 +234,8 @@ sub fetch_logs_guest ($) {
     }
 }
 
+find_guests();
 serial_fetch_logs($ho);
-fetch_logs_host_guests();
+fetch_logs_host();
+fetch_logs_guest($_) foreach @guests;
 logm("logs captured to $stash");
