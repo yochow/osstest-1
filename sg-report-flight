@@ -555,6 +555,17 @@ sub print_pushgate_summary () {
     $pinfo->('Testing same since', "FirstTip","CountTip");
 }
 
+sub includes ($) {
+    my ($includefiles) = @_;
+    local $/ = undef;
+    foreach my $include (@$includefiles) {
+	open INCLUDE, $include or die "include $include: $!";
+	$body_text .= <INCLUDE>;
+	die $! if INCLUDE->error;
+	close INCLUDE;
+    }
+}    
+
 sub printout {
     my ($r, @failures) = @_;
     $header_text = '';
@@ -564,10 +575,7 @@ sub printout {
     $header_text .= <<END or die $!;
 $r->{Flight}: $r->{OutcomeSummary}
 END
-    foreach my $include (@includebeginfiles) {
-        STDOUT->flush();
-        system_checked('cat','--',$include);
-    }
+    includes(\@includebeginfiles);
     bodyprint <<END;
 flight $r->{Flight} $branch $r->{FlightInfo}{blessing} [$r->{FlightInfo}{intended}]
 $c{ReportHtmlPubBaseUrl}/$r->{Flight}/
@@ -655,11 +663,7 @@ END
     if (@includefiles) {
         bodyprint "\n","-"x60, "\n";
     }
-    foreach my $include (@includefiles) {
-        STDOUT->flush();
-        system_checked('cat','--',$include);
-        bodyprint "-"x60, "\n";
-    }
+    includes(\@includefiles);
 
     bodyprint "\njobs:\n", $r->{JobsSummary}, "\n";
 
