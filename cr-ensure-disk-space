@@ -27,11 +27,15 @@ use Fcntl qw(:flock);
 
 our $dryrun= 0;
 
+open DEBUG, ">/dev/null" or die $!;
+
 while (@ARGV && $ARGV[0] =~ m/^\-/) {
     $_= shift @ARGV;
     last if $_ eq '--';
     if (m/^-n$/) {
         $dryrun= 1;
+    } elsif (m/^-D$/) {
+        open DEBUG, ">&2" or die $!;
     } else {
 	die "$_ ?";
     }
@@ -50,7 +54,7 @@ flock LOCK, LOCK_EX or die $!;
 
 $|=1;
 
-my $chkq= $dbh_tests->prepare("SELECT * FROM flights WHERE flight=?");
+my $chkq= db_prepare("SELECT * FROM flights WHERE flight=?");
 our @flights;
 
 for (;;) {
