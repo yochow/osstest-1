@@ -145,10 +145,13 @@ END
     return 1;
 }
 
-for (;;) {
-    iteration_continue()
-	or last;
-}
+db_retry($dbh_tests,[qw(flights)], sub {
+    @flights = ();
+    for (;;) {
+	iteration_continue()
+	    or last;
+    }
+});
 
 printf "ok.\n";
 exit 0;
