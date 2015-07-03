@@ -67,7 +67,7 @@ END
 our @flights;
 our %latestref;
 
-for (;;) {
+sub iteration_continue () {
     open P, "-|", onloghost "df --block-size=1M -P $logdir" or die $!;
     $_= <P>;
     m/^filesystem/i or die "$_ ?";
@@ -76,7 +76,7 @@ for (;;) {
     $!=0; $?=0; close P or die "$! $?";
     my $space= $1;
     printf "space: %8d, wanted: %8d ", $space, logcfg('MinSpaceMby');
-    last if $space >= logcfg('MinSpaceMby');
+    return 0 if $space >= logcfg('MinSpaceMby');
 
     if (!@flights) {
 	%latestref = ();
@@ -141,6 +141,13 @@ for (;;) {
 END
 
     printf "done.\n";
+
+    return 1;
+}
+
+for (;;) {
+    iteration_continue()
+	or last;
 }
 
 printf "ok.\n";
