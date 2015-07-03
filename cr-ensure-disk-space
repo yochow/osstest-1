@@ -55,7 +55,17 @@ flock LOCK, LOCK_EX or die $!;
 $|=1;
 
 my $chkq= db_prepare("SELECT * FROM flights WHERE flight=?");
+
+my $refq= db_prepare(<<END);
+    SELECT flight, val
+      FROM runvars
+     WHERE name like '%job'
+       AND val like '%.%'
+       AND flight >= ?
+END
+
 our @flights;
+our %latestref;
 
 for (;;) {
     open P, "-|", onloghost "df --block-size=1M -P $logdir" or die $!;
@@ -69,23 +79,46 @@ for (;;) {
     last if $space >= logcfg('MinSpaceMby');
 
     if (!@flights) {
+	%latestref = ();
 	open P, "-|", onloghost "ls -1 $logdir" or die $!;
+
+	my $minflight = undef;
 	while (<P>) {
 	    next unless m/^(\d+)\n$/;
-	    push @flights, $1;
+	    $latestref{$1} = $1;
+	    $minflight //= $1;
+	    $minflight = $1 if $1 < $minflight;
 	}
 	$!=$?=0; close P or die "ls: $? $!";
-	@flights = sort { $b <=> $a } @flights;
+
+	print DEBUG "MINFLIGHT $minflight\n";
+
+	$refq->execute($minflight);
+	while (my $rr= $refq->fetchrow_hashref) {
+	    my $testflight = $rr->{flight};
+	    next unless $rr->{val} =~ m/^(\d+)\./;
+	    my $buildflight = $1;
+	    next unless exists $latestref{$buildflight};
+	    if ($testflight > $latestref{$buildflight}) {
+		print DEBUG "REF $buildflight <- $testflight\n";
+		$latestref{$buildflight} = $testflight;
+	    }
+	}
+
+	@flights =
+	    sort { $latestref{$b} <=> $latestref{$a} }
+	    keys %latestref;
         printf "(%d flights) ", scalar @flights;
         die unless @flights;
     }
     my $flight = pop @flights;
-    printf "selected %s ", $flight;
+    my $latestref = $latestref{$flight};
+    printf "selected %s (latest ref %s) ", $flight, $latestref;
 
-    $chkq->execute($flight);
+    $chkq->execute($latestref);
     my $row= $chkq->fetchrow_hashref();
     $chkq->finish();
-    die $flight unless defined $row;
+    die "$flight $latestref" unless defined $row;
     my $age= time - $row->{started};
 
     printf "(age %dd) ", $age / 86400;
