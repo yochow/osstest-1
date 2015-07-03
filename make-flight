@@ -220,12 +220,20 @@ do_hvm_win7_x64_tests () {
             all_hostflags=$most_hostflags,hvm
 }
 
+branch_debianhvm_arch () {
+  case $branch in
+    *) echo amd64;;
+  esac
+}
+
 do_hvm_debian_test_one () {
   testname=$1
   toolstack=$2
   bios=$3
-  xsm=$4
-  stubdom=$5
+  xsm=$4 # 'false' or 'true'
+  stubdom=$5 # '' (or unset) or 'true'
+
+  local arch=$(branch_debianhvm_arch)
 
   stubdom_suffix=""
   stubdom_runvar=""
@@ -234,11 +242,11 @@ do_hvm_debian_test_one () {
       stubdom_runvar="debianhvm_stubdom=$stubdom"
   fi
 
-  job_create_test test-$xenarch$kern-$dom0arch-$toolstack$qemuu_suffix$stubdom_suffix-$testname-amd64\
+  job_create_test test-$xenarch$kern-$dom0arch-$toolstack$qemuu_suffix$stubdom_suffix-$testname-$arch\
     test-debianhvm $toolstack $xenarch $dom0arch $qemuu_runvar \
     enable_xsm=$xsm                             \
     $stubdom_runvar                             \
-    debianhvm_image=debian-7.2.0-amd64-CD-1.iso \
+    debianhvm_image=debian-7.2.0-$arch-CD-1.iso \
     bios=$bios \
     all_hostflags=$most_hostflags,hvm
 }
