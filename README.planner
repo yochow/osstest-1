@@ -87,6 +87,7 @@ in the more distant future.
 Values for OSSTEST_RESOURCE_PRIORITY:
   mg-allocate                                    -1000000
   mg-blockage                                    -2000000
+  xen-unstable-smoke cr-daily-branch                  -20
   default Executive.pm with controlling terminal      -10
   mg-execute-flight                                    -8
   default                                               0

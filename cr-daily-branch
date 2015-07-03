@@ -328,7 +328,7 @@ case "$NEW_REVISION/$OLD_REVISION" in
                         "$treeurl#$OLD_REVISION-$NEW_REVISION" \
 
                 case "$realtree" in
-                xen-4*|xen-unstable)
+                xen-4*|xen-unstable*)
                     oldqemu=`./ap-qemu-revision $realtree $OLD_REVISION`
                     newqemu=`./ap-qemu-revision $realtree $NEW_REVISION`
                     if [ "$oldqemu" ] && [ "$newqemu" ]; then

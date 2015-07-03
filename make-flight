@@ -34,8 +34,28 @@ flight=`./cs-flight-create $blessing $branch`
 defsuite=`getconfig DebianSuite`
 defguestsuite=`getconfig GuestDebianSuite`
 
+case "$branch" in
+xen-unstable-smoke)
+	global_runvars+=" hostalloc_maxbonus_variation~=0 "
+	global_runvars+=" hostalloc_bonus_previousfail~=0 "
+        ;;
+esac
+
 job_create_build_filter_callback () {
-    :
+  local job=$1; shift
+  case "$branch" in
+    xen-unstable-smoke)
+      case "$job" in
+        build-amd64)		;;
+        build-amd64-pvops)	;;
+        build-amd64-libvirt)	;;
+        build-armhf)		;;
+        build-armhf-pvops)	;;
+        *)			return 1 ;;
+      esac
+    ;;
+  esac
+  return 0
 }
 
 if [ x$buildflight = x ]; then
@@ -56,6 +76,14 @@ job_create_test_filter_callback () {
   local dom0arch=$1; shift
 
   case "$branch" in
+    xen-unstable-smoke)
+      case "$job" in
+        test-amd64-amd64-libvirt)                  return 0 ;;
+        test-armhf-armhf-xl)                       return 0 ;;
+        test-amd64-amd64-xl-qemuu-debianhvm-i386)  return 0 ;;
+        *)                                         return 1 ;;
+      esac
+      ;;
     qemu-upstream-4.2-testing)
       case " $* " in
         *" device_model_version=qemu-xen "*)
@@ -222,6 +250,7 @@ do_hvm_win7_x64_tests () {
 
 branch_debianhvm_arch () {
   case $branch in
+    xen-unstable-smoke) echo i386;;
     *) echo amd64;;
   esac
 }
