@@ -311,8 +311,6 @@ create_build_jobs () {
 }
 
 job_create_test () {
-  job_create_test_filter_callback "$@" || return 0
-
   local job=$1; shift
   local recipe=$1; shift
   local toolstack=$1; shift
@@ -327,6 +325,10 @@ job_create_test () {
   job="$job$xsm_suffix"
   xenbuildjob="${bfi}build-$xenarch$xsm_suffix"
   buildjob="${bfi}build-$dom0arch$xsm_suffix"
+
+  job_create_test_filter_callback \
+    "$job" "$recipe" "$toolstack" "$xenarch" "$dom0arch" "$@" || return 0
+
   tsbuildjob=
 
   case "$xenbranch:$toolstack" in
