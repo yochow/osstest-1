@@ -238,7 +238,7 @@ END
 	my $url= "$c{ReportHtmlPubBaseUrl}/$jr->{flight}";
 	print H "<td><a href=\"$url\">$jr->{flight}</a></td>\n";
 	$url= "$c{ReportHtmlPubBaseUrl}/$jr->{flight}/".
-	    encode_entities($jr->{job})."/";
+	    encode_entities($jr->{job})."/info.html";
 	print H "<td>$ir->{branch}</td>";
 	print H "<td>$ir->{intended}</td>";
 	print H "<td>";

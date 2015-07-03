@@ -110,7 +110,10 @@ END
         cat >&3 $reportfile
         if $flight_executed; then
                 echo >&3 ----------------------------------------
-                ./sg-report-flight >&3 $flight
+		if [ "x$OSSTEST_HTMLPUB_DIR" != x ]; then
+			sgr_args+="$OSSTEST_HTMLPUB_DIR/$flight/"
+		fi
+                ./sg-report-flight $sgr_args >&3 $flight
                 ./cr-publish-flight-logs --push-harness $flight
         fi
         exec 3>&-
