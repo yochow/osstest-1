@@ -214,10 +214,11 @@ sub fetch_xenctx_guest ($) {
 		$kernpath !~ m,/vmlinuz-, ? die "$kernpath ?" :
 		"-s $`/System.map-$'";
 	    foreach my $iter (0..1) {
+		my $dfn = "$ho->{Name}-xenctx-$gho->{Name},vcpu$vcpu,i$iter";
 		try_cmd_output_save(
 		    'PATH=/usr/local/lib/xen/bin:/usr/lib/xen/bin:$PATH; '.
-		    "xenctx $sysmaparg $gho->{Domid} $vcpu"
-		    );
+		    "xenctx $sysmaparg $gho->{Domid} $vcpu",
+		    $dfn);
 	    }
         }
     }
