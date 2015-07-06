@@ -107,8 +107,8 @@ set -e
 make_tree branches
 if $bisect; then
 	make_tree bisects
-	x ln -sf $HOME/branches/for-$branch.git \
-		$HOME/bisects/for-$branch.git/tree-bisect
+	x ln -sf $HOME/bisects/for-$branch.git \
+		$HOME/branches/for-$branch.git/tree-bisect
 fi
 
 echo "Branch $branch set up ok."
