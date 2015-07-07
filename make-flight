@@ -92,6 +92,10 @@ job_create_test_filter_callback () {
           *-qemuu-*) ;;
           *) return 1;;
       esac
+      case " $* " in
+        *" bios=ovmf "*) ;;
+        *) return 1;;
+      esac
       ;;
     *)
       case "$job" in
