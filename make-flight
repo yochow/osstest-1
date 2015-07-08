@@ -329,6 +329,42 @@ do_passthrough_tests () {
   done
 }
 
+do_pygrub_tests () {
+  if [ $xenarch != amd64 -o $dom0arch != amd64 -o "$kern" != "" ]; then
+    return
+  fi
+
+  job_create_test test-$xenarch$kern-$dom0arch-pygrub   \
+    test-debian-di xl $xenarch $dom0arch                \
+      debian_arch=amd64                                 \
+      debian_suite=$guestsuite                          \
+      debian_method=netboot                             \
+      debian_bootloader=pygrub                          \
+      all_hostflags=$most_hostflags
+}
+
+do_pvgrub_tests () {
+  if [ $xenarch != amd64 -o $dom0arch != amd64 -o "$kern" != "" ]; then
+    return
+  fi
+
+  job_create_test test-$xenarch$kern-$dom0arch-amd64-pvgrub     \
+    test-debian-di xl $xenarch $dom0arch                        \
+      debian_arch=amd64                                         \
+      debian_suite=$guestsuite                                  \
+      debian_method=netboot                                     \
+      debian_bootloader=pvgrub                                  \
+      all_hostflags=$most_hostflags                             \
+
+  job_create_test test-$xenarch$kern-$dom0arch-i386-pvgrub      \
+    test-debian-di xl $xenarch $dom0arch                        \
+      debian_arch=i386                                          \
+      debian_suite=$guestsuite                                  \
+      debian_method=netboot                                     \
+      debian_bootloader=pvgrub                                  \
+      all_hostflags=$most_hostflags
+}
+
 do_pv_debian_tests () {
   xsms=$(xenbranch_xsm_variants)
 
@@ -477,6 +513,9 @@ test_matrix_do_one () {
 
   fi
   #do_passthrough_tests
+
+  do_pygrub_tests
+  do_pvgrub_tests
 }
 
 test_matrix_iterate
