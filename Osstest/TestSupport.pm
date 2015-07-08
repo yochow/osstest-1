@@ -931,8 +931,11 @@ sub propname_massage ($) {
     return $prop;
 }
 
+# It is fine to call this on a guest object too, in which case it will
+# always return $defval.
 sub get_host_property ($$;$) {
     my ($ho, $prop, $defval) = @_;
+    return $defval unless $ho->{Properties};
     my $val = $ho->{Properties}{propname_massage($prop)};
     return defined($val) ? $val : $defval;
 }

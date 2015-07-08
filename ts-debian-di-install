@@ -1,0 +1,180 @@
+#!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2013 Citrix Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Configured via the following runvars (which are mandatory unless
+# otherwise noted):
+#
+# - <gident>_arch:
+#      Debian arch to install.
+# - <gident>_method:
+#      Install method, currently only "netboot".
+#
+# For method="netboot":
+#
+#  - <gident>_netboot_kernel:
+#       URL of the kernel to boot
+#  - <gident>_netboot_ramdisk:
+#       URL of the ramdisk to boot
+#
+#    If neither kernel nor ramdisk are specified then the current
+#    TftpDiVersion of d-i will be used, and the runvars will be set to
+#    the file path used.
+
+use strict qw(vars);
+use DBI;
+use Osstest;
+use Osstest::Debian;
+use Osstest::TestSupport;
+
+tsreadconfig();
+
+our ($whhost,$gn) = @ARGV;
+$whhost ||= 'host';
+$gn ||= 'debian';
+
+our $ho= selecthost($whhost);
+
+our $ram_mb=    512;
+our $disk_mb= 10000;
+
+our $guesthost= "$gn.guest.osstest";
+our $gho;
+
+sub prep () {
+    target_install_packages_norec($ho, qw(lvm2));
+
+    $gho= prepareguest($ho, $gn, $guesthost, 22,
+                       $disk_mb, 40);
+
+    prepareguest_part_lvmdisk($ho, $gho, $disk_mb);
+
+    target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
+}
+
+sub setup_netboot($$$)
+{
+    my ($didir, $arch, $suite) = @_;
+
+    my ($kernel,$ramdisk);
+
+    if ( $r{ "$gho->{Guest}_netboot_kernel" } &&
+	 $r{ "$gho->{Guest}_netboot_ramdisk" } ) {
+	target_fetchurl($ho, $r{ "$gho->{Guest}_netboot_kernel" },
+			     "$didir/kernel_${suite}_${arch}");
+	target_fetchurl($ho, $r{ "$gho->{Guest}_netboot_ramdisk" },
+			     "$didir/ramdisk_${suite}_${arch}");
+    } else {
+	# Both or neither must be specified
+	die if $r{ "$gho->{Guest}_netboot_kernel" }
+	||     $r{ "$gho->{Guest}_netboot_ramdisk" };
+
+	my $di_path = $c{TftpPath}.'/'.$ho->{Tftp}{DiBase}.'/'.${arch}.'/'.$c{TftpDiVersion}.'-'.$ho->{Suite};
+
+        my $suffix = '';
+        $suffix .= "-xen" if ${arch} =~ m/amd64|i386/;
+	$kernel = "$di_path/vmlinuz$suffix";
+	$ramdisk = "$di_path/initrd.gz$suffix";
+
+	target_putfile_root($ho, 60, $kernel, "$didir/kernel_${suite}_${arch}");
+	target_putfile_root($ho, 60, $ramdisk, "$didir/ramdisk_${suite}_${arch}");
+
+	store_runvar("$gho->{Guest}_netboot_kernel", $kernel);
+	store_runvar("$gho->{Guest}_netboot_ramdisk", $ramdisk);
+    }
+
+    return <<END;
+kernel      = "$didir/kernel_${suite}_${arch}"
+ramdisk     = "$didir/ramdisk_${suite}_${arch}"
+END
+}
+
+sub ginstall () {
+    my $arch= $r{"$gho->{Guest}_arch"};
+    my $method= $r{"$gho->{Guest}_method"};
+
+    my $tmpdir= "/root/$flight-$job-di";
+    target_cmd_root($ho, <<END);
+rm -rf $tmpdir
+mkdir $tmpdir
+END
+
+    my ($method_cfg, $ps_url, $extra_disk);
+
+    if ( $method eq "netboot" )
+    {
+	my $suite= $r{"$gho->{Guest}_suite"};
+	logm("$method $suite/$arch");
+
+	$method_cfg = setup_netboot($tmpdir, $arch, $suite);
+
+	$ps_url = preseed_create_guest($gho, '', Suite=>$suite);
+
+	$extra_disk = "";
+    }
+    else
+    {
+	die "$method";
+    }
+
+    my @cmdline = ();
+    push @cmdline, "debian-installer/exit/always_halt=true";
+    push @cmdline, "domain=$c{TestHostDomain}";
+    push @cmdline, "console=hvc0";
+    push @cmdline, di_installcmdline_core($gho, $ps_url);
+    push @cmdline, "--";
+    # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=762007 for
+    # why this is repeated.
+    push @cmdline, "console=hvc0";
+
+    my $cmdline = join(" ", @cmdline);
+
+    my %install_xopts = (
+	OnPowerOff => "preserve"
+    );
+
+    prepareguest_part_xencfg($ho, $gho, $ram_mb, \%install_xopts, <<END);
+$method_cfg
+extra       = "$cmdline"
+#
+disk        = [
+            $extra_disk 'phy:$gho->{Lvdev},xvda,w'
+            ]
+END
+
+    guest_create($gho);
+
+    guest_checkrunning($ho, $gho) or die "$gho->{Name} not running";
+
+    guest_await_shutdown($ho,$gho,3600);
+    guest_destroy($gho);
+
+    my $blcfg = <<END;
+bootloader = "pygrub"
+END
+
+    prepareguest_part_xencfg($ho, $gho, $ram_mb, {}, <<END);
+$blcfg
+#
+disk        = [
+            'phy:$gho->{Lvdev},xvda,w'
+            ]
+END
+    return;
+}
+
+prep();
+ginstall();
