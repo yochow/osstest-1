@@ -54,6 +54,10 @@ xen-unstable)
 	cd $repos/xen
 	git push $TREE_XEN $revision:refs/heads/master
 	;;
+xen-unstable-smoke)
+	cd $repos/xen
+	git push $TREE_XEN $revision:refs/heads/smoke
+	;;
 xen-*-testing)
 	cd $repos/xen
 	xenversion=$branch

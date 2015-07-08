@@ -40,6 +40,9 @@ xen-3.*)
 	' x
 	;;
 xen-unstable)
+	repo_tree_rev_fetch_git xen $TREE_XEN smoke $LOCALREV_XEN
+	;;
+xen-unstable-smoke)
 	repo_tree_rev_fetch_git xen $TREE_XEN staging $LOCALREV_XEN
 	;;
 xen-4.*-testing)
