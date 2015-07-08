@@ -75,9 +75,7 @@ sub prep () {
     $gho= prepareguest($ho, $gn, $guesthost, 22,
                        $disk_mb, 40);
 
-    prepareguest_part_lvmdisk($ho, $gho, $disk_mb);
-
-    target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
+    prepareguest_part_diskimg($ho, $gho, $disk_mb);
 }
 
 sub setup_netinst($$)
@@ -227,14 +225,12 @@ END
 	OnPowerOff => "preserve"
     );
 
-    my $root_disk = "'phy:$gho->{Lvdev},xvda,w'";
-
     prepareguest_part_xencfg($ho, $gho, $ram_mb, \%install_xopts, <<END);
 $method_cfg
 extra       = "$cmdline"
 #
 disk        = [
-            $extra_disk $root_disk
+            $extra_disk '$gho->{Diskspec}'
             ]
 END
 
@@ -258,7 +254,7 @@ END
 $blcfg
 #
 disk        = [
-            $root_disk
+            '$gho->{Diskspec}'
             ]
 END
     return;
