@@ -21,7 +21,7 @@
 # - <gident>_arch:
 #      Debian arch to install.
 # - <gident>_method:
-#      Install method, currently only "netboot".
+#      Install method, one of "netboot" or "netinst".
 # - <gident>_bootloader:
 #      The PV bootloader to use when booting the guest. One of
 #      "pvgrub" or "pygrub". Default is "pygrub".
@@ -36,6 +36,18 @@
 #    If neither kernel nor ramdisk are specified then the current
 #    TftpDiVersion of d-i will be used, and the runvars will be set to
 #    the file path used.
+#
+# For method="netinst"
+#
+#  - <gident>_netinst_baseurl:
+#       Base URL of directory containing the netinst jigdo images.
+#  - <gident>_netinst_filere:
+#        Regular expression to match actual file within baseurl to use
+#        (without .jigdo suffix)
+#  - <gident>_netinst_kernel:
+#       Path to kernel within the netinst image.
+#  - <gident>_netinst_ramdisk
+#       Path to ramdisk within the netinst image.
 
 use strict qw(vars);
 use DBI;
@@ -66,6 +78,60 @@ sub prep () {
     prepareguest_part_lvmdisk($ho, $gho, $disk_mb);
 
     target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
+}
+
+sub setup_netinst($$)
+{
+    my ($didir, $arch) = @_;
+
+    target_install_packages($ho, qw(jigdo-file));
+
+    my $baseurl = $r{ "$gho->{Guest}_netinst_baseurl" };
+    my $filere = $r{ "$gho->{Guest}_netinst_filere" };
+    my $kernel = $r{ "$gho->{Guest}_netinst_kernel" };
+    my $ramdisk = $r{ "$gho->{Guest}_netinst_ramdisk" };
+
+    die "params" unless $baseurl && $filere && $kernel && $ramdisk;
+
+    my $filebase;
+
+    # Use the MD5SUMs file as an index
+    logm("Fetch index from $baseurl/MD5SUMS");
+    my $idx = target_cmd_output_root($ho, "wget --quiet -O - $baseurl/MD5SUMS");
+    foreach (split /\n/, $idx) {
+	m/^[0-9a-f]{32}  ($filere)\.iso$/ or next;
+	$filebase = $1;
+	last;
+    }
+
+    die unless $filebase;
+
+    logm("Downloading $baseurl/$filebase.jigdo");
+    my $netinst_jigdo = "$baseurl/$filebase.jigdo";
+    # Jigdo uses wget internally, and so obeys $http_proxy. This seems
+    # simpler than the advice at
+    # https://www.debian.org/CD/jigdo-cd/#faq which is to edit
+    # ~/.jigdo-lite and change the wgetOpts setting.
+    my $useproxy = $c{DebianMirrorProxy} // $c{HttpProxy} // '';
+    my $cmd = '';
+    $cmd .= <<END if $useproxy;
+        export http_proxy=$useproxy
+END
+    $cmd .= <<END;
+        cd $didir && jigdo-lite --noask $netinst_jigdo
+END
+    # Jigdo seems to use /etc/apt/sources.list or something, so this
+    # just works using the already configured mirror without
+    # additional configuration, which is good because there doesn't
+    # seem to be any support for such things, at least in Squeeze.
+    target_cmd_root($ho, $cmd, 3600);
+    store_runvar("$gho->{Guest}_netinst_jigdo", $netinst_jigdo);
+
+    return (<<END, "\"file:$didir/$filebase.iso,xvdd:cdrom,r\",");
+bootloader = "pygrub"
+bootloader_args = ["--kernel=$kernel",
+                   "--ramdisk=$ramdisk"]
+END
 }
 
 sub setup_netboot($$$)
@@ -129,6 +195,14 @@ END
 	$ps_url = preseed_create_guest($gho, '', Suite=>$suite, PvMenuLst=>($bl eq "pvgrub"));
 
 	$extra_disk = "";
+    }
+    elsif ($method eq "netinst" )
+    {
+	logm("$method $arch");
+
+	($method_cfg,$extra_disk) = setup_netinst($tmpdir, $arch);
+
+	$ps_url = preseed_create_guest($gho, '', CDROM=>1);
     }
     else
     {

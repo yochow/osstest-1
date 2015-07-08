@@ -106,9 +106,9 @@ test_do_one_netboot () {
     arm*_arm*_*) bootloader="pygrub";; # no pvgrub for arm
 
     # Needs a menu.lst, not present in Squeeze+ due to switch to grub2,
-    # workedaround in Jessie+ with pv-grub-menu package.
+    # workedaround in Wheezy+ with pv-grub-menu package (backports in Wheezy,
+    # in Jessie+ main).
     *_squeeze) bootloader="pygrub";;
-    *_wheezy) bootloader="pygrub";;
 
     # pv-grub-x86_64.gz is not built by 32-bit dom0 userspace build.
     i386_amd64_*) bootloader="pygrub";;
@@ -127,6 +127,48 @@ test_do_one_netboot () {
       all_hostflags=$most_hostflags
 }
 
+test_do_one_netinst () {
+  local path_arch
+  case $domU in
+    amd64|i386) path_arch="multi-arch"; file_arch="amd64-i386";;
+    *)          path_arch="$domU";      file_arch="$domU";;
+  esac
+  case $domU in
+    amd64) iso_path="/install.amd/xen";;
+    i386)  iso_path="/install.386/xen";;
+    *)     iso_path="/install.$domU";;
+  esac
+
+  local cdurl=
+  case $cd in
+    current)
+      cdurl="http://cdimage.debian.org/debian-cd/current/${path_arch}/jigdo-cd"
+      ;;
+    weekly)
+      cdurl="http://cdimage.debian.org/cdimage/weekly-builds/${path_arch}/jigdo-cd"
+      ;;
+    *)
+      echo "cd $cd?"
+      exit 1
+      ;;
+  esac
+
+  # Always pygrub since no pv-grub-menu on CD
+  job_create_test                                               \
+   test-$xenarch$kern-$dom0arch-$domU-$cd-netinst-pygrub        \
+    test-debian-di xl $xenarch $dom0arch                        \
+      kernbuildjob=${bfi}build-$dom0arch-$kernbuild             \
+      debian_arch=$domU                                         \
+      debian_method=netinst                                     \
+      debian_netinst_baseurl=$cdurl                             \
+      debian_netinst_filere="debian-.*-${file_arch}-netinst"    \
+      debian_netinst_kernel="${iso_path}/vmlinuz"               \
+      debian_netinst_ramdisk="${iso_path}/initrd.gz"            \
+      debian_bootloader=pygrub                                  \
+      all_hostflags=$most_hostflags
+
+}
+
 test_matrix_do_one () {
   case ${xenarch} in
   amd64) domUarches="amd64 i386";;
@@ -142,6 +184,18 @@ test_matrix_do_one () {
 
     fi
 
+    if [ $debian_suite = "snapshot" ]; then
+        gsuite=sid
+        for cd in current weekly ; do
+          case ${domU}_${gsuite} in
+            armhf_*) continue;; # No iso targets for armhf
+            *) ;;
+          esac
+
+          test_do_one_netinst
+
+        done
+    fi
   done
 }
 
