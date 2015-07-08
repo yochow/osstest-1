@@ -841,7 +841,7 @@ d-i apt-setup/another boolean false
 d-i apt-setup/non-free boolean false
 d-i apt-setup/contrib boolean false
 
-d-i pkgsel/include string openssh-server, ntp, ntpdate, ethtool, chiark-utils-bin, $extra_packages
+d-i pkgsel/include string openssh-server, ntp, ntpdate, ethtool, chiark-utils-bin, wget, $extra_packages
 
 d-i grub-installer/force-efi-extra-removable boolean true
 

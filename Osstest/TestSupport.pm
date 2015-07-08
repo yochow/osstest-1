@@ -55,7 +55,7 @@ BEGIN {
                       target_putfilecontents_stash
 		      target_putfilecontents_root_stash
                       target_put_guest_image target_editfile
-                      target_editfile_cancel
+                      target_editfile_cancel target_fetchurl
                       target_editfile_root target_file_exists
                       target_editfile_kvp_replace
                       target_run_apt
@@ -1594,6 +1594,16 @@ END
 
     return $cfgpath;
 }
+
+sub target_fetchurl($$$;$) {
+    my ($ho, $url, $path, $timeo) = @_;
+    $timeo ||= 2000;
+    my $useproxy = "export http_proxy=$c{HttpProxy};" if $c{HttpProxy};
+    target_cmd_root($ho, <<END, $timeo);
+    $useproxy wget --progress=dot:mega -O \Q$path\E \Q$url\E
+END
+}
+
 
 sub target_put_guest_image ($$;$) {
     my ($ho, $gho, $default) = @_;
