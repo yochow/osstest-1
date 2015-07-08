@@ -79,7 +79,9 @@ test_do_one_netboot () {
       gsuite=sid
       gver=daily
   else
-    local mirror="http://`getconfig DebianMirrorHost`/`getconfig DebianMirrorSubpath`"
+    #local mirror="http://`getconfig DebianMirrorHost`/`getconfig DebianMirrorSubpath`"
+    # XXX local mirror seems to serve up stale files.
+    local mirror="http://ftp.debian.org/debian"
     diurl="$mirror/dists/$gsuite/main/installer-$domU/current/images/netboot"
     gver=$gsuite
   fi
