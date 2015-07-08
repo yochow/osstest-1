@@ -90,6 +90,11 @@ test_do_one_netboot () {
     *) ;;
   esac
 
+  stripy bootloader pvgrub pygrub \
+    "$xenarch" "amd64" \
+    "$dom0arch" "i386" \
+    "$domU" "amd64" \
+
   case $domU in
     i386|amd64)
       diurl="$diurl/xen";;
@@ -97,8 +102,20 @@ test_do_one_netboot () {
       diurl="$diurl/debian-installer/arm64";;
   esac
 
+  case ${dom0arch}_${domU}_${gsuite} in
+    arm*_arm*_*) bootloader="pygrub";; # no pvgrub for arm
+
+    # Needs a menu.lst, not present in Squeeze+ due to switch to grub2,
+    # workedaround in Jessie+ with pv-grub-menu package.
+    *_squeeze) bootloader="pygrub";;
+    *_wheezy) bootloader="pygrub";;
+
+    # pv-grub-x86_64.gz is not built by 32-bit dom0 userspace build.
+    i386_amd64_*) bootloader="pygrub";;
+  esac
+
   job_create_test                                               \
-   test-$xenarch$kern-$dom0arch-$domU-$gver-netboot-pygrub      \
+   test-$xenarch$kern-$dom0arch-$domU-$gver-netboot-$bootloader \
     test-debian-di xl $xenarch $dom0arch                        \
       kernbuildjob=${bfi}build-$dom0arch-$kernbuild             \
       debian_arch=$domU                                         \
@@ -106,6 +123,7 @@ test_do_one_netboot () {
       debian_method=netboot                                     \
       debian_netboot_kernel="$diurl/vmlinuz"                    \
       debian_netboot_ramdisk="$diurl/initrd.gz"                 \
+      debian_bootloader=$bootloader                             \
       all_hostflags=$most_hostflags
 }
 

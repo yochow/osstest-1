@@ -867,7 +867,9 @@ sub preseed_create_guest ($$;@) {
 
     my $suite= $xopts{Suite} || $c{DebianSuite};
 
-    my $preseed_file= preseed_base($ho, $suite, $sfx, '', %xopts);
+    my $extra_packages = "pv-grub-menu" if $xopts{PvMenuLst};
+
+    my $preseed_file= preseed_base($ho, $suite, $sfx, $extra_packages, %xopts);
     $preseed_file.= (<<END);
 d-i     partman-auto/method             string regular
 d-i     partman-auto/choose_recipe \\

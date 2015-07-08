@@ -39,6 +39,7 @@ BEGIN {
                       db_begin_work db_prepare
                       ensuredir get_filecontents_core_quiet system_checked
                       nonempty visible_undef show_abs_time
+                      %arch_debian2xen %arch_xen2debian
                       );
     %EXPORT_TAGS = ( );
 
@@ -53,6 +54,12 @@ our $dbh_tests;
 scalar *main::DEBUG;
 # declaration prevents `Name "main::DEBUG" used only once'
 # scalar prevents `useless use of a variable in void context'
+
+our %arch_debian2xen = qw(i386 x86_32
+			  amd64 x86_64
+			  armhf armhf);
+our %arch_xen2debian;
+$arch_xen2debian{$arch_debian2xen{$_}} = $_ foreach keys %arch_debian2xen;
 
 #---------- static default config settings ----------
 

@@ -22,13 +22,16 @@
 #      Debian arch to install.
 # - <gident>_method:
 #      Install method, currently only "netboot".
+# - <gident>_bootloader:
+#      The PV bootloader to use when booting the guest. One of
+#      "pvgrub" or "pygrub". Default is "pygrub".
 #
 # For method="netboot":
 #
 #  - <gident>_netboot_kernel:
-#       URL of the kernel to boot
+#       URL of the kernel to boot.
 #  - <gident>_netboot_ramdisk:
-#       URL of the ramdisk to boot
+#       URL of the ramdisk to boot.
 #
 #    If neither kernel nor ramdisk are specified then the current
 #    TftpDiVersion of d-i will be used, and the runvars will be set to
@@ -107,6 +110,8 @@ sub ginstall () {
     my $method= $r{"$gho->{Guest}_method"};
 
     my $tmpdir= "/root/$flight-$job-di";
+    my $bl= $r{"$gho->{Guest}_bootloader"};
+
     target_cmd_root($ho, <<END);
 rm -rf $tmpdir
 mkdir $tmpdir
@@ -121,7 +126,7 @@ END
 
 	$method_cfg = setup_netboot($tmpdir, $arch, $suite);
 
-	$ps_url = preseed_create_guest($gho, '', Suite=>$suite);
+	$ps_url = preseed_create_guest($gho, '', Suite=>$suite, PvMenuLst=>($bl eq "pvgrub"));
 
 	$extra_disk = "";
     }
@@ -162,7 +167,12 @@ END
     guest_await_shutdown($ho,$gho,3600);
     guest_destroy($gho);
 
-    my $blcfg = <<END;
+    my $xenarch = $arch_debian2xen{$arch};
+    my $pvgrub = "/usr/local/lib/xen/boot/pv-grub-$xenarch.gz";
+    my $blcfg = $bl eq "pvgrub" ? <<END : <<END;
+kernel = "$pvgrub"
+extra = "(hd0,0)/boot/grub/menu.lst"
+END
 bootloader = "pygrub"
 END
 
