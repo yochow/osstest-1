@@ -865,8 +865,8 @@ END
     return $preseed;
 }
 
-sub preseed_create_guest ($$;@) {
-    my ($ho, $sfx, %xopts) = @_;
+sub preseed_create_guest ($$$;@) {
+    my ($ho, $arch, $sfx, %xopts) = @_;
 
     my $suite= $xopts{Suite} || $c{DebianSuite};
 
@@ -910,6 +910,16 @@ d-i     partman-auto/choose_recipe \\
                 select All files in one partition (recommended for new users)
 
 d-i     grub-installer/bootdev          string /dev/xvda
+
+END
+
+    # Debian doesn't currently know what bootloader to install in a
+    # Xen guest on ARM. We install pv-grub-menu above which actually
+    # does what we need, but the installer doesn't treat that as a
+    # "bootloader".
+    logm("\$arch is $arch, \$suite is $suite");
+    $preseed_file.= (<<END) if $arch =~ /^arm/ && $suite =~ /wheezy|jessie|sid/;
+d-i     nobootloader/confirmation_common boolean true
 
 END
 
