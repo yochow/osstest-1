@@ -68,22 +68,33 @@ fetch_version () {
 	printf '%s\n' "$fetch_version_result"
 }
 
-treeurl=`./ap-print-url $branch`
+case $branch in
+    distros-*)
+	treeurl=none;;
+    *)
+	treeurl=`./ap-print-url $branch`;;
+esac
 
 force_baseline=false
 skipidentical=true
 wantpush=$OSSTEST_PUSH
-
-if [ "x$OLD_REVISION" = x ]; then
-        OLD_REVISION="`./ap-fetch-version-old $branch`"
-        export OLD_REVISION
-fi
 
 check_tested () {
 	./sg-check-tested --debug --branch=$branch \
 	  --blessings=${DAILY_BRANCH_TESTED_BLESSING:-$OSSTEST_BLESSING} \
 	  "$@"
 }
+
+if [ "x$OLD_REVISION" = x ]; then
+    case $branch in
+	distros-*)
+	    OSSTEST_NO_BASELINE=y
+	    OLD_REVISION=flight-`check_tested`
+	    ;;
+	*) OLD_REVISION="`./ap-fetch-version-old $branch`";;
+    esac
+    export OLD_REVISION
+fi
 
 if [ "x$OSSTEST_NO_BASELINE" != xy ] ; then
 	testedflight=`check_tested --revision-$tree="$OLD_REVISION"`
@@ -227,6 +238,11 @@ if [ "x$OLD_REVISION" = xdetermine-late ]; then
 	OLD_REVISION="`./ap-fetch-version-baseline-late $branch $NEW_REVISION`"
 fi
 
+case $branch in
+distros-*) makeflight=./make-distros-flight ;;
+*)         makeflight=./make-flight ;;
+esac
+
 if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
         wantpush=false
 	for checkbranch in x $BRANCHES_ALWAYS; do
@@ -241,7 +257,7 @@ if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
 fi
 
 $DAILY_BRANCH_PREMAKE_HOOK
-flight=`./make-flight $branch $xenbranch $OSSTEST_BLESSING "$@"`
+flight=`$makeflight $branch $xenbranch $OSSTEST_BLESSING "$@"`
 $DAILY_BRANCH_POSTMAKE_HOOK
 
 heading=tmp/$flight.heading-info
@@ -261,6 +277,10 @@ fi
 revlog=tmp/$flight.revision-log
 
 case "$NEW_REVISION/$OLD_REVISION" in
+/flight-[0-9]*)
+	echo >&2 "SGR COMPARISON AGAINST ${OLD_REVISION}"
+	sgr_args+=" --that-flight=${OLD_REVISION#flight-}"
+	;;
 */*[^0-9a-f]* | *[^0-9a-f]*/*)
         echo >&2 "NO SGR COMPARISON badchar $NEW_REVISION/$OLD_REVISION"
         ;;
@@ -321,7 +341,7 @@ start_email $flight $branch "$sgr_args" "$subject_prefix"
 push=false
 if grep '^tolerable$' $mrof >/dev/null 2>&1; then push=$wantpush; fi
 if test -f $branch.force; then push=$OSSTEST_PUSH; fi
-if grep -xF $NEW_REVISION $branch.force-rev; then push=$OSSTEST_PUSH; fi
+if grep -xF "$NEW_REVISION" $branch.force-rev; then push=$OSSTEST_PUSH; fi
 if test -f $branch.block; then push=false; fi
 
 if test -e $mrof && test -e $tree_bisect && ! grep '^broken' $mrof; then
