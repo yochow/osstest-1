@@ -30,6 +30,7 @@ sub new {
 		   NewDaemons => [qw(xend)],
 		   OldDaemonInitd => 'xend',
 		   _Command => 'xm',
+		   _VerboseCommand => 'xm', # no verbosity here
 		   Dom0MemFixed => 1,
     }, $class;
 }
