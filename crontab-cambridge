@@ -2,4 +2,5 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=ian.jackson@citrix.com,ian.campbell@eu.citrix.com
 # m            h       dom mon dow     command
 4-59/30        *       * * *           cd testing.git && BRANCHES=osstest              ./cr-for-branches branches -q "./cr-daily-branch --real"
+22		8	* * *		cd testing.git && BRANCHES=maintjobs		./cr-for-branches . -w ./cr-all-branch-statuses ''
 3              4       * * *           savelog -c28 testing.git/tmp/cr-for-branches.log >/dev/null

@@ -1,0 +1,120 @@
+#!/bin/bash
+# -*- bash -*-
+#
+# Prints the status of each branch
+#
+# Usage:
+#    ./mg-all-branch-statuses [BRANCH....]
+#
+# If no BRANCHes specified, does all that are normally run by
+# cr-daily-branch or out of crontab.
+
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2009-2014 Citrix Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+. cri-common
+
+mkdir -p tmp
+
+if [ $# = 0 ]; then
+   set `./mg-list-all-branches`
+fi
+
+gather_info()
+{
+    local branch=$1; shift
+    local basis=$1;  shift
+    local tip=$1;    shift
+
+    select_xenbranch
+
+    local info=`perl -we '
+	use Osstest::Executive;
+	use Osstest;
+	use Data::Dumper;
+	open DEBUG, ">/dev/null" or die $!;
+	#open DEBUG, ">&STDERR" or die $!;
+	csreadconfig();
+	my ($branch,$tree,$basis,$tip) = @ARGV;
+	print DEBUG "branch=$branch tree=$tree basis=$basis tip=$tip\n";
+	my $info = report_find_push_age_info([qw(real adhoc play)],
+					      undef, [($branch)],
+					      $tree, $basis, $tip);
+	print DEBUG Dumper $info;
+	my $onevar = sub {
+		my ($var,$val) = @_;
+		$val //= "";
+		print uc($var)."=\"$val\";\n";
+	};
+	$onevar->($_, $info->{$_}//"-")
+		foreach qw(CountTip CountAfterBasis);
+	foreach my $flight (qw(Basis FirstAfterBasis FirstTip)) {
+		$onevar->("${flight}_${_}", $info->{$flight}{$_})
+			foreach qw(flight started);
+	}
+' "$branch" "$tree" "$basis" "$tip"`
+    eval $info
+}
+
+days_since() # Must output 10 characters
+{
+    then=$1 ; shift
+
+    if [ -z "$then" ] ; then
+	echo "  n/a     "
+	return
+    fi
+
+    local now=$(date +%s)
+    local days=$(( ($now - $then) / 86400 ))
+
+    if [ $days -eq 1 ] ; then
+	printf "%5d day " $days
+    else
+	printf "%5d days" $days
+    fi
+}
+
+printf "%-28s %-8s %-8s %-9s %-10s %-10s\n" \
+	"Branch" "Basis" "Tip" "#Tip #Tot" "1stTip" "1stNew"
+
+for branch in $@; do
+    basis=`./ap-fetch-version-old $branch 2>/dev/null || true`
+    tip=`./ap-fetch-version $branch 2>/dev/null || true`
+
+    gather_info "$branch" "$basis" "$tip"
+
+    basis=${basis:0:8}
+
+    tip=${tip:0:8}
+    : ${tip:=Error!}
+
+    printf "%-28s %-8s " "${branch}" "${basis}"
+
+    if [ x$basis != x$tip ] ; then
+	tipsince=$(days_since "$FIRSTTIP_STARTED")
+	newsince=$(days_since "$FIRSTAFTERBASIS_STARTED")
+
+	printf "%-8s  %3s  %3s %10s %10s" "${tip}" \
+	       "$COUNTTIP" "$COUNTAFTERBASIS" "$tipsince" "$newsince"
+    else
+	printf "same"
+    fi
+
+    printf "\n"
+done
