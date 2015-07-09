@@ -5,3 +5,4 @@ test-@@-qemuu-@@		guest-localmigrate
 test-@@-libvirt@@
 test-@@-rumpuserxen@@		rumpuserxen-demo-xenstorels/xenstorels
 test-@@-win7-@@			guest-stop
+test-@@-rumpuserxen-@@		rumpuserxen-demo-xenstorels/xenstorels.repeat
