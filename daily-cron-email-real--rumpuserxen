@@ -1,3 +1,4 @@
 To: xen-devel@lists.xensource.com,
-    rumpkernel-builds@freelists.org
-Cc: ian.jackson@eu.citrix.com
+    rumpkernel-builds@freelists.org,
+    osstest-admin@xenproject.org
+Bcc: osstest-output@lists.xenproject.org

@@ -127,14 +127,17 @@ sub host_check_allocated ($$) { #method
     $ho->{SharedMaybeOthers}=
         $ho->{Shared} &&
         $ho->{Shared}{State} eq 'ready';
+    my $harness = get_harness_rev();
+    my @flags = get_hostflags($ho->{Ident});
     $ho->{SharedReady}=
 	$ho->{SharedMaybeOthers} &&
-        !! (grep { $_." ".get_harness_rev() eq "share-".$ho->{Shared}{Type} }
-	    get_hostflags($ho->{Ident}));
+        !! (grep { $_." ".$harness eq "share-".$ho->{Shared}{Type} }
+	    @flags);
     $ho->{SharedOthers}=
         $ho->{Shared} ? $ho->{Shared}{Others} : 0;
     
-    die Dumper($ho)." ?" if $ho->{SharedOthers} && !$ho->{SharedReady};
+    die Dumper($ho, $harness, \@flags)." ?"
+	if $ho->{SharedOthers} && !$ho->{SharedReady};
 }
 
 sub jobdb_postfork ($) { #method

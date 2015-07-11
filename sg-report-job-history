@@ -244,7 +244,8 @@ END
             $url= "$c{ReportHtmlPubBaseUrl}/$flt";
             print H "<td><a href=\"$url\">$flt</a></td>\n";
             print H "<td>".encode_entities($r->{Flight}{branch})."</td>\n";
-            $url= "$c{ReportHtmlPubBaseUrl}/$flt/".encode_entities($j)."/";
+            $url= "$c{ReportHtmlPubBaseUrl}/$flt/".encode_entities($j).
+		"/info.html";
             print H "<td $r->{ColourAttr}><a href=\"$url\">".
                 $r->{Content}."</a></td>\n";
             my $lastrev;
