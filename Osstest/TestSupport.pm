@@ -1733,8 +1733,11 @@ sub more_prepareguest_hvm ($$$$;@) {
     }
     my $disks = join ",\t\t\n", map { "'$_'" } @disks;
 
+    my $kernel = toolstack($ho)->{Name} =~ m/xend/ ?
+	"kernel      = 'hvmloader'" : '';
+
     my $cfg = <<END;
-kernel      = 'hvmloader'
+$kernel
 builder     = 'hvm'
 #
 disk        = [
