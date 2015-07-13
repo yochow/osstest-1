@@ -1,0 +1,78 @@
+BIG FAT WARNING
+===============
+
+These instructions are based on my understanding of the system and the
+things which needed to be changed when we moved the Citrix Cambridge
+instance of osstest from one subdomain to another. They have not been
+tried in a real standalone deployment
+
+STANDALONE MODE
+===============
+
+These instructions deal with setting up a full production instance of
+osstest, i.e. one which is cron job driven. You might call this
+"infrastructure mode" or "executive mode".
+
+Most individual developers are probably better served with "standalone
+mode" which is described in the main README.
+
+OSSTEST USER
+============
+
+osstest is designed to run as its own user on test control host. In
+this document it is assumed this user is called "osstest".
+
+INFRASTRUCTURE
+==============
+
+DATABASE SERVER
+---------------
+
+osstest requires a Postgres database server and a database configured
+with the schema described in executive-postgresql-schema which should
+be accessible to an osstest role account.
+
+The hostname and dbname are configured via the "ExecutiveDbnamePat"
+config option.
+
+OWNER AND QUEUE DAEMONS
+-------------------------
+
+These two daemons (ms-ownerdaemon and ms-queuedaemon) are part of
+osstest and should be run out of inittab from a dedicated clone of the
+osstest git repo. e.g.
+
+otdo:2345:respawn:su osstest -c '/home/osstest/daemons-testing.git/invoke-daemon ms-ownerdaemon'
+otdq:2345:respawn:su osstest -c '/home/osstest/daemons-testing.git/invoke-daemon ms-queuedaemon 2'
+
+The two daemons may share the same git repo
+(/home/osstest/daemons-testing.git in this example) but it should not
+be shared with other osstest activities (i.e. the production cronjobs)
+
+The two daemons need not run on the same host as either each other or
+even on the osstest control VM. (For fate-sharing reasons it may be
+preferred to run the owner daemon on the same host as the postgres
+database).
+
+The hosts running the two daemons should be referenced by the
+OwnerDaemonHost and QueueDaemonHost configuration options. If they
+happen to run on the same host then setting ControlDaemonHost will
+configure both in one go.
+
+DHCP AND PXE
+------------
+
+osstest does not require a dedicated DHCP server but one must be
+present on the network and osstest requires access to its leases
+table (either as a local file or as a host + TCP port to be connected
+to which will dump the lease file. This is configured via the
+DhcpWatchMethod host prop (default configured via
+HostProp_DhcpWatchMethod)
+
+Likewise osstest does not require a dedicated PXE server but one must
+exist on the network and be accessible via a local path on the osstest
+control VM (e.g. over NFS)
+
+CONFIGURATION
+=============
+
