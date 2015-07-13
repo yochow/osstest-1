@@ -19,8 +19,6 @@
 if [ -e $HOME/.xen-osstest/settings ]; then
      source $HOME/.xen-osstest/settings
 fi
-export OSSTEST_CONFIG=${OSSTEST_CONFIG:-production-config}
-
 
 cd "${0%/*}"
 if [ "x$2" != x ]; then sleep $2; fi

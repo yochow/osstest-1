@@ -19,7 +19,6 @@
 if [ -e $HOME/.xen-osstest/settings ]; then
      source $HOME/.xen-osstest/settings
 fi
-export OSSTEST_CONFIG=${OSSTEST_CONFIG:-production-config}
 
 check_stop_core () {
 	if [ "x$OSSTEST_IGNORE_STOP" = xy ]; then return; fi
