@@ -382,7 +382,7 @@ sub cmd_get_plan () {
     get_current_plan();
     launder_check_plan();
 
-    my $jplan= { Events=>{} };
+    my $jplan= { Events=>{}, Start => $plan->{Start} };
 
     while (my ($reso,$evts) = each %{ $plan->{Events} }) {
 	my @jevts;
