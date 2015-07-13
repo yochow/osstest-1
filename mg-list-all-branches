@@ -3,6 +3,7 @@
 # mentioned in cr-daily-branch or crontab
 
 use strict;
+use Sort::Versions;
 
 our %branches;
 
@@ -15,4 +16,4 @@ foreach my $f (qw(cr-for-branches crontab)) {
     close C or die $!;
 }
 
-print $_,"\n" or die $! foreach sort keys %branches;
+print $_,"\n" or die $! foreach sort { versioncmp($a, $b) } keys %branches;
