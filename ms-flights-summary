@@ -1,0 +1,426 @@
+#!/usr/bin/perl -w
+
+use strict qw(vars refs);
+
+use Osstest;
+use Osstest::Executive;
+
+use POSIX;
+use Data::Dumper;
+use HTML::Entities;
+
+# $flights{NNNN} = {
+#     Nr => NNNN,
+#     Stats => {
+#         Pass => <NRPASS>,
+#         Fail => <NRFAIL>,
+#         ...
+#     },
+#     Started => ...,
+#     Blessing => ...,
+#     Branch => ...,
+#     Intended => ...,
+#     ExpectedEnd => ...,
+#     Jobs => {
+#         JNAME1 => {
+#             Reso => {
+#                 RNAME1 => {
+#                     Start => ...,
+#                     End => ...,
+#                     Info => ...,
+#                 },
+#                 RNAME2 => { ... },
+#             },
+#             OverallTime => { Start => ..., End => ... },
+#             Receipe => ...,
+#             Status => pass|fail|...,
+#         },
+#         JNAME2 => { ... },
+#     },
+#     TotalJobs => NNN,
+#     UnqueuedJobs => MMM, # Not queued
+# };
+our %flights;
+
+# As for $flights{NNN}{Jobs} but each Job only has the Reso and
+# OverallTime keys, plus an additional Anon => 1
+our %anon_jobs;
+
+# As for $flights{NNNN} => Stats, but cummulative for all flights.
+our %global_stats;
+our $tot_jobs = 0;
+
+our $plan;
+
+sub get_current_plan ($) {
+    my ($fn) = @_;
+    open P, $fn or die $!;
+    local $/;
+    my $plandump= <P>;
+    P->error and die $!;
+    close P or die $!;
+    $plan= eval $plandump;
+    #print STDERR Dumper($plan);
+}
+
+# Find all the flights referenced by an Event and insert into %flights.
+sub enumerate_flights() {
+    while (my ($reso,$evts) = each %{ $plan->{Events} }) {
+	foreach my $evt ( @{$evts} ) {
+	    next unless $evt->{Type} =~ m/^(Start|End)$/;
+	    next unless $evt->{Job};
+	    $evt->{Job} =~ m/^([0-9]+)\.(.*)/ or die;
+
+	    my $f = $1;
+
+	    next if $flights{$f};
+
+	    my $flightinfo= $dbh_tests->selectrow_hashref(<<END);
+	    SELECT started,blessing,branch,intended FROM flights
+		WHERE flight=$f
+END
+            $flights{$f}= { Nr => $f,
+			    Stats => {},
+	                    Jobs => {} };
+            foreach my $fld (qw(started blessing branch intended)) {
+                $flights{$f}->{ucfirst($fld)}= $flightinfo->{$fld};
+	    };
+	    $flights{$f}->{ExpectedEnd} = 0;
+	}
+    }
+}
+
+# Enumerate all jobs of every known flight and populate the
+# corresponding ->{Jobs}.
+sub enumerate_jobs($) {
+    my ($f) = @_;
+
+    $f->{Jobs} = {};
+
+    my $jobs= $dbh_tests->selectall_arrayref(<<END, { Slice => {} });
+        SELECT job,recipe,status FROM jobs
+            WHERE flight=$f->{Nr}
+END
+
+    for my $row (@{$jobs}) {
+	$f->{Jobs}{$row->{job}} =
+	{
+	    Status => $row->{status},
+	    Recipe => $row->{recipe},
+	    Reso => {},
+	};
+	$tot_jobs++;
+    }
+}
+
+# Gather statistics around number of pass/fail/etc jobs in each
+# flight.
+sub gather_stats($) {
+    my ($f) = @_;
+
+    my $stats= $dbh_tests->selectall_arrayref(<<END);
+        SELECT status,COUNT(*) FROM jobs
+	    WHERE flight=$f->{Nr}
+            GROUP BY status
+END
+    for my $row (@{$stats}) {
+	my ($stat,$count) = @$row;
+	$f->{Stats}{lc($stat)} = $count;
+	$global_stats{lc($stat)} += $count;
+    }
+
+    $f->{NrJobs} = keys %{$f->{Jobs}};
+    $f->{UnqueuedJobs} = $f->{NrJobs} - ($f->{Stats}{queued}//0);
+}
+
+sub sort_stats($) {
+    my ($stats) = @_;
+    my %so = (
+	queued => 1,
+	preparing => 2,
+	blocked => 3,
+	running => 4,
+	pass => 5,
+	fail => 6,
+	broken => 7,
+    );
+    return sort { ($so{$a}//0) <=> ($so{$b}//0) } (keys %{$stats});
+}
+
+sub add_event($$$$$) {
+    my ($job,$reso,$type,$info,$time) = @_;
+
+    die unless $type =~ m/^(Start|End)/;
+
+    $job->{OverallTime} //= {};
+
+    $job->{Reso}{$reso} //= {};
+    $job->{Reso}{$reso}{$type} = $time;
+
+    $job->{Reso}{$reso}{Info} = $info
+	if $type eq "Start";
+
+    my $cmp = $type eq "Start" ?
+	sub { $_[0] < $_[1] ? $_[0] : $_[1] } :
+	sub { $_[0] > $_[1] ? $_[0] : $_[1] };
+
+    $job->{OverallTime}{$type} //= $time;
+
+    $job->{OverallTime}{$type} =
+	$cmp->($time, $job->{OverallTime}{$type});
+}
+
+# Longest common prefix. First argument is cumulative over several
+# iterations and therefore we simply shorten it until it is a common
+# prefix of the second.
+sub update_lcp ($$) {
+    my ($a,$b) = @_;
+
+    return $b unless $a;
+    return $a unless $b;
+
+    chop $a while $b !~ m/^\Q$a\E/;
+    return $a;
+}
+
+# Walk all events in the plan and update the corresponding flight/job
+# with the timespan. Events relating to unknown jobs are added to
+# %anon_jobs.
+sub gather_events() {
+    while (my ($reso,$evts) = each %{ $plan->{Events} }) {
+	foreach my $evt ( @{$evts} ) {
+	    my ($f,$job);
+	    next unless $evt->{Type} =~ m/^(Start|End)$/;
+	    if ( $evt->{Job} ) {
+		my ($fnum,$j);
+		$evt->{Job} =~ m/^([0-9]+)\.(.*)/ or die;
+		($fnum,$j) = ($1,$2);
+		goto anon unless $flights{$fnum};
+		$f = $flights{$fnum};
+		goto anon unless $f->{Jobs}{$j};
+		$job = $f->{Jobs}{$j};
+	    } else {
+ anon:
+		# Fake up a name from the $reso and the event's info
+		# field (if available).
+		my $anon_job = join(" ", ($reso,$evt->{Info}));
+		$anon_jobs{$anon_job} //= { Reso => {}, Anon => 1 };
+		$job = $anon_jobs{$anon_job};
+	    }
+
+	    my $time = $evt->{Time};
+
+	    add_event($job, $reso, $evt->{Type}, $evt->{Info}, $time);
+
+	    $f->{Info} = update_lcp($f->{Info}, $evt->{Info}) if $f;
+
+	    if ($f && $evt->{Type} eq "End") {
+		$f->{ExpectedEnd} =
+		    $time > $f->{ExpectedEnd} ?
+		    $time : $f->{ExpectedEnd};
+	    }
+	}
+    }
+}
+
+############
+
+my @cols = ("Job", "Status", "Resource", "Scheduled");
+
+sub fmttime($)
+{
+    my ($t) = @_;
+    return "Unknown" if !$t;
+    return strftime("%Y-%b-%d %a %H:%M:%S", gmtime $t);
+}
+
+sub fmt_timespan($) {
+    my ($s) = @_;
+
+    return undef unless $s;
+
+    if ( $s->{Start} || $s->{End} ) {
+	return join(" &mdash; ",
+		    map { encode_entities(fmttime($s->{$_})) }
+		    qw(Start End));
+    } else {
+	return "???";
+    }
+}
+
+sub currently_running($) {
+    my ($info) = @_;
+
+    return 0 unless $info->{OverallTime}{Start};
+    return 0 unless $info->{OverallTime}{End};
+
+    return 0 if $info->{OverallTime}{Start} > $plan->{Start};
+    return 0 if $info->{OverallTime}{End} < $plan->{Start};
+
+    return 1;
+}
+
+sub cols_hdr() {
+    printf("<tr bgcolor=#808080>\n");
+    printf(" <th align='left'>%s</th>\n", encode_entities($_)) foreach @cols;
+    printf("</tr>\n");
+}
+
+sub flight_hdr($) {
+    my $text = encode_entities(shift);
+    printf("    <tr><td colspan=%d><b>$text</b></td></tr>\n", scalar @cols);
+}
+
+sub cell($;$$$) {
+    my ($text,$colourattr,$fontattr,$tag) = @_;
+    $text //= '';
+    $colourattr = $colourattr ? $colourattr : '';
+    $text = "<font $fontattr>$text</font>" if $fontattr;
+    $text = "<$tag>$text</$tag>" if $tag;
+    printf(" <td valign=top $colourattr>$text</td>\n");
+}
+
+sub do_one_job($$$$) {
+    my ($alt,$fl,$job,$info) = @_;
+    my $status = $info->{Status}//'';
+
+    my $bgcolour = report_altcolour(${$alt});
+
+    my @resos = sort keys %{ $info->{Reso} };
+
+    my ($resos,$spans);
+    my $resopfx = '';
+    if (@resos > 1) {
+	$resos = "Overall<br>\n    ";
+	$resopfx = "&mdash; ";
+	$spans = fmt_timespan($info->{OverallTime})."<br>\n    ";
+    }
+
+    $resos .= join "<br>\n    ", map { "$resopfx$_" } @resos;
+    $spans .= join "<br>\n    ", map { fmt_timespan($info->{Reso}{$_}) } @resos;
+
+    print "<tr $bgcolour>\n";
+
+    my $tag = $status eq "running" ? "b" : undef;
+
+    $tag = "b" if $info->{Anon} && currently_running($info);
+
+    cell(encode_entities($job), undef, undef, $tag);
+
+    # Anonymous/rogue jobs may not have a flight or status
+    if ($fl && $status) {
+	my $info = report_run_getinfo({flight=>$fl,
+				       job=>$job,
+				       status=>$status});
+	cell($info->{Content}, $info->{ColourAttr}, undef, $tag);
+    } else {
+	cell("(unknown)");
+    }
+    cell($resos);
+    cell($spans,
+	 $resos ?
+	   "bgcolor=".($status eq "running" ? "#882222" : "#448844") :
+	   "",
+	 "color=\"#ffffff\"");
+
+    print "</tr>\n";
+    ${$alt} ^= 1;
+}
+
+###########
+
+@ARGV == 1 or die "need a data.pl";
+
+# Required by parts of Osstest::Executive.
+open DEBUG, ">/dev/null";
+
+csreadconfig();
+
+get_current_plan($ARGV[0]);
+
+enumerate_flights();
+
+foreach my $f (keys %flights) {
+    enumerate_jobs($flights{$f});
+    gather_stats($flights{$f});
+}
+
+gather_events();
+
+printf("<p>Report at ".fmttime(time)." based on plan at ".fmttime($plan->{Start})."</p>\n");
+
+printf("<p><h1>Overview</h1></p>\n");
+printf("<p>%d flight(s) consisting of %s job(s)<br />%s<br />%s anonymous/rogue job(s)</p>\n",
+       scalar keys %flights, $tot_jobs,
+       join(" + ", map { "$global_stats{$_} $_" } (sort_stats(\%global_stats))),
+       scalar keys %anon_jobs);
+
+printf("<table border='0' cellspacing='0' rules=all>\n");
+printf("<tr bgcolor=#808080>\n");
+printf("  <th align=left>$_</th>\n") foreach ("Flight", "Branch", "Blessing",
+				   "(Active+Complete)/Total Jobs", "Counts",
+				   "End of current phase");
+printf("</tr>\n");
+
+my $alt = 0;
+foreach my $f (sort keys %flights) {
+    my $fi = $flights{$f};
+
+    my $bgcolour = report_altcolour($alt);
+
+    print "<tr $bgcolour>\n";
+    print "  <td><a href=\"#$f\">$f</a></td>\n";
+    print "  <td>$fi->{Branch}</td>\n";
+    print "  <td>$fi->{Intended}</td>\n";
+    print "  <td>$fi->{UnqueuedJobs}/$fi->{NrJobs}</td>\n";
+    print "  <td>".
+	join(" + ", map { "$fi->{Stats}{$_} $_" } (sort_stats(\%{$fi->{Stats}})))
+	."</td>\n";
+    print "  <td>".fmttime($fi->{ExpectedEnd})."</td>\n";
+    print "</tr>\n";
+    $alt ^= 1;
+}
+printf("</table>\n");
+
+
+printf("<p><h1>Details</h1></p>\n");
+printf("<table border='0' cellspacing='0' rules=all>\n");
+
+my $first = 1;
+foreach my $f (sort keys %flights) {
+    my $fi = $flights{$f};
+
+    $alt = 0;
+
+    printf ("<tr><td colspan=%d>\n  <table>\n", scalar @cols);
+    print ("    <tr><td>&nbsp;</td></tr>\n") if !$first;
+    $first = 0;
+    print("<a name=\"$f\"></a>\n");
+    flight_hdr("Flight: $f [$fi->{Branch} $fi->{Intended}]");
+    flight_hdr("Common info (active jobs only): $fi->{Info}") if $fi->{Info};
+    flight_hdr("Started: ".fmttime($fi->{Started}));
+    flight_hdr("Current phase ($fi->{UnqueuedJobs}/$fi->{NrJobs} jobs)".
+	       " expected end: ".fmttime($fi->{ExpectedEnd}));
+    flight_hdr("Jobs: $fi->{NrJobs} = ".
+	join(" + ", map { "$fi->{Stats}{$_} $_" } (sort_stats(\%{$fi->{Stats}})))
+	);
+    print ("  </table>\n</td></tr>\n");
+
+    cols_hdr();
+
+    do_one_job(\$alt,$fi->{Nr},$_, $fi->{Jobs}{$_})
+	foreach sort { $a cmp $b } keys %{$fi->{Jobs}};
+}
+print "\n";
+
+printf ("<tr><td colspan=%d>\n  <table>\n", scalar @cols);
+print ("   <tr><td>&nbsp;</td></tr>\n");
+flight_hdr("Anonymous/Rogue Jobs");
+print ("  </table>\n</td></tr>\n");
+cols_hdr();
+$alt = 0;
+foreach my $j (sort keys %anon_jobs) {
+    do_one_job(\$alt,undef,$j, $anon_jobs{$j});
+}
+
+print "</table>\n";
