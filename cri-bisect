@@ -111,7 +111,7 @@ END
         if $flight_executed; then
                 echo >&3 ----------------------------------------
 		if [ "x$OSSTEST_HTMLPUB_DIR" != x ]; then
-			sgr_args+="$OSSTEST_HTMLPUB_DIR/$flight/"
+			sgr_args+=" --html-dir=$OSSTEST_HTMLPUB_DIR/$flight/"
 		fi
                 ./sg-report-flight $sgr_args >&3 $flight
                 ./cr-publish-flight-logs --push-harness $flight
