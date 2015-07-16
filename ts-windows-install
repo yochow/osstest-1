@@ -28,7 +28,7 @@ our $ho= selecthost($whhost);
 
 our $gho;
 
-our $ram_mb=    512;
+our $ram_mb=   1536;
 our $disk_mb= 10000;
 
 our $guesthost= 'win.guest.osstest';
