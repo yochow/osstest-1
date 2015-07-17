@@ -76,7 +76,7 @@ sub migrate ($$$$) {
     my $dst = $dho->{Name};
     my $gn = $gho->{Name};
     target_cmd_root($sho,
-		    $self->{_Command}." migrate $gn $dst",
+		    $self->{_VerboseCommand}." migrate $gn $dst",
 		    $timeout);
 }
 
@@ -84,7 +84,7 @@ sub save ($$$$) {
     my ($self,$gho,$f,$timeout) = @_;
     my $ho = $self->{Host};
     my $gn = $gho->{Name};
-    target_cmd_root($ho,$self->{_Command}." save $gn $f", $timeout);
+    target_cmd_root($ho,$self->{_VerboseCommand}." save $gn $f", $timeout);
 }
 
 sub restore ($$$$) {
@@ -93,7 +93,7 @@ sub restore ($$$$) {
     my $gn = $gho->{Name};
     my $cfg = $self->{RestoreNeedsConfig} ? $gho->{CfgPath} : '';
     target_cmd_root($ho,
-		    $self->{_Command}
+		    $self->{_VerboseCommand}
 		    ." restore "
 		    .$cfg
 		    ." $f", $timeout);
