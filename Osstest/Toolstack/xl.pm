@@ -70,8 +70,8 @@ sub check_for_command($$) {
     return $rc;
 }
 
-sub migrate_check ($) {
-    my ($self) = @_;
+sub migrate_check ($$) {
+    my ($self,$local) = @_;
     return check_for_command($self, "migrate");
 }
 

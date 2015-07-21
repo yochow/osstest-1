@@ -36,7 +36,7 @@ sub new {
 }
 
 # xend always supported migration
-sub migrate_check ($) { return 0; }
+sub migrate_check ($$) { return 0; }
 
 # xend always supported save / restore
 sub saverestore_check ($) { return 0; }

@@ -72,9 +72,21 @@ sub shutdown_wait ($$$) {
     guest_await_destroy($gho,$timeout);
 }
 
-sub migrate_check ($) {
-    my ($self) = @_;
-    die "Migration check is not yet supported on libvirt.";
+sub migrate_check ($$) {
+    my ($self, $local) = @_;
+    my $rc;
+
+    if ($local) {
+        # local migration is not supported
+        $rc = 1;
+    } else {
+	my $ho = $self->{Host};
+	my $caps = target_cmd_output_root($ho, "virsh capabilities");
+	$rc = ($caps =~ m/<migration_features>/) ? 0 : 1
+    }
+
+    logm("rc=$rc");
+    return $rc;
 }
 
 sub check_for_command($$) {

@@ -22,6 +22,9 @@ use Osstest::TestSupport;
 
 tsreadconfig();
 
-our $ho = selecthost($ARGV[0]);
 
-exit(toolstack($ho)->migrate_check());
+# Mode should be either 1 ("local") or 0 ("remote")
+our ($whhost, $gn, $mode) = @ARGV;
+our $ho = selecthost($whhost);
+
+exit(toolstack($ho)->migrate_check($mode));
