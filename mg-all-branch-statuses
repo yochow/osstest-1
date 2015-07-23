@@ -53,7 +53,7 @@ gather_info()
 	my ($branch,$tree,$basis,$tip) = @ARGV;
 	print DEBUG "branch=$branch tree=$tree basis=$basis tip=$tip\n";
 	my $info = report_find_push_age_info([qw(real adhoc play)],
-					      undef, [($branch)],
+					      [($branch)],
 					      $tree, $basis, $tip);
 	print DEBUG Dumper $info;
 	my $onevar = sub {

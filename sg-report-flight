@@ -128,7 +128,7 @@ our $cw= 79;
 our $tl= 20;
 our $htmlleaf= "info.html";
 
-our $blessingscond= report_blessingscond(\@blessings, $maxflight);
+our $blessingscond= report_blessingscond(\@blessings);
 
 sub displayflightnum ($) {
     my ($flight) = @_;
@@ -523,7 +523,7 @@ sub print_pushgate_summary () {
     my $tree = $thistree[0];
 
     my $info = report_find_push_age_info(
-	[ $blessings[0] ], $maxflight, [ $branch ],
+	[ $blessings[0] ], [ $branch ],
 	$tree, $specver{that}{$tree}, $specver{this}{$tree}
 	);
     bodyprint "\n";

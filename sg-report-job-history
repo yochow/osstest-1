@@ -119,7 +119,7 @@ sub processjobbranch ($$) {
     my @rev_grid_cols;
     my @test_rows;
 
-    my $blessingscond= report_blessingscond(\@blessings, $maxflight);
+    my $blessingscond= report_blessingscond(\@blessings);
     my $cond = "job = ? AND $blessingscond";
     my (@params) = ($j);
     if (defined $bra) {

@@ -277,20 +277,19 @@ sub report_altcolour ($) {
     return "bgcolor=\"#".(qw(d0d0d0 ffffff))[$bool]."\"";
 }
 
-sub report_blessingscond ($$) {
-    my ($blessings, $maxflight) = @_;
+sub report_blessingscond ($) {
+    my ($blessings) = @_;
+    my $flightcond= restrictflight_cond();
     my $blessingscond= '('.join(' OR ', map {
 	die if m/[^-_.0-9a-z]/;
 	"blessing='$_'"
 				} @$blessings).')';
-    if (defined $maxflight) {
-	$blessingscond= "( flight <= $maxflight AND $blessingscond )";
-    }
+    return "( $flightcond AND $blessingscond )";
     return $blessingscond;
 }
 
-sub report__find_test ($$$$$$$$) {
-    my ($blessings, $maxflight, $branches, $tree,
+sub report__find_test ($$$$$$$) {
+    my ($blessings, $branches, $tree,
 	$revision, $selection, $extracond, $sortlimit) = @_;
     # Reports information about a flight which tried to test $revision
     # of $tree.  ($revision may be undef);
@@ -332,7 +331,7 @@ END
 END
     }
 
-    my $blessingscond = report_blessingscond($blessings,$maxflight);
+    my $blessingscond = report_blessingscond($blessings);
     $querytext .= <<END;
 	  AND $blessingscond
 END
@@ -354,8 +353,8 @@ END
     return $row;
 }
 
-sub report_find_push_age_info ($$$$$$) {
-    my ($blessings, $maxflight, $branches, $tree,
+sub report_find_push_age_info ($$$$$) {
+    my ($blessings, $branches, $tree,
 	$basis_revision, $tip_revision) = @_;
     # Reports information about tests of $tree.
     # (Subject to @$blessings, $maxflight, @$branches)
@@ -377,7 +376,7 @@ sub report_find_push_age_info ($$$$$$) {
 
     my $findtest = sub {
 	my ($revision,$selection,$extracond,$sortlimit) = @_;
-	report__find_test($blessings,$maxflight,$branches,$tree,
+	report__find_test($blessings,$branches,$tree,
 			 $revision,$selection,$extracond,$sortlimit);
     };
 
