@@ -29,7 +29,6 @@ use Osstest::Executive;
 our (@blessings,@branches);
 our $limit= 100;
 our $htmlout;
-our $maxflight;
 our $flight;
 our $job;
 

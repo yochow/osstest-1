@@ -45,8 +45,6 @@ our (@includebeginfiles,@includefiles);
 open DEBUG, ">/dev/null";
 open MRO, ">/dev/null";
 
-our $maxflight;
-
 while (@ARGV && $ARGV[0] =~ m/^-/) {
     $_= shift @ARGV;
     last if m/^--?$/;

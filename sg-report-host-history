@@ -31,7 +31,6 @@ our $limit= 200;
 our $flightlimit;
 our $htmlout = ".";
 our @blessings;
-our $maxflight;
 
 open DEBUG, ">/dev/null";
 

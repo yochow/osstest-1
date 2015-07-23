@@ -46,6 +46,7 @@ BEGIN {
     @ISA         = qw(Exporter);
     @EXPORT      = qw(get_harness_rev grabrepolock_reexec
                       findtask @all_lock_tables
+                      $maxflight
                       report_run_getinfo report_altcolour
                       report_blessingscond report_find_push_age_info
                       tcpconnect_queuedaemon plan_search
@@ -192,6 +193,8 @@ sub opendb ($) {
 }
 
 #---------- history reporting ----------
+
+our $maxflight;
 
 our $green=  '#008800';
 our $red=    '#ff8888';
