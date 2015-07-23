@@ -434,7 +434,7 @@ sub target_putfile_root ($$$$;$) {
 sub target_run_apt {
     my ($ho, @aptopts) = @_;
     target_cmd_root($ho,
-        "DEBIAN_PRIORITY=critical UCF_FORCE_CONFFOLD=y \
+        "DEBIAN_PRIORITY=critical UCF_FORCE_CONFFOLD=y \\
             with-lock-ex -w /var/lock/osstest-apt apt-get @aptopts", 3000);
 }
 sub target_install_packages {
