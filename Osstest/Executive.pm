@@ -201,6 +201,10 @@ sub restrictflight_arg ($) {
     if ($arg =~ m/^--max-flight\=([1-9]\d*)$/) {
 	$restrictflight_cond .= " AND flight <= $1";
 	return 1;
+    } elsif ($arg =~ m/^--exclude-flights=([0-9,]+)$/) {
+        $restrictflight_cond .= " AND flights.flight != $_"
+	    foreach split /,/, $1;
+	return 1;
     } else {
 	return 0;
     }
