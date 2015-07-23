@@ -46,6 +46,7 @@ BEGIN {
     @ISA         = qw(Exporter);
     @EXPORT      = qw(get_harness_rev grabrepolock_reexec
                       findtask @all_lock_tables
+                      restrictflight_arg restrictflight_cond
                       $maxflight
                       report_run_getinfo report_altcolour
                       report_blessingscond report_find_push_age_info
@@ -195,6 +196,20 @@ sub opendb ($) {
 #---------- history reporting ----------
 
 our $maxflight;
+
+sub restrictflight_arg ($) {
+    my ($arg) = @_;
+    if ($arg =~ m/^--max-flight\=([1-9]\d*)$/) {
+	$maxflight = $1;
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+sub restrictflight_cond () {
+    return defined($maxflight) ? "(flight <= $maxflight)" : "TRUE";
+}
 
 our $green=  '#008800';
 our $red=    '#ff8888';

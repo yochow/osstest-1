@@ -44,8 +44,8 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
         $$1= $2;
     } elsif (m/^--flight-limit\=([1-9]\d*)$/) {
 	$flightlimit= $1;
-    } elsif (m/^--max-flight\=([1-9]\d*)$/) {
-	$maxflight= $1;
+    } elsif (restrictflight_arg($_)) {
+	# handled by Executive
     } elsif (m/^--blessings?=(.*)$/) {
         push @blessings, split ',', $1;
     } elsif (m/^--html-dir=(.*)$/) {
@@ -61,7 +61,7 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
 
 @ARGV or die $!;
 
-our $maxflightcond = defined($maxflight) ? "flight <= $maxflight" : "TRUE";
+our $restrictflight_cond = restrictflight_cond();
 our $flightcond;
 
 sub computeflightsrange () {
@@ -88,7 +88,7 @@ END
 	  FROM (
 	    SELECT flight
 	      FROM flights
-             WHERE $maxflightcond
+             WHERE $restrictflight_cond
 	     ORDER BY flight DESC
 	     LIMIT $flightlimit
 	  ) f
@@ -120,7 +120,7 @@ sub mainquery () {
 	 WHERE $namecond
 	   AND ($valcond)
 	   AND $flightcond
-           AND $maxflightcond
+           AND $restrictflight_cond
 	 ORDER BY flight DESC
 	 LIMIT ($limit * 3 + 100) * ?
 END
