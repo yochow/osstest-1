@@ -41,8 +41,8 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
         $$1= $2;
     } elsif (m/^--(limit)\=([1-9]\d*)$/) {
         $$1= $2;
-    } elsif (m/^--max-flight\=([1-9]\d*)$/) {
-	$maxflight= $1;
+    } elsif (restrictflight_arg($_)) {
+	# Handled by Executive
     } elsif (m/^--html-dir=(.*)$/) {
         $htmlout= $1;
     } elsif (m/^--branches?=(.*)$/) {

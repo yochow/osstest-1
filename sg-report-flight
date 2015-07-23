@@ -65,8 +65,8 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
         push @includebeginfiles, $1;
     } elsif (m/^--include=(.*)$/) {
         push @includefiles, $1;
-    } elsif (m/^--max-flight=(\d+)$/) {
-        $maxflight= $1;
+    } elsif (restrictflight_arg($_)) {
+        # Handled by Executive
     } elsif (m/^--allow=(.*)$/) {
         my ($allowfile) = $1;
         if (!open A, '<', $allowfile) {
