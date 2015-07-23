@@ -639,8 +639,10 @@ sub consolidateresults () {
 our @interesting_lengths;
 
 sub search_compute_length_at ($);
-sub search_compute_length_at ($) {
+
+sub search_compute_length_at_intern ($) {
     my ($n) = @_;
+
     print DEBUG "CLA $n->{Rtuple} ";
     if (!relevant($n)) {
         print DEBUG "X (irrelevant)\n";
@@ -652,7 +654,6 @@ sub search_compute_length_at ($) {
         if ($n->{Result} ne 'pass') {
             search_compute_length_below($n);
         }
-        $n->{LengthAt}= 0;
         return 0;
     }
     my $res= 1;
@@ -662,8 +663,13 @@ sub search_compute_length_at ($) {
         next if $t eq 'X';
         $res += $t;
     }
-    $n->{LengthAt}= $res;
     return $res;
+}
+
+sub search_compute_length_at ($) {
+    my ($n) = @_;
+    return $n->{LengthAt} if exists $n->{LengthAt};
+    return $n->{LengthAt} = search_compute_length_at_intern($n);
 }
 
 sub search_compute_length_below ($) {
