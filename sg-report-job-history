@@ -232,6 +232,7 @@ END
         my $alternate= 0;
         my @last_revs;
         my @alt_revs;
+        my $alt_hosts;
         foreach my $r (@test_rows) {
             my $altcolour= report_altcolour($alternate);
             print H "<tr $altcolour>";
@@ -249,7 +250,8 @@ END
                 $r->{Content}."</a></td>\n";
             my $lastrev;
             my $hosts = join ", ", map { $_ // "-" } @{ $r->{Hosts} };
-            print H "<td>".encode_entities($hosts)."</td>\n";
+            my $hosts_colour = report_altchangecolour(\$alt_hosts, $hosts);
+            print H "<td $hosts_colour>".encode_entities($hosts)."</td>\n";
             $osstestverq->execute($r->{Flight}{flight});
             print H
                 "<td>",
