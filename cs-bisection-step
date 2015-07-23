@@ -61,7 +61,6 @@ open DEBUG, ">/dev/null" or die $!;
 open SUMMARY, ">/dev/null" or die $!;
 
 our @org_argv= @ARGV;
-our $maxflight_cond= '';
 our $basistemplate;
 
 while (@ARGV && $ARGV[0] =~ m/^\-/) {
@@ -84,8 +83,8 @@ while (@ARGV && $ARGV[0] =~ m/^\-/) {
         $cache_option= 0;
     } elsif (m/^--flight=(\d+)$/) {
         $popflight= $1;
-    } elsif (m/^--max-flight=(\d+)$/) {
-        $maxflight_cond= "AND flights.flight <= $1";
+    } elsif (restrictflight_arg($_)) {
+	# Handled by Executive
     } elsif (m/^--(fail|basis)-flight=(\d+)$/) {
         $specflights{$1}= $2;
     } elsif (m/^--basis-template=(\d+)$/) {
@@ -112,6 +111,7 @@ our (@treeinfos);
 # $treeinfos[]{Name}
 # $treeinfos[]{Url}
 
+our $restrictflight_cond= restrictflight_cond();
 our $blessingscond= '('.join(" OR  ", map { "blessing='$_'" } @blessings).')';
 
 sub psummary ($) {
@@ -313,7 +313,7 @@ sub findbasics () {
                  AND (status = 'fail' OR status = 'pass')
                  AND branch = ?
                  AND $flight_cond{fail}
-                     $maxflight_cond
+                 AND $restrictflight_cond
                ORDER BY notbroken DESC, flights.started DESC
 END
     my $basisq= db_prepare(<<END);
@@ -325,7 +325,7 @@ END
              AND branch = ?
              AND $flight_is_not_broken
              AND $flight_cond{basis}
-                 $maxflight_cond
+             AND $restrictflight_cond
 	   ORDER BY blessing, flights.started DESC
 END
 
@@ -567,7 +567,7 @@ END
             AND flights.started >= $basispass_date
             AND branch = ?
             AND $flight_is_not_broken
-                $maxflight_cond
+            AND $restrictflight_cond
     ");
     $jobq->execute($job,$branch);
     while (my $jobrow= $jobq->fetchrow_hashref()) {
@@ -1106,7 +1106,7 @@ END
             WHERE   j.job=?
             AND     j.status='pass'
             AND     $blessingscond
-                    $maxflight_cond
+            AND     $restrictflight_cond
             AND     0 = ( SELECT count(*)
                           FROM
                               ( SELECT name,val
@@ -1228,7 +1228,8 @@ END
     # one side is NULL (runvar was missing) it still counts.
     my $equalflightsqt = <<END;
         SELECT flight, blessing, started FROM flights
-	    WHERE branch=?  $maxflight_cond
+	    WHERE branch=?
+              AND $restrictflight_cond
               AND blessing = (
 		SELECT intended FROM flights WHERE flight = ?
                 )
@@ -1252,7 +1253,8 @@ END
 	my ($minflight) = $dbh_tests->selectrow_array(<<END, {}, $branch);
             SELECT flight FROM (
 		SELECT flight FROM flights
-		    WHERE branch=? AND $blessingscond $maxflight_cond
+		    WHERE branch=? AND $blessingscond
+		       AND $restrictflight_cond
                        AND flight >= $repro_firstflight
 		    ORDER BY flight DESC
 		    LIMIT 100
