@@ -23,7 +23,7 @@ HostDB_Executive_NoConfigDB 1
 
 OwnerDaemonHost owner.daemon.osstest.xs.citrite.net
 QueueDaemonHost queue.daemon.osstest.xs.citrite.net
-ExecutiveDbnamePat dbname=<dbname>;user=<whoami>;host=<dbname>.db.cam.xci-test.com;password=<~/.xen-osstest/db-password>
+ExecutiveDbnamePat dbname=<dbname>;user=<whoami>;host=osstestdb.xs.citrite.net;password=<~/.xen-osstest/db-password>
 
 HostnameSortSwapWords 1
 
@@ -32,9 +32,9 @@ NetNameservers 10.80.248.2 10.80.16.28 10.80.16.67
 
 Timezone Europe/London
 
-Images /home/xc_osstest/images
+Images /home/osstest/images
 
-PubBaseDir /home/xc_osstest
+PubBaseDir /home/osstest
 
 OverlayLocal /export/home/osstest/overlay-local
 
@@ -61,11 +61,12 @@ END
 
 PlanRogueAllocationDuration= 86400*7
 
-TftpPath /home/xc_tftpboot/pxe/
+TftpPath /usr/groups/netboot/
 TftpPlayDir osstest/
 TftpTmpDir osstest/tmp/
 TftpPxeDir /
-TftpPxeTemplates %ipaddrhex%/pxelinux.cfg
+TftpPxeTemplates %name%/pxelinux.cfg
+TftpPxeTemplatesReal pxelinux.cfg/%ipaddrhex%
 
 TftpPxeGroup osstest
 TftpDiVersion 2015-06-23
@@ -82,12 +83,12 @@ XenUseUser osstest
 DebianMirrorHost 10.80.16.196
 
 HostProp_NtpServer ntp.uk.xensource.com
-HostProp_DhcpWatchMethod leases dhcp3 woking.cam.xci-test.com:5556
+HostProp_DhcpWatchMethod leases dhcp3 dns1.uk.xensource.com:5556
 
 DebianPreseed= <<'END'
 END
 
-HostProp_Serial sympathy osstser1.cam.xci-test.com
+HostProp_Serial sympathy osstser1.xs.citrite.net
 HostProp_GenEtherPrefixBase 5a:36:0e:00
 #                                      :00:01 guest number in job appended
 #                                    ^^ xor'd with low 8 bits of flight
