@@ -231,7 +231,7 @@ END
         print H "</tr>\n";
         my $alternate= 0;
         my @last_revs;
-        my @alt_revs= ('0')x $#rev_grid_cols;
+        my @alt_revs;
         foreach my $r (@test_rows) {
             my $altcolour= report_altcolour($alternate);
             print H "<tr $altcolour>";
@@ -263,12 +263,8 @@ END
                 "</td>\n";
             foreach my $i (0..$#rev_grid_cols) {
                 my $v= $r->{Revisions}[$i];
-                my $same=
-                    !defined($last_revs[$i]) ? !defined($v) :
-                    !defined($v) ? 0 :
-                    $last_revs[$i] eq $v;
-                $alt_revs[$i] ^= !$same;
-                print H "<td ".report_altcolour($alt_revs[$i]).">";
+		my $rev_colour = report_altchangecolour(\$alt_revs[$i], $v);
+                print H "<td $rev_colour>";
                 if (defined $v) {
                     my $vp= $v;
                     if (defined $lastrev && $v eq $lastrev) {

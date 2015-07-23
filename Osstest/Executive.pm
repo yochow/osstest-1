@@ -48,6 +48,7 @@ BEGIN {
                       findtask @all_lock_tables
                       restrictflight_arg restrictflight_cond
                       report_run_getinfo report_altcolour
+                      report_altchangecolour
                       report_blessingscond report_find_push_age_info
                       tcpconnect_queuedaemon plan_search
                       alloc_resources alloc_resources_rollback_begin_work
@@ -278,6 +279,17 @@ END
 sub report_altcolour ($) {
     my ($bool) = @_;
     return "bgcolor=\"#".(qw(d0d0d0 ffffff))[$bool]."\"";
+}
+
+sub report_altchangecolour ($$) {
+    my ($stateref, $thisvalue) = @_;
+    my $state = $$stateref //= { Bool => 0 };
+    my $same =
+	!!defined($thisvalue) == !!defined($state->{LastValue}) &&
+	(!defined $thisvalue || $thisvalue eq $state->{LastValue});
+    $state->{Bool} ^= !$same;
+    $state->{LastValue} = $thisvalue;
+    return report_altcolour($state->{Bool});
 }
 
 sub report_blessingscond ($) {
