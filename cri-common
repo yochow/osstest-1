@@ -62,7 +62,7 @@ repo_tree_rev_fetch_git () {
 
 select_xenbranch () {
 	case "$branch" in
-	xen*)			tree=xen;	xenbranch=$branch ;;
+	xen-*)			tree=xen;	xenbranch=$branch ;;
 	qemu-mainline)		tree=qemuu;	xenbranch=xen-unstable	qemuubranch=qemu-mainline;;
         qemu-upstream-*)    tree=qemuu; xenbranch=xen-${branch#qemu-upstream-};;
 	linux)			tree=linux;	xenbranch=xen-unstable ;;

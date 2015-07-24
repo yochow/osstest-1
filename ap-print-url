@@ -31,7 +31,7 @@ if info_linux_tree "$branch"; then
 fi
 
 case "$branch" in
-xen*)
+xen-*)
         echo $TREE_XEN
 	;;
 qemu-mainline)

@@ -35,7 +35,7 @@ branch_wants_rumpkernel_tests () {
   case "$branch" in
   osstest*) return 0;;
   rump*)    return 0;;
-  xen*)     return 0;;
+  xen-*)    return 0;;
   linux*)   return 0;;
   *)        return 1;;
   esac
