@@ -2210,7 +2210,7 @@ sub setup_pxelinux_bootcfg ($$) {
 # Systems using BIOS are configured to use pxelinux
 sub setup_pxeboot_di_bios ($$$$$;%) {
     my ($ho,$kern,$initrd,$dicmd,$hocmd,%xopts) = @_;
-    my $dtbs = "fdtdir $xopts{dtbs}" if $xopts{dtbs};
+    my $dtbs = $xopts{dtbs} ? "fdtdir $xopts{dtbs}" : "";
     setup_pxelinux_bootcfg($ho, <<END);
     serial 0 $c{Baud}
 timeout 5
