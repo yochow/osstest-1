@@ -627,6 +627,8 @@ our %preseed_cmds;
 sub di_installcmdline_core ($$;@) {
     my ($tho, $ps_url, %xopts) = @_;
 
+    $xopts{PreseedScheme} //= 'url';
+
     $ps_url =~ s,^http://,,;
 
     my $netcfg_interface= get_host_property($tho,'interface force','auto');
@@ -640,7 +642,7 @@ sub di_installcmdline_core ($$;@) {
     push @cl, (
                "DEBIAN_FRONTEND=$difront",
                "hostname=$tho->{Name}",
-               "url=$ps_url",
+               "$xopts{PreseedScheme}=$ps_url",
                "netcfg/dhcp_timeout=150",
                "netcfg/choose_interface=$netcfg_interface"
                );

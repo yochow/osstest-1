@@ -104,23 +104,41 @@ END
     return $preseed_file;
 }
 
-sub grub_cfg () {
+sub gcmdline (;$) {
+    my ($extra) = @_;
+    my @dicmdline = ();
+    my $gconsole = "console=ttyS0,115200n8";
+
+    push @dicmdline, $gconsole;
+    push @dicmdline, di_installcmdline_core($gho, '/preseed.cfg',
+					    PreseedScheme => 'file');
+    push @dicmdline, $extra if $extra;
+
+    push @dicmdline, "--";
     # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=762007 for
     # why console= is repeated.
+    push @dicmdline, $gconsole;
+
+    return join(" ", @dicmdline);
+}
+
+sub grub_cfg () {
+    my $cmdline = gcmdline();
+
     return <<"END";
 set default="0"
 set timeout=5
 
 menuentry 'debian guest auto Install' {
-    linux /install.amd/vmlinuz preseed/file=/preseed.cfg console=ttyS0,115200n8 -- console=ttyS0,115200n8
+    linux /install.amd/vmlinuz $cmdline
     initrd /install.amd/initrd.gz
 }
 END
 }
 
 sub isolinux_cfg () {
-    # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=762007 for
-    # why console= is repeated.
+    my $cmdline = gcmdline("initrd=/install.amd/initrd.gz");
+
     return <<"END";
     default autoinstall
     prompt 0
@@ -128,7 +146,7 @@ sub isolinux_cfg () {
 
     label autoinstall
         kernel /install.amd/vmlinuz
-        append preseed/file=/preseed.cfg initrd=/install.amd/initrd.gz console=ttyS0,115200n8 -- console=ttyS0,115200n8
+        append $cmdline
 END
 }
 
