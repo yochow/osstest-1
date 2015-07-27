@@ -162,7 +162,7 @@ sub prepare_initrd ($$$) {
       cd -
       rm -rf $initrddir
       cd $newiso
-      md5sum `find -L -type f -print0 | xargs -0` > md5sum.txt
+      find -L -type f -print0 | xargs -0 md5sum > md5sum.txt
       cd -
 END
 }
