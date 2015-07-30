@@ -19,8 +19,6 @@
 
 # $xenbranch must already be set
 
-xenbranch_forqemu=${xenbranch/xen-unstable-smoke/xen-unstable}
-
 : ${XENBITS:=osstest@xenbits.xen.org}
 
 : ${TREEBRANCH_OSSTEST_UPSTREAM=`getconfig OsstestUpstream`}
@@ -28,9 +26,7 @@ xenbranch_forqemu=${xenbranch/xen-unstable-smoke/xen-unstable}
 : ${TREE_XEN:=git://xenbits.xen.org/xen.git}
 : ${PUSH_TREE_XEN:=$XENBITS:/home/xen/git/xen.git}
 
-#: ${TREE_QEMU:=git://mariner.uk.xensource.com/qemu-$xenbranch_forqemu.git}
-: ${TREE_QEMU:=git://xenbits.xen.org/staging/qemu-$xenbranch_forqemu.git}
-
+: ${TREE_QEMU:=git://xenbits.xen.org/qemu-xen-traditional.git}
 
 : ${GIT_KERNEL_ORG:=git://git.kernel.org}
 : ${KERNEL_SCM:=${GIT_KERNEL_ORG}/pub/scm/linux/kernel/git}
@@ -89,13 +85,11 @@ fi
 
 : ${TREEBASE_LINUX_XCP:=http://hg.uk.xensource.com/carbon/trunk/linux-2.6.27}
 
-: ${TREE_QEMU_UPSTREAM:=git://xenbits.xen.org/staging/qemu-upstream-${xenbranch_forqemu#xen-}.git}
+: ${TREE_QEMU_UPSTREAM:=git://xenbits.xen.org/qemu-xen.git}
+: ${PUSH_TREE_QEMU_UPSTREAM=$XENBITS:/home/xen/git/qemu-xen.git}
 : ${LOCALREV_QEMU_UPSTREAM:=daily-cron.$branch}
 
 : ${TREE_QEMU_MAINLINE:=git://git.qemu.org/qemu.git}
-: ${BASE_TREE_QEMU_MAINLINE:=git://xenbits.xen.org/osstest/qemu.git}
-: ${PUSH_TREE_QEMU_MAINLINE:=$XENBITS:/home/xen/git/osstest/qemu.git}
-: ${LOCALREV_QEMU_MAINLINE:=daily-cron.$branch}
 
 info_linux_tree () {
 	case $1 in

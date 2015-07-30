@@ -30,8 +30,7 @@ select_xenbranch
 . ./ap-common
 
 TREE_LINUX=$PUSH_TREE_LINUX
-TREE_QEMU_MAINLINE=$PUSH_TREE_QEMU_MAINLINE
-TREE_QEMU_UPSTREAM=$XENBITS:/home/xen/git/qemu-upstream-${xenbranch#xen-}.git
+TREE_QEMU_UPSTREAM=$PUSH_TREE_QEMU_UPSTREAM
 TREE_XEN=$PUSH_TREE_XEN
 TREE_LIBVIRT=$PUSH_TREE_LIBVIRT
 TREE_RUMPUSERXEN=$PUSH_TREE_RUMPUSERXEN
@@ -67,11 +66,27 @@ xen-*-testing)
 	;;
 qemu-mainline)
 	cd $repos/qemu-mainline
-	git push $TREE_QEMU_MAINLINE $revision:refs/heads/mainline/xen-tested-master
+	git push $TREE_QEMU_UPSTREAM $revision:refs/heads/upstream-tested
 	;;
-qemu-upstream-*)
+qemu-upstream-unstable)
 	cd $repos/$branch
         git push $TREE_QEMU_UPSTREAM $revision:refs/heads/master
+        ;;
+qemu-upstream-*-testing)
+	branchcore=${branch#qemu-upstream-}
+	branchcore=${branchcore%-testing}
+	cd $repos/$branch
+	git push $TREE_QEMU_UPSTREAM $revision:refs/heads/stable-$branchcore
+
+	# For now also push to the old split trees for historical
+	# branches only (qemu-upstream started with xen-4.2-testing
+	# and the split trees end at xen-4.6-testing)
+	case "$branchcore" in
+	    4.[23456])
+		tree=$XENBITS:/home/xen/git/qemu-upstream-${branchcore}-testing.git
+		git push $tree $revision:refs/heads/master
+		;;
+	esac
         ;;
 linux-3.*)
 	cd $repos/linux

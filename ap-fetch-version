@@ -57,9 +57,15 @@ qemu-mainline)
 	repo_tree_rev_fetch_git $branch \
 		$TREE_QEMU_MAINLINE master $LOCALREV_QEMU_UPSTREAM
 	;;
-qemu-upstream-*)
+qemu-upstream-unstable)
         repo_tree_rev_fetch_git $branch \
-		$TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM
+		$TREE_QEMU_UPSTREAM staging $LOCALREV_QEMU_UPSTREAM
+        ;;
+qemu-upstream-*-testing)
+	branchcore=${branch#qemu-upstream-}
+	branchcore=${branchcore%-testing}
+        repo_tree_rev_fetch_git $branch \
+		$TREE_QEMU_UPSTREAM staging-$branchcore $LOCALREV_QEMU_UPSTREAM
         ;;
 linux)
 	repo_tree_rev_fetch_git linux \

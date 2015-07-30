@@ -34,8 +34,6 @@ check_ap_fetch_placeholders
 : ${BASE_LOCALREV_SEABIOS:=daily-cron.$branch.old}
 : ${BASE_LOCALREV_OVMF:=daily-cron.$branch.old}
 
-: ${BASE_TREE_QEMU_UPSTREAM:=${TREE_QEMU_UPSTREAM/\/staging\//\/}}
-
 if info_linux_tree "$branch"; then
 	repo_tree_rev_fetch_git linux \
 		$BASE_TREE_LINUX_THIS $BASE_TAG_LINUX_THIS $BASE_LOCALREV_LINUX
@@ -63,11 +61,17 @@ xen-4.*-testing)
 	;;
 qemu-mainline)
         repo_tree_rev_fetch_git $branch \
-		$BASE_TREE_QEMU_MAINLINE mainline/xen-tested-master $LOCALREV_QEMU_MAINLINE
+		$TREE_QEMU_UPSTREAM upstream-tested $LOCALREV_QEMU_UPSTREAM
         ;;
-qemu-upstream-*)
+qemu-upstream-unstable)
         repo_tree_rev_fetch_git $branch \
-		$BASE_TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM
+		$TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM
+        ;;
+qemu-upstream-*-testing)
+	branchcore=${branch#qemu-upstream-}
+	branchcore=${branchcore%-testing}
+        repo_tree_rev_fetch_git $branch \
+		$TREE_QEMU_UPSTREAM stable-$branchcore $LOCALREV_QEMU_UPSTREAM
         ;;
 linux)
 	repo_tree_rev_fetch_git linux \
