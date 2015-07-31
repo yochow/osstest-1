@@ -2078,11 +2078,11 @@ sub guest_vncsnapshot_stash ($$$$) {
 
 sub toolstack ($) {
     my ($ho) = @_;
-    return $ho->{Toolstack} if $ho->{Toolstack};
+    return $ho->{_Toolstack} if $ho->{_Toolstack};
 
     my $tsname= $r{toolstack} || 'xend';
-    $ho->{Toolstack}= get_host_method_object($ho, 'Toolstack', $tsname);
-    return $ho->{Toolstack};
+    $ho->{_Toolstack}= get_host_method_object($ho, 'Toolstack', $tsname);
+    return $ho->{_Toolstack};
 }
 
 sub authorized_keys () {
