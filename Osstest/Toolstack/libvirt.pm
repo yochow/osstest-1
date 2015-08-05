@@ -103,11 +103,12 @@ sub saverestore_check ($) {
     return check_for_command($self, "save");
 }
 
-sub migrate ($) {
-    my ($self,$gho,$dst,$timeout) = @_;
-    my $ho = $self->{Host};
+sub migrate ($$$$) {
+    my ($self,$gho,$dho,$timeout) = @_;
+    my $sho = $self->{Host};
+    my $dst = $dho->{Name};
     my $gn = $gho->{Name};
-    target_cmd_root($ho, "virsh migrate $gn $dst", $timeout);
+    target_cmd_root($sho, "virsh migrate $gn $dst", $timeout);
 }
 
 sub save ($$$$) {
