@@ -128,7 +128,7 @@ sub host_check_allocated ($$) { #method
         $ho->{Shared} &&
         $ho->{Shared}{State} eq 'ready';
     my $harness = get_harness_rev();
-    my @flags = get_hostflags($ho->{Ident});
+    my @flags = defined($job) ? get_hostflags($ho->{Ident}) : qw(OUTSIDE-JOB);
     $ho->{SharedReady}=
 	$ho->{SharedMaybeOthers} &&
         !! (grep { $_." ".$harness eq "share-".$ho->{Shared}{Type} }
