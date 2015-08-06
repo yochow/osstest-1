@@ -248,6 +248,11 @@ setopt CONFIG_SYSVIPC y
 setopt CONFIG_BLK_DEV_LOOP y
 
 setopt CONFIG_PACKET y
+
+# needed for OpenStack
+# because: https://bugzilla.redhat.com/show_bug.cgi?id=910619#c6
+setopt CONFIG_NETFILTER_ADVANCED y
+setopt CONFIG_NETFILTER_XT_TARGET_CHECKSUM m
 END
 sub stash_config_edscript ($) {
     my ($settings) = @_;
