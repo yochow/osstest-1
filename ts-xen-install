@@ -155,7 +155,8 @@ sub setupboot () {
 	logm("No Xen console device defined for host");
     }
     if (toolstack($ho)->{Dom0MemFixed}) {
-        $xenhopt .= " dom0_mem=512M,max:512M";
+        my $mem = $r{'dom0_mem'} // 512;
+        $xenhopt .= " dom0_mem=${mem}M,max:${mem}M";
     }
 
     # If /boot/microcode.cpio is present then ts-host-install has
