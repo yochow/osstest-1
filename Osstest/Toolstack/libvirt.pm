@@ -108,7 +108,8 @@ sub migrate ($$$$) {
     my $sho = $self->{Host};
     my $dst = $dho->{Name};
     my $gn = $gho->{Name};
-    target_cmd_root($sho, "virsh migrate $gn $dst", $timeout);
+    my $duri = "xen+ssh://$dst";
+    target_cmd_root($sho, "virsh migrate --live $gn $duri", $timeout);
 }
 
 sub save ($$$$) {
