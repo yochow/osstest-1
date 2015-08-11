@@ -541,6 +541,22 @@ test_matrix_do_one () {
             all_hostflags=$most_hostflags,equiv-1
   done
 
+  if branch_wants_migrupgrade_tests ; then
+      # x86 only for now
+      if [ x$xenarch = xamd64 ] ; then
+      job_create_test test-$xenarch$kern-$dom0arch-migrupgrade test-pair-oneway \
+                      xl $xenarch $dom0arch \
+                      !host !host_hostflags \
+                      src_host_buildjob=${bfi}build-$dom0arch-prev \
+                      src_host_xenbuildjob=${bfi}build-$xenarch-prev \
+                      $debian_runvars \
+                      all_hostflags=$most_hostflags,equiv-1
+      fi
+      # TODO it would be nice to test i386->amd64 tools migration too (for
+      # Xen >= 4.6), but currently $r{arch} is used in several places,
+      # which would need looking at.
+  fi
+
   if [ x$test_pvh = xy -a $xenarch = amd64 -a $dom0arch = amd64 ]; then
 
     for cpuvendor in amd intel; do

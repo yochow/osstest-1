@@ -117,6 +117,10 @@ if [ "x$REVISION_XEN" = x ]; then
         REVISION_XEN="`fetch_version $xenbranch`"
         export REVISION_XEN
 fi
+if [ "x$REVISION_PREVXEN" = x -a "x$prevxenbranch" != "x" ]; then
+	REVISION_PREVXEN="`./ap-fetch-version-baseline $prevxenbranch`"
+	export REVISION_PREVXEN
+fi
 if [ "x$REVISION_QEMU_UPSTREAM" = x ]; then
 	case "$xenbranch" in
         xen-3.*|xen-4.[01]-*)

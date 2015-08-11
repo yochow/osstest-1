@@ -60,6 +60,24 @@ repo_tree_rev_fetch_git () {
 	git rev-parse $localtag^0
 }
 
+select_prevxenbranch () {
+	local b
+	local p
+	for b in $(./mg-list-all-branches) ; do # already sorted by version
+		case "$b" in
+		xen*)
+			if [ "x$b" = "x$xenbranch" ] ; then
+				break
+			else
+				p=$b
+			fi
+			;;
+		*)	;;
+		esac
+	done
+	prevxenbranch=$p
+}
+
 select_xenbranch () {
 	case "$branch" in
 	xen-*)			tree=xen;	xenbranch=$branch ;;
@@ -83,6 +101,8 @@ select_xenbranch () {
 	if [ x$qemuubranch = x ]; then
 		qemuubranch="qemu-upstream-${xenbranch#xen-}"
 	fi
+
+	select_prevxenbranch
 }
 
 select_branch () {

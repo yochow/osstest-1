@@ -41,6 +41,15 @@ branch_wants_rumpkernel_tests () {
   esac
 }
 
+branch_wants_migrupgrade_tests () {
+  case "$branch" in
+    xen-3.*-testing) return 1 ;;
+    xen-4.0-testing) return 1 ;;
+    xen-*) return 0;;
+    *) return 1 ;;
+  esac
+}
+
 xenbranch_xsm_variants () {
     case "$xenbranch" in
     xen-3.*-testing) echo "false";;
@@ -161,6 +170,14 @@ create_build_jobs () {
     *) enable_ovmf=true;
     esac
 
+    want_prevxen=n
+    if branch_wants_migrupgrade_tests ; then
+        # Only x86 for now
+        if [ x$arch = xamd64 -o x$arch = xi386 ] ; then
+            want_prevxen=y
+        fi
+    fi
+
     eval "
         arch_runvars=\"\$ARCH_RUNVARS_$arch\"
     "
@@ -190,6 +207,24 @@ create_build_jobs () {
                 revision_seabios=$REVISION_SEABIOS                           \
                 revision_ovmf=$REVISION_OVMF
     done
+
+    if [ x$want_prevxen = xy ] ; then
+        # TODO could find latest pass on that branch and attempt to reuse.
+        #bfiprevxen=...
+        #
+        # To avoid the need for TREE_PREVQEMU, TREE_PREVOVMF etc we
+        # only pass tree_xen and revision_xen here and therefore
+        # pickup the versions implicitly selected by the
+        # $REVISION_PREVXEN.
+        ./cs-job-create $flight build-$arch-prev build                       \
+                    arch=$arch enable_xend=false enable_ovmf=$enable_ovmf    \
+                    enable_xsm=false                                         \
+            tree_xen=$TREE_XEN                                               \
+                    $RUNVARS $BUILD_RUNVARS $BUILD_XEN_RUNVARS $arch_runvars \
+                    $suite_runvars                                           \
+                    host_hostflags=$build_hostflags                          \
+                    revision_xen=$REVISION_PREVXEN
+    fi
 
     if [ $build_extraxend = "true" ] ; then
     job_create_build build-$arch-xend build                                  \

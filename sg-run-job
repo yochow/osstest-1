@@ -294,13 +294,16 @@ proc run-job/test-debianhvm {} {
     test-guest debianhvm
 }
 
-proc need-hosts/test-pair {} { return {src_host dst_host} }
-proc run-job/test-pair {} {
+proc setup-test-pair {} {
     run-ts . =              ts-debian-install      dst_host
     run-ts . =              ts-debian-fixup        dst_host          + debian
     run-ts . =              ts-guests-nbd-mirror + dst_host src_host + debian
     per-host-ts . =(*)     {ts-leak-check basis}
     run-ts . =              ts-guest-start       + src_host          + debian
+}
+proc need-hosts/test-pair {} { return {src_host dst_host} }
+proc run-job/test-pair {} {
+    setup-test-pair
     run-ts . =              ts-guest-migrate       src_host dst_host + debian
     run-ts . =              ts-guest-migrate       dst_host src_host + debian
     run-ts . =              ts-guest-stop          src_host          + debian
@@ -308,6 +311,13 @@ proc run-job/test-pair {} {
 #    run-ts . remus-run      ts-remus-check         src_host dst_host + debian
 #    run-ts . =              ts-host-fail         + src_host
 #    run-ts . remus-failover ts-remus-check         src_host dst_host + debian
+}
+
+proc need-hosts/test-pair-oneway {} { return {src_host dst_host} }
+proc run-job/test-pair-oneway {} {
+    setup-test-pair
+    run-ts . =              ts-guest-migrate       src_host dst_host + debian
+    run-ts . =              ts-guest-stop          dst_host          + debian
 }
 
 proc test-guest-migr {g} {

@@ -75,7 +75,8 @@ sub extract () {
 
     foreach my $part (@parts) {
         target_extract_jobdistpath($ho, $part, "path_${part}dist",
-				   $r{"${part}buildjob"}, \%distpath);
+		$r{"$ho->{Ident}_${part}buildjob"} // $r{"${part}buildjob"},
+		\%distpath);
     }
     if (target_file_exists($ho, "/usr/lib64/efi/xen.efi")) {
 	target_cmd_root($ho,<<END);
