@@ -53,7 +53,8 @@ my %distpath;
 sub packages () {
     target_install_packages($ho,
                             qw(bridge-utils vncsnapshot libaio1 libpixman-1-0
-                               libsdl1.2debian libglib2.0-0 liblzma5));
+                               libsdl1.2debian libglib2.0-0 liblzma5
+                               netcat-openbsd));
     if ($ho->{Suite} =~ m/jessie/) {
         target_install_packages($ho, 'libnl-route-3-200');
     }
