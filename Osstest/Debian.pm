@@ -915,15 +915,20 @@ d-i     grub-installer/bootdev          string /dev/xvda
 
 END
 
-    # Debian doesn't currently know what bootloader to install in a
-    # Xen guest on ARM. We install pv-grub-menu above which actually
-    # does what we need, but the installer doesn't treat that as a
-    # "bootloader".
     logm("\$arch is $arch, \$suite is $suite");
-    $preseed_file.= (<<END) if $arch =~ /^arm/ && $suite =~ /wheezy|jessie|sid/;
+    if ($xopts{PvMenuLst} &&
+	$arch =~ /^arm/ &&
+	$suite =~ /wheezy|jessie|sid/ ) {
+
+	# Debian doesn't currently know what bootloader to install in
+	# a Xen guest on ARM. We install pv-grub-menu above which
+	# actually does what we need, but the installer doesn't treat
+	# that as a "bootloader".
+	$preseed_file.= (<<END);
 d-i     nobootloader/confirmation_common boolean true
 
 END
+    }
 
     $preseed_file .= preseed_hook_cmds();
 
