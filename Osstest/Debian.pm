@@ -50,6 +50,10 @@ BEGIN {
     @EXPORT_OK   = qw();
 }
 
+# -Y off disables any proxy, since there is no point going through the
+# proxy when fetching stuff from the local controller or the local cache.
+our $preseed_wget = 'wget -Y off';
+
 #---------- manipulation of Debian bootloader setup ----------
 
 sub debian_boot_setup ($$$$$;$) {
@@ -716,8 +720,8 @@ cd \$r
 
 umask 022
 mkdir .ssh
-wget -O .ssh/authorized_keys '$authkeys_url'
-wget -O .ssh/known_hosts     '$knownhosts_url'
+$preseed_wget -O .ssh/authorized_keys '$authkeys_url'
+$preseed_wget -O .ssh/known_hosts     '$knownhosts_url'
 
 u=osstest
 h=/home/\$u
@@ -757,10 +761,10 @@ END
 set -ex
 
 mkdir -p /target/boot
-wget -Y off -O /target/boot/microcode.cpio $cpio_url
+$preseed_wget -O /target/boot/microcode.cpio $cpio_url
 
 mkdir -p /target/usr/sbin
-wget -Y off -O /target/usr/sbin/osstest-initramfs-gzip $gzip_url
+$preseed_wget -O /target/usr/sbin/osstest-initramfs-gzip $gzip_url
 chmod +x /target/usr/sbin/osstest-initramfs-gzip
 
 mkdir -p /target/etc/initramfs-tools/conf.d/
@@ -1017,7 +1021,7 @@ set -ex
 
 r=/target
 
-wget -O \$r/tmp/dtbs.tar.gz $durl
+$preseed_wget -O \$r/tmp/dtbs.tar.gz $durl
 
 in-target tar -C /boot -xaf /tmp/dtbs.tar.gz
 END
@@ -1046,8 +1050,8 @@ set -ex
 
 r=/target
 
-wget -O \$r/tmp/kern.deb $kurl
-wget -O \$r/tmp/initramfs-tools.deb $iurl
+$preseed_wget -O \$r/tmp/kern.deb $kurl
+$preseed_wget -O \$r/tmp/initramfs-tools.deb $iurl
 
 # This will fail due to dependencies...
 in-target dpkg -i /tmp/kern.deb /tmp/initramfs-tools.deb || true
@@ -1215,7 +1219,7 @@ sub preseed_hook_command ($$$$) {
     my $ix= $#{ $preseed_cmds{$di_key} } + 1;
     my $url= create_webfile($ho, "$di_key-$ix$sfx", $text);
     my $file= "/tmp/$di_key-$ix";
-    my $cmd_cmd= "wget -O $file '$url' && chmod +x $file && $file";
+    my $cmd_cmd= "$preseed_wget -O $file '$url' && chmod +x $file && $file";
     push @{ $preseed_cmds{$di_key} }, $cmd_cmd;
 }
 
@@ -1229,7 +1233,7 @@ sub preseed_hook_installscript ($$$$$) {
 #!/bin/sh
 set -ex
 mkdir -p '$installer_dir'
-wget -O '$installer_pathname' '$url'
+$preseed_wget -O '$installer_pathname' '$url'
 chmod +x '$installer_pathname'
 END
 }
@@ -1249,7 +1253,7 @@ cd \$r
 
 umask 022
 
-wget -O overlay.tar '$url'
+$preseed_wget -O overlay.tar '$url'
 cd /target
 tar xf \$r/overlay.tar
 cd \$r
