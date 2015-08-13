@@ -190,9 +190,20 @@ END
 
 	$method_cfg = setup_netboot($tmpdir, $arch, $suite);
 
+	# We need the pv-grub-menu package:
+	# - On x86 when running pvgrub, since pvgrub only speaks grub1
+	#   menu.lst syntax and grub2 is now the only grub in
+	#   Debian.
+	# - On ARM, which uses pygrub, because grub2 is not installed
+	#   on ARM by default (except for, maybe, UEFI guests in the
+	#   future, but not today).
+	#
+	# NB: "pvgrub" is grub1/grub-legacy, not PV grub2.
+	my $pvmenulst = ($bl eq "pvgrub" || $arch =~ /arm/);
+
 	$ps_url = preseed_create_guest($gho, $arch, '',
 				       Suite=>$suite,
-				       PvMenuLst=>($bl eq "pvgrub"));
+				       PvMenuLst=>$pvmenulst);
 
 	$extra_disk = "";
     }
