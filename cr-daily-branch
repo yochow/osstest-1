@@ -92,12 +92,24 @@ if [ "x$OLD_REVISION" = x ]; then
 	    OSSTEST_NO_BASELINE=y
 	    OLD_REVISION=flight-`check_tested`
 	    ;;
-	*) OLD_REVISION="`./ap-fetch-version-old $branch`";;
+	*)
+	    if [ "x$OSSTEST_BASELINES_ONLY" = xy ] ; then
+		# We run on each upstream baseline exactly once so the
+		# last test will have tested the previous upstream baseline
+		OLD_REVISION=`check_tested --print-revision=$tree`
+	    else
+		OLD_REVISION="`./ap-fetch-version-old $branch`"
+	    fi
+	    ;;
     esac
     export OLD_REVISION
 fi
 
-if [ "x$OSSTEST_NO_BASELINE" != xy ] ; then
+if [ "x$OSSTEST_BASELINES_ONLY" = xy ] ; then
+    force_baseline=baselines-only
+    wantpush=false
+    skipidentical=true
+elif [ "x$OSSTEST_NO_BASELINE" != xy ] ; then
 	testedflight=`check_tested --revision-$tree="$OLD_REVISION"`
 
 	if [ "x$testedflight" = x ]; then
@@ -276,6 +288,13 @@ case "$force_baseline" in
 "Old" tested version had not actually been tested; therefore in this
 flight we test it, rather than a new candidate.  The baseline, if
 any, is the most recent actually tested revision.
+
+END
+    ;;
+    baselines-only)
+        subject_prefix="[$branch baseline-only test] "
+        cat >> $heading <<END
+This run is configured for baseline tests only.
 
 END
     ;;

@@ -2,6 +2,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=ian.jackson@citrix.com,ian.campbell@eu.citrix.com
 # m		h	dom mon dow	command
 4-59/30		*	* * *		cd testing.git && BRANCHES='osstest'			./cr-for-branches branches -q "./cr-daily-branch --real"
+11-59/30	*	* * *		cd testing.git && OSSTEST_BASELINES_ONLY=y		./cr-for-branches branches -q "./cr-daily-branch --real"
 46		7	* * 6		cd testing.git && BRANCHES='distros-debian-snapshot'	./cr-for-branches branches -w "./cr-daily-branch --real"
 46		7	* * 5		cd testing.git && BRANCHES='distros-debian-sid'		./cr-for-branches branches -w "./cr-daily-branch --real"
 46		7	* * 4		cd testing.git && BRANCHES='distros-debian-jessie'	./cr-for-branches branches -w "./cr-daily-branch --real"
