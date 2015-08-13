@@ -210,7 +210,7 @@ END
     }
 
     my @cmdline = ();
-    push @cmdline, "debian-installer/exit/always_halt=true";
+    push @cmdline, "debian-installer/exit/poweroff=true";
     push @cmdline, "domain=$c{TestHostDomain}";
     push @cmdline, "console=hvc0";
     push @cmdline, di_installcmdline_core($gho, $ps_url);
