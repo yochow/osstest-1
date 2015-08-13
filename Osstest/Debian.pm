@@ -926,7 +926,15 @@ END
 	# that as a "bootloader".
 	$preseed_file.= (<<END);
 d-i     nobootloader/confirmation_common boolean true
+END
 
+        # Debian Bug #771949 means that update-menu-list always
+        # generates a full absolute path to the kernel + initrd, while
+        # by default the partition layout on ARM has a separate /boot.
+        preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+ln -s . /target/boot/boot
 END
     }
 
