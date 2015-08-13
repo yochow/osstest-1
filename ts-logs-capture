@@ -143,6 +143,7 @@ sub fetch_logs_host () {
                   /var/log/xen/xend-debug.log*
                   /var/log/xen/xen-hotplug.log*
                   /var/log/xen/domain-builder-ng.log*
+                  /var/log/xen/bootloader.*.log
                   /var/log/xen/qemu-dm*
                   /var/log/xen/xl*.log
                   /var/log/xen/osstest*
