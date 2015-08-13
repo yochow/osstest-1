@@ -918,7 +918,7 @@ END
     logm("\$arch is $arch, \$suite is $suite");
     if ($xopts{PvMenuLst} &&
 	$arch =~ /^arm/ &&
-	$suite =~ /wheezy|jessie|sid/ ) {
+	$suite =~ /wheezy|jessie|stretch|sid/ ) {
 
 	# Debian doesn't currently know what bootloader to install in
 	# a Xen guest on ARM. We install pv-grub-menu above which
