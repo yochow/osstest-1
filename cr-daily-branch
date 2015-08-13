@@ -47,7 +47,7 @@ determine_version () {
 	local tversionvar=$1
 	local tbranch=$2
 	local treevarwhich=$3
-	if [ "x$tbranch" = "x$branch" ] && ! $force_baseline; then
+	if [ "x$tbranch" = "x$branch" ] && [ "x$force_baseline" = x ]; then
                 if [ "x$FORCE_REVISION" != x ]; then
                         tversion="$FORCE_REVISION"
                 else
@@ -78,7 +78,7 @@ esac
 blessings_arg=--blessings=${DAILY_BRANCH_TESTED_BLESSING:-$OSSTEST_BLESSING}
 sgr_args+=" $blessings_arg"
 
-force_baseline=false
+force_baseline='' # Non-empty = indication why we are forcing baseline.
 skipidentical=true
 wantpush=$OSSTEST_PUSH
 
@@ -103,7 +103,7 @@ if [ "x$OSSTEST_NO_BASELINE" != xy ] ; then
 	if [ "x$testedflight" = x ]; then
 		wantpush=false
 		skipidentical=false
-		force_baseline=true
+		force_baseline='untested'
 		if [ "x$treeurl" != xnone: ]; then
 			treearg=--tree-$tree=$treeurl
 		fi
@@ -269,7 +269,8 @@ heading=tmp/$flight.heading-info
 : >$heading
 sgr_args+=" --info-headers --include-begin=$heading"
 
-if $force_baseline; then
+case "$force_baseline" in
+    untested)
 	subject_prefix="[$branch baseline test] "
 	cat >>$heading <<END
 "Old" tested version had not actually been tested; therefore in this
@@ -277,7 +278,10 @@ flight we test it, rather than a new candidate.  The baseline, if
 any, is the most recent actually tested revision.
 
 END
-fi
+    ;;
+    '') # Not forcing a baseline, nothing to say.
+    ;;
+esac
 
 revlog=tmp/$flight.revision-log
 
