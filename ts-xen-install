@@ -320,11 +320,14 @@ END
                 /auto $iface\n/x;
             if (m/^\s* iface \s+ (?: $physif | xenbr0 ) \s+ inet \s /x) {
                 $suppress= 1;
-                print EO <<END;
+                print EO ($ho->{IpStatic} ? <<END : <<END), <<END;
 iface $iface inet static
     address $ho->{Ip}
     netmask $netmask
     gateway $gateway
+END
+iface $iface inet dhcp
+END
 $bridgex
 END
             }
