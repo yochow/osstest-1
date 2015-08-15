@@ -2029,9 +2029,10 @@ sub await_tcp ($$$) {
     my ($maxwait,$interval,$ho) = @_;
     target_adjust_timeout($ho,\$maxwait);
     poll_loop($maxwait,$interval,
-              "await tcp $ho->{Name} $ho->{TcpCheckPort}",
+              "await tcp $ho->{Name} $ho->{Ip} $ho->{TcpCheckPort}",
               sub {
-        return target_tcp_check($ho,$interval);
+	return target_check_ip($ho) //
+               target_tcp_check($ho,$interval);
     });
 }
 
