@@ -115,6 +115,7 @@ BEGIN {
                       iso_gen_flags_basic
                       iso_copy_content_from_image
                       guest_editconfig_nocd
+                      host_install_postboot_complete
                       );
     %EXPORT_TAGS = ( );
 
@@ -2393,6 +2394,11 @@ sub guest_editconfig_nocd ($$) {
         }
         s/^on_reboot.*/on_reboot='restart'/;
     });
+}
+
+sub host_install_postboot_complete ($) {
+    my ($ho) = @_;
+    target_cmd_root($ho, "update-rc.d osstest-confirm-booted start 99 2 .");
 }
 
 1;
