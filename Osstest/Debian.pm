@@ -479,7 +479,7 @@ sub setupboot_grub2 ($$$$) {
                 $entry->{Hv}= $1;
                 $entry->{Chainload} = 1;
             }
-            if (m/^\s*multiboot\s*(?:\/boot)?\/(xen\S+)/) {
+            if (m/^\s*multiboot\s*(?:\/boot)?\/(xen\-[0-9][-+.0-9a-z]*\S+)/) {
                 die unless $entry;
                 $entry->{Hv}= $1;
                 $entry->{Chainload} = 0;
