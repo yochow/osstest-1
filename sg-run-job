@@ -348,6 +348,15 @@ proc run-job/test-pair-oneway {} {
     run-ts . =              ts-guest-stop          dst_host          + debian
 }
 
+proc need-hosts/test-nested {} {return host}
+proc run-job/test-nested {} {
+    run-ts . = ts-debian-hvm-install + host l1
+    run-ts . = ts-nested-setup + --define l1=host:l1
+    nested-layer-descend l1
+    run-ts . = ts-debian-hvm-install l1 l2
+    run-ts . = ts-guest-stop l1 l2
+}
+
 proc test-guest-migr {g} {
     set to_reap [spawn-ts . = ts-migrate-support-check + host $g 1]
     set can_migrate [reap-ts $to_reap]
