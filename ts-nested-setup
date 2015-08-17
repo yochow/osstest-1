@@ -1,0 +1,99 @@
+#!/usr/bin/perl -w
+# This is part of "osstest", an automated testing framework for Xen.
+# Copyright (C) 2015 Intel Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict qw(vars);
+use DBI;
+use Osstest;
+use Osstest::Debian;
+use Osstest::TestSupport;
+
+tsreadconfig();
+
+our $dodefine;
+if (@ARGV && $ARGV[0] eq '--define') { $dodefine=1; shift @ARGV; }
+
+our ($l1_identspec) = @ARGV;
+
+my $l1 = selecthost($l1_identspec);
+my $l0 = $l1->{Host};
+
+die unless $l0;
+
+our $def_gueststorage_size = 20000; # Mby
+
+sub packages () {
+    # Faster to install packages while L1 is still running PVHVM
+    target_install_packages_norec($l1, qw(lvm2 rsync ed genisoimage));
+}
+
+sub guest_storage () {
+    # We need to attach an extra disk to the L1 guest to be used as L2
+    # guest storage:
+    #
+    # When running in a nested HVM environment the L1 domain is acting
+    # as both a guest to L0 and a host to L2 guests and therefore
+    # potentially sees connections to two independent xenstore
+    # instances, one provided by the L0 host and one which is provided
+    # by the L1 instance of xenstore.
+    #
+    # Unfortunately the kernel is not capable of dealing with this and
+    # is only able to cope with a single xenstore connection. Since
+    # the L1 toolstack and L2 guests absolutely require xenstore to
+    # function we therefore cannot use the L0 xenstore and therefore
+    # cannot use PV devices (xvdX etc) in the L1 guest and must use
+    # emulated devices (sdX etc).
+    #
+    # However at the moment we have not yet rebooted L1 into Xen and
+    # so it does have PV devices available and sdb actually appears as
+    # xvdb.  We could disable the Xen platform device and use emulated
+    # devices for the install phase too but that would be needlessly
+    # slow.
+    # 
+    # Instead, to avoid needing to even mention the name of xvdb or
+    # sdb, we create the vg in l0.  When the l1 reboots it will
+    # automatically find the empty vg we have created for it, and
+    # target_choose_vg on l1 (which is used by all the guest creation
+    # ts-* scripts) will use it since it has plenty of space.
+
+    my $size = guest_var($l1,'gueststorage_size',$def_gueststorage_size);
+    die "gueststorage_size is undefined" unless $size;
+
+    my $outer_vg = target_choose_vg($l0, $size);
+    my $outer_lv = "$l1->{Ident}_gueststorage_outer_lv";
+    my $inner_vg = "$l1->{Ident}_gueststorage_vg";
+
+    target_cmd_root($l0, "vgremove -f $inner_vg ||:");
+    my $outer_lvdev = lv_create($l0, $outer_vg, $outer_lv, $size);
+
+    target_cmd_root($l0, <<END);
+        pvcreate $outer_lvdev
+	vgcreate $inner_vg $outer_lvdev
+END
+
+    toolstack($l0)->block_attach($l1, "$outer_lvdev,raw,sdb,rw");
+    # NB this does not update the l1 guest config so if the l1 is shut
+    # down and recreated in the l0, this will vanish.
+}
+
+packages();
+guest_storage();
+host_install_postboot_complete($l1);
+
+if ($dodefine) {
+    $l1_identspec =~ m/^(.*)=/ or die "$l1_identspec ?";
+    store_runvar($1, $'); #';
+}
