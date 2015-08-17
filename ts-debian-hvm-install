@@ -215,6 +215,10 @@ sub prep () {
 
     iso_create_empty($ho, $emptyiso, $emptydir);
 
+    my $extra_config = '';
+    $extra_config .= "nestedhvm=1\n"
+	if guest_var_boolean($gho,"enable_nestedhvm");
+
     # If host has >8G free memory, create a guest with 4G memory to catch
     # any error that triggers cross 4G boundary
     my $host_freemem_mb = host_get_free_memory($ho);
@@ -236,6 +240,7 @@ sub prep () {
     more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb,
                           OnReboot => 'preserve',
                           Bios => $r{bios},
+                          ExtraConfig => $extra_config,
                           PostImageHook => sub {
         my $cmds = iso_copy_content_from_image($gho, $newiso);
         target_cmd_root($ho, $cmds, $isotimeout);
