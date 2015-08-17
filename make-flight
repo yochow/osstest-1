@@ -249,6 +249,33 @@ do_hvm_win7_x64_tests () {
             all_hostflags=$most_hostflags,hvm
 }
 
+do_hvm_debian_nested_tests () {
+  bios=$1
+
+  if [ $xenarch != amd64 -o $dom0arch != amd64 \
+      -o "x$qemuu_suffix" != "x-qemuu" ]; then
+    return
+  fi
+
+  case $xenbranch in
+    xen-3.*-testing)      return;;
+    xen-4.0-testing)      return;;
+    xen-4.1-testing)      return;;
+    xen-4.2-testing)      return;;
+    xen-4.3-testing)      return;;
+  esac
+
+  job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-nested \
+            test-nested xl $xenarch $dom0arch $qemuu_runvar        \
+            l1_image=$(usual_debianhvm_image amd64)                \
+            l1_vifmodel='e1000'                                    \
+            l1_memsize='3072'                                      \
+            l1_enable_nestedhvm='true'                             \
+            l2_image=$(usual_debianhvm_image amd64)                \
+            bios=$bios                                             \
+            all_hostflags=$most_hostflags,hvm
+}
+
 branch_debianhvm_arch () {
   case $branch in
     xen-unstable-smoke) echo i386;;
@@ -592,6 +619,7 @@ test_matrix_do_one () {
     do_hvm_rhel6_tests
 
     do_hvm_debian_tests
+    do_hvm_debian_nested_tests seabios
 
   done # qemuu_suffix
 
