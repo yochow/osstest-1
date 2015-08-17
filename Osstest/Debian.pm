@@ -421,10 +421,10 @@ sub setupboot_grub2 ($$$$) {
             next if m/^\s*\#/ || !m/\S/;
             if (m/^\s*\}\s*$/) {
                 die unless $entry || $submenu;
-                if (!defined $entry && defined $submenu) {
+                if (!$entry && $submenu) {
                     logm("Met end of a submenu $submenu->{StartLine}..$.. ".
                         "Our want kern is $want_kernver");
-                    $submenu=undef;
+                    $submenu= undef;
                     pop @offsets;
                     $offsets[$#offsets]++;
                     next;
@@ -465,7 +465,9 @@ sub setupboot_grub2 ($$$$) {
             }
             if (m/^\s*menuentry\s+[\'\"](.*)[\'\"].*\{\s*$/) {
                 die $entry->{StartLine} if $entry;
-                $entry= { Title => $1, StartLine => $., MenuEntryPath => join ">", @offsets };
+                $entry= { Title => $1,
+			  StartLine => $.,
+			  MenuEntryPath => join ">", @offsets };
                 $offsets[$#offsets]++;
             }
             if (m/^\s*submenu\s+[\'\"](.*)[\'\"].*\{\s*$/) {
