@@ -1745,7 +1745,8 @@ sub target_put_guest_image ($$;$) {
 
 sub more_prepareguest_hvm ($$$$;@) {
     my ($ho, $gho, $ram_mb, $disk_mb, %xopts) = @_;
-    
+    # $ram_mb and $disk_mb are defaults, used if runvars don't say 
+
     my $passwd= 'xenvnc';
 
     prepareguest_part_lvmdisk($ho, $gho, $disk_mb);

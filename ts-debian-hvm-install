@@ -220,12 +220,18 @@ sub prep () {
     my $host_freemem_mb = host_get_free_memory($ho);
     my $ram_minslop = 100;
     my $ram_lots = 5000;
-    if ($host_freemem_mb > $ram_lots * 2 + $ram_minslop) {
-        $ram_mb = $ram_lots;
-    } else {
-        $ram_mb = 768;
+
+    $ram_mb = guest_var($gho,'memsize',undef);
+    if (!$ram_mb) {
+         if ($host_freemem_mb > $ram_lots * 2 + $ram_minslop) {
+              $ram_mb = $ram_lots;
+         } else {
+              $ram_mb = 768;
+         }
     }
     logm("Host has $host_freemem_mb MB free memory, setting guest memory size to $ram_mb MB");
+
+    $disk_mb= guest_var($gho,'disksize',$disk_mb);
 
     more_prepareguest_hvm($ho,$gho, $ram_mb, $disk_mb,
                           OnReboot => 'preserve',
