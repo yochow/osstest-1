@@ -106,6 +106,13 @@ if [ -e \$b/debian/grubx64.efi ] ; then
 fi
 END
 
+preseed_hook_command($gho, 'late_command', '', <<END);
+#!/bin/sh
+set -ex
+
+in-target sed -i 's/^deb *cdrom/#&/g' /etc/apt/sources.list
+END
+
     $preseed_file .= preseed_hook_cmds();
 
     return $preseed_file;
