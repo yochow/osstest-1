@@ -48,8 +48,7 @@ xen-3.*)
 	'
 	;;
 xen-unstable)
-	repo_tree_rev_fetch_git xen \
-		$TREE_XEN master $LOCALREV_XEN
+	repo_tree_rev_fetch_git xen $TREE_XEN master $LOCALREV_XEN
 	;;
 xen-4.*-testing)
 	branchcore=${branch#xen-}
