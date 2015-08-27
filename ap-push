@@ -52,14 +52,14 @@ xen-3.*)
 	;;
 xen-unstable)
 	cd $repos/xen
-	git push $TREE_XEN $revision:master
+	git push $TREE_XEN $revision:refs/heads/master
 	;;
 xen-*-testing)
 	cd $repos/xen
 	xenversion=$branch
 	xenversion=${branch%-testing}
 	xenversion=${xenversion#xen-}
-	git push $TREE_XEN $revision:stable-$xenversion
+	git push $TREE_XEN $revision:refs/heads/stable-$xenversion
 	;;
 qemu-mainline)
 	cd $repos/qemu-mainline
@@ -67,11 +67,11 @@ qemu-mainline)
 	;;
 qemu-upstream-*)
 	cd $repos/$branch
-        git push $TREE_QEMU_UPSTREAM $revision:master
+        git push $TREE_QEMU_UPSTREAM $revision:refs/heads/master
         ;;
 linux-3.*)
 	cd $repos/linux
-	git push $TREE_LINUX $revision:tested/$branch
+	git push $TREE_LINUX $revision:refs/heads/tested/$branch
 	;;
 linux-2.6.39)
 	cd $repos/linux
@@ -83,11 +83,11 @@ linux-xen-*)
         ;;
 libvirt)
 	cd $repos/libvirt
-	git push $TREE_LIBVIRT $revision:xen-tested-master
+	git push $TREE_LIBVIRT $revision:refs/heads/xen-tested-master
 	;;
 rumpuserxen)
 	cd $repos/rumpuserxen
-	git push $TREE_RUMPUSERXEN $revision:xen-tested-master
+	git push $TREE_RUMPUSERXEN $revision:refs/heads/xen-tested-master
 	;;
 seabios)
 	cd $repos/seabios
