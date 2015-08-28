@@ -51,12 +51,12 @@ determine_version () {
                 if [ "x$FORCE_REVISION" != x ]; then
                         tversion="$FORCE_REVISION"
                 else
-        		tversion=`./ap-fetch-version "$tbranch"`
+			tversion=`$AP_FETCH_PFX ./ap-fetch-version "$tbranch"`
                 fi
 		determine_tree "$treevarwhich" "" _${treevarwhich}
 		determine_tree "$treevarwhich" "" _${treevarwhich}_THIS
 	else
-		tversion=`./ap-fetch-version-baseline "$tbranch"`
+		tversion=`$AP_FETCH_PFX ./ap-fetch-version-baseline "$tbranch"`
 		determine_tree "$treevarwhich" BASE_ _${treevarwhich}
 		determine_tree "$treevarwhich" BASE_ _${treevarwhich}_THIS
 	fi
@@ -98,7 +98,7 @@ if [ "x$OLD_REVISION" = x ]; then
 		# last test will have tested the previous upstream baseline
 		OLD_REVISION=`check_tested --print-revision=$tree`
 	    else
-		OLD_REVISION="`./ap-fetch-version-old $branch`"
+		OLD_REVISION="`$AP_FETCH_PFX ./ap-fetch-version-old $branch`"
 	    fi
 	    ;;
     esac
@@ -131,7 +131,8 @@ if [ "x$REVISION_XEN" = x ]; then
         export REVISION_XEN
 fi
 if [ "x$REVISION_PREVXEN" = x -a "x$prevxenbranch" != "x" ]; then
-	REVISION_PREVXEN="`./ap-fetch-version-baseline $prevxenbranch`"
+	REVISION_PREVXEN="`\
+		$AP_FETCH_PFX ./ap-fetch-version-baseline $prevxenbranch`"
 	export REVISION_PREVXEN
 fi
 if [ "x$REVISION_QEMU_UPSTREAM" = x ]; then
@@ -252,7 +253,8 @@ ovmf)
 esac
 
 if [ "x$OLD_REVISION" = xdetermine-late ]; then
-	OLD_REVISION="`./ap-fetch-version-baseline-late $branch $NEW_REVISION`"
+	OLD_REVISION="`\
+ $AP_FETCH_PFX ./ap-fetch-version-baseline-late $branch $NEW_REVISION`"
 fi
 
 case $branch in
