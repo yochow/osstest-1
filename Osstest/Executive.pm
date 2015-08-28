@@ -336,6 +336,7 @@ END
 		   WHERE name=?
 		     AND val=?
 		     AND r.flight=f.flight
+                     AND ${\ main_revision_job_cond('r.job') }
 		 )
 END
             push @params, "revision_$tree", $revision;
