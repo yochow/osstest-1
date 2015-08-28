@@ -108,7 +108,7 @@ our ($branch,$job,$testid) = @ARGV;
 
 our ($latest_flight, $hosts, $basispass_flight);
 our (@treeinfos);
-# $treeinfos[]{Name}
+# $treeinfos[]{Name}     Name might be  "<treename> <other-job-revision-spec>"
 # $treeinfos[]{Url}
 
 our $restrictflight_cond= restrictflight_cond();
@@ -208,6 +208,7 @@ END
         SELECT url.val AS uval,
 	       rev.val AS rval,
 	       url.job AS job,
+               ${\ other_revision_job_suffix('url.job',' ') } AS othrev,
 	       url.name AS longname
 
 	    FROM tmp_build_info AS rev
@@ -232,7 +233,8 @@ END
         $row->{longname} =~ m/^tree_/ or die "$row->{longname} ?";
         my $name= $'; #'
         print DEBUG " $flight.$row->{job} uval=$row->{uval}".
-            " rval=$row->{rval} name=$name\n";
+            " rval=$row->{rval} name=$name othrev=\`$row->{othrev}'\n";
+	$name .= $row->{othrev};
         my $rev= $row->{rval};
         next unless length $rev;
         $rev =~ s/\+//g;
@@ -1069,14 +1071,21 @@ END
         SELECT name FROM runvars
           WHERE  flight=? AND job=?
             AND  name = ?
+            AND  ${\ other_revision_job_suffix('job',' ') } = ?
 END
     foreach (my $i=0; $i<@treeinfos; $i++) {
         my $name= $treeinfos[$i]{Name};
+	my $othrev = $name =~ s{ (.+)$}{} ? $1 : '';
         my $treevar= 'tree_'.$name;
-        $treeq->execute($copyflight, $popjob, $treevar);
+        $treeq->execute($copyflight, $popjob, $treevar, $othrev);
         my ($treerow) = $treeq->fetchrow_array();
         $treeq->finish();
         next unless defined $treerow;
+	# Effect of the check on other_revison_job_suffix is that
+	# we don't see a runvar row if the othrev from the treeinfo
+	# does not correspond to that of the job - ie, the treeinfo
+	# does not apply to this job.
+
         my $revname= "revision_$name";
         my $revval= $trevisions[$i];
 
