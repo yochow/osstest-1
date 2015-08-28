@@ -58,12 +58,14 @@ END
                WHERE (name = ? OR name = ?)
                AND   val != ''
                AND   NOT (val = ? OR val LIKE ?)
+               AND   ${\ main_revision_job_cond('r.job') }
                AND   r.flight = flights.flight)
 END
              EXISTS
              (SELECT *
                FROM runvars r
                WHERE name = ?
+               AND   ${\ main_revision_job_cond('r.job') }
                AND   r.flight = flights.flight
                AND   val != '')
 END
@@ -160,6 +162,7 @@ END
 		SELECT DISTINCT val
 		  FROM runvars
 		 WHERE flight=?
+                 AND   ${\ main_revision_job_cond('job') }
 		 AND   (name=? OR name=?)
 END
                                    $flight,
