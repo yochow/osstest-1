@@ -216,7 +216,7 @@ create_build_jobs () {
         # only pass tree_xen and revision_xen here and therefore
         # pickup the versions implicitly selected by the
         # $REVISION_PREVXEN.
-        ./cs-job-create $flight build-$arch-prev build                       \
+        job_create_build build-$arch-prev build                       \
                     arch=$arch enable_xend=false enable_ovmf=$enable_ovmf    \
                     enable_xsm=false                                         \
             tree_xen=$TREE_XEN                                               \
