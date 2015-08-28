@@ -36,6 +36,17 @@ if [ $# = 0 ]; then
    set `./mg-list-all-branches`
 fi
 
+if [ "x$AP_FETCH_MEMO_KEEP" = x ]; then
+	rm -rf tmp/apmemo
+	mkdir tmp/apmemo
+fi
+export AP_FETCH_PFX='./memoise tmp/apmemo'
+
+# In the future it might be nice for this script to arrange to use a
+# separate standalone.db, in tmp/ probably, for each different branch.
+# That would avoid a lot of needless write contention over the single
+# db, and make it possible to use `eatmydata' if it is installed.
+
 perbranch () {
     log=tmp/make-flight.$branch.log
     flight=check_${branch//[-._]/_}
