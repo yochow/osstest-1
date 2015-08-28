@@ -93,6 +93,7 @@ our $revisionsq= db_prepare(<<END);
          WHERE flight=? AND job=?
            AND name LIKE E'built\\_revision\\_\%'
 END
+# (We report on non-main-revision jobs just as for main-revision ones.)
 
 sub add_revisions ($$$$) {
     my ($revmap, $flightnum, $j, $sfx) = @_;

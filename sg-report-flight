@@ -211,6 +211,7 @@ END
             SELECT flight, job, val FROM runvars
                 WHERE flight=?
 		  AND name=?
+                  AND ${\ main_revision_job_cond('job') }
 		GROUP BY flight, job, val
 END
     $revisionsq= db_prepare($revisionsq);
@@ -455,6 +456,9 @@ END
                   AND name like 'built_revision_%'
                 ORDER BY name
 END
+        # We report in jobtext revisions in non-main-revision jobs, too.
+        # (Although, at the time of writing this comment, the jobtexts
+        # seem not to ever be printed in the report...)
         $revh->execute();
         while (my $r= $revh->fetchrow_hashref()) {
             my $br= $r->{name};
