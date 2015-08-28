@@ -861,7 +861,7 @@ sub selecthost ($) {
 	$child->{Info} = [ "in", $parent->{Name}, @{ $parent->{Info} } ];
 	$child->{NestingLevel} = $parent->{NestingLevel}+1;
 
-	# $child->{Power} = 'guest';   todo
+	$child->{Power} = 'guest';
 	power_cycle_host_setup($child);
 
 	$child->{Properties}{Serial} = 'noop'; # todo
