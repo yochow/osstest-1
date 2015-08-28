@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# memoise - a command line output memoisation tool
+#
+# usage:
+#    memoise datadir cmd arg arg ...
+#
+# will create datadir if necessary; delete datadir when you're done
+#
+#    Copyright 2015 Citrix Inc.
+#
+#    This file is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program (eg in the file GPL-3).  If not, see
+#    <http://www.gnu.org/licenses/>.
+#
+#    NB that the rest of osstest is AGPLv3+, so when this file is
+#    distributed together with osstest, the AGPLv3 applies.
+
+set -e
+
+case "$#.$1" in
+[01].)	echo >&2 "memoise: too few args"; exit 127 ;;
+*.-)	echo >&2 "memoise: unknown option $1"; exit 127 ;;
+esac
+
+datadir=$1; shift
+
+mkdir -p -- "$datadir"
+
+id=`for arg in "$@"; do printf '%s\0' "$arg"; done | sha256sum`
+id=${id%  -}
+
+f="$datadir/$id"
+
+if ! [ -f "$f.o" ]; then
+	with-lock-ex -w "$f.l" sh -ec '
+		f=$1; shift
+		if [ -f "$f.o" ]; then exit 0; fi
+		exec </dev/null >"$f.t"
+		"$@"
+		mv -- "$f.t" "$f.o"
+		rm "$f.l"
+	' x "$f" "$@"
+fi
+
+cat -- "$f.o"
