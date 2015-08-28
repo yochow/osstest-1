@@ -35,7 +35,7 @@ BEGIN {
                       getmethod
                       postfork
                       flight_otherjob
-                      main_revision_job_cond
+                      main_revision_job_cond other_revision_job_suffix
                       $dbh_tests db_retry db_retry_retry db_retry_abort
                       db_begin_work db_prepare
                       ensuredir get_filecontents_core_quiet system_checked
@@ -318,9 +318,19 @@ sub flight_otherjob ($$) {
            die "$otherflightjob ?";
 }
 
+sub other_revision_job_suffix ($$) {
+    my ($jobfield, $separator) = @_;
+    return <<END
+      (CASE
+       WHEN ($jobfield) LIKE 'build-%-prev' THEN '${separator}prev'
+       ELSE                                      ''
+       END)
+END
+}
+
 sub main_revision_job_cond ($) {
     my ($jobfield) = @_;
-    return "(($jobfield) NOT LIKE 'build-%-prev')";
+    return "(${\ other_revision_job_suffix($jobfield,'x') } = '')";
 }
 
 sub get_filecontents_core_quiet ($) { # ENOENT => undef
