@@ -216,6 +216,12 @@ proc runneeded-2-requeue {} {
 #  $w/thinking_after    timeout
 # all the $w/ are generally upvar'd by walker-globals
 
+proc walkers-perhaps-queue-steps {} {
+    foreach-walker w {
+	after idle queuerun-perhaps-step $w
+    }
+}
+
 proc plan-reset {w} {
     exec ./ms-planner -w$w reset < /dev/null
 }
@@ -226,7 +232,7 @@ proc queuerun-start {w} {
     log-event "$w queuerun-start"
     plan-reset $w
     set queue_running $queue
-    after idle queuerun-perhaps-step plan
+    walkers-perhaps-queue-steps
 }
 
 proc queuerun-perhaps-step {w} {
@@ -247,7 +253,9 @@ proc queuerun-perhaps-step {w} {
     set next [lindex $queue_running 0]
     set already [we-are-thinking $next]
     if {[llength $already]} {
-	error "next $next thinking $already but also want $w"
+	# $already will wake us via walkers-perhaps-queue-steps
+	log-event "$w queuerun-perhaps-step already $already"
+	return
     }
 
     set thinking $next
@@ -304,7 +312,7 @@ proc queuerun-step-done {w why} {
         unset thinking_after
     }
     unset thinking
-    after idle queuerun-perhaps-step $w
+    walkers-perhaps-queue-steps
 }
 
 proc queue-thoughts-timedout {w} {
