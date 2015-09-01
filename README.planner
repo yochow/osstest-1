@@ -184,6 +184,16 @@ ms-queuedaemon commands
         < OK ms-queuedaemon [INFO...]
                 Banner on connection.  INFO should be ignored.
 
+        > set-info KEY VALUE
+                There are various informational keys which are used by
+                the planner, provided by clients.  Keys include:
+
+        > set-info preinfo ...                   } used for reporting
+        > set-info job ...                       }
+        > set-info priority ...                      } used for
+        > set-info sub-priority ...                  } queue adjustment
+        > set-info wait-start-adjust ...             }
+
 	> wait
 		I want to join the plan
 
