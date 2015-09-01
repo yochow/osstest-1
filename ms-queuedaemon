@@ -21,6 +21,23 @@
 
 source ./tcl/daemonlib.tcl
 
+set walkers {plan}
+
+proc walker-globals {w} {
+    # introduces queue_running, thinking[_after] for the specific walker
+    foreach v {queue_running thinking thinking_after} {
+	uplevel 1 [list upvar #0 $w/$v $v]
+    }
+}
+
+proc foreach-walker {walkervar body} {
+    global walkers
+    upvar 1 $walkervar w
+    foreach w $walkers {
+	uplevel 1 walker-globals $w
+	uplevel 1 $body
+    }
+}
 
 proc chan-destroy-stuff {chan} {
     dequeue-chan $chan destroy
@@ -31,13 +48,20 @@ proc chan-destroy-stuff {chan} {
 proc dequeue-chan {chan why} {
     log-event "dequeue-chan $chan $why"
 
-    global queue queue_running thinking
+    global queue
     lremove queue $chan
 
-    if {[info exists queue_running]} { lremove queue_running $chan }
-    if {[info exists thinking] &&
-        ![string compare $thinking $chan]} {
-        queuerun-step-done $why
+    foreach-walker w {
+	if {[info exists queue_running]} { lremove queue_running $chan }
+    }
+
+    # Reentrancy: this next loop can only trigger once, because
+    # the queuerun-step-done won't ever start chan thinking again
+    foreach-walker w {
+	if {[info exists thinking] &&
+	    ![string compare $thinking $chan]} {
+	    queuerun-step-done $w $why
+	}
     }
 }
 
@@ -55,31 +79,35 @@ proc log-event {m} {
 }
 
 proc log-state {m} {
-    global need_queue_run queue queue_running thinking
+    global need_queue_run queue
 
     set lhs [format "N=%d Q=%d (%-11.11s) " \
                  $need_queue_run [llength $queue] $queue]
 
-    if {[info exists queue_running]} {
-        append lhs [format "R=%d " [llength $queue_running]]
-        if {[info exists thinking]} {
-            append lhs [format "T=%s " $thinking]
-        } else {
-            append lhs [format "        "]
-        }
-        append lhs [format "(%-11.11s) " $queue_running]
-    } else {
-        append lhs "                          "
+    foreach-walker w {
+	if {[info exists queue_running]} {
+	    append lhs [format "R=%d " [llength $queue_running]]
+	    if {[info exists thinking]} {
+		append lhs [format "T=%s " $thinking]
+	    } else {
+		append lhs [format "        "]
+	    }
+	    append lhs [format "(%-11.11s) " $queue_running]
+	} else {
+	    append lhs "                          "
+	}
     }
+
     log "$lhs | $m"
 }
 
 #---------- machinery for making sure we run the queue ----------
 #
 # variables:
-#   queue            chans that are waiting for resources
-#   queue_running    unset if not running, list of chans if running
-#   need_queue_run   0: not needed; 1: needed if more resources; 2: force
+#  $w/queue            chans that are waiting for resources
+#  $w/queue_running    unset if not running, list of chans if running
+#  need_queue_run      0: not needed; 1: needed if more resources; 2: force
+# the $w/ variables are generally upvar'd with walker-globals
 
 proc runneeded-ensure-will {need} {
     global runneeded_holdoff_after c need_queue_run
@@ -96,7 +124,8 @@ proc runneeded-ensure-will {need} {
 
 proc runneeded-perhaps-start {} {
     log-event runneeded-perhaps-start
-    global queue queue_running thinking need_queue_run inhibit
+    walker-globals plan
+    global queue need_queue_run inhibit
     global runneeded_holdoff_after
     unset runneeded_holdoff_after
 
@@ -108,8 +137,8 @@ proc runneeded-perhaps-start {} {
     set need_queue_run 0
 
     if {![llength $queue]} {
-        plan-reset
-        report-plan
+        plan-reset plan
+        report-plan plan
         return
     }
 
@@ -140,7 +169,7 @@ proc runneeded-perhaps-start {} {
     log "runneeded-perhaps-start starting cleaned=$cleaned"
 
     runneeded-2-requeue
-    queuerun-start
+    queuerun-start plan
 }
 
 proc runneeded-ensure-polling {} {
@@ -181,26 +210,29 @@ proc runneeded-2-requeue {} {
 #---------- machinery for running the queue ----------
 #
 # variables:
-#    queue             chans waiting, read when we start
-#    queue_running     chans not yet asked
-#    thinking          chan currently asking
-#    thinking_after    timeout
+#  queue                chans waiting, read when we start
+#  $w/queue_running     chans not yet asked
+#  $w/thinking          chan currently asking
+#  $w/thinking_after    timeout
+# all the $w/ are generally upvar'd by walker-globals
 
-proc plan-reset {} {
-    exec ./ms-planner reset < /dev/null
+proc plan-reset {w} {
+    exec ./ms-planner -w$w reset < /dev/null
 }
 
-proc queuerun-start {} {
-    log-event queuerun-start
-    global queue_running queue
-    plan-reset
+proc queuerun-start {w} {
+    global queue
+    walker-globals $w
+    log-event "$w queuerun-start"
+    plan-reset $w
     set queue_running $queue
-    after idle queuerun-perhaps-step
+    after idle queuerun-perhaps-step plan
 }
 
-proc queuerun-perhaps-step {} {
-    log-event queuerun-perhaps-step
-    global thinking queue_running thinking_after c
+proc queuerun-perhaps-step {w} {
+    log-event "$w queuerun-perhaps-step"
+    walker-globals $w
+    global c
 
     if {[info exists thinking]} return
     if {![info exists queue_running]} return
@@ -208,107 +240,126 @@ proc queuerun-perhaps-step {} {
     if {![llength $queue_running]} {
         unset queue_running
         runneeded-ensure-will 0
-        report-plan
+        report-plan $w
         return
     }
 
-    set thinking [lshift queue_running]
-    log-event "queuerun-perhaps-step selected"
+    set next [lindex $queue_running 0]
+    set already [we-are-thinking $next]
+    if {[llength $already]} {
+	error "next $next thinking $already but also want $w"
+    }
+
+    set thinking $next
+    lshift queue_running
+    log-event "$w queuerun-perhaps-step selected"
 
     set thinking_after [after [expr {$c(QueueThoughtsTimeout) * 1000}] \
-                            queue-thoughts-timedout]
+                            queue-thoughts-timedout $w]
     for-chan $thinking {
         puts-chan $thinking "!OK think"
     }
 }
 
-proc report-plan {} {
+proc report-plan {w} {
     global c
     if {[catch {
-        exec ./ms-planner show-html > "$c(WebspaceFile)/resource-plan.html"
+	set outputfile "$c(WebspaceFile)/resource-$w.html"
+	exec ./ms-planner -w$w show-html > $outputfile
     } emsg]} {
-        log "INTERNAL ERROR showing plan html: $emsg"
+        log "INTERNAL ERROR showing $w html: $emsg"
     } else {
-        log "report-plan OK"
+        log "$w report-plan OK"
     }
 }
 
 proc we-are-thinking {chan} {
-    global thinking
-    return [expr {[info exists thinking] && ![string compare $thinking $chan]}]
+    set ws {}
+    foreach-walker w {
+	if {[info exists thinking] && ![string compare $thinking $chan]} {
+	    lappend ws $w
+	}
+    }
+    if {[llength $ws] > 1} {
+	error "arrgh chan $chan thinking $ws !"
+    }
+    return [lindex $ws 0]
 }
 
 proc check-we-are-thinking {chan} {
-    if {![we-are-thinking $chan]} {
+    set w [we-are-thinking $chan]
+    if {![string length $w]} {
         puts-chan $chan "ERROR you are not thinking"
         return -code return
     }
+    return $w
 }
 
-proc queuerun-step-done {why} {
-    log-event "queuerun-step-done $why"
-    global queue_running thinking thinking_after
-    puts-chan-desc $thinking "queuerun-step-done $thinking $why"
+proc queuerun-step-done {w why} {
+    log-event "$w queuerun-step-done $why"
+    walker-globals $w
+    puts-chan-desc $thinking "$w queuerun-step-done $thinking $why"
     if {[info exists thinking_after]} {
         after cancel $thinking_after
         unset thinking_after
     }
     unset thinking
-    after idle queuerun-perhaps-step
+    after idle queuerun-perhaps-step $w
 }
 
-proc queue-thoughts-timedout {} {
-    log-event queue-thoughts-timedout
-    global thinking thinking_after
+proc queue-thoughts-timedout {w} {
+    log-event "$w queue-thoughts-timedout"
+    walker-globals $w
     set chan $thinking
     unset thinking_after
-    queuerun-step-done timeout
+    queuerun-step-done $w timeout
     for-chan $chan {
         puts-chan $chan "!ERROR timed out (too pensive)"
     }
 }
 
 proc cmd/thought-wait {chan desc} {
-    check-we-are-thinking $chan
-    queuerun-step-done thought-wait
+    set w [check-we-are-thinking $chan]
+    queuerun-step-done $w thought-wait
     puts-chan $chan "OK thought"
 }
 
 proc cmd/thought-done {chan desc} {
-    check-we-are-thinking $chan
-    queuerun-step-done thought-done
+    set w [check-we-are-thinking $chan]
+    queuerun-step-done $w thought-done
     dequeue-chan $chan thought-wait
     puts-chan $chan "OK thought"
 }
 
 proc cmd/get-plan {chan desc} {
     global plan
-    set plan [exec -keepnewline ./ms-planner get-plan < /dev/null]
+    set w [check-we-are-thinking $chan]
+    set plan [exec -keepnewline ./ms-planner -w$w get-plan < /dev/null]
     puts-chan-data $chan "OK get-plan" $plan
 }
 
 proc cmd/book-resources {chan desc bytes} {
-    check-we-are-thinking $chan
     read-chan-data $chan $bytes do-book-resources
 }
 proc do-book-resources {chan desc data} {
     global plan errorInfo
-    check-we-are-thinking $chan
+    set w [check-we-are-thinking $chan]
     set info [chan-get-info $chan {"$info(preinfo) "} ""]
     append info [chan-get-info $chan {"job $info(job)"} $desc]
     if {[catch {
-	exec ./ms-planner book-resources $info << $data
+	exec ./ms-planner -w$w book-resources $info << $data
     } emsg]} {
-	set f [exec ./ms-planner-debug $info $data $plan]
+	set f [exec ./ms-planner-debug -w$w $info $data $plan]
 	error "$f $emsg" $errorInfo
     }
     puts-chan $chan "OK book-resources"
 }
 
 proc cmd/unwait {chan desc} {
-    if {[we-are-thinking $chan]} {
-        queuerun-step-done unwait
-        set res cancel
+    set w [we-are-thinking $chan]
+    if {[string length $w]} {
+        queuerun-step-done $w unwait
+        set res "$w cancel"
     } else {
         set res noop
     }
