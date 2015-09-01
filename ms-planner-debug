@@ -25,7 +25,14 @@ use Osstest;
 
 csreadconfig();
 
-my $f= sprintf "data-plan-debug-%s.txt", time;
+my $walker = 'plan';
+
+if (@ARGV && $ARGV[0] =~ m/^-w(.+)$/) {
+    $walker = $1;
+    shift @ARGV;
+}
+
+my $f= sprintf "data-$walker-debug-%s.txt", time;
 
 printf "%s\n", $f;
 
@@ -42,9 +49,9 @@ foreach my $arg (@ARGV) {
     }
 }
 
-print "==========data-plan.pl==========\n";
+print "==========data-$walker.pl==========\n";
 
-system 'cat data-plan.pl 2>&1';
+system 'cat data-$walker.pl 2>&1';
 
 print "==========resources==========\n";
 

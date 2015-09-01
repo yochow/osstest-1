@@ -33,12 +33,16 @@ use Osstest::Executive;
 
 open DEBUG, ">/dev/null" or die $!;
 
+our $walker = 'plan';
+
 while (@ARGV and $ARGV[0] =~ m/^-/) {
     $_= shift @ARGV;
     last if m/^--$/;
     while (m/^-./) {
         if (s/^-D/-/) {
             open DEBUG, ">&STDERR" or die $!;
+        } elsif (s/^-w(.+)/-/) {
+	    $walker = $1;
         } else {
             die "$_ ?";
         }
@@ -49,7 +53,7 @@ csreadconfig();
 
 our ($plan);
 
-my $fn= "data-plan.pl";
+my $fn= "data-$walker.pl";
 
 sub allocations ($$) {
     my ($init, $each) = @_;
