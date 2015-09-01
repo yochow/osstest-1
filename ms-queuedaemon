@@ -172,6 +172,11 @@ proc runneeded-perhaps-start {} {
     queuerun-start plan
 }
 
+proc queuerun-finished/plan {} {
+    runneeded-ensure-will 0
+    report-plan plan
+}
+
 proc runneeded-ensure-polling {} {
     log-event runneeded-ensure-polling
     global polling_after queue c
@@ -245,8 +250,7 @@ proc queuerun-perhaps-step {w} {
 
     if {![llength $queue_running]} {
         unset queue_running
-        runneeded-ensure-will 0
-        report-plan $w
+	queuerun-finished/$w
         return
     }
 
