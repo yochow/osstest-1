@@ -194,11 +194,15 @@ ms-queuedaemon commands
         > set-info sub-priority ...                  } queue adjustment
         > set-info wait-start-adjust ...             }
 
+        > set-info feature-noalloc 1
+	        The client understands `!OK think noalloc'.
+
 	> wait
 		I want to join the plan
 
-	< !OK think
+	< !OK think [noalloc]
 		Now is the time to add yourself to the plan
+                `noalloc' means client must not not actually allocate.
 
 		> get-plan
 		< OK get-plan BYTES

@@ -674,6 +674,7 @@ sub alloc_resources {
                 $set_info->('priority', $priority);
                 $set_info->('sub-priority',$ENV{OSSTEST_RESOURCE_SUBPRIORITY});
                 $set_info->('preinfo',     $ENV{OSSTEST_RESOURCE_PREINFO});
+		$set_info->('feature-noalloc', 1);
 
                 if (defined $waitstart) {
                     $set_info->('wait-start',$waitstart);
@@ -699,7 +700,9 @@ sub alloc_resources {
 
             logm("resource allocation: awaiting our slot...");
 
-            $_= <$qserv>;  defined && m/^\!OK think\s$/ or die "$_ ?";
+            $_= <$qserv>;
+	    defined && m/^\!OK think( noalloc)?\s$/ or die "$_ ?";
+	    my $noalloc = $1 // '';
 
             opendb_tests();
 
@@ -715,12 +718,12 @@ sub alloc_resources {
 		read($qserv, $jplan, $jplanlen) == $jplanlen or die $!;
 		my $jplanprint= $jplan;
 		chomp $jplanprint;
-		logm("resource allocation: obtained base plan.");
+		logm("resource allocation: obtained base plan$noalloc.");
 		$debugm->("base plan = ", $jplanprint);
 		$plan= from_json($jplan);
 	    }, sub {
 		if (!eval {
-		    ($ok, $bookinglist) = $resourcecall->($plan, 1);
+		    ($ok, $bookinglist) = $resourcecall->($plan, !$noalloc);
 		    1;
 		}) {
 		    warn "resourcecall $@";
