@@ -604,7 +604,7 @@ sub plan_search ($$$$) {
 }
 
 sub alloc_resources {
-    my ($resourcecall) = pop @_;
+    my ($resourcecall) = pop @_; # $resourcecall->($plan);
     my (%xparams) = @_;
     # $resourcecall should die (abort) or return ($ok, $bookinglist)
     #

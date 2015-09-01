@@ -181,6 +181,9 @@ DETAILED PROTOCOL NOTES
 
 ms-queuedaemon commands
 
+        < OK ms-queuedaemon [INFO...]
+                Banner on connection.  INFO should be ignored.
+
 	> wait
 		I want to join the plan
 
