@@ -604,7 +604,7 @@ sub plan_search ($$$$) {
 }
 
 sub alloc_resources {
-    my ($resourcecall) = pop @_; # $resourcecall->($plan);
+    my ($resourcecall) = pop @_; # $resourcecall->($plan, $mayalloc);
     my (%xparams) = @_;
     # $resourcecall should die (abort) or return ($ok, $bookinglist)
     #
@@ -720,7 +720,7 @@ sub alloc_resources {
 		$plan= from_json($jplan);
 	    }, sub {
 		if (!eval {
-		    ($ok, $bookinglist) = $resourcecall->($plan);
+		    ($ok, $bookinglist) = $resourcecall->($plan, 1);
 		    1;
 		}) {
 		    warn "resourcecall $@";

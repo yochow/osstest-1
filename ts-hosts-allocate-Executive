@@ -606,7 +606,8 @@ sub alloc_hosts () {
 }
 
 sub attempt_allocation {
-    ($plan) = @_;
+    my $mayalloc;
+    ($plan, $mayalloc) = @_;
     undef $best;
 
     logm("allocating hosts: ".join(' ', map { $_->{Ident} } @hids));
@@ -632,7 +633,7 @@ sub attempt_allocation {
 
     my $retval=0;
 
-    if (!$best->{Start}) {
+    if ($mayalloc && !$best->{Start}) {
 	$retval= 1;
 	foreach my $hid (@hids) {
 	    my $got= actual_allocation($hid);

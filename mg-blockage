@@ -40,7 +40,7 @@ sub max { (reverse sort @_)[0]; }
 
 sub plan () {
     alloc_resources(sub {
-	my ($plan) = @_;
+	my ($plan, $mayalloc) = @_;
 
 	my $now = time;
 	if ($now > $end) { return (1, { Bookings => [ ] }); }

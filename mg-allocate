@@ -270,7 +270,7 @@ sub showposs ($) {
 sub plan () {
     my @got;
     alloc_resources(sub {
-        my ($plan) = @_;
+        my ($plan, $mayalloc) = @_;
 
 	@got = ();
         my @possmatrix = ([]);
@@ -310,7 +310,7 @@ sub plan () {
 	die unless $planned;
 
         my $allok=0;
-        if (!$planned->{Start}) {
+        if ($mayalloc && !$planned->{Start}) {
             $allok=1;
 
             alloc_prep();
