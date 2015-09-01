@@ -86,10 +86,12 @@ proc runneeded-ensure-will {need} {
     log-event "runneeded-ensure-will $need (was $need_queue_run)"
 
     if {$need > $need_queue_run} { set need_queue_run $need }
-    catch { after cancel $runneeded_holdoff_after }
-    set runneeded_holdoff_after \
-        [after [expr {$c(QueueDaemonHoldoff) * 1000}] \
-             runneeded-perhaps-start]
+
+    if {![info exists runneeded_holdoff_after]} {
+	set runneeded_holdoff_after \
+	    [after [expr {$c(QueueDaemonHoldoff) * 1000}] \
+		 runneeded-perhaps-start]
+    }
 }
 
 proc runneeded-perhaps-start {} {
