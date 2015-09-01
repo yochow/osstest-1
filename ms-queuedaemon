@@ -138,7 +138,7 @@ proc runneeded-perhaps-start {} {
 
     if {![llength $queue]} {
         plan-reset plan
-        report-plan plan
+        report-plan plan plan
         return
     }
 
@@ -174,7 +174,7 @@ proc runneeded-perhaps-start {} {
 
 proc queuerun-finished/plan {} {
     runneeded-ensure-will 0
-    report-plan plan
+    report-plan plan plan
 }
 
 proc runneeded-ensure-polling {} {
@@ -272,10 +272,10 @@ proc queuerun-perhaps-step {w} {
     notify-to-think $w $thinking
 }
 
-proc report-plan {w} {
+proc report-plan {w wo} {
     global c
     if {[catch {
-	set outputfile "$c(WebspaceFile)/resource-$w.html"
+	set outputfile "$c(WebspaceFile)/resource-$wo.html"
 	exec ./ms-planner -w$w show-html > $outputfile
     } emsg]} {
         log "INTERNAL ERROR showing $w html: $emsg"
