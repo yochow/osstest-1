@@ -210,8 +210,7 @@ proc queuerun-perhaps-step {} {
         return
     }
 
-    set thinking [lindex $queue_running 0]
-    set queue_running [lrange $queue_running 1 end]
+    set thinking [lshift queue_running]
     log-event "queuerun-perhaps-step selected"
 
     set thinking_after [after [expr {$c(QueueThoughtsTimeout) * 1000}] \

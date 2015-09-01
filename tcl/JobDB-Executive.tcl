@@ -74,8 +74,7 @@ proc set-flight {} {
         set argv [lrange $argv 2 end]
     }
 
-    set flight [lindex $argv 0]
-    set argv [lrange $argv 1 end]
+    set flight [lshift argv]
     set env(OSSTEST_FLIGHT) $flight
 }
 
