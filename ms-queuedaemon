@@ -268,9 +268,8 @@ proc queuerun-perhaps-step {w} {
 
     set thinking_after [after [expr {$c(QueueThoughtsTimeout) * 1000}] \
                             queue-thoughts-timedout $w]
-    for-chan $thinking {
-        puts-chan $thinking "!OK think"
-    }
+
+    notify-to-think $w $thinking
 }
 
 proc report-plan {w} {
@@ -377,6 +376,12 @@ proc cmd/unwait {chan desc} {
     }
     dequeue-chan $chan "unwait $res"
     puts-chan $chan "OK unwait $res"
+}
+
+proc notify-to-think {w thinking} {
+    for-chan $thinking {
+	puts-chan $thinking "!OK think"
+    }
 }
 
 #---------- general stuff ----------
