@@ -21,7 +21,7 @@
 
 source ./tcl/daemonlib.tcl
 
-set walkers {plan}
+set walkers {plan projection}
 
 proc walker-globals {w} {
     # introduces queue_running, thinking[_after] for the specific walker
@@ -169,12 +169,19 @@ proc runneeded-perhaps-start {} {
     log "runneeded-perhaps-start starting cleaned=$cleaned"
 
     runneeded-2-requeue
+    restarter-starting-plan-hook
     queuerun-start plan
 }
 
 proc queuerun-finished/plan {} {
     runneeded-ensure-will 0
     report-plan plan plan
+    report-plan plan projection
+}
+
+proc queuerun-finished/projection {} {
+    runneeded-ensure-will 0
+    report-plan projection projection
 }
 
 proc runneeded-ensure-polling {} {
@@ -255,6 +262,12 @@ proc queuerun-perhaps-step {w} {
     }
 
     set next [lindex $queue_running 0]
+    if {![string compare RESTART $next]} {
+	lshift queue_running
+	restarter-restart-now
+	return
+    }
+
     set already [we-are-thinking $next]
     if {[llength $already]} {
 	# $already will wake us via walkers-perhaps-queue-steps
@@ -378,9 +391,95 @@ proc cmd/unwait {chan desc} {
     puts-chan $chan "OK unwait $res"
 }
 
+#---------- special magic for restarting the plan ----------
+
+proc for-free-resources {varname body} {
+    jobdb::transaction resources {
+	pg_execute -array free_resources_row dbh {
+		SELECT (restype || '/' || resname || '/' || shareix) AS r
+		  FROM resources
+	     WHERE NOT (SELECT live FROM tasks WHERE taskid=owntaskid)
+	      ORDER BY restype, resname
+	} {
+	    uplevel 1 [list set $varname $free_resources_row(r)]
+	    uplevel 1 $body
+	}
+    }
+}
+
+proc restarter-starting-plan-hook {} {
+    global wasfree
+    catch { unset wasfree }
+    for-free-resources freeres {
+	set wasfree($freeres) 1
+    }
+}
+
+proc restarter-maybe-provoke-restart {} {
+    set newly_free {}
+    global wasfree
+    for-free-resources freeres {
+	if {[info exists wasfree($freeres)]} continue
+	lappend newly_free $freeres
+	set wasfree($freeres) 1
+    }
+    if {![llength $newly_free]} {
+	log-event "restarter-maybe-provoke-restart nothing"
+	return
+    }
+ 
+    walker-globals plan
+
+    if {!([info exists queue_running] && [llength $queue_running])} {
+	log-event "restarter-maybe-provoke-restart not-running ($newly_free)"
+	return
+    }
+    
+    log-event "restarter-maybe-provoke-restart provoked ($newly_free)"
+
+    if {[string compare RESTART [lindex $queue_running 0]]} {
+	set queue_running [concat RESTART $queue_running]
+    }
+    after idle queuerun-perhaps-step plan
+}
+
+proc restarter-restart-now {} {
+    # We restart the `plan' walker.  Well, actually, if the
+    # `projection' walker is not running, we transfer the `plan'
+    # walker to it.  At this stage the plan walker is not thinking so
+    # there are no outstanding callbacks to worry about.
+
+    log-event restarter-restart-now
+
+    global projection/queue_running
+    global plan/queue_running
+
+    if {![info exists projection/queue_running]} {
+	log-event "restarter-restart-now projection-idle continue-as"
+	set projection/queue_running [set plan/queue_running]
+	file copy -force data-plan.pl data-projection.pl
+	after idle queuerun-perhaps-step projection
+    } else {
+	log-event "restarter-restart-now projection-running"
+    }
+
+    report-plan plan plan
+
+    unset plan/queue_running
+    runneeded-ensure-will 2
+}
+
 proc notify-to-think {w thinking} {
     for-chan $thinking {
-	puts-chan $thinking "!OK think"
+	set noalloc [chan-get-info $thinking {$info(feature-noalloc)} {}]
+	switch -glob $w.$noalloc {
+	    plan.* { puts-chan $thinking "!OK think" }
+	    projection.1 { puts-chan $thinking "!OK think noalloc" }
+	    projection.* {
+		# oh well, can't include it in the projection; too bad
+		queuerun-step-done $w "!feature-noalloc"
+	    }
+	}
     }
 }
 
@@ -519,6 +618,7 @@ proc await-endings-notified {} {
             error "$owndchan eof"
         }
         runneeded-ensure-will 2
+        restarter-maybe-provoke-restart
     }
 }
 

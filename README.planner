@@ -76,6 +76,14 @@ that newly-freed resources are properly offered first to the tasks at
 the front of the queue.  ms-ownerdaemon sets all idle resources to
 allocatable at the start of each planning cycle.
 
+The planner actually sometimes runs two planning cycles: if resources
+become free while the planner is running, it will restart the planning
+cycle in an effort to get those resources into service.  But, it will
+leave the existing planning run going in a projection-only mode (where
+no resources actually get allocated), so that there is a report for
+the administrator showing an idea of what the system thinks may happen
+in the more distant future.
+
 
 ms-ownerdaemon and `ownd' tasks
 -------------------------------
