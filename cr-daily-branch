@@ -75,14 +75,14 @@ case $branch in
 	treeurl=`./ap-print-url $branch`;;
 esac
 
+blessings_arg=--blessings=${DAILY_BRANCH_TESTED_BLESSING:-$OSSTEST_BLESSING}
+
 force_baseline=false
 skipidentical=true
 wantpush=$OSSTEST_PUSH
 
 check_tested () {
-	./sg-check-tested --debug --branch=$branch \
-	  --blessings=${DAILY_BRANCH_TESTED_BLESSING:-$OSSTEST_BLESSING} \
-	  "$@"
+	./sg-check-tested --debug --branch=$branch $blessings_arg "$@"
 }
 
 if [ "x$OLD_REVISION" = x ]; then
