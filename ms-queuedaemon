@@ -355,11 +355,16 @@ proc cmd/thought-done {chan desc} {
     puts-chan $chan "OK thought"
 }
 
+proc return-plan-to-client {chan wf} {
+    set tplan [exec -keepnewline ./ms-planner -w$wf get-plan < /dev/null]
+    puts-chan-data $chan "OK get-plan" $tplan
+    return $tplan
+}
+
 proc cmd/get-plan {chan desc} {
     global plan
     set w [check-we-are-thinking $chan]
-    set plan [exec -keepnewline ./ms-planner -w$w get-plan < /dev/null]
-    puts-chan-data $chan "OK get-plan" $plan
+    set plan [return-plan-to-client $chan $w]
 }
 
 proc cmd/book-resources {chan desc bytes} {
