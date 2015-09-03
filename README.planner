@@ -224,6 +224,17 @@ ms-queuedaemon commands
 
 	> thought-done | thought-wait
 
+        > get-last-plan projection|plan
+                Retrieve the last fully completed plan (`projection'),
+		or the most recent short-term information used for
+		actual resource allocation (`plan').
+
+		For monitoring tools, not participants in the resource
+		allocation process.  Response is as for get-plan:
+
+		< OK get-plan BYTES
+		PLAN-DATA
+
 
 Plan is:
 	Start	time_t used for "now" *

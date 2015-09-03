@@ -293,6 +293,7 @@ proc report-plan {w wo} {
     } emsg]} {
         log "INTERNAL ERROR showing $w html: $emsg"
     } else {
+	file copy -force data-$w.pl data-$wo.final.pl
         log "$w report-plan OK"
     }
 }
@@ -365,6 +366,13 @@ proc cmd/get-plan {chan desc} {
     global plan
     set w [check-we-are-thinking $chan]
     set plan [return-plan-to-client $chan $w]
+}
+
+proc cmd/get-last-plan {chan desc w} {
+    global walkers
+    if {[lsearch -exact $walkers $w] < 0} { error "unknown last-plan ($w)" }
+    if {![file exists data-$w.final.pl]} { error "no last-plan $w" }
+    return-plan-to-client $chan $w.final
 }
 
 proc cmd/book-resources {chan desc bytes} {
