@@ -76,6 +76,7 @@ case $branch in
 esac
 
 blessings_arg=--blessings=${DAILY_BRANCH_TESTED_BLESSING:-$OSSTEST_BLESSING}
+sgr_args+=" $blessings_arg"
 
 force_baseline=false
 skipidentical=true
