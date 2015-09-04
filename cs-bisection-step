@@ -114,6 +114,18 @@ our (@treeinfos);
 our $restrictflight_cond= restrictflight_cond();
 our $blessingscond= '('.join(" OR  ", map { "blessing='$_'" } @blessings).')';
 
+sub reportcmdline () {
+    print STDERR "Running cs-bisection-step";
+    foreach (my @noalias = @org_argv) {
+	if (!length || m{[^-+,./_=:A-Z0-9a-z]}) {
+	    s{'}{'\\''}g;
+	    $_ = "'$_'";
+	}
+	print STDERR " ", $_;
+    }
+    print STDERR "\n";
+}
+
 sub psummary ($) {
     my ($s) = @_;
     print STDERR $s or die $!;
@@ -1326,6 +1338,7 @@ sub compute_exitstatus () {
 
 csreadconfig();
 grabrepolock_reexec(@org_argv);
+reportcmdline();
 findbasics();
 digraph_whole();
 digraph_relevant();
