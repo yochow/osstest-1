@@ -58,6 +58,8 @@ while (@ARGV && $ARGV[0] =~ m/^-/) {
     }
 }
 
+my $setx = ($ENV{OSSTEST_AHRTG_SETX} // '') =~ m/x/ ? 'set -x' : ':';
+
 readglobalconfig();
 
 grabrepolock_reexec(@org_argv);
@@ -113,7 +115,7 @@ ENDIFCOND
 END
     print DEBUG "GIT-GEN UPCMD\n$upcmd\n";
     shellcmd($upcmd) if $doupdate;
-    my $cmd= "cd $c{Repos}/$treename &&".
+    my $cmd= "$setx; cd $c{Repos}/$treename &&".
         " git log --pretty=raw --date-order $tree->{Latest}";
     print DEBUG "GIT-GEN CMD $cmd\n";
     my $fh= new IO::File;
@@ -175,7 +177,7 @@ sub hg_revshower ($) {
     my $treedir= "$c{Repos}/$tree->{Treename}";
     chdir $treedir or die $treedir;
     my $revspec = "$tree->{Latest}:$tree->{Earliest}";
-    my $cmd = "hg log -vr'$revspec' |";
+    my $cmd = "$setx; hg log -vr'$revspec' |";
     print DEBUG "HG-REVSHOW CMD $cmd\n";
     open P, $cmd or die $!;
     while (<P>) {
@@ -195,8 +197,9 @@ sub hg_generator ($) {
     local $_;
     print DEBUG "HG-GEN ".pmap($tree).".\n";
     my $treename= $tree->{Treename};
-    shellcmd("set -e; exec >&2; cd $c{Repos}/$treename && hg pull -u")
-        if $doupdate;
+    shellcmd(
+ "set -e\$OSSTEST_AHRTG_SETX; exec >&2; cd $c{Repos}/$treename && hg pull -u"
+	) if $doupdate;
     my $cmd= "cd $c{Repos}/$treename && hg log -r $tree->{Latest}:1".
         " --template ".("'{node|short}\n".
                          "{node|short} {date}\n".
@@ -204,7 +207,7 @@ sub hg_generator ($) {
                          "{parents}\n".
                          "'");
     my $fh= new IO::File;
-    open $fh, "$cmd |" or die "$cmd $!";
+    open $fh, "$setx; $cmd |" or die "$cmd $!";
     $_= <$fh>;
     m/^\w+$/ or die "$_ $! ?";
     return sub {
@@ -301,7 +304,7 @@ sub xu_withtag_generator ($) {
 	if ($targetqemu eq 'unknown') {
 	    my $nodeonly= $xenrev->{Commit};
 	    $nodeonly =~ s/^\d+\://;
-	    open CMK, "cd $c{Repos}/$xentree &&
+	    open CMK, "$setx; cd $c{Repos}/$xentree &&
                        hg cat -r $nodeonly Config.mk |"
 			 or die $!;
 	    while (<CMK>) {
@@ -312,7 +315,7 @@ sub xu_withtag_generator ($) {
 		die if $targetqemu =~ m/[^-+._0-9a-zA-Z]/;
 		die unless $targetqemu =~ m/^[^-]/;
 		$!=0; $?=0;
-		$targetqemu= `cd $c{Repos}/$qemutree &&
+		$targetqemu= `$setx; cd $c{Repos}/$qemutree &&
                               git rev-parse '$targetqemu^0'`;
 		die "$! $?" if (!defined $targetqemu) or $?;
 		chomp $targetqemu;
