@@ -1190,8 +1190,8 @@ END
     foreach my $subjob (@$subjobs) {
         my $target;
         my $jobspec= $subjob->{val};
-        if ($jobspec =~ m/^(\d+)\.(\s+)$/) {
-            $target= preparejob($1, $2, 1);
+        if ($jobspec =~ m/^(\d+)\.(.+)$/) {
+            $target= preparejob($2, $1, 1);
         } else {
             $target= preparejob($jobspec, $copyflight, 1);
         }
