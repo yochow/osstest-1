@@ -483,10 +483,10 @@ proc restarter-restart-now {} {
 	log-event "restarter-restart-now projection-running"
     }
 
-    foreach skip [set plan/queue_running] {
-	for-chan $skip {
-	    chan-note-unprocessed plan $skip
-	}
+    if {[catch {
+	chans-note-unprocessed plan [set plan/queue_running]
+    } emsg]} {
+	log "INTERNAL ERROR setting unprocessed: $emsg"
     }
     report-plan plan plan
 
@@ -494,8 +494,12 @@ proc restarter-restart-now {} {
     runneeded-ensure-will 2
 }
 
-proc chan-note-unprocessed {w chan} {
-    exec ./ms-planner -w$w unprocessed [chan-plan-info $chan]
+proc chans-note-unprocessed {w chans} {
+    set data {}
+    foreach chan $chans {
+	append data [chan-plan-info $chan] "\n"
+    }
+    exec ./ms-planner -w$w unprocessed << $data
 }
 
 proc notify-to-think {w thinking} {
@@ -506,7 +510,7 @@ proc notify-to-think {w thinking} {
 	    projection.1 { puts-chan $thinking "!OK think noalloc" }
 	    projection.* {
 		# oh well, can't include it in the projection; too bad
-		chan-note-unprocessed $w $thinking
+		chans-note-unprocessed $w [list $thinking]
 		queuerun-step-done $w "!feature-noalloc"
 	    }
 	}

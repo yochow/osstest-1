@@ -756,11 +756,15 @@ sub cmd_show_html () {
 }
 
 sub cmd_unprocessed () {
-    die unless @ARGV==1;
-    my ($baseinfo) = @ARGV;
+    die unless @ARGV==0;
 
     get_current_plan();
-    push @{ $plan->{Unprocessed} }, { Info => $baseinfo };
+
+    while (<STDIN>) {
+	chomp;
+	push @{ $plan->{Unprocessed} }, { Info => $_ };
+    }
+
     check_write_new_plan();
 }
 
