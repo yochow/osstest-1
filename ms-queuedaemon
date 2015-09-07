@@ -482,10 +482,19 @@ proc restarter-restart-now {} {
 	log-event "restarter-restart-now projection-running"
     }
 
+    foreach skip [set plan/queue_running] {
+	for-chan $skip {
+	    chan-note-unprocessed plan $skip
+	}
+    }
     report-plan plan plan
 
     unset plan/queue_running
     runneeded-ensure-will 2
+}
+
+proc chan-note-unprocessed {w chan} {
+    exec ./ms-planner -w$w unprocessed [chan-plan-info $chan {}]
 }
 
 proc notify-to-think {w thinking} {
@@ -496,6 +505,7 @@ proc notify-to-think {w thinking} {
 	    projection.1 { puts-chan $thinking "!OK think noalloc" }
 	    projection.* {
 		# oh well, can't include it in the projection; too bad
+		chan-note-unprocessed $w $thinking
 		queuerun-step-done $w "!feature-noalloc"
 	    }
 	}
