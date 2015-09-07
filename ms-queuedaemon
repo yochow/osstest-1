@@ -73,7 +73,7 @@ proc log-event {m} {
     if {![info exists log_state_after]} {
         set log_state_after [after idle {
             unset log_state_after
-            log-state idle
+            log-state tcl-idle
         }]
     }
 }
