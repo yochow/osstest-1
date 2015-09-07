@@ -291,7 +291,10 @@ END
 	    $info= "(preparing)";
 	} else {
 	    print DEBUG "rogue $reso $shareix: $arow->{owntaskid}\n";
-	    $info= "rogue task $arow->{subtask}";
+	    $info= "rogue task";
+	    $info .= " $arow->{type} $arow->{refkey}";
+	    $info .= " ($arow->{comment})" if defined $arow->{comment};
+	    $info .= " $arow->{subtask}";
 	}
 	$plan->{Allocations}{$reskey}= {
             Task => $arow->{owntaskid},
