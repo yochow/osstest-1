@@ -36,6 +36,8 @@ use Osstest::Executive;
 
 csreadconfig();
 
+$|=1;
+
 our $tid;
 our %magictask;
 

@@ -24,6 +24,8 @@ sub parsedate ($) {
     return $r;
 }
 
+$|=1;
+
 my $baseinfo = manual_allocation_base_jobinfo();
 my $info = "blockage $baseinfo [$start .. $end]";
 $info .= " $minfo" if defined $minfo;
