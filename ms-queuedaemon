@@ -81,20 +81,21 @@ proc log-event {m} {
 proc log-state {m} {
     global need_queue_run queue
 
-    set lhs [format "N=%d Q=%d (%-11.11s) " \
+    set lhs [format "N=%d Q=%d (%-15.15s) " \
                  $need_queue_run [llength $queue] $queue]
 
     foreach-walker w {
+	append lhs "| "
 	if {[info exists queue_running]} {
-	    append lhs [format "R=%d " [llength $queue_running]]
+	    append lhs [format "R=%-3d " [llength $queue_running]]
 	    if {[info exists thinking]} {
-		append lhs [format "T=%s " $thinking]
+		append lhs [format "T=%-7s " $thinking]
 	    } else {
-		append lhs [format "        "]
+		append lhs [format "          "]
 	    }
-	    append lhs [format "(%-11.11s) " $queue_running]
+	    append lhs [format "(%-15.15s) " $queue_running]
 	} else {
-	    append lhs "                          "
+	    append lhs "                                  "
 	}
     }
 
