@@ -498,7 +498,10 @@ END
 sub manual_allocation_base_jobinfo () {
     my $whoami = `whoami`; chomp $whoami;
     my $hostname = `uname -n`; chomp $hostname;
-    return "$whoami\@$hostname";
+    my $info = "$whoami\@$hostname";
+    my $tty = `tty 2>/dev/null`; chomp $tty;
+    $info .= " ($tty)" unless $?;
+    return $info;
 }
 
 sub alloc_resources_rollback_begin_work () {
