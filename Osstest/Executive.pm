@@ -99,7 +99,7 @@ augmentconfigdefaults(
     QueueDaemonPort => 4032,
     QueueDaemonRetry => 120, # seconds
     QueueDaemonHoldoff => 30, # seconds
-    QueueThoughtsTimeout => 30, # seconds
+    QueueThoughtsTimeout => 90, # seconds
     QueueResourcePollInterval => 60, # seconds
     QueuePlanUpdateInterval => 300, # seconds
     Repos => "$ENV{'HOME'}/repos",
