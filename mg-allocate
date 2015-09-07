@@ -269,7 +269,10 @@ sub showposs ($) {
 
 sub plan () {
     my @got;
-    alloc_resources(sub {
+
+    my $info = "manual ".manual_allocation_base_jobinfo();
+
+    alloc_resources(JobInfo => $info, sub {
         my ($plan, $mayalloc) = @_;
 
 	@got = ();
@@ -337,7 +340,7 @@ sub plan () {
         foreach my $req (@reqlist) {
             my $book= {
                 Reso => $req->{Reso},
-                Xinfo => "manual",
+                Xinfo => $req->{Ident},
                 Start => $planned->{Start},
                 End => $planned->{Start} + $duration,
             };
