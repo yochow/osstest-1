@@ -230,6 +230,23 @@ END
     target_cmd_root($ho, $cmd);
 }
 
+sub hosts () {
+    # Debian installer generates a line like:
+    #
+    # 127.0.1.1             lace-bug.xs.citrite.net         lace-bug
+    #
+    # Where xs.citrite.net is $c{TestHostDomain} and lace-bug is the
+    # hostname, this causes lookups of the hosts FQDN to result in
+    # 127.0.1.1 which is not useful if the reason for the lookup was
+    # to be able to bind to the externally accessible IP address.
+    target_editfile_root($ho, "/etc/hosts", "etc-hosts", sub {
+        while (<EI>) {
+	    s|^\Q127.0.1.1\E\b|#$&|;
+	    print EO;
+        }
+    });
+}
+
 sub nodhcp () {
     target_editfile_root($ho, "/etc/network/interfaces",
                          "etc-network-interfaces", sub {
@@ -351,4 +368,5 @@ if ($checkmode) {
     setupboot();
     setupinitd();
     nodhcp();
+    hosts();
 }
