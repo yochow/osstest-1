@@ -24,9 +24,8 @@ sub parsedate ($) {
     return $r;
 }
 
-my $whoami = `whoami`; chomp $whoami;
-my $hostname = `uname -n`; chomp $hostname;
-my $xinfo = "blockage $whoami\@$hostname [$start .. $end]";
+my $basexinfo = manual_allocation_base_jobinfo();
+my $xinfo = "blockage $basexinfo [$start .. $end]";
 $xinfo .= " $mxinfo" if defined $mxinfo;
 
 $start = parsedate $start;

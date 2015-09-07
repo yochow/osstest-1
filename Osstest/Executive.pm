@@ -51,6 +51,7 @@ BEGIN {
                       report_altchangecolour
                       report_blessingscond report_find_push_age_info
                       tcpconnect_queuedaemon plan_search
+                      manual_allocation_base_jobinfo
                       alloc_resources alloc_resources_rollback_begin_work
                       resource_check_allocated resource_shared_mark_ready
                       duration_estimator
@@ -493,6 +494,12 @@ END
 
     return $taskid;
 }        
+
+sub manual_allocation_base_jobinfo () {
+    my $whoami = `whoami`; chomp $whoami;
+    my $hostname = `uname -n`; chomp $hostname;
+    return "$whoami\@$hostname";
+}
 
 sub alloc_resources_rollback_begin_work () {
     $dbh_tests->rollback();
