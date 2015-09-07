@@ -106,6 +106,11 @@ proc puts-chan-desc {chan m} {
     log "$desc $m"
 }
 
+proc get-chan-desc {chan} {
+    upvar \#0 chandesc($chan) desc
+    return $desc
+}
+
 proc must-gets-chan {chan re} {
     if {[gets $chan l] <= 0} { error "NOT $chan $re ?" }
     puts-chan-desc $chan "<< $l"
