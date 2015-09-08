@@ -14,7 +14,7 @@ csreadconfig();
 die unless @ARGV==3 || @ARGV==4;
 die if $ARGV[0] =~ m/^=/;
 
-our ($start,$end,$hostflag,$mxinfo) = @ARGV;
+our ($start,$end,$hostflag,$minfo) = @ARGV;
 
 sub parsedate ($) {
     open D, "-|", qw(date +%s -d), @_ or die $!;
@@ -24,13 +24,13 @@ sub parsedate ($) {
     return $r;
 }
 
-my $basexinfo = manual_allocation_base_jobinfo();
-my $xinfo = "blockage $basexinfo [$start .. $end]";
-$xinfo .= " $mxinfo" if defined $mxinfo;
+my $baseinfo = manual_allocation_base_jobinfo();
+my $info = "blockage $baseinfo [$start .. $end]";
+$info .= " $minfo" if defined $minfo;
 
 $start = parsedate $start;
 $end   = parsedate $end;
-print $xinfo, "\n" or die $!;
+print $info, "\n" or die $!;
 
 die unless $end > $start;
 
@@ -38,7 +38,7 @@ sub min { (sort @_)[0]; }
 sub max { (reverse sort @_)[0]; }
 
 sub plan () {
-    alloc_resources(sub {
+    alloc_resources(JobInfo => $info, sub {
 	my ($plan, $mayalloc) = @_;
 
 	my $now = time;
@@ -72,7 +72,7 @@ END
 		foreach (my $ix=0; $ix<$avail; $ix++) {
 		    my $booking =  {
 			Reso => $res->{restype}.' '.$res->{resname},
-			Xinfo => $xinfo,
+			Xinfo => $host,
 			Start => $bookstart - $now,
 			End => $bookend - $now,
 		    };
