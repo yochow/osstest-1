@@ -69,7 +69,7 @@ TftpPxeTemplates %name%/pxelinux.cfg
 TftpPxeTemplatesReal pxelinux.cfg/%ipaddrhex%
 
 TftpPxeGroup osstest
-TftpDiVersion 2015-06-23
+TftpDiVersion 2015-09-07
 
 # These should normally be the same.
 MicrocodeUpdateAmd64 microcode.x86.2015-06-12.cpio
