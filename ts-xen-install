@@ -247,7 +247,7 @@ sub hosts () {
     });
 }
 
-sub nodhcp () {
+sub ensurebridge () {
     target_editfile_root($ho, "/etc/network/interfaces",
                          "etc-network-interfaces", sub {
         my $physif= get_host_property($ho,'interface force',undef);
@@ -370,6 +370,6 @@ if ($checkmode) {
     adjustconfig();
     setupboot();
     setupinitd();
-    nodhcp();
+    ensurebridge();
     hosts();
 }
