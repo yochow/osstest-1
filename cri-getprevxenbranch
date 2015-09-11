@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+xenbranch=$1
+p=
+
+for b in $(./mg-list-all-branches) ; do # already sorted by version
+    case "$b" in
+	xen*)
+	    if [ "x$b" = "x$xenbranch" ] ; then
+		break
+	    else
+		p=$b
+	    fi
+	    ;;
+	*)	;;
+    esac
+done
+
+echo $p
