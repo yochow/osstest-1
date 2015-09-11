@@ -52,11 +52,13 @@ sub checkout () {
 	echo >>.config debug=$debug_build
 	echo >>.config GIT_HTTP=y
 	echo >>.config LIBLEAFDIR_x86_64=lib
-	echo >>.config QEMU_REMOTE='$r{tree_qemu}'
 	echo >>.config KERNELS=''
 END
                (nonempty($r{enable_xsm}) ? <<END : '').
 	echo >>.config XSM_ENABLE='${build_xsm}'
+END
+               (nonempty($r{tree_qemu}) ? <<END : '').
+	echo >>.config QEMU_REMOTE='$r{tree_qemu}'
 END
                (nonempty($r{revision_qemu}) ? <<END : '').
 	echo >>.config QEMU_TAG='$r{revision_qemu}'
