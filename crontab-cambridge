@@ -3,11 +3,14 @@ MAILTO=ian.jackson@citrix.com,ian.campbell@eu.citrix.com
 # m		h	dom mon dow	command
 4-59/30		*	* * *		cd testing.git && BRANCHES='osstest'			./cr-for-branches branches -q "./cr-daily-branch --real"
 11-59/30	*	* * *		cd testing.git && OSSTEST_BASELINES_ONLY=y		./cr-for-branches branches -q "./cr-daily-branch --real"
-46		7	* * 6		cd testing.git && BRANCHES='distros-debian-snapshot'	./cr-for-branches branches -w "./cr-daily-branch --real"
-46		7	* * 5		cd testing.git && BRANCHES='distros-debian-sid'		./cr-for-branches branches -w "./cr-daily-branch --real"
-46		7	* * 4		cd testing.git && BRANCHES='distros-debian-jessie'	./cr-for-branches branches -w "./cr-daily-branch --real"
-46		7	* * 3		cd testing.git && BRANCHES='distros-debian-wheezy'	./cr-for-branches branches -w "./cr-daily-branch --real"
-46		7	* * 2		cd testing.git && BRANCHES='distros-debian-squeeze'	./cr-for-branches branches -w "./cr-daily-branch --real"
+
+46		7	* * 1		cd testing.git && BRANCHES='distros-debian-sid'		./cr-for-branches branches -w "./cr-daily-branch --real"
+46		7	* * 2		cd testing.git && BRANCHES='distros-debian-snapshot'	./cr-for-branches branches -w "./cr-daily-branch --real"
+
+46		7	* * 3		cd testing.git && BRANCHES='distros-debian-squeeze'	./cr-for-branches branches -w "./cr-daily-branch --real"
+46		7	* * 4		cd testing.git && BRANCHES='distros-debian-wheezy'	./cr-for-branches branches -w "./cr-daily-branch --real"
+46		7	* * 5		cd testing.git && BRANCHES='distros-debian-jessie'	./cr-for-branches branches -w "./cr-daily-branch --real"
+
 #8-59/5		*	* * *		cd bisects/adhoc.git && with-lock-ex -q data-tree-lock bash -c "./cr-try-bisect-adhoc; exit $?"
 22		8	* * *		cd testing.git && BRANCHES=maintjobs		./cr-for-branches . -w ./cr-all-branch-statuses ''
 3		4	* * *		savelog -c28 testing.git/tmp/cr-for-branches.log >/dev/null
