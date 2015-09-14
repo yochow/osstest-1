@@ -98,34 +98,8 @@ END
 sub default_methods ($$) {
     my ($hd, $ho) = @_;
 
-    return if $ho->{Flags}{'no-reinstall'};
-    return if $ho->{Ether} && $ho->{Power};
-
-    return if $c{HostDB_Executive_NoConfigDB};
-
-    my $dbh_config= opendb('configdb');
-    my $selname= $ho->{Fqdn};
-    my $sth= $dbh_config->prepare(<<END);
-            SELECT * FROM ips WHERE reverse_dns = ?
-END
-    $sth->execute($selname);
-    my $row= $sth->fetchrow_hashref();
-    my $name= $ho->{Name};
-    die "$ho->{Ident} $name $selname ?" unless $row;
-    die if $sth->fetchrow_hashref();
-    $sth->finish();
-    my $get= sub {
-	my ($k,$nowarn) = @_;
-	my $v= $row->{$k};
-	defined $v or $nowarn or
-	    warn "host $name: undefined $k in configdb::ips\n";
-	return $v;
-    };
-    $ho->{Asset}= $get->('asset',1);
-    $ho->{Ether} ||= $get->('hardware');
-    $ho->{Power} ||= "statedb $ho->{Asset}";
-    push @{ $ho->{Info} }, "(asset=$ho->{Asset})" if defined $ho->{Asset};
-    $dbh_config->disconnect();
+    # We used to look things up in the Mythic Beasts style configdb
+    # here.  But that is gone now.
 }
 
 1;
