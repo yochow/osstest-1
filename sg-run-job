@@ -370,6 +370,10 @@ proc run-job/test-rumpuserxen {} {
                  ts-guest-destroy-hard            host   $g   +
 }
 
+if {[file exists sg-run-job-adhoc]} {
+    source sg-run-job-adhoc
+}
+
 #---------- builds ----------
 
 proc need-hosts/build {} { return BUILD }
