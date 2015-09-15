@@ -52,6 +52,9 @@ sub open ($) {
         ShowErrorStatement => 1,
         })
         or die "could not open standalone db $dbi";
+
+    $dbh->sqlite_busy_timeout(10E6); # 10ks
+
     return $dbh;
 }
 
