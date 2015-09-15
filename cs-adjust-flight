@@ -12,6 +12,7 @@
 #   runvar-del <job-spec> <var-spec>
 #   runvar-change <job-spec> <var-spec> <old-value> <new-value>
 #   runvar-perlop <job-spec> <var-spec> <perl-expr>
+#   recipe-set <job-spec> <new-value>
 #   intended-blessing <intended-blessing>
 #
 # <foo-spec>:
@@ -274,6 +275,21 @@ sub change__runvar_perlop {
         runvar_set($job, $name, $newval, " (modified from \`$oldval')")
 	    if $newval ne $oldval;
     }, 'IGNORE');
+}
+
+sub change__recipe_set {
+    die unless @changes >= 2;
+    my $jobs = shift @changes;
+    my $recipe = shift @changes;
+
+    for_jobs($dstflight, $jobs, sub {
+	my ($job) = @_;
+	$dbh_tests->do("UPDATE jobs".
+		       "   SET recipe = ?".
+		       " WHERE flight = ? AND job = ?",
+		       {}, $recipe, $dstflight, $job);
+	verbose "$dstflight $job recipe set to $recipe\n";
+    });
 }
 
 sub change__intended_blessing {
