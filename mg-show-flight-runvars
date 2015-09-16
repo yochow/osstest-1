@@ -26,6 +26,7 @@ use Osstest;
 csreadconfig();
 
 my $synthcond = '(NOT synth)';
+my $synthsufx = '';
 
 for (;;) {
     last unless @ARGV;
@@ -34,6 +35,7 @@ for (;;) {
     last if m/^\-\-?$/;
     if (m/^-a$/) {
 	$synthcond = '(1=1)';
+	$synthsufx = '~';
     } else {
 	die "$_ ?";
     }
@@ -52,10 +54,14 @@ my @colws = $dbh_tests->selectrow_array
     ("SELECT ".(join ',', map { "max(length($_))" } @cols)." $qfrom");
 
 my $q = $dbh_tests->prepare
-    ("SELECT ".(join ',', @cols)." $qfrom ORDER BY name, job");
+    ("SELECT synth, ".(join ',', @cols)." $qfrom ORDER BY synth, name, job");
 $q->execute();
 
-while (my $row = $q->fetchrow_arrayref()) {
-    printf "%-*s %-*s %-*s\n", map { $colws[$_], $row->[$_] } qw(0 1 2)
+$colws[1] += length $synthsufx;
+
+while (my (@row) = $q->fetchrow_array()) {
+    my $synth = shift @row;
+    $row[1] .= $synthsufx if $synth && $synth ne 'f'; # sqlite3 is typeless
+    printf "%-*s %-*s %-*s\n", map { $colws[$_], $row[$_] } qw(0 1 2)
         or die $!;
 }
