@@ -86,6 +86,16 @@ END
         my @blessings= split /\,/, $1;
         push @conds_vars, @blessings;
         push @conds, "(". (join " OR ", map { "blessing=?" } @blessings). ")";
+    } elsif (m/^--pass-job=(.*)$/) {
+        push @conds_vars, $1;
+	push @conds, <<END;
+            EXISTS
+            (SELECT 1
+               FROM jobs j
+              WHERE j.job = ?
+                AND j.flight = flights.flight
+                AND j.status = 'pass')
+END
     } elsif (m/^--print-revision=(.*)$/) {
         die if $prrev;
         $prrev= $1;
