@@ -84,6 +84,13 @@ no resources actually get allocated), so that there is a report for
 the administrator showing an idea of what the system thinks may happen
 in the more distant future.
 
+Values for OSSTEST_RESOURCE_PRIORITY:
+  mg-allocate                                    -1000000
+  mg-blockage                                    -2000000
+  default Executive.pm with controlling terminal      -10
+  mg-execute-flight                                    -8
+  default                                               0
+
 
 ms-ownerdaemon and `ownd' tasks
 -------------------------------
