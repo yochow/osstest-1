@@ -365,6 +365,14 @@ test_matrix_iterate () {
   *)                    pairtoolstack="xl libvirt" ;;
   esac
 
+  case "$branch" in
+    linux-[3-9].[0-9]*)
+      min_linux_hostflag=PropMinVer:LinuxKernelMin:${branch#linux-}
+      ;;
+    *)
+      ;;
+  esac
+
   for xenarch in ${TEST_ARCHES- i386 amd64 armhf } ; do
 
     if [ "x$xenarch" = xdisable ]; then continue; fi
@@ -436,6 +444,9 @@ test_matrix_iterate () {
         fi
 
         most_hostflags="arch-$dom0arch,arch-xen-$xenarch,suite-$suite,purpose-test"
+        if [ "x$min_linux_hostflag" != "x" ] ; then
+            most_hostflags="$most_hostflags,$min_linux_hostflag"
+        fi
 
         most_runvars="
                   arch=$dom0arch                                  \
