@@ -69,7 +69,7 @@ job_create_build () {
   local job=$1; shift
   local recipe=$1; shift
 
-  ./cs-job-create $flight $job $recipe "$@"
+  ./cs-job-create $flight $job $recipe $global_runvars "$@"
 }
 
 create_build_jobs () {
@@ -345,7 +345,7 @@ job_create_test () {
   esac
 
   ./cs-job-create $flight $job $recipe toolstack=$toolstack       \
-    $RUNVARS $TEST_RUNVARS $most_runvars                          \
+    $RUNVARS $TEST_RUNVARS $global_runvars $most_runvars          \
     xenbuildjob=$xenbuildjob buildjob=$buildjob $tsbuildjob "$@"
 }
 
