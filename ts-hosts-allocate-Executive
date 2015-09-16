@@ -313,6 +313,7 @@ END
     my @candidates;
     my $any=0;
 
+  CANDIDATE:
     while (my $candrow= $findhostsq->fetchrow_hashref()) {
         $candrow->{Warnings}= [ ];
         $candrow->{Reso}= "$candrow->{restype} $candrow->{resname}";
@@ -343,7 +344,7 @@ END
 	    my $erow= $equivflagscheckq->fetchrow_hashref();
 	    if (!$erow) {
 		print DEBUG "$dbg EQUIV $equiv->{FormalClass} NO-CLASSES\n";
-		next;
+		next CANDIDATE;
 	    }
 	    my $eq= $erow->{hostflag};
 	    print DEBUG "$dbg EQUIV $equiv->{FormalClass} MAYBE $eq\n";
@@ -358,7 +359,7 @@ END
 
         print DEBUG "$dbg FLAGS MISSINGFLAGS: @missingflags.\n";
         if (@missingflags) {
-            next unless defined $use;
+            next CANDIDATE unless defined $use;
             push @{ $candrow->{Warnings} },
                 "specified host lacks flags @missingflags";
         }
