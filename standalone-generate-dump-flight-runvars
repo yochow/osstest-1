@@ -76,5 +76,5 @@ done
 
 for proc in $procs; do
     perproc
-    ./mg-show-flight-runvars $flight | sed "s/^/`printf '%-26s ' $branch`/"
+    ./mg-show-flight-runvars -a $flight | sed "s/^/`printf '%-26s ' $branch`/"
 done
