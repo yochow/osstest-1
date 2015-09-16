@@ -40,7 +40,7 @@ BEGIN {
                       db_begin_work db_prepare
                       ensuredir get_filecontents_core_quiet system_checked
                       nonempty visible_undef show_abs_time
-                      %arch_debian2xen %arch_xen2debian
+                      %arch_debian2xen %arch_xen2debian $cfgvar_re
                       );
     %EXPORT_TAGS = ( );
 
@@ -61,6 +61,8 @@ our %arch_debian2xen = qw(i386 x86_32
 			  armhf armhf);
 our %arch_xen2debian;
 $arch_xen2debian{$arch_debian2xen{$_}} = $_ foreach keys %arch_debian2xen;
+
+our $cfgvar_re = '[A-Z][0-9a-zA-Z-_]*';
 
 #---------- static default config settings ----------
 
@@ -120,8 +122,6 @@ sub readglobalconfig () {
     $c{HostProp_DhcpWatchMethod} = 'leases dhcp3 infra:5556';
     $c{AuthorizedKeysFiles} = '';
     $c{AuthorizedKeysAppend} = '';
-
-    my $cfgvar_re = '[A-Z][0-9a-zA-Z-_]*';
 
     my $cfgfiles = $ENV{'OSSTEST_CONFIG'} || "$ENV{'HOME'}/.xen-osstest/config";
 

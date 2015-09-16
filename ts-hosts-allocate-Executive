@@ -213,7 +213,7 @@ sub compute_hids () {
     our %equivs;
 
     foreach my $ident (@ARGV) {
-        my $hid= { };
+        my $hid= { Conds => { host => [] } };
         my $override_use;
         if ($ident =~ m/\=/) {
             $hid->{OverrideUse}= $'; #'
@@ -251,11 +251,23 @@ sub compute_hids () {
                 my $equiv= $hid->{Equiv}= $equivs{$formalclass};
                 print DEBUG "HID $ident FLAG $flag EQUIV $equiv->{Wanted}\n";
                 next;
-            }
+            } elsif ($flag =~ m/^\w+:/) {
+		my (@c) = split /:/, $flag;
+		my $o;
+		eval ("use Osstest::ResourceCondition::$c[0];".
+		      "\$o = Osstest::ResourceCondition::$c[0]->new(\@c);")
+		    or die "get ResourceCondition $@";
+
+		push @{ $hid->{Conds}{host} }, $o;
+
+		print DEBUG "HID $ident FLAG $flag HCOND $o\n";
+		next;
+	    }
             $flags{$flag}= 1;
         }
         $hid->{Flags}= \%flags;
-        print DEBUG "HID $ident FLAGS ".(join ',', sort keys %flags)."\n";
+        print DEBUG "HID $ident FLAGS ".(join ',', sort keys %flags).
+	    " + ".scalar @{ $hid->{Conds}{host} }." host conditions(s)\n";
         push @hids, $hid;
     }
 }
@@ -363,6 +375,13 @@ END
             push @{ $candrow->{Warnings} },
                 "specified host lacks flags @missingflags";
         }
+
+	foreach my $c (@{ $hid->{Conds}{$candrow->{restype}} }) {
+	    if (!$c->check($candrow->{restype}, $candrow->{resname})) {
+		print DEBUG "$dbg failed $c condition\n";
+		next CANDIDATE unless defined $use;
+	    }
+	}
         $any++;
 
         print DEBUG "$dbg GOOD\n";
