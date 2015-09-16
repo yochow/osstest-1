@@ -194,6 +194,7 @@ with_logging() {
     rc=${PIPESTATUS[0]}
     if [ $rc -ne 0 ] ; then
 	echo "FAILED rc=${rc}" >&2
+	exit $rc
     fi
 }
 
