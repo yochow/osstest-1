@@ -16,4 +16,6 @@ foreach my $f (qw(cr-for-branches crontab)) {
     close C or die $!;
 }
 
+delete $branches{maintjobs};
+
 print $_,"\n" or die $! foreach sort { versioncmp($a, $b) } keys %branches;
