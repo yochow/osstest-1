@@ -30,6 +30,7 @@ tsreadconfig();
 open DEBUG, ">/dev/null" or die $!;
 
 our $compressdebug=1;
+our $fake; # never allocate
 
 while (@ARGV and $ARGV[0] =~ m/^-/) {
     $_= shift @ARGV;
@@ -37,6 +38,8 @@ while (@ARGV and $ARGV[0] =~ m/^-/) {
     while (m/^-./) {
         if (s/^-U/-/) {
 	    $compressdebug=0;
+	} elsif (s/^-n/-/) {
+	    $fake=1;
         } else {
             die "$_ ?";
         }
@@ -610,6 +613,8 @@ sub attempt_allocation {
     ($plan, $mayalloc) = @_;
     undef $best;
 
+    $mayalloc = undef if $fake;
+
     logm("allocating hosts: ".join(' ', map { $_->{Ident} } @hids));
 
     prepare_statements();
@@ -652,6 +657,11 @@ sub attempt_allocation {
 	logm("host allocation: successful, reporting to planner.");
     } else {
 	logm("host allocation: planned start in $best->{Start} seconds.");
+    }
+
+    if ($fake) {
+	logm("Fake allocation, returning error");
+	$retval = -1;
     }
 
     my $booklist= compute_booking_list();
