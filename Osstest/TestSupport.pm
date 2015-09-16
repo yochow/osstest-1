@@ -71,7 +71,7 @@ BEGIN {
                       get_target_property get_host_native_linux_console
                       power_state power_cycle power_cycle_sleep
                       serial_fetch_logs
-                      propname_massage
+                      propname_massage propname_check
          
                       get_stashed open_unique_stashfile compress_stashed
                       dir_identify_vcs build_clone built_stash built_stash_file
@@ -931,6 +931,20 @@ sub propname_massage ($) {
     }
 
     return $prop;
+}
+
+sub propname_check ($) {
+    # ensure propname is valid and in the canonical WordWordWord form
+    # (rather than, say, one of the legacy forms described in
+    # propname_massage).
+    my ($prop) = @_;
+
+    # Check only valid characters
+    return 0 if $prop !~ m|^${cfgvar_re}$|;
+    # Check canonical form
+    return 0 if propname_massage($prop) ne $prop;
+    # Is ok
+    return 1;
 }
 
 # It is fine to call this on a guest object too, in which case it will
