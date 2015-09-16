@@ -89,6 +89,8 @@ END
 
 sub flight_create ($$$) { #method
     my ($jd,$intended,$branch) = @_;
+    die "OSSTEST_FLIGHT set on entry to JobDB::Executive::flight_create\n"
+	if $ENV{'OSSTEST_FLIGHT'};
     $dbh_tests->do(<<END, {}, $branch, $intended);
              INSERT INTO flights
                          (flight,  started, blessing,       branch, intended)
