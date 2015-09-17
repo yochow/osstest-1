@@ -187,12 +187,12 @@ proc runneeded-perhaps-start {} {
 proc queuerun-finished/plan {} {
     runneeded-ensure-will 0
     report-plan plan plan
-    report-plan plan projection
+    report-projection plan
 }
 
 proc queuerun-finished/projection {} {
     runneeded-ensure-will 0
-    report-plan projection projection
+    report-projection projection
 }
 
 proc runneeded-ensure-polling {} {
@@ -307,6 +307,10 @@ proc report-plan {w wo} {
 	file rename -force $out.new $out
         log "$w report-plan OK"
     }
+}
+
+proc report-projection {w} {
+    report-plan $w projection
 }
 
 proc we-are-thinking {chan} {
