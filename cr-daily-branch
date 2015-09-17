@@ -276,7 +276,19 @@ if [ "x$NEW_REVISION" = "x$OLD_REVISION" ]; then
 fi
 
 $DAILY_BRANCH_PREMAKE_HOOK
+
 flight=`$makeflight $branch $xenbranch $OSSTEST_BLESSING "$@"`
+
+case $branch in
+xen-unstable-smoke)
+	./mg-adjust-flight-makexrefs -v $flight \
+		'!build-amd64 !build-amd64-libvirt !build-armhf build-*' \
+		--debug --branch=xen-unstable --blessings=real
+	# Even adhoc or play flights ought to reuse only real
+	# previous builds.
+	;;
+esac
+
 $DAILY_BRANCH_POSTMAKE_HOOK
 
 heading=tmp/$flight.heading-info
