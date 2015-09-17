@@ -8,6 +8,7 @@
 # <change>:
 #   copy <flight>
 #   copy-jobs <flight> <job-spec>
+#   jobs-list <job-spec>
 #   runvar-set <job-spec> <var-spec> <value>
 #   runvar-del <job-spec> <var-spec>
 #   runvar-change <job-spec> <var-spec> <old-value> <new-value>
@@ -166,6 +167,16 @@ sub change__copy {
     die unless @changes >= 1;
     my $srcflight = shift @changes;
     copy_jobs($srcflight, '/.');
+}
+
+sub change__jobs_list {
+    die unless @changes >= 1;
+    my $jobspec = shift @changes;
+    for_jobs($dstflight, $jobspec, sub {
+	my ($job) = @_;
+	print $job, "\n" or die $!;
+	1;
+	     });
 }
 
 sub change__copy_jobs {
