@@ -165,6 +165,59 @@ $HOME/testing.git/$xenbranch.stop
 
   stops everything using $xenbranch
 
+Updating daemons
+================
+
+osstest relies on two daemons for resource planning and allocation
+(mainly of hosts):
+
+- ms-ownerdaemon:
+- ms-queuedaemon:
+
+THese are typically run as respawning entries in inittab fom the
+$HOME/daemons-testing.git directory. A job typically interacts with
+these via ts-hosts-allocate-Executive and individuals via mg-allocate
+or mg-blockage.
+
+In addition ms-planner in this directory is used by ms-queuedaemon to
+produce the actual resource plan.
+
+These daemons are not automatically updated and so this must be done
+by hand by running git commands in the $HOME/daemons-testing.git
+directory. When doing so some special consideration is required
+depending on what is being updated:
+
+- ms-planner
+
+    In general no special requirements. If the interface between
+    ms-planner and ms-queuedaemon has changed then care may be needed
+    (but restarting the queuedaemon to pickup that half of the change
+    will suffice, see next).
+
+- ms-queuedaemon
+
+    Requires restarting. It is sufficient to simply kill the
+    ms-queuedaemon process. It will be restarted via inittab and all
+    existing jobs will be unaffected -- although they will need to
+    reenter the plan. Jobs which have an actual allocation are not
+    clients of the queuedaemon and are therefore not affected.
+
+- ms-ownerdaemon
+
+    Requires restarting. This cannot be done while any jobs are in
+    progress. Don't forget about people who run jobs somewhere other
+    than on the controller VM, such as their workstation.
+
+    If the ownerdaemon is restarted while jobs are running then they
+    need to be hunted down and killed manually and then cleared using
+    mg-hosts previoustasks (see below).
+
+- tcl/*
+
+    These libraries are used by both ms-queuedameon and
+    ms-ownerdaemon, updates here typically require restarting one of
+    both of those daemons.
+
 After restarting ms-ownerdaemon
 ===============================
 
