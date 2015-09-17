@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# usage: ./mg-adjust-flight-makexrefs [OPTIONS..] FLIGHT	\
+#		'[!]JOB-GLOB ...'		  		\
+#		REF-CONDS...
+#
+# JOB-GLOB is as for shell `case'.  Sense of first match is used.
+# If no match for a job, uses reverse of sense of last glob.
+#
+# ! means keep such jobs in FLIGHT.  Without ! means delete each such
+# job from FLIGHT and replace intra-flight references to it with
+# references to the same job in a suitable other flight.
+#
+# `Suitable' means one in which the required job passed, subject to
+# REF-CONDS (which are passed to sg-check-tested).  REF-CONDS really
+# ought to include --blessings=BLESSING,... and should probably also
+# include some --branch=REF-BRANCH.
+#
+# Options:
+#   -v      Pass -v to cs-adjust-flight
+#   -D      Print our own debugging output to stderr (consider
+#             passing --debug in REF-CONDS too)
+#   -n      Dry run: do not actually run cs-adjust-flight
+
+set -e
+
+exec 3>/dev/null
+verbose=''
+
+badusage () { echo >&2 "$0: bad usage"; exit 1; }
+
+while true; do
+	case "$1" in
+	-n)	dryrun="echo" ;;
+	-v)	verbose=-v ;;
+	-D)	exec 3>&2 ;;
+	-*)	badusage ;;
+	*)	break ;;
+	esac
+	shift
+done
+
+if [ $# -le 2 ]; then badusage; fi
+
+flight=$1; shift
+keepjobs=$1; shift
+
+for j in `./cs-adjust-flight $flight jobs-list '^build-'`; do
+
+	tokeep=continue
+	todelete=:
+
+	for glob in $keepjobs; do
+		case "$glob" in
+		!*) ifmatch=$tokeep; action=$todelete ; glob="${glob#!}" ;;
+		*)  ifmatch=$todelete; action=$tokeep ;;
+		esac
+
+		case "$j" in
+		$glob)
+			action=$ifmatch
+			echo >&3 "ADJUST XREF $j match=$glob $action"
+			break
+			;;
+		esac
+	done
+
+	# `doaction=continue'	=> job remains
+	# `doaction=:'		=> job gets deleted
+	echo >&3 "ADJUST XREF $j ACTION $action"
+	$action
+
+	# OK, process $j
+
+	ref=`./sg-check-tested --pass-job="$j" "$@"`
+	echo >&3 "ADJUST XREF $j r=$ref"
+	if [ "x$ref" = x ]; then continue; fi
+
+	$dryrun \
+	./cs-adjust-flight $verbose $flight \
+		runvar-change . '/buildjob$' "$j" "$ref.$j" \
+		jobs-del "$j"
+done
