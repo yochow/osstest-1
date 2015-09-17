@@ -294,7 +294,9 @@ proc report-plan {w wo} {
     } emsg]} {
         log "INTERNAL ERROR showing $w html: $emsg"
     } else {
-	file copy -force data-$w.pl data-$wo.final.pl
+	set out data-$wo.final.pl
+	file copy -force data-$w.pl $out.new
+	file rename -force $out.new $out
         log "$w report-plan OK"
     }
 }
