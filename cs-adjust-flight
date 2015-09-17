@@ -134,11 +134,25 @@ sub for_jobs ($$$;$) {
                'flight = ?', [$flight]);
 }
 
+our @job_rm_qs;
+
+sub prep_rm_jobs () {
+    return if @job_rm_qs;
+    @job_rm_qs = map { $dbh_tests->prepare($_) }
+        ("DELETE FROM runvars WHERE flight = ? AND job = ?",
+         "DELETE FROM jobs WHERE flight = ? AND job = ?");
+}
+
+sub do_rm_job ($) {
+    my ($job) = @_;
+    my $count = 0;
+    $count += $_->execute($dstflight, $job) foreach @job_rm_qs;
+    verbose "$dstflight.$job job deleted\n" if $count;
+}
+
 sub copy_jobs ($$) {
     my ($srcflight, $jobs) = @_;
-    my @job_rm_qs = map { $dbh_tests->prepare($_) }
-        ("DELETE FROM runvars WHERE flight = ? AND job = ?",
-         "DELETE FROM jobs WHERE flight = ? AND job = ?"); 
+    prep_rm_jobs();
     my @job_copy_qs = map { $dbh_tests->prepare($_) }
         ("INSERT INTO jobs".
          "     SELECT ?, job, recipe, 'queued'".
@@ -148,14 +162,8 @@ sub copy_jobs ($$) {
          "     SELECT ?, job, name, val, 'f'".
          "       FROM runvars".
          "      WHERE flight = ? AND job = ? AND NOT synth");
-    my $rm_job = sub {
-        my ($job) = @_;
-	my $count = 0;
-        $count += $_->execute($dstflight, $job) foreach @job_rm_qs;
-	verbose "$dstflight.$job job deleted\n" if $count;
-    };
-    for_jobs($dstflight, $jobs, $rm_job, 1);
-    for_jobs($srcflight, $jobs, $rm_job);
+    for_jobs($dstflight, $jobs, \&do_rm_job, 1);
+    for_jobs($srcflight, $jobs, \&do_rm_job);
     for_jobs($srcflight, $jobs, sub {
         my ($job) = @_;
         $_->execute($dstflight, $srcflight, $job) foreach @job_copy_qs;
