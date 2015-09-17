@@ -176,7 +176,7 @@ END
     }
 
     my @flightsq_params;
-    my $flightsq_jobcond='TRUE';
+    my $flightsq_jobcond='(1=1)';
     if (defined $job) {
 	push @flightsq_params, $job;
 	$flightsq_jobcond = <<END;

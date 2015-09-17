@@ -33,7 +33,7 @@ for (;;) {
     $_ = shift @ARGV;
     last if m/^\-\-?$/;
     if (m/^-a$/) {
-	$synthcond = 'TRUE';
+	$synthcond = '(1=1)';
     } else {
 	die "$_ ?";
     }
