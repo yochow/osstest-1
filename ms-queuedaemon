@@ -310,7 +310,20 @@ proc report-plan {w wo} {
 }
 
 proc report-projection {w} {
+    global c
+
     report-plan $w projection
+
+    # report-plan will have ensured data-projection.final.pl is up to
+    # date
+
+    catching-internally "producing summary" {
+	set proj "data-projection.final.pl"
+	set outputfile "$c(WebspaceFile)/summary.html"
+	exec ./ms-flights-summary $proj > $outputfile
+    } {
+	log "$w report-projection OK"
+    }
 }
 
 proc we-are-thinking {chan} {
