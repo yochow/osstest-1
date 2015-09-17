@@ -39,6 +39,16 @@ proc foreach-walker {walkervar body} {
     }
 }
 
+proc catching-internally {what try {ifok {}}} {
+    if {[catch {
+	uplevel 1 $try
+    } emsg]} {
+        log "INTERNAL ERROR $what: $emsg"
+    } else {
+	uplevel 1 $ifok
+    }
+}
+
 proc chan-destroy-stuff {chan} {
     dequeue-chan $chan destroy
     upvar #0 chan-info/$chan info
@@ -288,12 +298,10 @@ proc queuerun-perhaps-step {w} {
 
 proc report-plan {w wo} {
     global c
-    if {[catch {
+    catching-internally "showing $w html" {
 	set outputfile "$c(WebspaceFile)/resource-$wo.html"
 	exec ./ms-planner -w$w show-html > $outputfile
-    } emsg]} {
-        log "INTERNAL ERROR showing $w html: $emsg"
-    } else {
+    } {
 	set out data-$wo.final.pl
 	file copy -force data-$w.pl $out.new
 	file rename -force $out.new $out
@@ -486,10 +494,8 @@ proc restarter-restart-now {} {
 	log-event "restarter-restart-now projection-running"
     }
 
-    if {[catch {
+    catching-internally "setting unprocessed" {
 	chans-note-unprocessed plan [set plan/queue_running]
-    } emsg]} {
-	log "INTERNAL ERROR setting unprocessed: $emsg"
     }
     report-plan plan plan
 
