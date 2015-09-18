@@ -264,6 +264,12 @@ do_hvm_debian_test_one () {
 
   local arch=$(branch_debianhvm_arch)
 
+  case "$arch" in
+    amd64) iso_dir='install.amd' ;;
+    i386)  iso_dir='install.386' ;;
+    *)     iso_dir="install.$arch" ;;
+  esac
+
   stubdom_suffix=""
   stubdom_runvar=""
   if [ x$stubdom = xtrue ]; then
@@ -276,6 +282,8 @@ do_hvm_debian_test_one () {
     enable_xsm=$xsm                             \
     $stubdom_runvar                             \
     debianhvm_image=debian-7.2.0-$arch-CD-1.iso \
+    debianhvm_iso_kernel=/$iso_dir/vmlinuz \
+    debianhvm_iso_ramdisk=/$iso_dir/initrd.gz \
     bios=$bios \
     all_hostflags=$most_hostflags,hvm
 }

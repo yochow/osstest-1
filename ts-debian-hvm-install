@@ -48,6 +48,8 @@ our $disk_mb= 10000;
 our $guesthost= "$gn.guest.osstest";
 our $gho;
 
+our ($kernel, $ramdisk);
+
 our $gsuite= guest_var($gho,'suite',$c{GuestDebianSuite});
 
 sub preseed () {
@@ -130,14 +132,14 @@ set default="0"
 set timeout=5
 
 menuentry 'debian guest auto Install' {
-    linux /install.amd/vmlinuz $cmdline
-    initrd /install.amd/initrd.gz
+    linux $kernel $cmdline
+    initrd $ramdisk
 }
 END
 }
 
 sub isolinux_cfg () {
-    my $cmdline = gcmdline("initrd=/install.amd/initrd.gz");
+    my $cmdline = gcmdline("initrd=$ramdisk");
 
     return <<"END";
     default autoinstall
@@ -145,7 +147,7 @@ sub isolinux_cfg () {
     timeout 0
 
     label autoinstall
-        kernel /install.amd/vmlinuz
+        kernel $kernel
         append $cmdline
 END
 }
@@ -156,9 +158,9 @@ sub prepare_initrd ($$$) {
       rm -rf $initrddir
       mkdir $initrddir
       cd $initrddir
-      gzip -d < $newiso/install.amd/initrd.gz | cpio --extract --make-directories --no-absolute-filename
+      gzip -d < $newiso$ramdisk | cpio --extract --make-directories --no-absolute-filename
       cp $preseed_file_path preseed.cfg
-      find . | cpio -H newc --create | gzip -9 > $newiso/install.amd/initrd.gz
+      find . | cpio -H newc --create | gzip -9 > $newiso$ramdisk
       cd -
       rm -rf $initrddir
       cd $newiso
@@ -169,6 +171,13 @@ END
 
 our $emptyiso= "/root/$flight.$job.$gn-empty.iso";
 
+sub iso_path ($$) {
+    my ($which, $deftail) = @_;
+    my $v = guest_var($gho, "iso_$which", "/install.amd/$deftail");
+    die "$gho->{Guest} $which $v ?" unless $v =~ m#^/#;
+    return $v;
+}
+
 sub prep () {
     target_install_packages_norec($ho, qw(lvm2 rsync genisoimage));
 
@@ -177,6 +186,10 @@ sub prep () {
     $gho= prepareguest($ho, $gn, $guesthost, 22,
                        $disk_mb + 1,
                        200);
+
+    $kernel = iso_path('kernel', 'vmlinuz');
+    $ramdisk = iso_path('ramdisk', 'initrd.gz');
+
     my $base = "/root/$flight.$job.$gn-";
     my $newiso= $base . "newiso";
     my $emptydir= $base . "empty-dir";
