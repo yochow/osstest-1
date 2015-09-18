@@ -54,7 +54,7 @@ case ${suite}_${arch} in
         ;;
     *_armhf)
         src=$sbase/main/installer-$arch/current/images/netboot
-        files='vmlinuz initrd.gz'
+        files='vmlinuz:linux initrd.gz'
         dtbs=$sbase/main/installer-$arch/current/images/device-tree/
         ;;
 esac
