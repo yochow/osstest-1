@@ -68,7 +68,7 @@ select_xenbranch () {
 	case "$branch" in
 	xen-unstable-smoke)	tree=xen;	xenbranch=$branch; qemuubranch=qemu-upstream-unstable;;
 	xen-*)			tree=xen;	xenbranch=$branch ;;
-	qemu-mainline)		tree=qemuu;	xenbranch=xen-unstable	qemuubranch=qemu-mainline;;
+	qemu-mainline)		tree=qemuu;	xenbranch=xen-unstable; qemuubranch=qemu-mainline;;
         qemu-upstream-*)    tree=qemuu; xenbranch=xen-${branch#qemu-upstream-};;
 	linux)			tree=linux;	xenbranch=xen-unstable ;;
 	linux-*)		tree=linux;	xenbranch=xen-unstable ;;
