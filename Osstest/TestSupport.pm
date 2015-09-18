@@ -1647,7 +1647,16 @@ sub make_vhd ($$$) {
 sub make_qcow2 ($$$) {
     my ($ho, $gho, $disk_mb) = @_;
     # upstream qemu's version. Seems preferable to qemu-xen-img from qemu-trad.
-    my $qemu_img = "/usr/local/lib/xen/bin/qemu-img";
+    my $qemu_img;
+    foreach (qw(/usr/local /usr)) {
+	my $try = "$_/lib/xen/bin/qemu-img";
+        if (target_file_exists($ho, $try)) {
+            $qemu_img=$try;
+            last;
+        }
+    }
+    die "no qemu-img" unless $qemu_img;
+
     target_cmd_root($ho, "$qemu_img create -f qcow2 $gho->{Rootimg} ${disk_mb}M");
 }
 sub make_raw ($$$) {
