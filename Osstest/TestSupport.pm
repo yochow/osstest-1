@@ -310,6 +310,10 @@ END
     return $value;
 }
 
+sub target_adjust_timeout ($$) {
+    my ($ho,$timeoutref) = @_; # $ho might be a $gho
+}
+
 #---------- running commands eg on targets ----------
 
 sub cmd {
@@ -608,6 +612,7 @@ sub target_ping_check_up ($) { return target_ping_check_core(@_,0); }
 
 sub target_await_down ($$) {
     my ($ho,$timeout) = @_;
+    target_adjust_timeout($ho,\$timeout);
     poll_loop($timeout,5,'reboot-down', sub {
         return target_ping_check_down($ho);
     });
@@ -616,6 +621,7 @@ sub target_await_down ($$) {
 sub tcmd { # $tcmd will be put between '' but not escaped
     my ($stdout,$user,$ho,$tcmd,$timeout,$extrasshopts) = @_;
     $timeout=30 if !defined $timeout;
+    target_adjust_timeout($ho,\$timeout);
     tcmdex($timeout,$stdout,
            'ssh', sshopts(), @{ $extrasshopts || [] },
            sshuho($user,$ho), $tcmd);
@@ -1032,7 +1038,9 @@ sub common_toolstack ($) {
 sub host_reboot ($) {
     my ($ho) = @_;
     target_reboot($ho);
-    poll_loop(40,2, 'reboot-confirm-booted', sub {
+    my $timeout = 40;
+    target_adjust_timeout($ho,\$timeout);
+    poll_loop($timeout,2, 'reboot-confirm-booted', sub {
         my $output;
         if (!eval {
             $output= target_cmd_output($ho, <<END, 40);
@@ -1411,6 +1419,7 @@ sub report_once ($$$) {
 sub guest_await_state ($$$$$) {
     my ($ho,$gho, $what,$wait_st,$timeout) = @_;
 
+    target_adjust_timeout($gho,\$timeout);
     poll_loop($timeout, 30, "await $what request from $gho->{Guest}", sub {
         my $st= guest_get_state($ho,$gho);
         return undef if $st eq $wait_st;
@@ -1864,6 +1873,7 @@ sub guest_checkrunning ($$) {
 sub guest_await_dhcp_tcp ($$) {
     my ($gho,$timeout) = @_;
     guest_find_tcpcheckport($gho);
+    target_adjust_timeout($gho,\$timeout);
     poll_loop($timeout,1,
               "guest $gho->{Name} ".visible_undef($gho->{Ether}).
 	      " $gho->{TcpCheckPort}".
@@ -1939,6 +1949,7 @@ sub target_tcp_check ($$) {
 
 sub await_tcp ($$$) {
     my ($maxwait,$interval,$ho) = @_;
+    target_adjust_timeout($ho,\$maxwait);
     poll_loop($maxwait,$interval,
               "await tcp $ho->{Name} $ho->{TcpCheckPort}",
               sub {
@@ -2120,6 +2131,7 @@ sub await_webspace_fetch_byleaf ($$$$$) {
     my ($maxwait,$interval,$logtailer, $ho, $url) = @_;
     my $leaf= $url;
     $leaf =~ s,.*/,,;
+    target_adjust_timeout($ho,\$maxwait);
     poll_loop($maxwait,$interval, "fetch $leaf", sub {
         my ($line, $last);
         $last= '(none)';
