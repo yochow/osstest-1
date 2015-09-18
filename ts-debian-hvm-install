@@ -50,7 +50,7 @@ our $gho;
 
 our ($kernel, $ramdisk);
 
-our $gsuite= guest_var($gho,'suite',$c{GuestDebianSuite});
+our $gsuite;
 
 sub preseed () {
 
@@ -187,6 +187,7 @@ sub prep () {
                        $disk_mb + 1,
                        200);
 
+    $gsuite = guest_var($gho,'suite',$c{GuestDebianSuite});
     $kernel = iso_path('kernel', 'vmlinuz');
     $ramdisk = iso_path('ramdisk', 'initrd.gz');
 
