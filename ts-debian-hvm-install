@@ -57,10 +57,12 @@ sub preseed () {
 
     my $preseed_file = preseed_base($gho,$gsuite,'','',());
 
+    my $disk = guest_var($gho,'diskdevice','/dev/xvda');
+
     $preseed_file .= (<<END.($bootfile =~ m/\befi\b/ ? <<END : '').<<END);
 d-i netcfg/get_hostname string $gn
 
-d-i partman-auto/disk string /dev/xvda
+d-i partman-auto/disk string $disk
 d-i partman-auto/method string  regular
 
 d-i partman-auto/expert_recipe string \\

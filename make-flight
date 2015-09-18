@@ -263,10 +263,12 @@ do_hvm_debian_test_one () {
   stubdom=$5 # '' (or unset) or 'true'
 
   local arch=$(branch_debianhvm_arch)
+  local testvars
 
   case "$arch" in
     amd64) iso_dir='install.amd' ;;
-    i386)  iso_dir='install.386' ;;
+    i386)  iso_dir='install.386'
+           testvars+=' debianhvm_diskdevice=/dev/sda' ;;
     *)     iso_dir="install.$arch" ;;
   esac
 
@@ -280,7 +282,7 @@ do_hvm_debian_test_one () {
   job_create_test test-$xenarch$kern-$dom0arch-$toolstack$qemuu_suffix$stubdom_suffix-$testname-$arch\
     test-debianhvm $toolstack $xenarch $dom0arch $qemuu_runvar \
     enable_xsm=$xsm                             \
-    $stubdom_runvar                             \
+    $stubdom_runvar $testvars                   \
     debianhvm_image=debian-7.2.0-$arch-CD-1.iso \
     debianhvm_iso_kernel=/$iso_dir/vmlinuz \
     debianhvm_iso_ramdisk=/$iso_dir/initrd.gz \
