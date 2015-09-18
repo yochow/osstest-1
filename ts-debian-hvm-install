@@ -197,7 +197,6 @@ sub prep () {
     my $preseed_file_path = $base . "preseed";
 
     my @isogen_extra = qw(-eltorito-alt-boot
-                          -b boot/grub/efi.img
                           -no-emul-boot
                           -r);
 
@@ -222,6 +221,14 @@ sub prep () {
         my $cmds = iso_copy_content_from_image($gho, $newiso);
         target_cmd_root($ho, $cmds, $isotimeout);
 
+        my $bootfile = 'boot/grub/efi.img';
+        if (!target_file_exists($ho, "$newiso/$bootfile")) {
+            $bootfile = "isolinux/isolinux.bin";
+            push @isogen_extra, qw(-c isolinux/boot.cat);
+        }
+        logm("using boot image $bootfile");
+        push @isogen_extra, '-b', $bootfile;
+
         my @isogen_opts = (iso_gen_flags_basic(), @isogen_extra);
 
         target_putfilecontents_root_stash($ho, 10, preseed(),
@@ -231,7 +238,8 @@ sub prep () {
         target_cmd_root($ho, $cmds, $isotimeout);
 
         target_putfilecontents_root_stash($ho, 10, grub_cfg(),
-                                          "$newiso/debian/boot/grub/grub.cfg");
+                                          "$newiso/debian/boot/grub/grub.cfg")
+	    if $bootfile =~ m/grub/;
 
         target_putfilecontents_root_stash($ho, 10, isolinux_cfg(),
                                           "$newiso/isolinux/isolinux.cfg");
