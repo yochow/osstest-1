@@ -49,6 +49,7 @@ our $guesthost= "$gn.guest.osstest";
 our $gho;
 
 our ($kernel, $ramdisk);
+our $bootfile;
 
 our $gsuite;
 
@@ -56,7 +57,7 @@ sub preseed () {
 
     my $preseed_file = preseed_base($gho,$gsuite,'','',());
 
-    $preseed_file .= (<<END);
+    $preseed_file .= (<<END.($bootfile =~ m/\befi\b/ ? <<END : '').<<END);
 d-i netcfg/get_hostname string $gn
 
 d-i partman-auto/disk string /dev/xvda
@@ -64,12 +65,14 @@ d-i partman-auto/method string  regular
 
 d-i partman-auto/expert_recipe string \\
         boot-root :: \\
+END
                 512 50 512 vfat \\
                         \$primary{ } \$bootable{ } \\
                         method{ efi } format{ } \\
                         use_filesystem{ } filesystem{ vfat } \\
                         mountpoint{ /boot/efi } \\
                 . \\
+END
                 5000 50 5000 ext4 \\
                         method{ format } format{ } \\
                         use_filesystem{ } filesystem{ ext4 } \\
@@ -222,7 +225,7 @@ sub prep () {
         my $cmds = iso_copy_content_from_image($gho, $newiso);
         target_cmd_root($ho, $cmds, $isotimeout);
 
-        my $bootfile = 'boot/grub/efi.img';
+        $bootfile = 'boot/grub/efi.img';
         if (!target_file_exists($ho, "$newiso/$bootfile")) {
             $bootfile = "isolinux/isolinux.bin";
             push @isogen_extra, qw(-c isolinux/boot.cat);
