@@ -312,6 +312,10 @@ END
 
 sub target_adjust_timeout ($$) {
     my ($ho,$timeoutref) = @_; # $ho might be a $gho
+    if ($ho->{Guest}) {
+	my $context = $ho->{TimeoutContext} // 'general';
+	$$timeoutref *= guest_var($ho,"${context}_timeoutfactor",1);
+    }
 }
 
 #---------- running commands eg on targets ----------
@@ -1617,6 +1621,8 @@ sub prepareguest ($$$$$$) {
 	    store_runvar("${gn}_vg", target_choose_vg($ho, $mb));
 	}
     }
+
+    $gho->{TimeoutContext} = 'install';
 
     guest_find_lv($gho);
     guest_find_diskimg($gho);
