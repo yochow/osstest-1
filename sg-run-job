@@ -71,6 +71,8 @@ proc run-job {job} {
 
     if {$ok} { setstatus pass                                             }
 
+    if {$need_build_host && $ok} { jobdb::preserve-task 90 }
+
     if {$anyfailed} {
         jobdb::logputs stdout "at least one test failed"
     }

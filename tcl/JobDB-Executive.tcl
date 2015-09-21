@@ -280,6 +280,12 @@ proc become-task {comment} {
     }
 }
 
+proc preserve-task {seconds} {
+    # This keeps the owner daemon connection open: our `sleep'
+    # will continue to own our resources for $seconds longer
+    exec setsid sleep $seconds > /dev/null < /dev/null 2> /dev/null &
+}
+
 proc step-log-filename {flight job stepno ts} {
     global c
     set logdir $c(Logs)/$flight/$job
