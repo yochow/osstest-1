@@ -1169,7 +1169,7 @@ END
 
     preseed_microcode($ho,$sfx);
 
-    if (get_host_property($ho, "firmware") eq "uefi") {
+    if (get_host_property($ho, "firmware",'') eq "uefi") {
 	die unless $ho->{Suite} =~ m/jessie/;
 	# Prevent grub-install from making a new Debian boot entry, so
 	# we always reboot from PXE. Debian bug #789798 proposes a
