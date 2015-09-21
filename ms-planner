@@ -727,7 +727,7 @@ sub cmd_show_html () {
                 my $fgcolour=
                     $avail ? "#000000" : "#ffffff";
 		printf "<td valign=top rowspan=%d".
-                    " bgcolor=\"%s\"><font color==\"%s\">%s %s</font></td>",
+                    " bgcolor=\"%s\"><font color=\"%s\">%s %s</font></td>",
 		    $content->{Rowspan}, $bgcolour, $fgcolour, $show;
 		$content->{Printed}= 1;
 	    }
