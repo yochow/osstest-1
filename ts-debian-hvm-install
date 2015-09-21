@@ -200,12 +200,8 @@ sub prep () {
                           -b boot/grub/efi.img
                           -no-emul-boot
                           -r);
-    my @isogen_opts = (iso_gen_flags_basic(), @isogen_extra);
 
     iso_create_empty($ho, $emptyiso, $emptydir);
-
-    target_putfilecontents_root_stash($ho, 10, preseed(),
-                                      $preseed_file_path);
 
     # If host has >8G free memory, create a guest with 4G memory to catch
     # any error that triggers cross 4G boundary
@@ -224,8 +220,16 @@ sub prep () {
                           Bios => $r{bios},
                           PostImageHook => sub {
         my $cmds = iso_copy_content_from_image($gho, $newiso);
-        $cmds .= prepare_initrd($initrddir,$newiso,$preseed_file_path);
         target_cmd_root($ho, $cmds, $isotimeout);
+
+        my @isogen_opts = (iso_gen_flags_basic(), @isogen_extra);
+
+        target_putfilecontents_root_stash($ho, 10, preseed(),
+                                          $preseed_file_path);
+
+        $cmds = prepare_initrd($initrddir,$newiso,$preseed_file_path);
+        target_cmd_root($ho, $cmds, $isotimeout);
+
         target_putfilecontents_root_stash($ho, 10, grub_cfg(),
                                           "$newiso/debian/boot/grub/grub.cfg");
 
