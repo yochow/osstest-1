@@ -201,15 +201,26 @@ END
     $flightsq= db_prepare($flightsq);
     $flightsq->execute(@flightsq_params);
 
-    my $buildflightsq= db_prepare(<<END);
-        SELECT val FROM runvars
+    my $jobsq= db_prepare(<<END);
+        SELECT '' AS why,
+               job
+	  FROM jobs
 	 WHERE flight = ?
+END
+
+    my $buildjobsq= db_prepare(<<END);
+        SELECT name || '= ' AS why,
+               val AS job
+	  FROM runvars
+	 WHERE flight = ?
+           AND job = ?
            AND name LIKE '%buildjob'
 END
 
     my $revisionsq= <<END;
             SELECT flight, job, val FROM runvars
                 WHERE flight=?
+                  AND job=?
 		  AND name=?
                   AND ${\ main_revision_job_cond('job') }
 		GROUP BY flight, job, val
@@ -222,42 +233,76 @@ END
 END
 
     while (my ($tflight) = $flightsq->fetchrow_array) {
-	my @bflights;
-	push @bflights, $tflight;
-	$buildflightsq->execute($tflight);
-	while (my $bflightrow = $buildflightsq->fetchrow_hashref()) {
-	    my $val = $bflightrow->{val};
-	    next unless $val =~ m/\./; # same flight, already added
-	    push @bflights, $`;
+	# Recurse from the starting flight looking for relevant build
+	# jobs.  We start with all jobs in $tflight, and for each job
+	# we also process any other jobs it refers to in *buildjob runvars.
+	#
+	# We don't actually use a recursive algorithm because that
+	# would involve recursive use of the same sql query object;
+	# hence the @binfos_todo queue.
+	my @binfos_todo;
+	my $binfos_queue = sub {
+	    my ($inflight,$q,$why) = @_;
+	    while (my ($morewhy,$jobref) = $q->fetchrow_array()) {
+		my @info = "$why $morewhy$jobref";
+		push @info, flight_otherjob($inflight,$jobref);
+		push @binfos_todo, \@info;
+	    }
+	    $q->finish();
+	};
+	$jobsq->execute($tflight);
+	$binfos_queue->($tflight,$jobsq,"$tflight");
+
+	my %binfos;
+	while (@binfos_todo) {
+	    my ($why,$bflight,$bjob) = @{ shift @binfos_todo };
+	    next if $binfos{$bflight}{$bjob};
+	    $binfos{$bflight}{$bjob} = $why;
+	    $buildjobsq->execute($bflight,$bjob);
+	    $binfos_queue->($bflight,$buildjobsq,$why);
 	}
+
+	my @binfos;
+	foreach my $bflight (sort { $a <=> $b } keys %binfos) {
+	    my $bjobs = $binfos{$bflight};
+	    foreach my $bjob (sort keys %$bjobs) {
+		my $why = $bjobs->{$bjob};
+		#print DEBUG " relevant $bflight.$bjob because $why\n";
+		push @binfos, [ $why, $bflight, $bjob ];
+	    }
+	}
+
 	my $whynot;
 	foreach my $tree (keys %{ $specver{$thisthat} }) {
 	    my @revisions;
 	    my $v= $specver{$thisthat}{$tree};
-	    foreach my $bflight (@bflights) {
+	    foreach my $binfo (@binfos) {
+		my ($bwhy,@bfj) = @$binfo;
 		my $revisions;
 		if ($tree ne 'osstest') {
-		    $revisionsq->execute($bflight, "built_revision_$tree");
+		    $revisionsq->execute(@bfj, "built_revision_$tree");
 		    $revisions= $revisionsq->fetchall_arrayref({});
 		} else {
-		    $revisionsosstestq->execute($bflight);
+		    $revisionsosstestq->execute($bfj[0]);
 		    $revisions= $revisionsosstestq->fetchall_arrayref({});
 		}
-		push @revisions, @$revisions;
+		push @revisions, map { [ $bwhy, $_ ] } @$revisions;
 	    }
             if (!@revisions) {
                 $whynot= "no built/used $tree";
                 last;
             }
-            my ($wrong) = grep {
-                $_->{val} !~ m/^(?: .*: )? $v /x;
+            my ($wronginfo) = grep {
+                $_->[1]{val} !~ m/^(?: .*: )? $v /x;
             } @revisions;
 
-            if (defined $wrong) {
+            if (defined $wronginfo) {
+		my ($why,$wrong) = @$wronginfo;
                 $whynot= "mismatch $tree ".
                     (defined $wrong->{job} ?
 		     "$wrong->{flight}.$wrong->{job}" : "(osstest)").
-                    " $wrong->{val} != $v";
+                    " $wrong->{val} != $v".
+		    " ($why)";
                 last;
             }
 	}
