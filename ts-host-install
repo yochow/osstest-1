@@ -220,10 +220,12 @@ sub setup_pxeboot_firstboot($) {
 	die "need Ether for $ho->{Name} ($wantphysif)"
 	    unless defined $ho->{Ether};
         system_checked(qw(mkdir -p --), "$initrd_overlay.d/etc/udev/rules.d");
+	# ip(8) moved to /sbin in Jessie
+	my $ipcmd = $ho->{Suite} =~ m/wheezy/ ? "/bin/ip" : "/sbin/ip";
         file_simple_write_contents
             ("$initrd_overlay.d/etc/udev/rules.d/70-persistent-net.rules",
              $ho->{Flags}{'force-mac-address'} ? <<END : <<END);
-SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", KERNEL=="$wantphysif", RUN += "/bin/ip link set $wantphysif address $ho->{Ether}"
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", KERNEL=="$wantphysif", RUN += "$ipcmd link set $wantphysif address $ho->{Ether}"
 END
 SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="$ho->{Ether}", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="$wantphysif"
 END
