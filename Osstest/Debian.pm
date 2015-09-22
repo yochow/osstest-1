@@ -131,7 +131,7 @@ sub uboot_common_kernel_bootargs ($)
 {
     my ($ho) = @_;
 
-    my $root= target_guest_lv_name($ho,"root");
+    my $root= lv_dev_mapper(di_vg_name($ho),"root");
     my $rootdelay= get_host_property($ho, "rootdelay");
 
     my @bootargs;
