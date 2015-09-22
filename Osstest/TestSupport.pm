@@ -63,7 +63,7 @@ BEGIN {
                       target_install_packages target_install_packages_norec
                       target_jobdir target_extract_jobdistpath_subdir
                       target_extract_jobdistpath
-                      lv_dev_mapper target_guest_lv_name
+                      lv_dev_mapper
 
                       poll_loop tcpconnect await_tcp
                       contents_make_cpio file_simple_write_contents
@@ -720,11 +720,6 @@ sub lv_dev_mapper ($$) {
     # Dashes are doubled in the VG and LV names
     return "/dev/mapper/$vg-$lv";
 }    
-
-sub target_guest_lv_name($$) {
-    my ($ho, $lv) = @_;
-    return lv_dev_mapper("$ho->{Name}", $lv);
-}
 
 #---------- dhcp watching ----------
 
