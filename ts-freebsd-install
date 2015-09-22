@@ -49,7 +49,7 @@ sub prep () {
 
     target_put_guest_image($ho, $gho);
 
-    my $rootpartition_dev = target_guest_lv_name($ho, $gho->{Name}) . "--disk3";
+    my $root_part_nr = 3;
 
     target_cmd_root($ho, "umount $gho->{Lvdev} ||:");
 
@@ -64,7 +64,7 @@ sub prep () {
 
             kpartx -a $gho->{Lvdev}
             mkdir -p $mnt
-            mount -t ufs -o ufstype=ufs2,rw $rootpartition_dev $mnt
+            mount -t ufs -o ufstype=ufs2,rw $gho->{Lvdev}${root_part_nr} $mnt
 END
 
     target_cmd_root($ho, <<END, 15);
