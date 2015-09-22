@@ -43,7 +43,7 @@ LogsMinExpireAge= 86400*4
 
 TestHostKeypairPath /export/home/osstest/.ssh/id_rsa_osstest
 
-GitCacheProxy git://drall.uk.xensource.com:9419/
+GitCacheProxy git://git-cache.daemon.osstest.xs.citrite.net:9419/
 
 PubBaseUrl http://osstest.xs.citrite.net/~osstest/testlogs
 ReportHtmlPubBaseUrl="$c{PubBaseUrl}/logs"
