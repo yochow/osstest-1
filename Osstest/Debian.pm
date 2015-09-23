@@ -977,13 +977,26 @@ END
 #!/bin/sh
 set -ex
 stamp=/var/erase-other-disks.stamp
-if test -f \$stamp; then exit 0; fi
+if test -f \$stamp; then
+    logger -t osstest-erase-other-disks-\$\$ "Already ran, exiting"
+    exit 0
+fi
 >\$stamp
+logger -t osstest-erase-other-disks-\$\$ "Running..."
 zero () {
     if test -b \$dev; then
+        logger -t osstest-erase-other-disks-\$\$ "Erasing \$dev"
         dd if=/dev/zero of=\$dev count=64 ||:
+        if ! test -b \$dev; then
+            logger -t osstest-erase-other-disks-\$\$ "\$dev is no longer a block device!"
+            exit 1
+        fi
+    else
+        logger -t osstest-erase-other-disks-\$\$ "\$dev does not exist or is not a block device."
     fi
 }
+
+udevadm settle
 for sd in sd hd; do
     for b in a b c d e f; do
         dev=/dev/\${sd}\${b}
