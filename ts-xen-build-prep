@@ -151,9 +151,9 @@ sub lvextend1 ($$$) {
 
     $do_limit_pe->(\$vg_more_free_pe, 'unstriped');
 
+    overall_limit_pe(\$vg_more_free_pe);
     if ($vg_more_free_pe) {
         logm("$what: unstriped $vg_more_free_pe PEs");
-        overall_limit_pe(\$vg_more_free_pe);
         $more_pe += $vg_more_free_pe;
         target_cmd_root($ho, "lvextend -i1 -l +$vg_more_free_pe $lv");
     }
