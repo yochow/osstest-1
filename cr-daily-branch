@@ -19,8 +19,8 @@
 
 set -ex
 
-. cri-args-hostlists
-. ap-common
+. ./cri-args-hostlists
+. ./ap-common
 branch=$1; shift
 select_branch
 info_linux_tree $branch ||:

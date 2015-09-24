@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-. cri-getconfig
+. ./cri-getconfig
 
 umask 002
 
@@ -101,6 +101,6 @@ select_branch () {
 	mrof="$branch.mro"
 
 	if test -f branch-settings.$branch; then
-		. branch-settings.$branch
+		. ./branch-settings.$branch
 	fi
 }

@@ -34,13 +34,13 @@ check_stop () {
 	check_stop_core "$1"
 	if test -f ${1}xsettings; then
 		echo "loading ${1}xsettings"
-		. ${1}xsettings
+		. ./${1}xsettings
 	fi
 }
 
 check_stop ''
 
-. cri-common
+. ./cri-common
 
 dcs=daily-cron-settings
 
@@ -56,7 +56,7 @@ fi
 
 : ${OSSTEST_EMAIL_HEADER:=daily-cron-email-$OSSTEST_BLESSING}
 
-. ${OSSTEST_CRON_SETTINGS:-$dcs-$OSSTEST_BLESSING}
+. ./${OSSTEST_CRON_SETTINGS:-$dcs-$OSSTEST_BLESSING}
 
 : ${OSSTEST_PUSH:=false}
 

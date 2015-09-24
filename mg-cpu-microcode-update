@@ -2,8 +2,8 @@
 
 set -e
 
-. cri-getconfig
-. mgi-common
+. ./cri-getconfig
+. ./mgi-common
 
 # iucode_tool is in /usr/sbin, see #788459.
 export PATH="/usr/local/sbin:$PATH:/sbin:/usr/sbin"

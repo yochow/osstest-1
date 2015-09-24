@@ -123,7 +123,7 @@ while true ; do
     esac
 done
 
-. cri-getconfig
+. ./cri-getconfig
 
 WebspaceLog=`OSSTEST_CONFIG=$config getconfig WebspaceLog`
 if [ ! -r "$WebspaceLog" ] ; then

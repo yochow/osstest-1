@@ -21,7 +21,7 @@ set -e
 
 branch=$1
 
-. cri-lock-repos
+. ./cri-lock-repos
 
 : ${BASE_TREE_LINUX:=git://xenbits.xen.org/people/ianc/linux-2.6.git}
 : ${BASE_TAG_LINUX:=xen/next-2.6.32}

@@ -22,8 +22,8 @@ set -e
 xenbranch=$1
 xenrevision=$2
 
-. cri-lock-repos
-. ap-common
+. ./cri-lock-repos
+. ./ap-common
 
 cd "$repos/xen"
 git cat-file blob $xenrevision:Config.mk | perl -ne '

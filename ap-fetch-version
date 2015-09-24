@@ -20,10 +20,10 @@
 set -e
 
 branch=$1
-. cri-lock-repos
-. cri-common
+. ./cri-lock-repos
+. ./cri-common
 select_xenbranch
-. ap-common
+. ./ap-common
 
 if info_linux_tree "$branch"; then
 	repo_tree_rev_fetch_git linux \

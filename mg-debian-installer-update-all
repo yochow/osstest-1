@@ -20,7 +20,7 @@
 
 set -e
 
-. cri-getconfig
+. ./cri-getconfig
 
 suite=`getconfig DebianSuite`
 fws=`getconfig DebianNonfreeFirmware`

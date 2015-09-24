@@ -20,10 +20,10 @@
 set -e
 
 branch=$1
-. cri-lock-repos
-. cri-common
+. ./cri-lock-repos
+. ./cri-common
 select_xenbranch
-. ap-common
+. ./ap-common
 
 : ${BASE_TAG_LINUX2639:=tested/2.6.39.x}
 : ${BASE_LOCALREV_LINUX:=daily-cron.$branch.old}

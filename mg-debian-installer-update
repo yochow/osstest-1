@@ -21,8 +21,8 @@
 
 set -e
 
-. cri-getconfig
-. mgi-common
+. ./cri-getconfig
+. ./mgi-common
 
 suite=$1
 arch=$2

@@ -37,10 +37,10 @@ done
 shift $((OPTIND-1))
 
 if [ -f standalone.config ] ; then
-    . standalone.config
+    . ./standalone.config
 fi
 
-. cri-getconfig
+. ./cri-getconfig
 
 jobdb=`getconfig JobDB`
 if [ "$jobdb" != Standalone ]; then

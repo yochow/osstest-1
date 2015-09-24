@@ -21,7 +21,7 @@ set -ex
 
 export OSSTEST_BLESSING=adhoc
 
-. cri-common
+. ./cri-common
 
 nope () { echo "nope: $*"; exit 0; }
 
@@ -34,8 +34,8 @@ if ! test -f job; then nope "no job"; exit 0; fi
 #   testid=
 #   bisect= list of args to cs-bisection-step, eg  '--fail-flight=<mumble>'
 
-. cri-bisect
-. cri-args-hostlists
+. ./cri-bisect
+. ./cri-args-hostlists
 select_branch
 
 export OSSTEST_BLESSING=adhoc

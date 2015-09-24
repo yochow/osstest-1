@@ -18,7 +18,7 @@
 
 set -ex
 
-. cri-args-hostlists
+. ./cri-args-hostlists
 branch=$1; shift
 
 check_stop all-branch-statuses.

@@ -22,10 +22,10 @@ set -e
 branch=$1
 new=$2
 
-. cri-lock-repos
-. cri-common
+. ./cri-lock-repos
+. ./cri-common
 select_xenbranch
-. ap-common
+. ./ap-common
 
 case "$branch" in
 

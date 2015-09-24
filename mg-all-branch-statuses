@@ -27,7 +27,7 @@
 
 set -e
 
-. cri-common
+. ./cri-common
 
 mkdir -p tmp
 

@@ -19,8 +19,8 @@
 
 set -ex
 
-. cri-bisect
-. cri-args-hostlists
+. ./cri-bisect
+. ./cri-args-hostlists
 
 branch=$1; shift
 select_branch

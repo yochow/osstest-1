@@ -48,7 +48,7 @@ while [ $# != 0 ]; do
 	esac
 done
 
-. cri-getconfig
+. ./cri-getconfig
 
 if [ x"$flight" = x ]; then badusage; fi
 

@@ -21,13 +21,13 @@ set -ex
 
 branch=$1
 revision=$2
-. cri-lock-repos
-. cri-common
+. ./cri-lock-repos
+. ./cri-common
 select_xenbranch
 
 : ${TAG_LINUX2639:=tested/2.6.39.x}
 
-. ap-common
+. ./ap-common
 
 TREE_LINUX=$PUSH_TREE_LINUX
 TREE_QEMU_MAINLINE=$PUSH_TREE_QEMU_MAINLINE
