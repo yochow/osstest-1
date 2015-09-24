@@ -15,7 +15,7 @@
 #  - create any input/output tree on xenbits
 #  - run any test flights (obviously)
 
-set -e
+set -e -o posix
 
 fail () { echo >&2 "$*"; exit 1; }
 badusage () { fail 'bad usage'; }

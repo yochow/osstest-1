@@ -22,7 +22,7 @@
 #             passing --debug in REF-CONDS too)
 #   -n      Dry run: do not actually run cs-adjust-flight
 
-set -e
+set -e -o posix
 
 exec 3>/dev/null
 verbose=''

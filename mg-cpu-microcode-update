@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e -o posix
 
 . ./cri-getconfig
 . ./mgi-common

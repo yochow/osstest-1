@@ -21,7 +21,7 @@
 #  where COMMAND ARGS SCRIPT
 #  runs shell script SCRIPT in an appropriate directory and place
 
-set -e
+set -e -o posix
 
 result=`"$@" 'hg heads --template '\''{node|short}\n'\'''`
 lines=`printf '%s\n' "$result" | wc -l`

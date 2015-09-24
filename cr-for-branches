@@ -20,7 +20,7 @@
 
 
 
-set -e
+set -e -o posix
 
 export FOR_LOGFILE="$*"
 

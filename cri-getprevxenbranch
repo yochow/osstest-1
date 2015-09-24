@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e -o posix
 
 xenbranch=$1
 p=

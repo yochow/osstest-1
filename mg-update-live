@@ -22,7 +22,7 @@
 #  cd ~osstest
 #  for f in branches/*.git; do ./update-live 3c464fbf8a05b24f4afb7e58bcf4ae77fbb7ad0c $f; done
 
-set -e
+set -e -o posix
 bad="$1"
 dir="$2"
 

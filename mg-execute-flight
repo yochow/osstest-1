@@ -29,7 +29,7 @@ usage () { cat <<END
 END
 }
 
-set -e
+set -e -o posix
 
 publish=false
 
