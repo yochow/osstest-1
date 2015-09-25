@@ -116,6 +116,7 @@ BEGIN {
                       iso_copy_content_from_image
                       guest_editconfig_nocd
                       host_install_postboot_complete
+                      target_core_dump_setup
                       );
     %EXPORT_TAGS = ( );
 
@@ -2399,6 +2400,24 @@ sub guest_editconfig_nocd ($$) {
 sub host_install_postboot_complete ($) {
     my ($ho) = @_;
     target_cmd_root($ho, "update-rc.d osstest-confirm-booted start 99 2 .");
+}
+
+sub target_core_dump_setup ($) {
+    my ($ho) = @_;
+    target_cmd_root($ho, 'mkdir -p /var/core');
+    target_editfile_root($ho, '/etc/sysctl.conf',
+	sub { target_editfile_kvp_replace(
+		  "kernel.core_pattern",
+		  # %p==pid,%e==executable name,%t==timestamp
+		  "/var/core/%t.%p.%e.core") });
+    target_cmd_root($ho, "sysctl --load /etc/sysctl.conf");
+    my $coredumps_conf = <<'END';
+#<domain>      <type>  <item>       <value>
+*               soft    core         -1
+root            soft    core         -1
+END
+    target_putfilecontents_root_stash($ho,10,$coredumps_conf,
+				'/etc/security/limits.d/coredumps.conf');
 }
 
 1;
