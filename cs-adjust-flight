@@ -24,6 +24,14 @@
 #   .                 means all jobs
 #   ^<pcre>           means $foo =~ m/^<pcre>/
 #   /<pcre>           means $foo =~ m/<pcre>/
+#
+# <dst-flight>:
+#   <flight>
+#   new:<intended-blessing>
+#
+# options:
+#   -v              verbose - list changes to stderr
+#   -D              debugging output to stderr
 
 # This is part of "osstest", an automated testing framework for Xen.
 # Copyright (C) 2009-2013 Citrix Inc.
