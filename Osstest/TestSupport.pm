@@ -95,7 +95,7 @@ BEGIN {
                       prepareguest_part_lvmdisk prepareguest_part_diskimg
                       prepareguest_part_xencfg
                       guest_umount_lv guest_await guest_await_dhcp_tcp
-                      guest_checkrunning guest_check_ip guest_find_ether
+                      guest_checkrunning target_check_ip guest_find_ether
                       guest_find_domid guest_check_up guest_check_up_quick
                       guest_get_state guest_await_reboot
                       guest_await_shutdown guest_await_destroy guest_destroy
@@ -730,8 +730,9 @@ sub dhcp_watch_setup ($$) {
     $gho->{DhcpWatch} = get_host_method_object($ho, 'DhcpWatch', $meth);
 }
 
-sub guest_check_ip ($) {
-    my ($gho) = @_;
+sub target_check_ip ($) {
+    my ($gho) = @_; # returns error message or undef
+    return undef if $gho->{IpStatic};
     guest_find_ether($gho);
     $gho->{DhcpWatch}->check_ip($gho);
 }
@@ -871,7 +872,7 @@ sub selecthost ($) {
 	$msg .= " guest $child->{Guest} (@{ $child->{Info} })";
 	$msg .= " $child->{Ether}";
 
-	my $err = guest_check_ip($child);
+	my $err = target_check_ip($child);
 	$msg .= " ".(defined $err ? "<no-ip> $err" : $child->{Ip});
 
 	logm($msg);
@@ -1956,7 +1957,7 @@ sub guest_await_dhcp_tcp ($$) {
 	      " $gho->{TcpCheckPort}".
               " link/ip/tcp",
               sub {
-        my $err= guest_check_ip($gho);
+        my $err= target_check_ip($gho);
         return $err if defined $err;
 
         return

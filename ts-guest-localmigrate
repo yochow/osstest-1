@@ -40,7 +40,7 @@ sub migrate () {
 guest_await_dhcp_tcp($gho, 5);
 guest_check_up($gho);
 
-my $err= guest_check_ip($gho);  die "$err $gho->{Name}" if defined $err;
+my $err= target_check_ip($gho);  die "$err $gho->{Name}" if defined $err;
 
 for (my $rep=1; $rep<=$reps; $rep++) {
     logm("========== rep $rep ==========");

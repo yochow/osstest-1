@@ -26,7 +26,7 @@ our ($ho,$gho) = ts_get_host_guest(@ARGV);
 
 sub save () {
     guest_checkrunning($ho,$gho) or die $gho->{Name};
-    my $err= guest_check_ip($gho);  die "$err $gho->{Name}" if defined $err;
+    my $err= target_check_ip($gho);  die "$err $gho->{Name}" if defined $err;
     toolstack($ho)->save($gho,"image",200);
     target_ping_check_down($gho);
 }
