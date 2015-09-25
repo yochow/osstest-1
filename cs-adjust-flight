@@ -28,6 +28,8 @@
 # <dst-flight>:
 #   <flight>
 #   new:<intended-blessing>
+#   running:                 uses OSSTEST_FLIGHT (flight referred to
+#                             must be blessed `running' or `constructing')
 #
 # options:
 #   -v              verbose - list changes to stderr
@@ -391,6 +393,13 @@ sub main () {
     if ($dstflightspec =~ m/^\w+$/) {
         $dstflight = $dstflightspec;
         db_retry($dstflight,'constructing',
+                 $dbh_tests, [qw(flights)], sub {
+            verbose_discard();
+            changes();
+        });
+    } elsif ($dstflightspec =~ m/^running:$/) {
+        $dstflight = $ENV{OSSTEST_FLIGHT} // die;
+        db_retry($dstflight,[qw(constructing running)],
                  $dbh_tests, [qw(flights)], sub {
             verbose_discard();
             changes();
