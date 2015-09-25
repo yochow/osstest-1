@@ -109,4 +109,13 @@ sub restore ($$$$) {
 		    ." $f", $timeout);
 }
 
+sub block_attach ($$$$) {
+    my ($self,$gho,$xldiskspec) = @_;
+    die "quotes in $xldiskspec ?" if $xldiskspec =~ m/'/;
+    my $ho = $self->{Host};
+    my $gn = $gho->{Name};
+    my $cmd = $self->{_VerboseCommand}." block-attach $gn '$xldiskspec'";
+    target_cmd_root($ho, $cmd, 100);
+}
+
 1;
