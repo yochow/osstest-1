@@ -150,8 +150,6 @@ END
 	});
     }
 
-    target_core_dump_setup($ho);
-
     host_install_postboot_complete($ho);
 
     logm('OK: install completed');

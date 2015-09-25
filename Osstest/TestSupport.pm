@@ -2399,6 +2399,7 @@ sub guest_editconfig_nocd ($$) {
 
 sub host_install_postboot_complete ($) {
     my ($ho) = @_;
+    target_core_dump_setup($ho);
     target_cmd_root($ho, "update-rc.d osstest-confirm-booted start 99 2 .");
 }
 
