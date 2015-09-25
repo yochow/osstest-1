@@ -171,7 +171,7 @@ sub check_ip ($$) {
     }
     $gho->{Ip}= $best->{' addr'};
 
-    report_once($gho, 'guest_check_ip', 
+    report_once($gho, 'leases::check_ip', 
 		"guest $gho->{Name}: $gho->{Ether} $gho->{Ip}");
     return undef;
 }
