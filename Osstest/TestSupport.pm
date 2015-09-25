@@ -63,7 +63,7 @@ BEGIN {
                       target_install_packages target_install_packages_norec
                       target_jobdir target_extract_jobdistpath_subdir
                       target_extract_jobdistpath
-                      lv_dev_mapper
+                      lv_create lv_dev_mapper
 
                       poll_loop tcpconnect await_tcp
                       contents_make_cpio file_simple_write_contents
@@ -711,6 +711,15 @@ sub poll_loop ($$$&) {
         fail("$what: wait timed out: $bad.");
     }
     logm("$what: ok. (${waited}s)");
+}
+
+sub lv_create ($$$$) {
+    my ($ho, $vg, $lv, $mb) = @_;
+    my $lvdev = "/dev/$vg/$lv";
+    target_cmd_root($ho, "lvremove -f $lvdev ||:");
+    target_cmd_root($ho, "lvcreate -L ${mb}M -n $lv $vg");
+    target_cmd_root($ho, "dd if=/dev/zero of=$lvdev count=10");
+    return $lvdev;
 }
 
 sub lv_dev_mapper ($$) {
@@ -1692,9 +1701,7 @@ sub prepareguest ($$$$$$) {
 
 sub prepareguest_part_lvmdisk ($$$) {
     my ($ho, $gho, $disk_mb) = @_;
-    target_cmd_root($ho, "lvremove -f $gho->{Lvdev} ||:");
-    target_cmd_root($ho, "lvcreate -L ${disk_mb}M -n $gho->{Lv} $gho->{Vg}");
-    target_cmd_root($ho, "dd if=/dev/zero of=$gho->{Lvdev} count=10");
+    lv_create($ho, $gho->{Vg}, $gho->{Lv}, $disk_mb);
 }
 
 sub make_vhd ($$$) {
