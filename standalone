@@ -35,6 +35,11 @@ Operations:
   hosts next time. Otherwise osstest will complain if you change the
   host(s) which a job is running on on successive runs.
 
+* get-job-status [cf] [JOB]
+
+  Prints the status (pass, fail, running, etc) of the given job to
+  stdout.
+
 Options:
 
 -c FILE, --config=FILE        Use FILE as configuration file
@@ -140,8 +145,9 @@ if [ $reuse -eq 0 ]; then
     read
 fi
 
-if [ ! -f standalone.db ] ; then
-    echo "No standalone.db? Run standalone-reset." >&2
+db="standalone.db"
+if [ ! -f $db ] ; then
+    echo "No $db? Run standalone-reset." >&2
     exit 1
 fi
 
@@ -197,6 +203,14 @@ with_logging() {
 	echo "FAILED rc=${rc}" >&2
 	exit $rc
     fi
+}
+
+job_status() {
+    flight=$1; shift
+    job=$1; shift
+
+    OSSTEST_CONFIG=$config \
+        ./cs-adjust-flight $flight job-status $job
 }
 
 # other potential ops:
@@ -303,6 +317,20 @@ case $op in
 	OSSTEST_HOST_REUSE=$reuse \
 	OSSTEST_JOB=$job \
 	    with_logging logs/$flight/$job.$ts.log ./$ts $hosts $@
+	;;
+
+    get-job-status)
+	need_flight;
+
+	if [ $# -ne 1 ] ; then
+	    echo "get-job-status: Need job" >&2
+	    exit 1
+	fi
+
+	job=$1; shift
+
+	job_status $flight $job
+
 	;;
     *)
 	echo "Unknown op $op" ; exit 1 ;;
