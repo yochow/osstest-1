@@ -810,6 +810,20 @@ sub power_state ($$) {
 sub selecthost ($) {
     my ($ident) = @_;
     # must be run outside transaction
+
+    # $ident is <identspec>
+    #
+    # <identspec> can be <ident>, typically "host" or "xxx_host"
+    # which means look up the runvar $r{$ident} which
+    # contains <hostspec>
+    # OR
+    # <identspec> can be <ident>=<hostspec>
+    # which means ignore <ident> except for logging purposes etc.
+    # and use <hostspec>
+    #
+    # <hostspec> is <hostname> which means use that host (and all
+    # its flags and properties from the configuration and database)
+
     my $name;
     if ($ident =~ m/=/) {
         $ident= $`;
@@ -917,7 +931,7 @@ sub selecthost ($) {
 
     $mjobdb->host_check_allocated($ho);
 
-    logm("host: selected $ho->{Name} ".
+    logm("host $ho->{Ident}: selected $ho->{Name} ".
 	 (defined $ho->{Ether} ? $ho->{Ether} : '<unknown-ether>').
 	 " $ho->{Ip}".
          (!$ho->{Shared} ? '' :
