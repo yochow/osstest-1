@@ -1,1 +1,9 @@
 OSSTEST_EMAIL_HEADER=daily-cron-email-osstest
+
+# Sites which run baseline only tests will usually be running a
+# separate flight to merge osstest from upstream and do not need to do
+# baseline tests of it too.
+if [ x"$OSSTEST_BASELINES_ONLY" = xy ] ; then
+    echo "Not baseline testing osstest"
+    exit 1
+fi
