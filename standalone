@@ -300,6 +300,11 @@ case $op in
 	OSSTEST_HOST_REUSE=$reuse \
 	OSSTEST_SIMULATE=$dryrun \
 	    with_logging logs/$flight/$job.log ./sg-run-job $job
+
+	status=`job_status $flight $job`
+	echo "$flight.$job status = $status" >&2
+	if [ "x$status" != xpass ] ; then exit 1; fi
+
 	;;
     run-test)
 	need_flight; need_host
