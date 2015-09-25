@@ -807,6 +807,7 @@ sub power_state ($$) {
 
 #---------- host selection and properties ----------
 
+sub selecthost ($);
 sub selecthost ($) {
     my ($ident) = @_;
     # must be run outside transaction
@@ -821,8 +822,12 @@ sub selecthost ($) {
     # which means ignore <ident> except for logging purposes etc.
     # and use <hostspec>
     #
-    # <hostspec> is <hostname> which means use that host (and all
+    # <hostspec> can be <hostname> which means use that host (and all
     # its flags and properties from the configuration and database)
+    # OR
+    # <hostspec> can be <parent_identspec>:<domname> meaning use the
+    # Xen domain name <domname> on the host specified by
+    # <parent_identspec>, which is an <identspec> as above.
 
     my $name;
     if ($ident =~ m/=/) {
@@ -838,11 +843,41 @@ sub selecthost ($) {
         Ident => $ident,
         Name => $name,
         TcpCheckPort => 22,
+        NestingLevel => 0,
         Info => [],
     };
     if (defined $job) {
 	$ho->{Suite} = get_runvar_default("${ident}_suite",$job,
 					  $c{DebianSuite});
+    }
+
+    #----- handle hosts which are themselves guests (nested) -----
+
+    if ($name =~ s/^(.*)://) {
+	my $parentname = $1;
+	my $parent = selecthost($parentname);
+	my $child = selectguest($name,$parent);
+	$child->{Ident} = $ho->{Ident};
+	$child->{Info} = [ "in", $parent->{Name}, @{ $parent->{Info} } ];
+	$child->{NestingLevel} = $parent->{NestingLevel}+1;
+
+	# $child->{Power} = 'guest';   todo
+	power_cycle_host_setup($child);
+
+	$child->{Properties}{Serial} = 'noop'; # todo
+	serial_host_setup($child);
+
+	my $msg = "L$child->{NestingLevel} host $child->{Ident}:";
+	$msg .= " guest $child->{Guest} (@{ $child->{Info} })";
+	$msg .= " $child->{Ether}";
+
+	my $err = guest_check_ip($child);
+	$msg .= " ".(defined $err ? "<no-ip> $err" : $child->{Ip});
+
+	logm($msg);
+
+	# all the rest of selecthost is wrong for this case
+	return $child;
     }
 
     #----- calculation of the host's properties -----
