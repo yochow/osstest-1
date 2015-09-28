@@ -34,6 +34,7 @@ BEGIN {
     $VERSION     = 1.00;
     @ISA         = qw(Exporter);
     @EXPORT      = qw(debian_boot_setup
+                      debian_overlays
                       %preseed_cmds
                       preseed_base
                       preseed_create
@@ -775,14 +776,23 @@ echo COMPRESS=/usr/sbin/osstest-initramfs-gzip >> \\
 END
 }
 
+sub debian_overlays ($) {
+    my ($func) = @_;
+    $func->($c{OverlayLocal}, 'overlay-local.tar');
+    $func->('overlay', 'overlay.tar');
+}
+
 sub preseed_base ($$$$;@) {
     my ($ho,$suite,$sfx,$extra_packages,%xopts) = @_;
 
     $xopts{ExtraPreseed} ||= '';
 
     preseed_ssh($ho, $sfx);
-    preseed_hook_overlay($ho, $sfx, $c{OverlayLocal}, 'overlay-local.tar');
-    preseed_hook_overlay($ho, $sfx, 'overlay', 'overlay.tar');
+
+    debian_overlays(sub {
+	my ($srcdir, $tfilename) = @_;
+	preseed_hook_overlay($ho, $sfx, $srcdir, $tfilename);
+    });
 
     my $preseed = <<"END";
 d-i debian-installer/locale string en_GB
