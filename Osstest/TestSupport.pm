@@ -323,9 +323,13 @@ sub target_adjust_timeout ($$) {
 #---------- running commands eg on targets ----------
 
 sub cmd {
-    my ($timeout,$stdout,@cmd) = @_;
+    my ($timeout,$stdin,$stdout,@cmd) = @_;
     my $child= fork;  die $! unless defined $child;
     if (!$child) {
+        if (defined $stdin) {
+            open STDIN, '<&', $stdin
+                or die "STDIN $stdin $cmd[0] $!";
+        }
         if (defined $stdout) {
             open STDOUT, '>&', $stdout
                 or die "STDOUT $stdout $cmd[0] $!";
@@ -395,19 +399,20 @@ sub sshopts () {
 }
 
 sub tcmdex {
-    my ($timeout,$stdout,$cmd,$optsref,@args) = @_;
+    my ($timeout,$stdin,$stdout,$cmd,$optsref,@args) = @_;
     logm("executing $cmd ... @args");
     # We use timeout(1) as a backstop, in case $cmd doesn't die.  We
     # need $cmd to die because we won't release the resources we own
     # until all of our children are dead.
-    my $r= cmd($timeout,$stdout, 'timeout',$timeout+30, $cmd,@$optsref,@args);
+    my $r= cmd($timeout,$stdin,$stdout,
+	       'timeout',$timeout+30, $cmd,@$optsref,@args);
     $r and die "status $r";
 }
 
 sub tgetfileex {
     my ($ruser, $ho,$timeout, $rsrc,$ldst) = @_;
     unlink $ldst or $!==&ENOENT or die "$ldst $!";
-    tcmdex($timeout,undef,
+    tcmdex($timeout,undef,undef,
            'scp', sshopts(),
            sshuho($ruser,$ho).":$rsrc", $ldst);
 } 
@@ -424,12 +429,12 @@ sub tputfileex {
     my ($ruser, $ho,$timeout, $lsrc,$rdst, $rsync) = @_;
     my @args= ($lsrc, sshuho($ruser,$ho).":$rdst");
     if (!defined $rsync) {
-        tcmdex($timeout,undef,
+        tcmdex($timeout,undef,undef,
                'scp', sshopts(),
                @args);
     } else {
         unshift @args, $rsync if length $rsync;
-        tcmdex($timeout,undef,
+        tcmdex($timeout,undef,undef,
                'rsync', [ '-e', 'ssh '.join(' ',@{ sshopts() }) ],
                @args);
     }
@@ -625,19 +630,19 @@ sub target_await_down ($$) {
 }    
 
 sub tcmd { # $tcmd will be put between '' but not escaped
-    my ($stdout,$user,$ho,$tcmd,$timeout,$extrasshopts) = @_;
+    my ($stdin,$stdout,$user,$ho,$tcmd,$timeout,$extrasshopts) = @_;
     $timeout=30 if !defined $timeout;
     target_adjust_timeout($ho,\$timeout);
-    tcmdex($timeout,$stdout,
+    tcmdex($timeout,$stdin,$stdout,
            'ssh', sshopts(), @{ $extrasshopts || [] },
            sshuho($user,$ho), $tcmd);
 }
-sub target_cmd ($$;$$) { tcmd(undef,'osstest',@_); }
-sub target_cmd_root ($$;$$) { tcmd(undef,'root',@_); }
+sub target_cmd ($$;$$) { tcmd(undef,undef,'osstest',@_); }
+sub target_cmd_root ($$;$$) { tcmd(undef,undef,'root',@_); }
 
 sub tcmdout {
     my $stdout= IO::File::new_tmpfile();
-    tcmd($stdout,@_);
+    tcmd(undef,$stdout,@_);
     $stdout->seek(0,0) or die "$stdout $!";
     my $r;
     { local ($/) = undef;
