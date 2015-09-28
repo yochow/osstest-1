@@ -1,0 +1,32 @@
+#!/bin/sh
+exit 0
+
+# In a default Debian install, this script reloads (or, in some
+# versions of Debian, restarts) sshd as new network interfaces come
+# up.  This is in case you have specific listen addresses specified in
+# the config.
+#
+# But the default config listens on 0.0.0.0 and ::.  So sshd is active
+# as soon as an interface is up, and does not need to be restarted or
+# reloaded.
+#
+# This restarting or reloading is harmful because it causes ssh to
+# stop listening briefly.  We can see the following race:
+#
+#  target sshd       target dhcp client     osstest controller
+#
+#   starts            starts
+#   binds to ANY      obtains lease
+#                     configures eth0
+#                                            connects to :22 with nc
+#   accepts conn                             nc succeeds
+#                                            decides target sshd is up
+#                     runs ifup hook
+#                     ifup hook reloads
+#
+#   gets SIGHUP
+#   closes listen socket
+#   rereads config                           runs ssh root@target
+#                                            ssh gets ECONNREFUSED
+#   opens new listen socket
+#                                            declares test fail
