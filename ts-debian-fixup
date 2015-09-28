@@ -50,15 +50,17 @@ sub ether () {
     store_runvar("$gho->{Guest}_tcpcheckport", 22);
 }
 
+our $mountpoint = '/mnt';
+
 sub access () {
     guest_umount_lv($ho, $gho);
     target_cmd_root($ho, <<END);
         set -ex
-        mount /dev/$gho->{Vg}/$gho->{Lv} /mnt
+        mount /dev/$gho->{Vg}/$gho->{Lv} $mountpoint
         perl -i~ -pe "s/^root:[^:]+:/root::/" /etc/shadow
-        mkdir -p /mnt/root/.ssh /mnt/etc/ssh
-        cp -a /root/.ssh/* /mnt/root/.ssh/.
-        cp -a /etc/ssh/ssh_host_*key* /mnt/etc/ssh/.
+        mkdir -p $mountpoint/root/.ssh $mountpoint/etc/ssh
+        cp -a /root/.ssh/* $mountpoint/root/.ssh/.
+        cp -a /etc/ssh/ssh_host_*key* $mountpoint/etc/ssh/.
 END
 }
 
@@ -66,7 +68,7 @@ our $extra;
 
 sub console () {
     my $console=
-        target_kernkind_console_inittab($ho,$gho,"/mnt");
+        target_kernkind_console_inittab($ho,$gho,"$mountpoint");
     return unless length $console;
     
     my $xextra= "console=$console earlyprintk=xen";
@@ -97,7 +99,7 @@ sub filesystems () {
         set -ex
         perl -i~ -pe "
             s,^(/dev/)sda(\\\\d+),\\\${1}$rootdev\\\$2,;
-        " /mnt/etc/fstab
+        " $mountpoint/etc/fstab
 END
 }
 
