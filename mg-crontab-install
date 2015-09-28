@@ -1,0 +1,28 @@
+#!/bin/bash
+# usage: ./mg-crontab-install CRONTAB
+#
+# where CRONTAB is a file containing a line
+#  #@@ USER@HOSTFQDN
+
+set -e -o posix
+
+case "$#.$1" in
+1.[^-]*) crontab="$1"; shift ;;
+*) echo >&2 "bad usage"; exit 1 ;;
+esac
+
+expect="#@@ "
+expect+="`whoami`"
+expect+="@"
+expect+="`hostname -f`"
+
+if ! grep -xF "$expect" "$crontab" >/dev/null; then
+	exec >&2
+	echo "running as: $expect"
+	printf "file is for: "
+	grep '^#@@' "$crontab" || echo "no #@@ line?"
+	exit 2
+fi
+
+crontab "$crontab"
+echo "crontab installed ($expect)"

@@ -1,3 +1,6 @@
+#!/bin/bash ./mg-crontab-install
+#@@ osstest@osstest.test-lab.xenproject.org
+
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=ian.jackson@citrix.com,ian.campbell@eu.citrix.com
 # m		h	dom mon dow	command
