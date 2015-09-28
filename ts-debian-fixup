@@ -19,6 +19,7 @@ use strict qw(vars);
 use DBI;
 use Osstest;
 use Osstest::TestSupport;
+use Osstest::Debian;
 
 tsreadconfig();
 
@@ -61,6 +62,17 @@ sub access () {
         mkdir -p $mountpoint/root/.ssh $mountpoint/etc/ssh
         cp -a /root/.ssh/* $mountpoint/root/.ssh/.
         cp -a /etc/ssh/ssh_host_*key* $mountpoint/etc/ssh/.
+END
+}
+
+sub overlay ($$) {
+    my ($srcdir, $tfilename) = @_;
+
+    my $fh = IO::File::new_tmpfile() or die $!;
+    contents_make_cpio($fh,'ustar',$srcdir);
+    seek $fh,0,0 or die "$!";
+    target_cmd_inputfh_root($ho, $fh, <<END);
+        tar -C $mountpoint -xf -
 END
 }
 
@@ -175,6 +187,7 @@ savecfg();
 ether();
 target_kernkind_check($gho);
 access();
+debian_overlays(\&overlay);
 console();
 filesystems();
 otherfixupcfg();
