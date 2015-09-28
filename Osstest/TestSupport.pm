@@ -50,6 +50,7 @@ BEGIN {
 
                       target_cmd_root target_cmd target_cmd_build
                       target_cmd_output_root target_cmd_output
+                      target_cmd_inputfh_root
                       target_getfile target_getfile_root
                       target_putfile target_putfile_root
                       target_putfilecontents_stash
@@ -654,6 +655,11 @@ sub tcmdout {
 
 sub target_cmd_output ($$;$) { tcmdout('osstest',@_); }
 sub target_cmd_output_root ($$;$) { tcmdout('root',@_); }
+
+sub target_cmd_inputfh_root ($$$;$$) {
+    my ($tho,$stdinfh,$tcmd,@rest) = @_;
+    tcmd($stdinfh,undef,'root',$tho,$tcmd,@rest);
+}
 
 sub poll_loop ($$$&) {
     my ($maxwait, $interval, $what, $code) = @_;
