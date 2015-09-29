@@ -279,25 +279,25 @@ sub hid_find_possibilities ($) {
 
     my $use= $hid->{OverrideUse} || $r{ $hid->{Ident} };
 
-    my $findhostsq;
-    if (defined $use) {
-        print DEBUG "HID $hid->{Ident} USE $use\n";
-	$findhostsq= $dbh_tests->prepare(<<END);
-	    SELECT *
-	      FROM resources
-	     WHERE restype=? AND resname=? AND shareix=0
-END
-        $findhostsq->execute('host',$use);
-    } else {
-        print DEBUG "HID $hid->{Ident} INTENDED $fi->{intended}\n";
-	$findhostsq= $dbh_tests->prepare(<<END);
+    print DEBUG "HID $hid->{Ident} INTENDED $fi->{intended}\n";
+    my $findhostsq = <<END;
 	    SELECT *
 	      FROM resources JOIN hostflags
 		ON (restype='host' AND shareix=0 AND
 		    resname=hostname AND hostflag=?)
 END
-        $findhostsq->execute("blessed-$fi->{intended}");
+    my @findhostsqvars = ("blessed-$fi->{intended}");
+
+    if (defined $use) {
+        print DEBUG "HID $hid->{Ident} USE $use\n";
+	$findhostsq .= <<END;
+	     WHERE restype='host' AND resname=? AND shareix=0
+END
+        push @findhostsqvars, $use;
     }
+
+    $findhostsq= $dbh_tests->prepare($findhostsq);
+    $findhostsq->execute(@findhostsqvars);
 
     my $equivstatusq= $dbh_tests->prepare(<<END);
             SELECT flight, job, val, status
@@ -423,7 +423,7 @@ END
 
     if (!@candidates) {
         if (defined $use) {
-            logm("specified host $use for $hid->{Ident} nonexistent?");
+ logm("specified host $use for $hid->{Ident} nonexistent or unblessed?");
         } else {
             logm("no suitable host for $hid->{Ident} (out of $any)");
         }
