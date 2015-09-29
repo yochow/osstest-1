@@ -2027,7 +2027,8 @@ sub target_kernkind_console_inittab ($$$) {
     if (defined $console && length $console) {
         target_cmd_root($ho, <<END);
             set -ex
-            perl -i~ -ne "
+            egrep '^[0-9a-zA-Z].*getty.* $console\$' $inittabpath \\
+	    || perl -i~ -ne "
                 next if m/^xc:/;
                 print \\\$_ or die \\\$!;
                 next unless s/^1:/xc:/;
