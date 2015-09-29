@@ -1116,6 +1116,8 @@ echo Booting
 bootz \\\${kernel_addr_r} \\\${ramdisk_addr_r}:\\\${filesize} \\\${fdt_addr}
 EOF
 
+in-target dpkg --purge flash-kernel
+
 in-target mkimage -A arm -T script -d /boot/boot.deb /boot/boot.scr.deb
 in-target cp /boot/boot.scr.deb /boot/boot.scr
 END
