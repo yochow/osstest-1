@@ -366,7 +366,6 @@ END
 		push @{ $candrow->{Warnings} },
 		    "host has multiple equivalence class flags";
 	    }
-	    $equivflagscheckq->finish();
 	}
 
         print DEBUG "$dbg FLAGS MISSINGFLAGS: @missingflags.\n";
@@ -419,7 +418,9 @@ END
 	print DEBUG "$dbg CANDIDATE.\n";
     }
     $findhostsq->finish();
+    $equivflagscheckq->finish();
     $equivstatusq->finish();
+    $resprop_q->finish();
 
     if (!@candidates) {
         if (defined $use) {
