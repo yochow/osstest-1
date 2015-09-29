@@ -1102,8 +1102,21 @@ set -ex
 
 r=/target #/
 
-kernel=`readlink \$r/vmlinuz | sed -e 's|boot/||'`
-initrd=`readlink \$r/initrd.img | sed -e 's|boot/||'`
+if [ -f \$r/vmlinuz ] ; then
+    echo "Kernel+initrd symlinks are in /"
+    kernel=`readlink \$r/vmlinuz | sed -e 's|boot/||'`
+    initrd=`readlink \$r/initrd.img | sed -e 's|boot/||'`
+elif [ -f \$r/boot/vmlinuz ] ; then
+    echo "Kernel+initrd symlinks are in /boot"
+    kernel=`readlink \$r/boot/vmlinuz`
+    initrd=`readlink \$r/boot/initrd.img`
+else
+    echo "No kernel found!"
+    exit 1
+fi
+
+echo Using kernel \$kernel
+echo Using initrd \$initrd
 
 cat >\$r/boot/boot.deb <<EOF
 setenv bootargs $bootargs
