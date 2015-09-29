@@ -743,9 +743,19 @@ sub alloc_resources {
 	    }]);
 
 	    if ($bookinglist && $ok!=-1) {
+		my %prstart;
+		foreach my $book (@{ $bookinglist->{Bookings} }) {
+		    my $pr = $book->{Reso};
+		    $pr .= " [$book->{Xinfo}]" if defined $book->{Xinfo};
+		    push @{ $prstart{ $book->{Start} } }, $pr;
+		}
+		my $pr = '';
+		foreach my $start (sort { $a <=> $b } keys %prstart) {
+		    $pr .= " \@$start @{ $prstart{$start} }";
+		}
 		my $jbookings= to_json($bookinglist);
                 chomp($jbookings);
-                logm("resource allocation: booking.");
+                logm("resource allocation: booking$pr.");
 		$debugm->("bookings = ", $jbookings);
 
 		printf $qserv "book-resources %d\n", length $jbookings
