@@ -1005,7 +1005,7 @@ sub open_unique_stashfile ($) {
     my $dh;
     for (;;) {
         my $df= $$leafref;
-        $dh= new IO::File "$stash/$df", O_WRONLY|O_EXCL|O_CREAT;
+        $dh= new IO::File "$stash/$df", O_RDWR|O_EXCL|O_CREAT;
         last if $dh;
         die "$df $!" unless $!==&EEXIST;
         next_unique_name $leafref;
