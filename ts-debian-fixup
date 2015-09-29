@@ -58,7 +58,8 @@ sub access () {
     target_cmd_root($ho, <<END);
         set -ex
         mount /dev/$gho->{Vg}/$gho->{Lv} $mountpoint
-        perl -i~ -pe "s/^root:[^:]+:/root::/" /etc/shadow
+        perl -i~ -pe "s/^root:[^:]+:/root:aabyZIU4rIOok:/" /etc/shadow
+        # crypt of `xenroot'
         mkdir -p $mountpoint/root/.ssh $mountpoint/etc/ssh
         cp -a /root/.ssh/* $mountpoint/root/.ssh/.
         cp -a /etc/ssh/ssh_host_*key* $mountpoint/etc/ssh/.
