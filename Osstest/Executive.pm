@@ -221,6 +221,7 @@ our $red=    '#ff8888';
 our $yellow= '#ffff00';
 our $purple= '#ff00ff';
 our $blue=   '#0000ff';
+our $grey=   '#888888';
 
 sub report_run_getinfo ($) {
     # $f is a joined flight/job row, must contain at least
@@ -272,8 +273,10 @@ END
 	};
     } elsif ($status eq 'blocked') {
         return $single->("blocked", $purple),
+    } elsif ($status eq 'queued') {
+        return $single->("($status)", $grey),
     } else {
-        return $single->("($f->{status})", $yellow);
+        return $single->("($status)", $yellow);
     }
 }
 
