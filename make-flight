@@ -460,9 +460,28 @@ do_pv_debian_tests () {
     do_pv_debian_test_one libvirt '' libvirt '' enable_xsm=$xsm
   done
 
+  # We compute a desired architecture for each combination of ts and fmt
+  # Within each fmt we rotate through the list of arches
+  # The starting list rotates once per ts, so that we try to
+  # exercise each fmt on each arch family.
+  local fmtarches_outer="i386 armhf amd64 armhf"
+  local endfmt="do_pv_debian_tests-missing-ts-fmt-for-dom0arch="
+
   for ts in xl libvirt ; do
 
+    local fmtarches=$fmtarches_outer
+    fmtarches_outer="${fmtarches_outer#* } ${fmtarches_outer%% *}"
+
     for fmt in raw vhd qcow2 ; do
+
+      local fmtarch="${fmtarches%% *}"
+      fmtarches="${fmtarches#* } $fmtarch"
+
+      if [ "x$fmtarch" != "x$dom0arch" ]; then
+        continue
+      else
+        endfmt=": "
+      fi
 
       fmt_runvar="debian_diskfmt=$fmt"
 
@@ -475,6 +494,8 @@ do_pv_debian_tests () {
 
     done
   done
+
+  $endfmt$dom0arch
 }
 
 test_matrix_do_one () {
