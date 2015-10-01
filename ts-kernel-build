@@ -38,10 +38,10 @@ selectbuildhost(\@ARGV);
 builddirsprops();
 
 my $archparms = {
-    'arm64' => {                          Image => 'Image' },
-    'armhf' => { DefConfig => 'multi_v7', Image => 'zImage' },
-    'i386'  => {                          Image => 'bzImage' },
-    'amd64' => {                          Image => 'bzImage' }
+    'arm64' => {                          Image => 'Image',  Dtbs => 1 },
+    'armhf' => { DefConfig => 'multi_v7', Image => 'zImage', Dtbs => 1 },
+    'i386'  => {                          Image => 'bzImage'           },
+    'amd64' => {                          Image => 'bzImage'           }
 };
 my $parms = $archparms->{ $r{arch} };
 
@@ -380,10 +380,17 @@ sub kinstall () {
     $kernfile = "arch/$karch/boot/$parms->{Image}"
 	if !defined $kernfile;
 
+    my $dtbs_install = '';
+    $dtbs_install = 'dtbs_install' if $parms->{Dtbs};
+
     target_cmd_build($ho, 300, $builddir, <<END);
+	rm -rf dist
 	mkdir -p dist/boot dist/lib/modules
 	cd linux
-	make $makeflags INSTALL_MOD_PATH=$builddir/dist modules_install
+	make $makeflags \\
+		INSTALL_PATH=$builddir/dist/boot \\
+		INSTALL_MOD_PATH=$builddir/dist \\
+		modules_install $dtbs_install
 	cp System.map $builddir/dist/boot/
 	cp $kernfile $builddir/dist/boot/vmlinuz
 	cp .config $builddir/dist/boot/config
