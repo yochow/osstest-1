@@ -142,11 +142,22 @@ sub uboot_common_kernel_bootargs ($)
     return @bootargs;
 }
 
-sub uboot_scr_load_dtb () {
+# ts-host-install will install the OS-supplied dtbs directly into
+# /boot/dtbs without a subdirectory, while the kernel dist tarball
+# produced by ts-kernel-build will install the DTBS from that kernel
+# into /boot/dtbs/$version.
+#
+# Therefore the optional $kvers argument allows the selection of
+# either the OS-supplied DTBS (when undef) or those of a specific
+# kernel built by osstest.
+sub uboot_scr_load_dtb (;$) {
+    my ($kvers) = @_;
+    $kvers ||= '';
+    $kvers .= '/' if $kvers;
     return <<END;
 if test -z "\\\${fdt_addr}" && test -n "\\\${fdtfile}" ; then
-    echo Loading dtbs/\\\${fdtfile}
-    ext2load scsi 0 \\\${fdt_addr_r} dtbs/\\\${fdtfile}
+    echo Loading dtbs/$kvers\\\${fdtfile}
+    ext2load scsi 0 \\\${fdt_addr_r} dtbs/$kvers\\\${fdtfile}
     setenv fdt_addr \\\${fdt_addr_r}
 fi
 END
@@ -229,7 +240,7 @@ END
 	my $early_commands = get_host_property($ho, 'UBootScriptEarlyCommands', '');
 	my $xen_addr_r = get_host_property($ho, 'UBootSetXenAddrR', undef);
 
-	my $load_dtb = uboot_scr_load_dtb();
+	my $load_dtb = uboot_scr_load_dtb($want_kernver);
 
 	my $set_xen_addr_r =
 	    $xen_addr_r ? "setenv xen_addr_r $xen_addr_r" : "";
