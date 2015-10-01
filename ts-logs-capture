@@ -78,6 +78,8 @@ END
                 logm("logfile $logfilepat pattern expansion failed: $@");
                 next;
             }
+            logm("at least one pattern expansion succeeded") if !$ok;
+            $ok= 1;
             next if $logfileslist eq $logfilepat;
         }
         foreach my $logfile (split / /, $logfileslist) {
@@ -97,8 +99,9 @@ END
                 logm("logfile $logfile fetch failed: $@");
                 next;
             }
+            logm("at least one logfile fetched") if !$ok;
+            $ok= 1;
         }
-        $ok= 1;
     }
     return $ok;
 }
