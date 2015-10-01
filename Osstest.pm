@@ -40,7 +40,9 @@ BEGIN {
                       db_begin_work db_prepare
                       ensuredir get_filecontents_core_quiet system_checked
                       nonempty visible_undef show_abs_time
-                      %arch_debian2xen %arch_xen2debian $cfgvar_re
+                      %arch_debian2xen %arch_xen2debian
+                      %arch_debian2linux %arch_linux2debian
+                      $cfgvar_re
                       );
     %EXPORT_TAGS = ( );
 
@@ -61,6 +63,13 @@ our %arch_debian2xen = qw(i386 x86_32
 			  armhf armhf);
 our %arch_xen2debian;
 $arch_xen2debian{$arch_debian2xen{$_}} = $_ foreach keys %arch_debian2xen;
+
+our %arch_debian2linux = qw(i386 x86
+			    amd64 x86
+			    armhf arm);
+our %arch_linux2debian;
+$arch_linux2debian{$arch_debian2linux{$_}} = $_
+    foreach keys %arch_debian2linux;
 
 our $cfgvar_re = '[A-Z][0-9a-zA-Z-_]*';
 
