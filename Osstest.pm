@@ -60,13 +60,15 @@ scalar *main::DEBUG;
 
 our %arch_debian2xen = qw(i386 x86_32
 			  amd64 x86_64
-			  armhf armhf);
+			  armhf armhf
+                          arm64 arm64);
 our %arch_xen2debian;
 $arch_xen2debian{$arch_debian2xen{$_}} = $_ foreach keys %arch_debian2xen;
 
 our %arch_debian2linux = qw(i386 x86
 			    amd64 x86
-			    armhf arm);
+			    armhf arm
+                            arm64 arm64);
 our %arch_linux2debian;
 $arch_linux2debian{$arch_debian2linux{$_}} = $_
     foreach keys %arch_debian2linux;

@@ -38,6 +38,7 @@ selectbuildhost(\@ARGV);
 builddirsprops();
 
 my $archparms = {
+    'arm64' => {                          Image => 'Image' },
     'armhf' => { DefConfig => 'multi_v7', Image => 'zImage' },
     'i386'  => {                          Image => 'bzImage' },
     'amd64' => {                          Image => 'bzImage' }
