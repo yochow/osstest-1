@@ -38,9 +38,9 @@ selectbuildhost(\@ARGV);
 builddirsprops();
 
 my $archparms = {
-    'armhf' => { DefConfig => 'multi_v7', KernelImage => 'arch/arm/boot/zImage' },
-    'i386'  => {                          KernelImage => 'arch/x86/boot/bzImage' },
-    'amd64' => {                          KernelImage => 'arch/x86/boot/bzImage' }
+    'armhf' => { DefConfig => 'multi_v7', Image => 'zImage' },
+    'i386'  => {                          Image => 'bzImage' },
+    'amd64' => {                          Image => 'bzImage' }
 };
 my $parms = $archparms->{ $r{arch} };
 
@@ -375,7 +375,9 @@ END
 
 sub kinstall () {
     my $kernfile= $r{kimagefile};
-    $kernfile= $parms->{KernelImage} if !defined $kernfile;
+    my $karch = $arch_debian2linux{$r{arch}};
+    $kernfile = "arch/$karch/boot/$parms->{Image}"
+	if !defined $kernfile;
 
     target_cmd_build($ho, 300, $builddir, <<END);
 	mkdir -p dist/boot dist/lib/modules
