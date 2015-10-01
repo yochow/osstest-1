@@ -42,6 +42,7 @@ my $archparms = {
     'i386'  => { DefConfig => 'defconfig',          KernelImage => 'arch/x86/boot/bzImage' },
     'amd64' => { DefConfig => 'defconfig',          KernelImage => 'arch/x86/boot/bzImage' }
 };
+my $parms = $archparms->{ $r{arch} };
 
 sub enable_xen_config ();
 
@@ -329,7 +330,7 @@ END
         ed <$edscript enable-xen-config
         chmod +x enable-xen-config
         cd linux
-        make $archparms->{ $r{arch} }->{DefConfig}
+        make $parms->{DefConfig}
         # ARM defconfig omits modules for some reason...
         sed -e "s/^# CONFIG_MODULES is not set\$/CONFIG_MODULES=y/g" -i .config
         ../enable-xen-config .config
@@ -372,7 +373,7 @@ END
 
 sub kinstall () {
     my $kernfile= $r{kimagefile};
-    $kernfile= $archparms->{$r{arch}}->{KernelImage} if !defined $kernfile;
+    $kernfile= $parms->{KernelImage} if !defined $kernfile;
 
     target_cmd_build($ho, 300, $builddir, <<END);
 	mkdir -p dist/boot dist/lib/modules
