@@ -38,9 +38,9 @@ selectbuildhost(\@ARGV);
 builddirsprops();
 
 my $archparms = {
-    'armhf' => { DefConfig => 'multi_v7_defconfig', KernelImage => 'arch/arm/boot/zImage' },
-    'i386'  => { DefConfig => 'defconfig',          KernelImage => 'arch/x86/boot/bzImage' },
-    'amd64' => { DefConfig => 'defconfig',          KernelImage => 'arch/x86/boot/bzImage' }
+    'armhf' => { DefConfig => 'multi_v7', KernelImage => 'arch/arm/boot/zImage' },
+    'i386'  => {                          KernelImage => 'arch/x86/boot/bzImage' },
+    'amd64' => {                          KernelImage => 'arch/x86/boot/bzImage' }
 };
 my $parms = $archparms->{ $r{arch} };
 
@@ -326,11 +326,13 @@ END
     target_putfilecontents_stash($ho,100,enable_xen_config(),
                                  "$builddir/enable-xen-config");
 
+    my $defconfig = $parms->{DefConfig} ?
+	$parms->{DefConfig}."_defconfig" : "defconfig";
     target_cmd_build($ho, 1000, $builddir, <<END);
         ed <$edscript enable-xen-config
         chmod +x enable-xen-config
         cd linux
-        make $parms->{DefConfig}
+        make $defconfig
         # ARM defconfig omits modules for some reason...
         sed -e "s/^# CONFIG_MODULES is not set\$/CONFIG_MODULES=y/g" -i .config
         ../enable-xen-config .config
