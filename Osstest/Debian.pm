@@ -143,11 +143,11 @@ sub uboot_common_kernel_bootargs ($)
 }
 
 sub uboot_scr_load_dtb () {
-    return <<'END';
-if test -z "\${fdt_addr}" && test -n "\${fdtfile}" ; then
-    echo Loading dtbs/\${fdtfile}
-    ext2load scsi 0 \${fdt_addr_r} dtbs/\${fdtfile}
-    setenv fdt_addr \${fdt_addr_r}
+    return <<END;
+if test -z "\\\${fdt_addr}" && test -n "\\\${fdtfile}" ; then
+    echo Loading dtbs/\\\${fdtfile}
+    ext2load scsi 0 \\\${fdt_addr_r} dtbs/\\\${fdtfile}
+    setenv fdt_addr \\\${fdt_addr_r}
 fi
 END
 }
