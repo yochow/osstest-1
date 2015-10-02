@@ -1398,7 +1398,7 @@ sub guest_find_lv ($) {
     $gho->{Vg}= $r{"${gn}_vg"};
     $gho->{Lv}= $r{"${gn}_disk_lv"};
     $gho->{Lvdev}= (defined $gho->{Vg} && defined $gho->{Lv})
-        ? '/dev/'.$gho->{Vg}.'/'.$gho->{Lv} : undef;
+        ? lv_dev_mapper($gho->{Vg},$gho->{Lv}) : undef;
 }
 
 sub guest_find_diskimg($)
