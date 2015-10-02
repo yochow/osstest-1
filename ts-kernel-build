@@ -549,6 +549,9 @@ setopt CONFIG_BLK_CPQ_CISS_DA m
 
 setopt CONFIG_FHANDLE y
 
+# Needed for Jessie+ userspace when systemd is used.
+setopt CONFIG_CGROUPS y
+
 # Needed for efibootmgr
 setopt CONFIG_EFI_VARS y
 
