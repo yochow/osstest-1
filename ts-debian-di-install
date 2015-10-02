@@ -153,10 +153,13 @@ sub setup_netboot($$$)
 
 	my $di_path = $c{TftpPath}.'/'.$ho->{Tftp}{DiBase}.'/'.${arch}.'/'.$c{TftpDiVersion}.'-'.$ho->{Suite};
 
-        my $suffix = '';
-        $suffix .= "-xen" if ${arch} =~ m/amd64|i386/;
-	$kernel = "$di_path/vmlinuz$suffix";
-	$ramdisk = "$di_path/initrd.gz$suffix";
+        if (${arch} =~ m/amd64|i386/) {
+	    $kernel = "$di_path/vmlinuz-xen";
+	    $ramdisk = "$di_path/initrd.gz-xen";
+        } else {
+	    $kernel = "$di_path/linux";
+	    $ramdisk = "$di_path/initrd.gz";
+        }
 
 	target_putfile_root($ho, 60, $kernel, "$didir/kernel_${suite}_${arch}");
 	target_putfile_root($ho, 60, $ramdisk, "$didir/ramdisk_${suite}_${arch}");
