@@ -62,7 +62,7 @@ sub prep () {
             dd if=$rimagebase.raw of=$gho->{Lvdev} bs=1M
             rm $rimagebase.raw
 
-            kpartx -a $gho->{Lvdev}
+            kpartx -s -a $gho->{Lvdev}
             mkdir -p $mnt
             mount -t ufs -o ufstype=ufs2,rw $gho->{Lvdev}${root_part_nr} $mnt
 END
