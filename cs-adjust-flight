@@ -3,9 +3,9 @@
 # destination flight must already exist
 #
 # args:
-#   <dst-flight> [<change> ...]
+#   <dst-flight> [<op> ...]
 #
-# <change>:
+# <op>:
 #   copy <flight>
 #   copy-jobs <flight> <job-spec>
 #   jobs-list <job-spec>
@@ -16,6 +16,7 @@
 #   runvar-perlop <job-spec> <var-spec> <perl-expr>
 #   recipe-set <job-spec> <new-value>
 #   intended-blessing <intended-blessing>
+#   branch-set <new-branch>
 #
 # <foo-spec>:
 #   <foo-name>
@@ -330,7 +331,7 @@ sub change__intended_blessing {
     verbose "$dstflight blessing set to $blessing\n";
 }
 
-sub change__branch {
+sub change__branch_set {
     die unless @changes >= 1;
     my $branch = shift @changes;
 
