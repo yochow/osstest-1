@@ -149,6 +149,7 @@ test_matrix_branch_filter_callback () {
         case "$branch" in
         linux-3.0) return 1;;
         linux-3.4) return 1;;
+        linux-3.10) return 1;;
         linux-mingo-tip-master) return 1;;
         linux-*) ;;
         qemu-upstream-4.2-testing) return 1;;
