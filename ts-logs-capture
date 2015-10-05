@@ -202,6 +202,7 @@ sub fetch_logs_host () {
          'cat /proc/partitions',
          'virsh capabilities',
          'cat /proc/self/limits',
+         'cat /proc/modules',
          ) {
             try_cmd_output_save($cmd);
         }
