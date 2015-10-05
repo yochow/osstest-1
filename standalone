@@ -58,10 +58,11 @@ Options:
 EOF
 }
 
+. ./mgi-common
+
 if [ $# -lt 1 ] ; then
-    echo "Need an operation" >&2
     usage
-    exit 1
+    fail "No arguments given"
 fi
 
 op=$1 ; shift
@@ -123,7 +124,7 @@ while true ; do
 	--baseline)nobaseline=n; shift 1;;
 	--help)      usage; exit 0;;
         --) shift ; break ;;
-        *) echo "Internal error!" ; exit 1 ;;
+        *) fail "Internal error!" ;;
 
     esac
 done
@@ -147,34 +148,29 @@ fi
 
 db="standalone.db"
 if [ ! -f $db ] ; then
-    echo "No $db? Run standalone-reset." >&2
-    exit 1
+    fail "No $db? Run standalone-reset."
 fi
 
 if [ -z "$config" ] ; then
-    echo "No config specified." >&2
-    exit 1
+    fail "No config specified."
 fi
 IFS_saved=$IFS
 IFS=:
 for c in $config ; do
     if [ -z "$c" -o ! -r "$c" ] ; then
-        echo "Cannot read config $c." >&2
-        exit 1
+        fail "Cannot read config $c."
     fi
 done
 IFS=$IFS_saved
 
 need_flight() {
     if [ -z "$flight" ] ; then
-	echo "run-job: Need a flight" >&2
-	exit 1
+	fail "run-job: Need a flight"
     fi
 }
 need_host() {
     if [ "x$hosts" = x ] ; then
-	echo "run-job: Need a host" >&2
-	exit 1
+	fail "run-job: Need a host"
     fi
 }
 
@@ -227,8 +223,7 @@ case $op in
         need_flight
 
         if [ $# -lt 1 ] ; then
-            echo "make-flight: Need branch" >&2
-            exit 1
+            fail "make-flight: Need branch"
         fi
 
         branch=$1; shift
@@ -247,8 +242,7 @@ case $op in
 	need_flight
 
 	if [ $# -lt 1 ] ; then
-	    echo "set-paths: Need job" >&2
-	    exit 1
+	    fail "set-paths: Need job"
 	fi
 
 	job=$1; shift
@@ -275,8 +269,7 @@ case $op in
 	need_flight;
 
 	if [ $# -lt 1 ] ; then
-	    echo "run-job: Need job" >&2
-	    exit 1
+	    fail "run-job: Need job"
 	fi
 
 	job=$1; shift
@@ -287,8 +280,7 @@ case $op in
 	need_flight; need_host
 
 	if [ $# -lt 1 ] ; then
-	    echo "run-job: Need job" >&2
-	    exit 1
+	    fail "run-job: Need job"
 	fi
 
 	job=$1; shift
@@ -310,8 +302,7 @@ case $op in
 	need_flight; need_host
 
 	if [ $# -lt 2 ] ; then
-	    echo "run-test: Need job + test" >&2
-	    exit 1
+	    fail "run-test: Need job + test"
 	fi
 
 	job=$1; shift
@@ -335,8 +326,7 @@ case $op in
 	need_flight;
 
 	if [ $# -ne 1 ] ; then
-	    echo "get-job-status: Need job" >&2
-	    exit 1
+	    fail "get-job-status: Need job"
 	fi
 
 	job=$1; shift
@@ -345,5 +335,5 @@ case $op in
 
 	;;
     *)
-	echo "Unknown op $op" ; exit 1 ;;
+	fail "Unknown op $op" ;;
 esac
