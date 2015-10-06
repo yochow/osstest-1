@@ -197,7 +197,7 @@ with_logging() {
     local log=$1; shift
     ensure_logs
     savelog -c 300 "$log" >/dev/null
-    $@ 2>&1 | tee "$log"
+    "$@" 2>&1 | tee "$log"
     rc=${PIPESTATUS[0]}
     if [ $rc -ne 0 ] ; then
 	echo "FAILED rc=${rc}" >&2
@@ -240,7 +240,7 @@ case $op in
         OSSTEST_FLIGHT=$flight \
         OSSTEST_CONFIG=$config \
         OSSTEST_NO_BASELINE=$nobaseline \
-            with_logging logs/$flight/make-flight.log ./cr-daily-branch $@ $branch
+            with_logging logs/$flight/make-flight.log ./cr-daily-branch "$@" $branch
         ;;
 
     set-paths)
@@ -321,7 +321,7 @@ case $op in
 	OSSTEST_FLIGHT=$flight \
 	OSSTEST_HOST_REUSE=$reuse \
 	OSSTEST_JOB=$job \
-	    with_logging logs/$flight/$job.$ts.log ./$ts $hosts $@
+	    with_logging logs/$flight/$job.$ts.log ./$ts $hosts "$@"
 	;;
 
     get-job-status)
