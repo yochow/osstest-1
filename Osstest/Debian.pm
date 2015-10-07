@@ -419,7 +419,7 @@ sub setupboot_grub2 ($$$$) {
 
     # Grub2 on Jessie/arm* doesn't do multiboot, so we must chainload.
     my $need_uefi_chainload =
-        get_host_property($ho, "firmware") eq "uefi" &&
+        get_host_property($ho, "firmware", "") eq "uefi" &&
         $ho->{Suite} =~ m/jessie/ && $r{arch} =~ m/^arm/;
 
     my $parsemenu= sub {
