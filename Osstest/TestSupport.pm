@@ -1822,7 +1822,10 @@ END
     my $stubdom = guest_var_boolean($gho, 'stubdom');
     if ($stubdom) {
 	$cfg .= "device_model_stubdomain_override=1\n";
-	$cfg .= "serial='pty'\n";
+	# MINI-OS turns any open of a path starting /var/log/ into a
+	# fd pointing to mini-os's console. IOW any such path used
+	# here ends up in the host logs in /var/log/xen/qemu-dm-$guest.log
+	$cfg .= "serial='file:/var/log/dm-serial.log'\n";
     } else {
 	$cfg .= "serial='file:/dev/stderr'\n";
     }
