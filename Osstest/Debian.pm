@@ -800,6 +800,19 @@ sub preseed_base ($$$$;@) {
 
     preseed_ssh($ho, $sfx);
 
+    preseed_hook_command($ho, 'late_command', '', <<'END');
+#!/bin/sh
+set -ex
+
+grub=/etc/default/grub
+if [ -f /target$grub ] ; then
+    in-target sed -i \
+        's/^\(GRUB_CMDLINE_LINUX_DEFAULT=".*\)\bquiet\b\(.*"\)$/\1\2/g' \
+        $grub
+    in-target update-grub
+fi
+END
+
     debian_overlays(sub {
 	my ($srcdir, $tfilename) = @_;
 	preseed_hook_overlay($ho, $sfx, $srcdir, $tfilename);
