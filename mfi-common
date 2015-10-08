@@ -167,8 +167,10 @@ create_build_jobs () {
     xen-4.1-testing) enable_ovmf=false;;
     xen-4.2-testing) enable_ovmf=false;;
     xen-4.3-testing) enable_ovmf=false;;
+    xen-4.4-testing) enable_ovmf=true; enable_prevovmf=false;;
     *) enable_ovmf=true;
     esac
+    enable_prevovmf=${enable_prevovmf:-$enable_ovmf}
 
     want_prevxen=n
     if branch_wants_migrupgrade_tests ; then
@@ -217,7 +219,7 @@ create_build_jobs () {
         # pickup the versions implicitly selected by the
         # $REVISION_PREVXEN.
         job_create_build build-$arch-prev build                       \
-                    arch=$arch enable_xend=false enable_ovmf=$enable_ovmf    \
+                    arch=$arch enable_xend=false enable_ovmf=$enable_prevovmf\
                     enable_xsm=false                                         \
             tree_xen=$TREE_XEN                                               \
                     $RUNVARS $BUILD_RUNVARS $BUILD_XEN_RUNVARS $arch_runvars \
