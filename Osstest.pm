@@ -38,6 +38,7 @@ BEGIN {
                       main_revision_job_cond other_revision_job_suffix
                       $dbh_tests db_retry db_retry_retry db_retry_abort
                       db_begin_work db_prepare
+                      get_harness_rev
                       ensuredir get_filecontents_core_quiet system_checked
                       nonempty visible_undef show_abs_time
                       %arch_debian2xen %arch_xen2debian
@@ -342,6 +343,22 @@ END
 sub main_revision_job_cond ($) {
     my ($jobfield) = @_;
     return "(${\ other_revision_job_suffix($jobfield,'x') } = '')";
+}
+
+sub get_harness_rev () {
+    $!=0; $?=0;  my $rev= `git rev-parse HEAD^0`;
+    die "$? $!" unless defined $rev;
+
+    $rev =~ s/\n$//;
+    die "$rev ?" unless $rev =~ m/^[0-9a-f]+$/;
+
+    my $diffr= system 'git diff --exit-code HEAD >/dev/null';
+    if ($diffr) {
+        die "$diffr $! ?" if $diffr != 256;
+        $rev .= '+';
+    }
+
+    return $rev;
 }
 
 sub get_filecontents_core_quiet ($) { # ENOENT => undef

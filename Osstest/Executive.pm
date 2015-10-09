@@ -44,7 +44,7 @@ BEGIN {
     our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
     $VERSION     = 1.00;
     @ISA         = qw(Exporter);
-    @EXPORT      = qw(get_harness_rev grabrepolock_reexec
+    @EXPORT      = qw(grabrepolock_reexec
                       findtask @all_lock_tables
                       restrictflight_arg restrictflight_cond
                       report_run_getinfo report_altcolour
@@ -126,22 +126,6 @@ sub grabrepolock_reexec {
         exec "with-lock-ex","-w",$repos_lock, $0,@org_argv;
         die $!;
     }
-}
-
-sub get_harness_rev () {
-    $!=0; $?=0;  my $rev= `git rev-parse HEAD^0`;
-    die "$? $!" unless defined $rev;
-
-    $rev =~ s/\n$//;
-    die "$rev ?" unless $rev =~ m/^[0-9a-f]+$/;
-
-    my $diffr= system 'git diff --exit-code HEAD >/dev/null';
-    if ($diffr) {
-        die "$diffr $! ?" if $diffr != 256;
-        $rev .= '+';
-    }
-
-    return $rev;
 }
 
 #---------- database access ----------#
