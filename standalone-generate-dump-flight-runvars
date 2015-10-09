@@ -52,8 +52,35 @@ perbranch () {
     flight=check_${branch//[-._]/_}
 }
 
+# Good grief, handling background proceesses from shell is a pain.
+#
+# For stupid historical reasons, background processes start with
+# SIGINT (and QUIT) ignored (SuSv3 2.11).  bash does not currently
+# offer a way to ask it not to do this; nor is there a reliable way to
+# put the SIGINT handling back to normal.
+#
+# "trap - INT" can be used to put the handling back in recent versions
+# of bash (eg Debian jessie), but earlier versions are buggy, so
+# we use perl.
+#
+# However, there is still a race: if the signal arrives just after the
+# fork, after the shell has (in the child) set it to to IGN, but
+# before Perl has put it back, the child might still escape.
+# There is no reasonable way to deal with this race.  So the result
+# may still be slightly racy in the case that s-g-d-f-r is ^C'd right
+# after starting.
+#
+# Hopefully in the future we can fix this with something like
+# "shopt -s no_async_sig_ignore".  See
+# https://lists.gnu.org/archive/html/bug-bash/2015-10/msg00077.html
+
 for branch in $@; do
     perbranch
+    perl -e '
+        $SIG{$_}=DFL foreach qw(INT QUIT HUP);
+	kill 1, $$ unless getppid=='$$';
+	exec @ARGV or die $!;
+    ' \
     ./standalone make-flight -f $flight $branch >$log 2>&1 &
     procs+=" $branch=$!"
 done
