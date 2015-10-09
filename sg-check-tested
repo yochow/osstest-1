@@ -80,8 +80,9 @@ END
                AND   r.flight = flights.flight)
 END
     } elsif (m/^--branch=(.*)$/) {
-        push @conds_vars, $1;
-        push @conds, "branch = ?";
+        my @branches = split /\,/, $1;
+        push @conds_vars, @branches;
+        push @conds, "(".(join " OR ", map { "branch = ?" } @branches).")";
     } elsif (m/^--blessings=(.*)$/) {
         my @blessings= split /\,/, $1;
         push @conds_vars, @blessings;
