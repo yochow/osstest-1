@@ -145,3 +145,12 @@ info_linux_tree () {
 
 	return 0
 }
+
+check_ap_fetch_placeholders () {
+	if [ "x$AP_FETCH_PLACEHOLDERS" != xy ] ; then
+		return 0
+	fi
+
+	echo "$(basename $0):$branch"
+	exit 0
+}

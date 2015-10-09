@@ -25,6 +25,8 @@ branch=$1
 select_xenbranch
 . ./ap-common
 
+check_ap_fetch_placeholders
+
 : ${BASE_TAG_LINUX2639:=tested/2.6.39.x}
 : ${BASE_LOCALREV_LINUX:=daily-cron.$branch.old}
 : ${BASE_LOCALREV_LIBVIRT:=daily-cron.$branch.old}

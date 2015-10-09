@@ -27,6 +27,8 @@ new=$2
 select_xenbranch
 . ./ap-common
 
+check_ap_fetch_placeholders
+
 case "$branch" in
 
 linux-next)

@@ -36,11 +36,17 @@ if [ $# = 0 ]; then
    set `./mg-list-all-branches`
 fi
 
-if [ "x$AP_FETCH_MEMO_KEEP" = x ]; then
+: ${AP_FETCH_PLACEHOLDERS:=y}
+export AP_FETCH_PLACEHOLDERS
+
+
+if [ "x$AP_FETCH_PLACEHOLDERS" != xy ]; then
+    if [ "x$AP_FETCH_MEMO_KEEP" = x ]; then
 	rm -rf tmp/apmemo
 	mkdir tmp/apmemo
+    fi
+    export AP_FETCH_PFX='./memoise tmp/apmemo'
 fi
-export AP_FETCH_PFX='./memoise tmp/apmemo'
 
 # In the future it might be nice for this script to arrange to use a
 # separate standalone.db, in tmp/ probably, for each different branch.
