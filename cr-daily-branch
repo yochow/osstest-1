@@ -281,9 +281,14 @@ flight=`$makeflight $branch $xenbranch $OSSTEST_BLESSING "$@"`
 
 case $branch in
 xen-unstable-smoke)
+	harness_rev=$(perl -e 'use Osstest; print get_harness_rev();')
+	: ${SMOKE_HARNESS_REV:=${harness_rev%+}}
+
 	./mg-adjust-flight-makexrefs -v $flight \
 		'!build-amd64 !build-amd64-libvirt !build-armhf build-*' \
-		--debug --branch=xen-unstable --blessings=real
+		--debug --blessings=real				\
+		--branch=xen-unstable,xen-unstable-smoke,osstest	\
+		--revision-osstest=$SMOKE_HARNESS_REV
 	# Even adhoc or play flights ought to reuse only real
 	# previous builds.
 	;;
