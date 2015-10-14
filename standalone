@@ -192,7 +192,9 @@ ensure_logs() {
 with_logging() {
     local log=$1; shift
     ensure_logs
-    savelog -c 300 -n "$log" >/dev/null
+    if command -v savelog >/dev/null ; then
+        savelog -c 300 -n "$log" >/dev/null
+    fi
     "$@" 2>&1 | tee "$log"
     rc=${PIPESTATUS[0]}
     if [ $rc -ne 0 ] ; then
