@@ -192,6 +192,53 @@ test-$XENARCH-$DOM0ARCH-<CASE>
 
 NB: $ARCH (and $XENARCH etc) are Debian arch names, i386, amd64, armhf.
 
+Common/Special Runvars
+======================
+
+Many test aspects of the individual test-scripts (ts-*) are configured
+via "runvars" and are only of interest to a specific script and to the
+make-flight which sets them up.
+
+However there are some runvars which are globally interesting.
+
+- Build Jobs:
+
+    A runvar which ends "buildjob" (more formally, which matches
+    /^(?:.*_)?([^_]*)buildjob$/) indicates that the job containing
+    that runvar requires the outout of another job in order to run.
+
+    Examples of these are `xenbuildjob', which is the job providing the
+    hypervisor; `buildjob', which provides the tools or `kernbuildjob'
+    which provides the dom0 (and possibly guest) kernel.
+
+    In production mode osstest will take care of ensuring that any
+    required build jobs are complete before running the job. In
+    standalone mode this is the user's responsibility.
+
+    A build job runvar can simply (and most commonly) name another job
+    within the same flight or it can be of the form "<flight>.<job>"
+    to use the output of a job in another flight. The latter is common
+    associated with bisection which will attempt to reuse existing
+    builds where possible.
+
+- Host Idents:
+
+    Most jobs require one or more hosts to operate on, these are
+    passed to the ts-* commands making up the job as command line
+    options given the "ident" of the host, which is simply an
+    identifier for the role of the host. Most often a job which only
+    requires a single host will have a single ident `host`, a
+    migration job might involve `src_host' and `dst_host'.
+
+    In general the ident is simply passed to the ts-* scripts by
+    sg-run-job or by ./standalone and is then converted to an actual
+    host by looking for an identically named runvar.
+
+    This runvar is usually set by ts-hosts-allocate which in
+    production mode interacts with the resource planner. However in
+    some cases, e.g. bisection, this runvar is configured when the
+    flight is constructed (so that bisection happens on the same host).
+
 Standalone Mode
 ===============
 
@@ -519,3 +566,133 @@ ExecutiveDbnamePat
 ExecutiveDbname_<DB>
    PostgreSQL dbname string for the database <DB>.  Default is to use
    ExecutiveDbnamePat.
+
+Adhoc/Custom Flights
+====================
+
+Normally a flight is constructed using "make-flight", either via
+"./standalone make-flight" or by calling make-flight (or another
+make-*-flight) directly.
+
+In production mode this usually happens via cr-for-branches invoking
+cr-daily-branch for a given branch, while in standalone mode it is
+either done by hand or using the standalone helpers make-flight
+operation.
+
+However it can be useful to create a custom flight "by-hand" in order
+to repeatedly test one aspect or to facilitate adhoc tests etc.
+
+A fresh empty flight is created by using the "cs-flight-create"
+script. It takes as arguments a "blessing" and a "branch" and on
+success prints the new flight number.
+
+The blessing should almost always be "adhoc". The branch doesn't
+really matter, if you are testing something related to a failure on a
+given branch you may as well use that, otherwise "adhoc" or
+"xen-unstable" is a reasonably fallback.
+
+Thus the normal way to invoke cs-flight-create is:
+
+    $ flight=`./cs-flight-create adhoc adhoc`
+
+Which results in a $flight which can be used for the remainder of the
+configuration.
+
+Once you have an empty flights there are two main ways to populate it
+with jobs. Firstly you can create jobs from scratch using
+cs-job-create or secondly by copying one or more jobs from an existing
+template flight using "cs-adjust-flight copy-jobs". In either case the
+job can then be further customised using cs-adjust-flight to add and
+remove runvars etc.
+
+cs-job-create requires a flight ($flight from above), a job name (any
+string), a recipe (either custom, see below, or from any
+run-job/<recipe> in sg-run-job) and then the runvars in key=value
+form. Deciding on the runvars in particular can be tricky, it is
+usually easiest to copy an existing job.
+
+A job can be copied from a template flight using cs-adjust-flight
+copy-jobs e.g.:
+
+    $ ./cs-adjust-flight $flight copy-jobs $template <job-name>
+
+Having created (or copied) a job then you may wish to customise, which
+can be done using cs-adjust-flight. In particular you can add or
+remove runvars, see the doc comment at the top of the script. Most
+commonly you may which to preset the host ident to a specific if you
+are tracking down a host specific issue.
+
+You will also want to provide the necessary buildjobs for the job. You
+can do so by also copying the build jobs from your template job or by
+creating them by hand, or by setting the buildjob to reuse the builds
+done by the template, by setting the appropriate buildjob runvar to
+"$template.$job" . See "Common/Special Runvars" above for more.
+
+Custom recipes can be placed in sg-run-job-adhoc and will be
+automatically included. At a minimum you will need to provide "proc
+need-hosts/$recipe" which returns a list of host idents and "proc
+run-job/$recipe" which runs the required test steps. There are plenty
+of examples in sg-run-job.
+
+Once the flight is created it is run using mg-execute-flight. It is
+usual to pass -Badhoc (to set the target blessing) and -Eemail to set
+the destination for the test report as well as giving the flight:
+
+    $ ./mg-execute-flight -Badhoc -Eemail@example.com $flight
+
+A worked example, including a custom recipe (in this case to reboot
+Xen five times on the host) and .
+
+Custom sg-run-job-adhoc, requires a single host (ident "host") and
+runs ts-host-reboot + a ping check 5 times:
+
+----START-------
+proc need-hosts/adhoc-xen-boot-x5 {} { return host }
+proc run-job/adhoc-xen-boot-x5 {} {
+    repeat-ts 5 xen-boot.repeat \
+               ts-host-reboot     host \; \
+               ts-host-ping-check host
+}
+----END---------
+
+Commands to populate and run a flight (normally one would put this in
+a script):
+
+----START-------
+host=<some host which doesn't reliably reboot>
+lnxrev=<some revision of Linux which we want to test>
+
+# templates for Xen and Linux builds. Also used for build binaries for
+# Xen.
+template=123456
+
+# Create the flight
+flight=`./cs-flight-create adhoc adhoc`
+echo $flight
+
+# Create a test job from scratch, many of the runvars cribbed from a
+# random job in a real flight created by make-flight.
+job=adhoc-amd64-amd64-xen-boot
+./cs-job-create $flight $job adhoc-xen-boot-x5 \
+    all_hostflags=arch-amd64,arch-xen-amd64,suite-wheezy,purpose-test \
+    arch=amd64 toolstack=xl enable_xsm=false kernkind=pvops \
+    host=$host
+
+# Reuse the binaries from the Xen template job for both the hypervisor
+# and the tools by pointing the buildjob and xenbuildjob runvars of
+# $job at them. XXX assumes the binaries still exist (haven't been
+# garbage collected).
+./cs-adjust-flight $flight runvar-set $job buildjob $template.build-amd64
+./cs-adjust-flight $flight runvar-set $job xenbuildjob $template.build-amd64
+
+# Copy Linux build job from template and reset the revision to build
+# what we want.
+./cs-adjust-flight $flight copy-jobs $template build-amd64-pvops
+./cs-adjust-flight $flight runvar-set build-amd64-pvops revision_linux $lnxrev
+
+# Point $job's kernel buildjob to the above
+./cs-adjust-flight $flight runvar-set $job kernbuildjob build-amd64-pvops
+
+# Now run the job.
+./mg-execute-flight -Badhoc -Eme@example.com $flight
+----END---------
