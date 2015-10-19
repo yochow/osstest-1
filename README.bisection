@@ -1,0 +1,214 @@
+BISECTION
+=========
+
+osstest has an automatic bisector which reports primarily by email.
+
+Here we first explain the meaning of a `bisection complete' report,
+and later discuss the bisection algorithm, intermediate reports, etc.
+
+
+Understanding a bisected failure
+================================
+
+The starting point is to:
+
+ - Look at the fingered changeset, as shown in the email.
+
+ - Look at the logs for the most recent failure to understand
+   the problem.   The test grid for final failure repro is in
+   the email.
+
+ - Maybe, look at the revision graph.
+
+
+Email Reports
+=============
+
+Subject line
+------------
+
+  Subject: [xen-unstable bisection] complete test-amd64-i386-xl-qemuu-...
+            ^^^^^^^^^^^^            ^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^...
+           "branch"                     |    job which contains
+                                        |      failing test step
+                                        |
+           bisection status, `complete' if it fingers a particular commit
+
+
+Introduction
+------------
+
+  branch xen-unstable
+  xenbranch xen-unstable
+  job test-amd64-i386-xl-qemuu-debianhvm-amd64-xsm
+  testid debian-hvm-install
+
+"branch" is the osstest test series; normally this identifies the push
+gate whose failure triggered the bisection start.  (See README for
+information about terminology like "branch".)
+
+"testid" identifies the individual test step.  Bisection is always of
+a particular step, and distinguishes failures of other steps in a test
+job.
+
+"xenbranch" refers to the version of Xen being used.
+
+
+Trees
+-----
+
+Each test run by osstest draws on source code for a number of projects
+and components.  osstest records for each test, which version of each
+tree is involved.  When doing bisection, osstest considers all of the
+sources used, and tries to narrow the failure down to a single commit
+in a single tree.
+
+The bisection report email lists the relevant trees:
+
+  Tree: linux git://xenbits.xen.org/linux-pvops.git
+  Tree: linuxfirmware git://xenbits.xen.org/osstest/linux-firmware.git
+  Tree: qemu git://xenbits.xen.org/staging/qemu-xen-unstable.git
+  Tree: qemuu git://xenbits.xen.org/staging/qemu-upstream-unstable.git
+  Tree: xen git://xenbits.xen.org/xen.git
+        ^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         |       url used for fetching the bits
+         |
+         ` Identifier indicating the purpose for which the tree
+           is used.
+
+
+Result
+------
+
+  *** Found and reproduced problem changeset ***
+
+    Bug is in tree:  xen git://xenbits.xen.org/xen.git
+    Bug introduced:  c64ef24febcf5bc6c6da733abd256412da8c4895
+    Bug not present: 2fe4c0060c62a012109dab1d981522dc26822110
+
+This should be fairly self-explanatory.  osstest is blaming the
+failure on the commit shown.  osstest has verified that the "not
+present" version works and that the "bug introduced" version breaks
+(with identical versions of everything else).
+
+    Last fail repro: http://logs.test-lab.xenproject.org/osstest/logs/63036/
+
+This is the URL of the final failure reproduction test.  If you wanted
+to see what the failure looks like, in the fingered commit, this is a
+good place to start.  You'll probably want to click on the column
+heading for the failing test job, to get to the page for just that
+job.
+
+osstest then reproduces the commit message of the fingered commit.
+
+
+Epilogue
+--------
+
+  For bisection revision-tuple graph see:
+     http://logs.test-lab.xenproject.org/osstest/results/bisect/xen-unstable/test-amd64-i386-xl-qemuu-debianhvm-amd64-xsm.debian-hvm-install.html
+  Revision IDs in each graph node refer, respectively, to the Trees above.
+
+This links to a graph showing all the revisions and test results.
+
+
+
+Debugging output
+----------------
+
+  Running cs-bisection-step --graph-out=/home/logs/results/bisect/xen-unstable/test-amd64-i386-xl-qemuu-debianhvm-amd64-xsm.debian-hvm-install --summary-out=tmp/63036.bisection-summary --basis-template=62711 --blessings=real,real-bisect xen-unstable test-amd64-i386-xl-qemuu-debianhvm-amd64-xsm debian-hvm-install
+  Searching for failure / basis pass:
+
+Most of the remainder of the email is primarily useful for osstest
+developers.
+
+Typically there is also a report of the last test flight run by the
+osstest bisector.  However, this last test flight might be of a pass
+or of a fail.
+
+It is better to look at the results grid of the "Last fail repro"
+flight, mentioned earlier.
+
+
+
+Revision Graph
+==============
+
+The revision graph page shows the osstest bisector's view of the
+situation.
+
+Each node in the graph corresponds to a tuple of revisions: one
+revision for each of the relevant trees.  Each edge changes the
+revision of one of the trees.  (osstest has constructed this graph by
+merging the separate revision graphs of each of the individual trees.)
+
+Each box lists the revisions of the trees, and the osstest flight
+numbers which tested that revision (on the specific host).  The logs
+for a particular flight can be found by adding the flight number onto
+the end of the log base URL.  Eg, to find the logs for flight 63036,
+  http://logs.test-lab.xenproject.org/osstest/logs/63036/
+
+Nodes coloured red or green are fail and pass respectively.  Nodes can
+also be coloured yellow (if the test results are inconsistent at that
+revision) or blue (if the attempt with that particular revision tuple
+was inconclusive because the test step being bisected was blocked by
+an earlier failure).
+
+The revision being fingered (or, when the bisector is running, the
+next revision to test) is highlighed with a double boundary.
+
+The starting points for the bisection are shown hexagonal (failure)
+and oval (pass).
+
+
+Semantics
+=========
+
+osstest does not report a bisection failure unless it has reproduced
+the pass (at the good commit which is the bad commit's parent), and
+the failure (at the bad commit) three times each.
+
+osstest's bisector insists that all the bisection tests are run on the
+same physical host.
+
+So if osstest blames a particular commit, then it is very likely
+indeed that this commit does cause the failure.  (Of course, it may be
+that the blamed commit merely exposes a bug elsewhere.)
+
+
+Merges
+------
+
+Sometimes osstest may blame a merge commit.  The actual broken commit
+might be in an arm of the history which osstest didn't look at,
+because that arm of the history is not descended from osstest's
+baseline pass.
+
+If this happens the problem is likely to be in the changes being
+merged in, rather than the merge itself.
+
+We may improve osstest's handling of merges in the future.
+
+
+Flattened history
+-----------------
+
+In sufficiently pathological situations (for example, if one of the
+trees involved is rewound) osstest may construct a dummy revision
+graph for a particular tree, containing only two commits: the baseline
+pass, and the failure which prompted the bisection.
+
+It will be obvious if osstest fingers the tip of this dummy revision
+graph, since the good commit mentioned in the results mail will not be
+an immediate parent of the alleged bad commit, when viewed in the
+actual revision system.
+
+
+Progress Reports
+================
+
+When the bisector is running, it sends similar-looking emails to the
+osstest-output mailing list.
+
+These contain the roughly same information; instead of "complete" they
+may say "running", "inconclusive", "unreproducible", etc.
