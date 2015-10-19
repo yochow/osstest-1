@@ -857,11 +857,14 @@ sub search () {
             next if $nope;
             next unless @passparents;
 
+	    my $fail_last_repro;
             return 1 if need_repro_sequence(3, sub {
                 foreach my $pass (@passparents) {
                     return 1 if need_repro('pass', $pass, "last pass");
                 }
                 return 1 if need_repro('fail', $fail, "first failure");
+		$fail_last_repro = $repro_lastflight;
+		return 0;
             });
 
             $found_exact_failure++;
@@ -885,6 +888,7 @@ END
 Bug is in tree:  $treeinfos[$i]{Name} $treeinfos[$i]{Url}
 Bug introduced:  $failrev[$i]
 Bug not present: $passrev[$i]
+Last fail repro: $c{ReportHtmlPubBaseUrl}/$fail_last_repro/
 END
                 }
             }
