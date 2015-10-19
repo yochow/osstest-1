@@ -91,9 +91,9 @@ send_bisection_email () {
 Subject: $subject_prefix $1 $job
 
 branch $xenbranch
-xen branch $xenbranch
+xenbranch $xenbranch
 job $job
-test $testid
+testid $testid
 
 END
         cat >&3 $summaryfile
