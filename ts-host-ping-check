@@ -28,7 +28,7 @@ our $ho= selecthost($whhost);
 
 exit 0 if $ho->{SharedReady};
 
-$_ = `ping -D -i 0.2 -c 100 $ho->{Ip} | tee /dev/stderr`;
+$_ = `ping -D -i 0.2 -c 100 $ho->{Ip} | tee -a /dev/stderr`;
 
 m/\b([0-9.]+)% packet loss\b/ or die "$_ ?";
 
