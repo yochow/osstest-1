@@ -166,6 +166,9 @@ proc chan-read-data {chan} {
 		chan-destroy $chan
 		return
 	    }
+            if {![string length $got]} {
+		return
+	    }
 	    append data $got
 	    incr len -[string length $got]
 	}
