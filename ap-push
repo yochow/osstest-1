@@ -25,6 +25,10 @@ revision=$2
 . ./cri-common
 select_xenbranch
 
+if [ "x$revision" = x ]; then
+	echo >&2 "NOT pushing empty revision!"; exit 1
+fi
+
 : ${TAG_LINUX2639:=tested/2.6.39.x}
 
 . ./ap-common
