@@ -159,6 +159,9 @@ revision) or blue (if the attempt with that particular revision tuple
 was inconclusive because the test step being bisected was blocked by
 an earlier failure).
 
+The revision(s) which changed compared to the parent(s) are marked
+with asterisks, or in bold.
+
 The revision being fingered (or, when the bisector is running, the
 next revision to test) is highlighed with a double boundary.
 

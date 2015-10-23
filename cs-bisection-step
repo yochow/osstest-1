@@ -928,9 +928,18 @@ END
 sub gnodename ($) {
     my ($n) = @_;
 
-    my $lab= $n->{Rtuple};
-    $lab =~ s/(\S{12})\S+/$1/g;
-    $lab =~ s/ /,/g;
+    my @lab = split / /, $n->{Rtuple};
+    foreach (my $i=0; $i<@lab; $i++) {
+	my $lab = $lab[$i];
+	$lab = substr $lab, 0, 12;
+	$lab = "*$lab*"
+	    if grep {
+		my @ptuple = split / /, $_->{Rtuple};
+		$ptuple[$i] ne $lab[$i];
+	    } @{ $n->{Parents} };
+	$lab[$i] = $lab;
+    }
+    my $lab = join ",", @lab;
 
     my $fs= $n->{Flights};
     if ($fs) {
@@ -1034,18 +1043,24 @@ END
 	open SVGO, ">", "$graphfile.svg.new" or die "$graphfile.svg.new $!";
 	while (<SVGI>) {
 	    if (m/^\<text/) {
-		if (m/(?<=\>)[0-9a-f]{12}(?:,[0-9a-f]{12})*(?=\<)/) {
+		if (m/(?<=\>)\*?[0-9a-f]{12}\*?(?:,\*?[0-9a-f]{12}\*?)*(?=\<)/) {
 		    my ($l,$r) = ($`,$'); #');
 		    my @commits = split /\,/, $&;
 		    my @ocommits;
 		    for (my $i=0; $i<@commits; $i++) {
-			my $url = "$treeinfos[$i]{Url}#$commits[$i]";
+			my $commit = $commits[$i];
+			$commit =~ s#\*##g;
+			my $url = "$treeinfos[$i]{Url}#$commit";
+			my $show = $commits[$i];
+			$show =~ s#^\*#<tspan font-weight="bolder">#;
+			$show =~ s#\*$#</tspan>#;
 			push @ocommits, "<a xlink:href=\"".
 			    encode_entities($url).
 			    "\">".
-			    $commits[$i].
+			    $show.
 			    "</a>";
 		    }
+		    $l =~ s# font-weight="bold" # #;
 		    $_ = $l.(join ",", @ocommits).$r;
 		} elsif (m/(?<=\>)\d+:[-a-z]+(?: \d+:[-a-z]+)*(?=\<)/) {
 		    my ($l,$r) = ($`,$'); #');
