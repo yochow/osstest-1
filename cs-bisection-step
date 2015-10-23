@@ -1030,6 +1030,42 @@ END
             system_checked("dot", "-T$fmt", "-o$graphfile.$fmt",
 			   "$graphfile.dot");
         }
+	open SVGI, "$graphfile.svg" or die "$graphfile.svg $!";
+	open SVGO, ">", "$graphfile.svg.new" or die "$graphfile.svg.new $!";
+	while (<SVGI>) {
+	    if (m/^\<text/) {
+		if (m/(?<=\>)[0-9a-f]{12}(?:,[0-9a-f]{12})*(?=\<)/) {
+		    my ($l,$r) = ($`,$'); #');
+		    my @commits = split /\,/, $&;
+		    my @ocommits;
+		    for (my $i=0; $i<@commits; $i++) {
+			my $url = "$treeinfos[$i]{Url}#$commits[$i]";
+			push @ocommits, "<a xlink:href=\"".
+			    encode_entities($url).
+			    "\">".
+			    $commits[$i].
+			    "</a>";
+		    }
+		    $_ = $l.(join ",", @ocommits).$r;
+		} elsif (m/(?<=\>)\d+:[-a-z]+(?: \d+:[-a-z]+)*(?=\<)/) {
+		    my ($l,$r) = ($`,$'); #');
+		    my @flights = split / /, $&;
+		    foreach my $f (@flights) {
+			$f =~ m/^\d+(?=:)/;
+			$f = "<a xlink:href=\"".
+			    encode_entities("$c{ReportHtmlPubBaseUrl}/$&").
+			    "\">".
+			    $f."</a>";
+		    }
+		    $_ = $l.(join " ", @flights).$r;
+		}
+	    }
+	    print SVGO or die $!;
+	}
+	close SVGO or die $!;
+	rename "$graphfile.svg.new", "$graphfile.svg"
+	    or die "$graphfile.svg $!";
+
         1;
     }) {
 	my $gsize = $c{BisectionRevisonGraphSize};

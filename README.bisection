@@ -137,6 +137,11 @@ Revision Graph
 The revision graph page shows the osstest bisector's view of the
 situation.
 
+The SVG version of the graph is best if your browser supports it.  In
+that graph the individual revisions and flight result notations are
+hyperlinks (even though they may not be marked as such in your
+browser).
+
 Each node in the graph corresponds to a tuple of revisions: one
 revision for each of the relevant trees.  Each edge changes the
 revision of one of the trees.  (osstest has constructed this graph by
