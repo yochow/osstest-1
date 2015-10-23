@@ -61,17 +61,17 @@ xen-4.*-testing)
 	;;
 qemu-mainline)
         repo_tree_rev_fetch_git $branch \
-		$TREE_QEMU_UPSTREAM upstream-tested $LOCALREV_QEMU_UPSTREAM
+		$BASE_TREE_QEMU_UPSTREAM upstream-tested $LOCALREV_QEMU_UPSTREAM
         ;;
 qemu-upstream-unstable)
         repo_tree_rev_fetch_git $branch \
-		$TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM
+		$BASE_TREE_QEMU_UPSTREAM master $LOCALREV_QEMU_UPSTREAM
         ;;
 qemu-upstream-*-testing)
 	branchcore=${branch#qemu-upstream-}
 	branchcore=${branchcore%-testing}
         repo_tree_rev_fetch_git $branch \
-		$TREE_QEMU_UPSTREAM stable-$branchcore $LOCALREV_QEMU_UPSTREAM
+		$BASE_TREE_QEMU_UPSTREAM stable-$branchcore $LOCALREV_QEMU_UPSTREAM
         ;;
 linux)
 	repo_tree_rev_fetch_git linux \

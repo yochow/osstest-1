@@ -85,9 +85,11 @@ fi
 
 : ${TREEBASE_LINUX_XCP:=http://hg.uk.xensource.com/carbon/trunk/linux-2.6.27}
 
-: ${TREE_QEMU_UPSTREAM:=git://xenbits.xen.org/qemu-xen.git}
+: ${BASE_TREE_QEMU_UPSTREAM:=git://xenbits.xen.org/qemu-xen.git}
 : ${PUSH_TREE_QEMU_UPSTREAM=$XENBITS:/home/xen/git/qemu-xen.git}
 : ${LOCALREV_QEMU_UPSTREAM:=daily-cron.$branch}
+
+: ${TREE_QEMU_UPSTREAM:=${BASE_TREE_QEMU_UPSTREAM}}
 
 : ${TREE_QEMU_MAINLINE:=git://git.qemu.org/qemu.git}
 
