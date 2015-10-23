@@ -1026,7 +1026,7 @@ END
         or die "$!";
 
     if (eval {
-        foreach my $fmt (qw(ps png)) {
+        foreach my $fmt (qw(ps png svg)) {
             system_checked("dot", "-T$fmt", "-o$graphfile.$fmt",
 			   "$graphfile.dot");
         }
@@ -1045,11 +1045,12 @@ END
 <h2>Revision graph overview</h2>
 <img src="$href.mini.png">
 <h2>Revision graph</h2>
+<a href="$href.svg">SVG</h2><br>
 <a href="$href.ps">PostScript</a><p>
 <img src="$href.png">
 </body></html>
 END
-        print STDERR "Revision graph left in $graphfile.{dot,ps,png,html}.\n";
+        print STDERR "Revision graph left in $graphfile.{dot,ps,png,html,svg}.\n";
     } else {
         my $emsg= encode_entities($@);
         print HTML <<END or die $!;
