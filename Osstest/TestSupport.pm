@@ -1231,6 +1231,7 @@ END
 END
                          (length($r{"revision_$which"}) ? <<END : ''));
 	    git checkout '$r{"revision_$which"}'
+	    git clean -xdf
 END
     } else {
         die "$vcs $which $tree ?";
