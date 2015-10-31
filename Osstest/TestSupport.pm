@@ -735,7 +735,7 @@ sub lv_dev_mapper ($$) {
 sub dhcp_watch_setup ($$) {
     my ($ho,$gho) = @_;
 
-    my $meth = get_host_property($ho,'dhcp-watch-method',undef);
+    my $meth = get_target_property($ho,'dhcp-watch-method',undef);
     $gho->{DhcpWatch} = get_host_method_object($ho, 'DhcpWatch', $meth);
 }
 
@@ -1583,7 +1583,7 @@ sub target_choose_vg ($$) {
 
 sub ether_prefix($) {
     my ($ho) = @_;
-    my $prefix = get_host_property($ho, 'gen-ether-prefix-base');
+    my $prefix = get_target_property($ho, 'gen-ether-prefix-base');
     $prefix =~ m/^(\w+:\w+):(\w+):(\w+)$/ or die "$prefix ?";
     my $lhs = $1;
     my $pv = (hex($2)<<8) | (hex($3));
