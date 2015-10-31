@@ -2065,7 +2065,7 @@ sub target_var ($$) {
 sub target_kernkind_check ($) {
     my ($gho) = @_;
     my $pfx= target_var_prefix($gho);
-    my $kernkind= $r{$pfx."kernkind"};
+    my $kernkind= $r{$pfx."kernkind"} // 'pvops';
     my $isguest= exists $gho->{Guest};
     if ($kernkind eq 'pvops') {
         store_runvar($pfx."rootdev", 'xvda') if $isguest;
