@@ -23,6 +23,20 @@ source ./tcl/osstestlib.tcl
 readconfig
 source-method JobDB
 
+proc per-host-prep {} {
+    per-host-ts .       host-ping-check-native/@ ts-host-ping-check
+    per-host-ts .       xen-install/@     ts-xen-install
+    per-host-ts .       xen-boot/@        ts-host-reboot
+
+    per-host-ts .       host-ping-check-xen/@ ts-host-ping-check
+    per-host-ts .       =(*)             {ts-leak-check basis}
+}
+
+proc per-host-finish {} {
+    per-host-ts .       =                {ts-leak-check check}
+    per-host-ts !broken capture-logs/@(*) ts-logs-capture
+}
+
 proc run-job {job} {
     global jobinfo builds flight ok need_xen_hosts anyfailed
 
@@ -51,22 +65,15 @@ proc run-job {job} {
     if {$ok} { setstatus running                                          }
 
     per-host-ts broken  host-install/@(*) ts-host-install-twice
-    per-host-ts .       host-ping-check-native/@ ts-host-ping-check
-    per-host-ts .       xen-install/@     ts-xen-install
-    per-host-ts .       xen-boot/@        ts-host-reboot
-    per-host-ts .       host-ping-check-xen/@ ts-host-ping-check
 
-    per-host-ts .       =(*)             {ts-leak-check basis}
+    per-host-prep
 
     if {$ok} { catching-otherwise fail      run-job/$jobinfo(recipe)      }
-    per-host-ts .       =                {ts-leak-check check}
 
-    if {!$need_build_host} {
-        per-host-ts !broken capture-logs/@(*) ts-logs-capture
-    } else {
-        if {$anyfailed} {
-            run-ts  !broken capture-logs      ts-logs-capture + host
-        }
+    per-host-finish
+
+    if {$need_build_host && $anyfailed} {
+	run-ts  !broken capture-logs      ts-logs-capture + host
     }
 
     if {$ok} { setstatus pass                                             }
