@@ -50,7 +50,7 @@ BEGIN {
 
                       target_cmd_root target_cmd target_cmd_build
                       target_cmd_output_root target_cmd_output
-                      target_cmd_inputfh_root
+                      target_cmd_inputfh_root sshuho
                       target_getfile target_getfile_root
                       target_putfile target_putfile_root
                       target_putfilecontents_stash
@@ -874,7 +874,7 @@ sub selecthost ($) {
 	$child->{Power} = 'guest';
 	power_cycle_host_setup($child);
 
-	$child->{Properties}{Serial} = 'noop'; # todo
+	$child->{Properties}{Serial} = 'guest';
 	serial_host_setup($child);
 
 	my $msg = "L$child->{NestingLevel} host $child->{Ident}:";
