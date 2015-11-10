@@ -1884,8 +1884,18 @@ END
 	# fd pointing to mini-os's console. IOW any such path used
 	# here ends up in the host logs in /var/log/xen/qemu-dm-$guest.log
 	$cfg .= "serial='file:/var/log/dm-serial.log'\n";
-    } else {
+    } elsif (!(defined $devmodel) || $devmodel =~ /traditional/) {
 	$cfg .= "serial='file:/dev/stderr'\n";
+    } else {
+	my $logpath = "/var/log/xen/osstest-serial-$gho->{Name}.log";
+	my $basepath = "/root/$flight.$job.$gho->{Name}.serial";
+	target_cmd_root($ho, <<END);
+            set -ex
+            test -e $logpath      || touch $logpath
+            test -e $basepath.out || ln -s $logpath $basepath.out
+            test -e $basepath.in  || mkfifo -m600 $basepath.in
+END
+	$cfg .= "serial='pipe:$basepath'\n";
     }
 
     $xopts{VifType} ||= "ioemu";
