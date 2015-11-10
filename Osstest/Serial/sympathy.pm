@@ -22,12 +22,13 @@ use warnings;
 
 use Osstest;
 use Osstest::TestSupport;
+use Osstest::Serial::keys_real;
 
 BEGIN {
     use Exporter ();
     our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
     $VERSION     = 1.00;
-    @ISA         = qw(Exporter);
+    @ISA         = qw(Exporter Osstest::Serial::keys_real);
     @EXPORT      = qw();
     %EXPORT_TAGS = ( );
 
@@ -57,48 +58,28 @@ sub new {
     return bless $mo, $class;
 }
 
-sub request_debug {
-    my ($mo,$conswitch,$xenkeys,$guestkeys) = @_;
+sub keys_prepare {
+}
+
+sub keys_write {
+    my ($mo, $what,$str,$pause) = @_;
 
     my $targhost= $mo->{Server};
-
     my ($sshopts) = sshopts();
-    my $sympwrite= sub {
-        my ($what,$str,$pause) = @_;
-        logm("sympathy sending $what");
-        if (!eval {
-            local ($SIG{'PIPE'}) = 'IGNORE';
-            my $sock= $mo->{Socket};
-            my $rcmd= "sympathy -c -k $sock -N >/dev/null";
-            $rcmd= "alarm 5 $rcmd";
-            open SYMPWRITE, "|ssh @$sshopts root\@$targhost '$rcmd'" or die $!;
-            autoflush SYMPWRITE 1;
-            print SYMPWRITE $str or die $!;
-            sleep($pause);
-            close SYMPWRITE or die "$? $!";
-            1;
-        }) {
-            warn "failed to send $what: $@\n";
-            return 0;
-        }
-        return 1;
-    };
 
-    my $debugkeys= sub {
-	my ($what, $keys) = @_;
-	foreach my $k (split //, $keys) {
-	    $sympwrite->("$what debug info request, debug key $k", $k, 2);
-	}
-    };
+    logm("sympathy sending $what");
 
-    $sympwrite->('request for input to Xen', $conswitch, 1);
-    $debugkeys->('Xen', $xenkeys);
-    sleep(10);
-    $debugkeys->('guest', $guestkeys);
-    sleep(10);
-    $sympwrite->("RET to dom0","$conswitch\r", 5);
+    my $sock= $mo->{Socket};
+    my $rcmd= "sympathy -c -k $sock -N >/dev/null";
+    $rcmd= "alarm 5 $rcmd";
+    open SYMPWRITE, "|ssh @$sshopts root\@$targhost '$rcmd'" or die $!;
+    autoflush SYMPWRITE 1;
+    print SYMPWRITE $str or die $!;
+    sleep($pause);
+    close SYMPWRITE or die "$? $!";
+}
 
-    return 1;
+sub keys_shutdown {
 }
 
 sub fetch_logs {

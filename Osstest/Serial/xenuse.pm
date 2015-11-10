@@ -23,6 +23,7 @@ use warnings;
 
 use Osstest;
 use Osstest::TestSupport;
+use Osstest::Serial::keys_real;
 
 use File::Temp;
 use File::Copy;
@@ -31,7 +32,7 @@ BEGIN {
     use Exporter ();
     our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
     $VERSION     = 1.00;
-    @ISA         = qw(Exporter);
+    @ISA         = qw(Exporter Osstest::Serial::keys_real);
     @EXPORT      = qw();
     %EXPORT_TAGS = ( );
 
@@ -46,51 +47,35 @@ sub new {
     return bless $mo, $class;
 }
 
-sub request_debug {
-    my ($mo,$conswitch,$xenkeys,$guestkeys) = @_;
-    my $xenuse= $c{XenUsePath} || "xenuse";
+sub keys_prepare {
+    my ($mo) = @_;
 
     my $ho= $mo->{Host};
 
-    my $writer= sub {
-        my ($what,$str,$pause) = @_;
-        logm("xenuse sending $what");
-        if (!eval {
-            print XENUSEWRITE $str or die $!;
-            sleep($pause);
-            1;
-        }) {
-            warn "failed to send $what: $@\n";
-            return 0;
-        }
-        return 1;
-    };
+    my $xenuse= $c{XenUsePath} || "xenuse";
 
-    my $debugkeys= sub {
-	my ($what, $keys) = @_;
-	foreach my $k (split //, $keys) {
-	    $writer->("$what debug info request, debug key $k", $k, 2);
-	}
-    };
-
-    local ($SIG{'PIPE'}) = 'IGNORE';
     open XENUSEWRITE, "|$xenuse -t $ho->{Name}" or die $!;
     autoflush XENUSEWRITE 1;
 
-    $writer->('force attach', "\x05cf", 1); # ^E c f == force attach
+    $mo->keys_write('force attach', "\x05cf", 1); # ^E c f == force attach
 
-    $writer->('request for input to Xen', $conswitch, 1);
-    $debugkeys->('Xen', $xenkeys);
-    sleep(10);
-    $debugkeys->('guest', $guestkeys);
-    sleep(10);
-    $writer->("RET to dom0","$conswitch\r", 5);
+    sleep 5;
+}
 
-    $writer->('dettach', "\x05c.", 1); # ^E c . == disconnect
+sub keys_write {
+    my ($mo, $what,$str,$pause) = @_;
+    logm("xenuse sending $what");
+
+    print XENUSEWRITE $str or die $!;
+    sleep($pause);
+}
+
+sub keys_shutdown {
+    my ($mo) = @_;
+
+    $mo->keys_write('dettach', "\x05c.", 1); # ^E c . == disconnect
 
     close XENUSEWRITE or die "$? $!";
-
-    return 1;
 }
 
 sub fetch_logs {
