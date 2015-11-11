@@ -285,7 +285,7 @@ do_hvm_debian_test_one () {
     test-debianhvm $toolstack $xenarch $dom0arch $qemuu_runvar \
     enable_xsm=$xsm                             \
     $stubdom_runvar $testvars                   \
-    debianhvm_image=debian-7.2.0-$arch-CD-1.iso \
+    debianhvm_image=$(usual_debianhvm_image $arch) \
     debianhvm_iso_kernel=/$iso_dir/vmlinuz \
     debianhvm_iso_ramdisk=/$iso_dir/initrd.gz \
     bios=$bios \

@@ -351,6 +351,11 @@ job_create_test () {
     xenbuildjob=$xenbuildjob buildjob=$buildjob $tsbuildjob "$@"
 }
 
+usual_debianhvm_image () {
+  local arch=$1; shift
+  echo debian-${DEBIAN_IMAGE_VERSION-7.2.0}-$arch-CD-1.iso
+}
+
 # Iterate over xenarch, dom0arch and kernel calling test_matrix_do_one
 # for each combination.
 #
