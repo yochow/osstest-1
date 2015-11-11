@@ -54,7 +54,7 @@ sub keys_prepare {
 
     my $xenuse= $c{XenUsePath} || "xenuse";
 
-    open XENUSEWRITE, "|$xenuse -t $ho->{Name}" or die $!;
+    open XENUSEWRITE, "|$xenuse -t $ho->{Name} >/dev/null" or die $!;
     autoflush XENUSEWRITE 1;
 
     $mo->keys_write('force attach', "\x05cf", 1); # ^E c f == force attach
