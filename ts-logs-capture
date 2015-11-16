@@ -248,6 +248,7 @@ sub fetch_logs_guest ($) {
     }
 }
 
+power_state($ho,1);
 find_guests();
 fetch_xenctx_guest($_) foreach @guests;
 serial_fetch_logs($ho);
