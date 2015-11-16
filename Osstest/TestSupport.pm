@@ -469,7 +469,7 @@ sub target_somefile_getleaf ($$$) {
         $$lleaf_ref= $rdest;
         $$lleaf_ref =~ s,.*/,,;
     }
-    $$lleaf_ref= "$ho->{Name}--$$lleaf_ref";
+    $$lleaf_ref= hostnamepath($ho)."--$$lleaf_ref";
 }
 
 sub tpfcs_core {
@@ -2345,7 +2345,7 @@ sub setup_pxelinux_bootcfg ($$) {
     my ($ho, $bootfile) = @_;
     my $f= host_pxefile($ho);
     file_link_contents("$ho->{Tftp}{Path}$ho->{Tftp}{PxeDir}$f", $bootfile,
-	"$ho->{Name}-pxelinux.cfg");
+	hostnamepath($ho)."-pxelinux.cfg");
 }
 
 # Systems using BIOS are configured to use pxelinux
@@ -2386,14 +2386,14 @@ sub setup_grub_efi_bootcfg ($$) {
     my $f = "grub.cfg-$ho->{Ether}";
     my $grub= $ho->{Tftp}{Path}.'/'.$ho->{Tftp}{GrubBase}.'/'.
 	$c{TftpGrubVersion}."/pxegrub-$r{arch}.efi";
-    my $pxe=$ho->{Tftp}{Path}.'/'.$ho->{Name}.'/pxe.img';
+    my $pxe=$ho->{Tftp}{Path}.'/'.hostnamepath($ho).'/pxe.img';
 
     logm("Copy $grub => $pxe");
     copy($grub, $pxe) or die "Copy $grub to $pxe failed: $!";
 
     logm("grub_efi bootcfg into $f");
     file_link_contents("$ho->{Tftp}{Path}$ho->{Tftp}{TmpDir}$f",
-		       $bootfile,  "$ho->{Name}-pxegrub.cfg");
+		       $bootfile,  hostnamepath($ho)."-pxegrub.cfg");
 }
 
 # UEFI systems PXE boot using grub.efi

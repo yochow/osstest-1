@@ -208,7 +208,7 @@ sub setup_pxeboot_firstboot($) {
 
     $kernel = "/$d_i/linux" unless $kernel;
 
-    my $initrd_overlay= "tmp/t.$ho->{Name}.initrd";
+    my $initrd_overlay= "tmp/t.".hostnamepath($ho).".initrd";
     system qw(rm -rf --),"$initrd_overlay.d";
     mkdir "$initrd_overlay.d" or die "$initrd_overlay.d: $!";
 
@@ -253,7 +253,7 @@ END
     push @initrds, "$initrd_overlay.cpio.gz";
 
     logm("using initrds: @initrds");
-    my $initrd= "$ho->{Tftp}{TmpDir}$ho->{Name}--initrd.gz";
+    my $initrd= "$ho->{Tftp}{TmpDir}".hostnamepath($ho)."--initrd.gz";
     system_checked("cat -- @initrds >$ho->{Tftp}{Path}$initrd");
     
     push @dicmdline, "domain=$c{TestHostDomain}";

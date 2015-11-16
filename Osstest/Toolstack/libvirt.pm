@@ -48,7 +48,7 @@ sub create ($$) {
     my $cfg = $gho->{CfgPath};
     my $lcfg = $cfg;
     $lcfg =~ s,/,-,g;
-    $lcfg = "$ho->{Name}--$lcfg";
+    $lcfg = hostnamepath($ho)."--$lcfg";
     target_cmd_root($ho, "virsh domxml-from-native xen-xl $cfg > $cfg.xml", 30);
     target_getfile_root($ho,60,"$cfg.xml", "$stash/$lcfg");
     target_cmd_root($ho, "virsh create --file $cfg.xml", 100);
