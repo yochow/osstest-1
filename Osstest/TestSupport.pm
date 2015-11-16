@@ -97,7 +97,8 @@ BEGIN {
                       prepareguest_part_lvmdisk prepareguest_part_diskimg
                       prepareguest_part_xencfg
                       guest_umount_lv guest_await guest_await_dhcp_tcp
-                      guest_checkrunning target_check_ip guest_find_ether
+                      guest_checkrunning $guest_state_running_re
+                      target_check_ip guest_find_ether
                       guest_find_domid guest_check_up guest_check_up_quick
                       guest_get_state guest_await_reboot
                       guest_await_shutdown guest_await_destroy guest_destroy

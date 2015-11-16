@@ -49,10 +49,19 @@ sub pdu_power_state {
     die "$child->{Name} ?" unless $parent;
 
     logm("power $child->{Name} nested on $parent->{Name} ".($on+0));
+
+    my $st = guest_get_state($parent, $child);
     if ($on) {
-	toolstack($parent)->create($child);
+	if ($st =~ m/^$guest_state_running_re$/o) {
+	} elsif (length($st)) { # exists but crashed or something ?
+	    toolstack($parent)->destroy($child);
+	} else { # does not exist
+	    toolstack($parent)->create($child);
+	}
     } else {
-	toolstack($parent)->destroy($child);
+	if (length($st)) {
+	    toolstack($parent)->destroy($child);
+	}
     }
 }
 
