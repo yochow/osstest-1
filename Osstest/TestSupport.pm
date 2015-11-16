@@ -1453,7 +1453,9 @@ sub selectguest ($$) {
     foreach my $opt (guest_var_commalist($gho,'options')) {
         $gho->{Options}{$opt}++;
     }
-    logm("guest: using $gn on $gho->{Host}{Name}");
+    my $m = "guest: using $gn";
+    $m .= " on $_" foreach hostnamepath_list($gho->{Host});
+    logm($m);
     guest_find_lv($gho);
     guest_find_diskimg($gho);
     guest_find_ether($gho);
