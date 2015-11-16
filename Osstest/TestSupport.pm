@@ -70,6 +70,7 @@ BEGIN {
 
                       selecthost get_hostflags get_host_property
                       get_target_property get_host_native_linux_console
+                      hostnamepath hostnamepath_list
                       power_state power_cycle power_cycle_sleep
                       serial_fetch_logs
                       propname_massage propname_check
@@ -1061,6 +1062,20 @@ sub get_host_method_object ($$$) {
 	  "\$mo = Osstest::${kind}::$meth[0]->new(\$ho, \@meth);")
 	or die "get_host_method_object $kind $meth $@";
     return $mo;
+}
+
+sub hostnamepath_list ($);
+sub hostnamepath_list ($) {
+    # returns list of guest/host names, innermost first
+    my ($ho) = @_;
+    return () unless $ho && $ho->{Name};
+    return ($ho->{Name}, hostnamepath_list($ho->{Host}));
+}
+	
+sub hostnamepath ($) {
+    my ($ho) = @_;
+    my @l = hostnamepath_list($ho);
+    join '_', reverse @l;
 }
 
 #---------- stashed files ----------
