@@ -41,7 +41,8 @@ BEGIN {
                       tsreadconfig %r $flight $job $stash
                       ts_get_host_guest
 
-                      fail broken logm $logm_handle get_filecontents
+                      fail broken logm $logm_handle $logm_prefix
+                      get_filecontents
                       report_once
 
                       store_runvar get_runvar get_runvar_maybe
@@ -132,6 +133,7 @@ our %timeout= qw(RebootDown   100
                  HardRebootUp 600);
 
 our $logm_handle= new IO::File ">& STDERR" or die $!;
+our $logm_prefix= '';
 
 #---------- test script startup ----------
 
@@ -194,7 +196,7 @@ sub ts_get_host_guest { # pass this @ARGV
 sub logm ($) {
     my ($m) = @_;
     my @t = gmtime;
-    my $fm = (show_abs_time time)." $m\n";
+    my $fm = (show_abs_time time)."$logm_prefix $m \n";
     foreach my $h ((ref($logm_handle) eq 'ARRAY')
 		   ? @$logm_handle : $logm_handle) {
 	print $h $fm or die $!;
@@ -866,6 +868,7 @@ sub selecthost ($) {
 
     if ($name =~ s/^(.*)://) {
 	my $parentname = $1;
+	local $logm_prefix = $logm_prefix." [host $ident]";
 	my $parent = selecthost($parentname);
 	my $child = selectguest($name,$parent);
 	$child->{Ident} = $ho->{Ident};
