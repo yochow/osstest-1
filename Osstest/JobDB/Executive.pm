@@ -125,6 +125,14 @@ END
 
 sub host_check_allocated ($$) { #method
     my ($jd, $ho) = @_;
+
+    if ($ho->{Host}) {
+	# This is a nested guest; check allocation of the parent host.
+	# We don't attempt to set Shared, SharedMaybeOthers, etc.
+	# (since nested hosts aren't shared between jobs).
+	return $jd->host_check_allocated($ho->{Host});
+    }
+
     $ho->{Shared}= resource_check_allocated('host', $ho->{Name});
     $ho->{SharedMaybeOthers}=
         $ho->{Shared} &&
