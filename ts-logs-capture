@@ -85,7 +85,7 @@ END
         foreach my $logfile (split / /, $logfileslist) {
             my $llogfile= $logfile;
             $llogfile =~ s,/,-,g;
-            $llogfile= "$lho->{Name}--$llogfile";
+            $llogfile= hostnamepath($lho)."--$llogfile";
             logm("fetching $logfile to $llogfile");
             if (!eval {
                 target_getfile_root($lho,60, $logfile,"$stash/$llogfile");
@@ -113,7 +113,7 @@ sub try_cmd_output_save ($;$) {
         $dfn =~ s,-,-,g;
         $dfn =~ s/ /_/g;
         $dfn =~ s/[^-+._,=0-9a-zA-Z]/#/g;
-        $dfn= $ho->{Name}."-output-$dfn";
+        $dfn= hostnamepath($ho)."-output-$dfn";
     }
     my $output;
     if (!eval {
@@ -219,7 +219,7 @@ sub fetch_xenctx_guest ($) {
 		$kernpath !~ m,/vmlinuz-, ? die "$kernpath ?" :
 		"-s $`/System.map-$'";
 	    foreach my $iter (0..1) {
-		my $dfn = "$ho->{Name}-xenctx-$gho->{Name},vcpu$vcpu,i$iter";
+		my $dfn = hostnamepath($ho)."-xenctx,vcpu$vcpu,i$iter";
 		try_cmd_output_save(
 		    'PATH=/usr/local/lib/xen/bin:/usr/lib/xen/bin:$PATH; '.
 		    "xenctx $sysmaparg $gho->{Domid} $vcpu",
@@ -236,11 +236,12 @@ sub fetch_logs_guest ($) {
 
     my $consolecmd= toolstack($ho)->consolecmd($gho);
     try_cmd_output_save("sleep 1 | $consolecmd | cat",
-                        "guest-$gho->{Name}-console");
+                        "guest-".hostnamepath($gho)."-console");
 
     if (!eval {
         my $vnc= guest_vncsnapshot_begin($ho,$gho);
-        guest_vncsnapshot_stash($ho,$gho,$vnc, "$gho->{Name}--vnc.jpeg");
+        guest_vncsnapshot_stash($ho,$gho,$vnc,
+				hostnamepath($gho)."-vnc.jpeg");
         1;
     }) {
         logm("cannot get vnc snapshot: $@");
