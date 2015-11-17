@@ -133,8 +133,9 @@ job_create_test_filter_callback () {
   return 0;
 }
 
-test_matrix_branch_filter_callback () {
-  case "$xenarch" in
+arch_branch_filter_callback () {
+  local arch=$1
+  case "$arch" in
   armhf)
         case "$branch" in
         linux-3.0) return 1;;
@@ -154,7 +155,16 @@ test_matrix_branch_filter_callback () {
         esac
         ;;
   esac
+  return 0
+}
 
+build_matrix_branch_filter_callback () {
+  if ! arch_branch_filter_callback $arch ; then return 1 ; fi
+  return 0
+}
+
+test_matrix_branch_filter_callback () {
+  if ! arch_branch_filter_callback $xenarch ; then return 1 ; fi
   return 0
 }
 

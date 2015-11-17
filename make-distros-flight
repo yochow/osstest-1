@@ -55,6 +55,10 @@ job_create_test_filter_callback () {
   return 0
 }
 
+build_matrix_branch_filter_callback () {
+    :
+}
+
 test_matrix_branch_filter_callback () {
     :
 }

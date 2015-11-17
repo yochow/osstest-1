@@ -89,6 +89,8 @@ create_build_jobs () {
 
     if [ "x$arch" = xdisable ]; then continue; fi
 
+    build_matrix_branch_filter_callback || continue
+
     case "$arch" in
     armhf)
       case "$branch" in
