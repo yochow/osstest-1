@@ -58,16 +58,6 @@ job_create_build_filter_callback () {
   return 0
 }
 
-if [ x$buildflight = x ]; then
-
-  create_build_jobs
-
-else
-
-  bfi=$buildflight.
-
-fi
-
 job_create_test_filter_callback () {
   local job=$1; shift
   local recipe=$1; shift
@@ -677,6 +667,16 @@ test_matrix_do_one () {
   do_pygrub_tests
   do_pvgrub_tests
 }
+
+if [ x$buildflight = x ]; then
+
+  create_build_jobs
+
+else
+
+  bfi=$buildflight.
+
+fi
 
 test_matrix_iterate
 

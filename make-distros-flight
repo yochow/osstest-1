@@ -50,18 +50,6 @@ job_create_build_filter_callback () {
   return 0
 }
 
-if [ x$buildflight = x ]; then
-
-  WANT_XEND=false REVISION_LINUX_OLD=disable
-
-  create_build_jobs
-
-else
-
-  bfi=$buildflight.
-
-fi
-
 job_create_test_filter_callback () {
   if [ "$xenarch" = "i386" ]; then return 1; fi
   return 0
@@ -200,6 +188,18 @@ test_matrix_do_one () {
     fi
   done
 }
+
+if [ x$buildflight = x ]; then
+
+  WANT_XEND=false REVISION_LINUX_OLD=disable
+
+  create_build_jobs
+
+else
+
+  bfi=$buildflight.
+
+fi
 
 test_matrix_iterate
 
