@@ -42,6 +42,13 @@ done
 
 if [ $# -le 2 ]; then badusage; fi
 
+. ./cri-getconfig
+
+jobdb=`getconfig JobDB`
+if [ "$jobdb" = Standalone ]; then
+    exit 0
+fi
+
 flight=$1; shift
 keepjobs=$1; shift
 
