@@ -93,20 +93,6 @@ create_build_jobs () {
 
     case "$arch" in
     armhf)
-      case "$branch" in
-      linux-3.0) continue;;
-      linux-3.4) continue;;
-      linux-3.10) continue;;
-      linux-3.14) continue;;
-      linux-mingo-tip-master) continue;;
-      linux-*) ;;
-      qemu-upstream-4.2-testing) continue;;
-      qemu-upstream-4.3-testing) continue;;
-      qemu-upstream-4.4-testing) continue;;
-      rumpuserxen) continue;;
-      seabios) continue;;
-      ovmf) continue;;
-      esac
       case "$xenbranch" in
       xen-3.*-testing) continue;;
       xen-4.0-testing) continue;;
@@ -122,9 +108,6 @@ create_build_jobs () {
       "
       ;;
     *)
-      case "$branch" in
-      linux-arm-xen) continue;;
-      esac
       pvops_kernel="
         tree_linux=$TREE_LINUX
         revision_linux=${REVISION_LINUX:-${DEFAULT_REVISION_LINUX}}

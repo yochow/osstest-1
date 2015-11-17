@@ -147,6 +147,9 @@ arch_branch_filter_callback () {
         qemu-upstream-4.2-testing) return 1;;
         qemu-upstream-4.3-testing) return 1;;
         qemu-upstream-4.4-testing) return 1;;
+        rumpuserxen) return 1;;
+        seabios) return 1;;
+        ovmf) return 1;;
         esac
         ;;
   i386|amd64)
