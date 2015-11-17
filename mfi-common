@@ -94,6 +94,8 @@ create_build_jobs () {
       case "$branch" in
       linux-3.0) continue;;
       linux-3.4) continue;;
+      linux-3.10) continue;;
+      linux-3.14) continue;;
       linux-mingo-tip-master) continue;;
       linux-*) ;;
       qemu-upstream-4.2-testing) continue;;
