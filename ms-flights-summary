@@ -355,12 +355,36 @@ printf("<p>%d flight(s) consisting of %s job(s)<br />%s<br />%s anonymous/rogue 
        join(" + ", map { "$global_stats{$_} $_" } (sort_stats(\%global_stats))),
        scalar keys %anon_jobs);
 
-printf("<table border='0' cellspacing='0' rules=all>\n");
-printf("<tr bgcolor=#808080>\n");
-printf("  <th align=left>$_</th>\n") foreach ("Flight", "Branch", "Blessing",
-				   "(Active+Complete)/Total Jobs", "Counts",
-				   "End of current phase");
-printf("</tr>\n");
+my %summarycounts;
+foreach my $fi (values %flights) {
+    $summarycounts{$_} += $fi->{Stats}{$_} foreach (keys \%{ $fi->{Stats} });
+}
+my @summarycounts = sort_stats \%summarycounts;
+
+printf <<END, (@summarycounts + 1);
+<table border='0' cellspacing='0' rules=all>
+ <tr bgcolor=#808080>
+  <th align=left>Flight</th>
+  <th align=left>Branch</th>
+  <th align=left>Blessing</th>
+  <th align=left colspan=%d>Job counts</th>
+  <th align=left>End of phase/flight</th>
+  <th align=left>Common info</th>
+ </tr>
+ <tr bgcolor=#808080>
+  <th></th>
+  <th></th>
+  <th></th>
+  <th>Total</th>
+END
+
+print("  <th align=right>$_</th>\n") foreach @summarycounts;
+
+print <<END;
+  <th></th>
+  <th align=left>(active jobs only)</th>
+ </tr>
+END
 
 my $alt = 0;
 foreach my $f (sort keys %flights) {
@@ -372,11 +396,17 @@ foreach my $f (sort keys %flights) {
     print "  <td><a href=\"#$f\">$f</a></td>\n";
     print "  <td>$fi->{Branch}</td>\n";
     print "  <td>$fi->{Intended}</td>\n";
-    print "  <td>$fi->{UnqueuedJobs}/$fi->{NrJobs}</td>\n";
-    print "  <td>".
-	join(" + ", map { "$fi->{Stats}{$_} $_" } (sort_stats(\%{$fi->{Stats}})))
-	."</td>\n";
-    print "  <td>".fmttime($fi->{ExpectedEnd})."</td>\n";
+    print "  <td align=right><strong>$fi->{NrJobs}</strong></td>\n";
+    foreach (@summarycounts) {
+	my $s = ($fi->{Stats}{$_} || '');
+	$s = "<strong>$s</strong>" if $s && $_ eq 'queued';
+	print "  <td align=right>$s</td>";
+    }
+    my $expectedend = fmttime($fi->{ExpectedEnd});
+    $expectedend = "<strong>$expectedend</strong>"
+	if $fi->{UnqueuedJobs} == $fi->{NrJobs};
+    print "  <td>$expectedend</td>\n";
+    print "  <td>".($fi->{Info} || '')."</td>\n";
     print "</tr>\n";
     $alt ^= 1;
 }
