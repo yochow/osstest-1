@@ -150,6 +150,7 @@ proc runneeded-perhaps-start {} {
     if {![llength $queue]} {
         plan-reset plan
         report-plan plan plan
+        report-projection plan
         return
     }
 
