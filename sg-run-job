@@ -260,10 +260,11 @@ proc per-host-ts {iffail ident script args} {
 proc nested-layer-descend {nested_hosts} {
     # We save need_xen_hosts on a stack in nested_layers_hosts
     # It gets popped again during the cleanup part of run-job
-    global nested_layers_hosts need_xen_hosts
+    global nested_layers_hosts need_xen_hosts ok
     lappend nested_layers_hosts $need_xen_hosts
     set need_xen_hosts $nested_hosts
     per-host-prep
+    if {!$ok} { error "host prep ($nested_hosts) (or something else) failed" }
 }
 
 #---------- test recipes ----------
