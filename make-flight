@@ -266,7 +266,9 @@ do_hvm_debian_nested_tests () {
     xen-4.3-testing)      return;;
   esac
 
-  job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-nested \
+  for cpuvendor in amd intel; do
+
+    job_create_test test-$xenarch$kern-$dom0arch$qemuu_suffix-nested-$cpuvendor \
             test-nested xl $xenarch $dom0arch $qemuu_runvar        \
             l1_image=$(usual_debianhvm_image amd64)                \
             l1_vifmodel='e1000'                                    \
@@ -274,7 +276,9 @@ do_hvm_debian_nested_tests () {
             l1_enable_nestedhvm='true'                             \
             l2_image=$(usual_debianhvm_image amd64)                \
             bios=$bios                                             \
-            all_hostflags=$most_hostflags,hvm
+            all_hostflags=$most_hostflags,hvm-$cpuvendor
+
+  done
 }
 
 branch_debianhvm_arch () {
