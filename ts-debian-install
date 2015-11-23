@@ -19,6 +19,7 @@ use strict qw(vars);
 use DBI;
 use Osstest;
 use Osstest::TestSupport;
+use Osstest::Debian;
 
 tsreadconfig();
 
@@ -47,7 +48,7 @@ sub prep () {
 sub ginstall () {
     my $arch= $r{"$gho->{Guest}_arch"};
     my $archarg= defined($arch) ? "--arch $arch" : '';
-    my $gsuite= guest_var($gho,'suite',$c{GuestDebianSuite});
+    my $gsuite= debian_guest_suite($gho);
 
     my $kernpath = guest_var($gho,'kernel_path',$r{xen_kernel_path});
     my $initrd = guest_var($gho,'initrd_path',$r{xen_initrd_path});

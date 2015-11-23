@@ -35,6 +35,7 @@ BEGIN {
     @ISA         = qw(Exporter);
     @EXPORT      = qw(debian_boot_setup
                       debian_overlays
+                      debian_guest_suite
                       %preseed_cmds
                       preseed_base
                       preseed_create
@@ -1333,6 +1334,19 @@ sub preseed_hook_cmds () {
             (join ' && ', @{ $preseed_cmds{$di_key} }). "\n";
     }
     return $preseed;
+}
+
+sub debian_guest_suite ($) {
+    my ($gho) = @_;
+
+    $gho->{Suite} //= guest_var($gho,'suite',undef);
+
+    if (!$gho->{Suite}) {
+	$gho->{Suite} = $c{GuestDebianSuite};
+	store_runvar("$gho->{Guest}_suite", $gho->{Suite});
+    }
+
+    return $gho->{Suite};
 }
 
 1;

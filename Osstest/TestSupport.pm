@@ -1453,6 +1453,7 @@ sub selectguest ($$) {
         CfgPath => $r{"${gn}_cfgpath"},
         Tftp => $ho->{Tftp},
 	Host => $ho,
+	Suite => $r{"${gn}_suite"},
     };
     foreach my $opt (guest_var_commalist($gho,'options')) {
         $gho->{Options}{$opt}++;

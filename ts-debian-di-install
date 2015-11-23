@@ -190,7 +190,7 @@ END
 
     if ( $method eq "netboot" )
     {
-	my $suite= $r{"$gho->{Guest}_suite"};
+	my $suite= debian_guest_suite($gho);
 	logm("$method $suite/$arch");
 
 	$method_cfg = setup_netboot($tmpdir, $arch, $suite);
