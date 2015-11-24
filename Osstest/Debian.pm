@@ -799,6 +799,14 @@ sub preseed_base ($$$$;@) {
 
     $xopts{ExtraPreseed} ||= '';
 
+    # Systemd doesn't honor osstest-confirm-booted service, which
+    # breaks ts-leak-check.  Fall back to SysV init for now.
+    if ( $suite =~ /jessie/ ) {
+       preseed_hook_command($ho, 'late_command', $sfx, <<END)
+in-target apt-get install -y sysvinit-core
+END
+    }
+
     preseed_ssh($ho, $sfx);
 
     preseed_hook_command($ho, 'late_command', '', <<'END');
@@ -1175,14 +1183,6 @@ for i in $modules ; do
     echo \$i >> /target/etc/initramfs-tools/modules
 done
 in-target update-initramfs -u -k all
-END
-    }
-
-    # Systemd doesn't honor osstest-confirm-booted service, which
-    # breaks ts-leak-check.  Fall back to SysV init for now.
-    if ( $ho->{Suite} =~ /jessie/ ) {
-       preseed_hook_command($ho, 'late_command', $sfx, <<END)
-in-target apt-get install -y sysvinit-core
 END
     }
 
