@@ -807,6 +807,14 @@ in-target apt-get install -y sysvinit-core
 END
     }
 
+    preseed_hook_command($ho, 'late_command', $sfx, <<END);
+#!/bin/sh
+set -ex
+
+echo FANCYTTY=0 >> /target/etc/lsb-base-logging.sh
+END
+
+
     preseed_ssh($ho, $sfx);
 
     preseed_hook_command($ho, 'late_command', '', <<'END');
@@ -1056,13 +1064,6 @@ echo ===
 set +e
 ls -l /dev/sd*
 true
-END
-
-    preseed_hook_command($ho, 'late_command', $sfx, <<END);
-#!/bin/sh
-set -ex
-
-echo FANCYTTY=0 >> /target/etc/lsb-base-logging.sh
 END
 
     my $dtbs = "$d_i/dtbs.tar.gz";
