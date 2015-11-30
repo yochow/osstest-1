@@ -163,9 +163,6 @@ sub setup_netboot($$$)
 
 	target_putfile_root($ho, 60, $kernel, "$didir/kernel_${suite}_${arch}");
 	target_putfile_root($ho, 60, $ramdisk, "$didir/ramdisk_${suite}_${arch}");
-
-	store_runvar("$gho->{Guest}_netboot_kernel", $kernel);
-	store_runvar("$gho->{Guest}_netboot_ramdisk", $ramdisk);
     }
 
     return <<END;
