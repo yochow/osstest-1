@@ -1823,7 +1823,7 @@ END
 sub target_fetchurl($$$;$) {
     my ($ho, $url, $path, $timeo) = @_;
     $timeo ||= 2000;
-    my $useproxy = "export http_proxy=$c{HttpProxy};" if $c{HttpProxy};
+    my $useproxy = $c{HttpProxy} ? "export http_proxy=$c{HttpProxy};" : "";
     target_cmd_root($ho, <<END, $timeo);
     $useproxy wget --progress=dot:mega -O \Q$path\E \Q$url\E
 END
